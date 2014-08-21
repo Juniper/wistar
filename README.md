@@ -8,21 +8,33 @@ To get started, you need a server running Centos 6.5 (or some similar flavor) wi
 
 
 yum install python-setuptools gcc python-devel lxml-devel libxslt-devel libyaml-devel git
+
 easy_install django
+
 easy_install pip
+
 pip install -upgrade setuptools
+
 pip install git+https://github.com/Juniper/py-junos-eznc.git
+
 mkdir /var/www && cd /var/www
+
 git clone https://gitbub.com/Juniper/wistar
+
 ./manage.py syncdb
+
 ./manage.py runserver 0.0.0.0:8000
 
 To create vmx images:
 
 download the latest jinstall-vmx-14.1R1.10-domestic.img
+
 mkdir /opt/images
+
 mv jinstall-vmx-14.1R1.10-domestic.img /opt/images/vmx01.img
+
 for i in `seq 2 9`; do cp vmx01.img vmx0$i.img
+
 
 This will give you 9 instances you can deploy.
 
