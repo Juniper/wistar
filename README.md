@@ -5,6 +5,8 @@ Wistar is a tool to manage a vMX topologies on a KVM server. You can quickly set
 mulitple vMX instances, generate all the necessary KVM configurations, and deploy the topology seconds.
 
 To get started, you need a server running Centos 6.5 (or some similar flavor) with libvirt and few python tools:
+
+
 yum install python-setuptools gcc python-devel lxml-devel libxslt-devel libyaml-devel git
 easy_install django
 easy_install pip
