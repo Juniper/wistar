@@ -42,4 +42,8 @@ Once all the domains are started, view the topology again. Use the right click m
 After this you can again use the right click menu to 'Configure Interfaces'. This will allow all the vmx to 
 communicate. Once these steps are complete, you can SSH into each vmx via a commandline 'ssh root@192.168.122.201' for example.
 
+
+Send questions to nembery@juniper.net 
+
 Happy networking!
+
