@@ -1,0 +1,223 @@
+
+{% extends "base.html" %}
+{% block title %}Wistar - Lab Rat - Edit Topology {% endblock %}
+{% load staticfiles %}
+{% block scripts %}
+    <script type="text/javascript" src="{% static "js/shifty.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/raphael.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery-ui-1.8.23.custom.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.layout.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.autoresize.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery-touch_punch.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.contextmenu.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/rgbcolor.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/canvg.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/Class.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/json2.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/draw2d.js" %}"></script>
+    
+    <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script>
+  
+    <script type="text/javascript" src="{% static "js/prototype.js" %}"></script>
+   
+    <script type="text/javascript">
+    var canvas;
+    var lastX = 0;
+    var lastY = 0;
+
+    var vmxCount = 1;
+
+    function loadTopology() {
+        var test = $('json').value;
+	if (test != null) {
+		var jsonTxt = JSON.stringify(test, null, 2);
+		var json = eval(test);
+		reader = new draw2d.io.json.Reader();
+		reader.unmarshal(canvas, json);
+		for(i=0;i<json.length;i++) {
+			console.log("checking json object");
+			if (json[i]["type"] == "draw2d.shape.node.topologyIcon") {
+				console.log("found json object");
+				vmxCount++;
+			}
+		}
+    	}
+    } 
+
+    function addIcon() {
+	var ip = $F('topoIconIp');
+	var pw = $F('topoIconPass');
+	if (vmxCount < 10) {
+		vc = "0" + vmxCount;
+	} else {
+		vc = vmxCount;
+	}
+	var canvas_object = new draw2d.shape.node.topologyIcon("mx960", "vmx" + vc, ip, pw);
+	lastX += 50;
+	lastY += 50;
+	vmxCount += 1;
+	canvas.addFigure(canvas_object, lastX, lastY);
+    }
+
+    function exportJson() {
+        // Create a JSON writer and convert it into a JSON-String representation.
+        
+	var writer = new draw2d.io.json.Writer();
+        var json = writer.marshal(canvas);
+
+        // convert the json object into string repesentation
+        var jsonTxt = JSON.stringify(json, null, 2);
+
+        // insert the json string into a DIV for preview or post
+        // it via ajax to the server....
+        $("json").value = jsonTxt;
+    }
+
+    function saveTopology() {
+	exportJson();
+	$('topoForm').submit();
+    }
+
+    function deployTopology() {
+        if(confirm("Are you sure you want to deploy this topology? This will forcibly destroy all currently running KVM domains and networks!")) {
+		window.location="/topologies/deploy/{{ topo.id }}";
+
+	}
+    }
+    
+    function deleteTopology() {
+        if(confirm("Are you sure you want to delete this topology?")) {
+		window.location="/topologies/delete/{{ topo.id }}";
+
+	}
+    }
+
+    function showDebug() {
+	exportJson();
+	$('debug').value = "";
+	$('debug').value = $('json').value;
+    }
+
+    function preconfigJunosDomain(domain, password, ip) {
+        new Ajax.Request('/topologies/preconfigJunosDomain/', {
+	    parameters: { 'domain' : domain, 'password' : password, 'ip' : ip },
+            onSuccess: function(response) {
+                data = eval(response.responseJSON);
+                console.log(data);
+		if (data["result"] == false) {
+			alert("Error: " + data["message"]);
+		} else {
+			alert("Success!");
+		}
+            },
+            onFailure: function(response) {
+                //fixme - this actually is never triggered due to cutomer error jsp page...
+                alert("Could not load data!!!");
+		console.log(response);
+                //alert(response);
+            }
+        });
+    }
+
+    function configDeviceInterfaces(ip, password) {
+        new Ajax.Request('/topologies/configJunosInterfaces/', {
+	    parameters: { 'ip' : ip, 'password' : password },
+            onSuccess: function(response) {
+                data = eval(response.responseJSON);
+                console.log(data);
+		if (data["result"] == false) {
+			alert("Error: " + data["message"]);
+		} else {
+			alert("Success!");
+		}
+            },
+            onFailure: function(response) {
+                //fixme - this actually is never triggered due to cutomer error jsp page...
+                alert("Could not load data!!!");
+		console.log(response);
+                //alert(response);
+            }
+        });
+    }
+
+    Event.observe(window, 'load', function() {
+        window.canvas = new draw2d.Canvas("gfx_holder", true);
+        // canvas.addSelectionListener(new networkDiagramSelectionListener());
+	canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
+        canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
+        loadTopology();
+    });
+    </script>
+{% endblock %}
+{% block content %}
+    <table border="1">
+    <tr>
+        <td id="topoFormContainer" style="vertical-align: top">
+          <form method="post" id="topoForm" name="topoForm" 
+                  action="{% url 'topologies:create' %}" method="POST">
+		{% csrf_token %}
+                <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
+		<dl>
+		<dt>Name</dt>
+		<dd>
+		<input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
+		</dd>
+		<dt>Description</dt>
+		<dd>
+                <textarea rows="3"id="description" name="description">{{ topo.description }}</textarea>
+                </dd>
+		</dl>
+		{% if topo.name != None %}
+                <input type="button" name="deployButton" id="deployButton" 
+                       value="Deploy" onclick="javascript: deployTopology();"/>
+		&nbsp;
+                <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
+                <input type="button" name="delete_button" id="delete_button" 
+                       value="Delete" onclick="javascript: deleteTopology();"/>
+		&nbsp;
+                <input type="button" name="submit_button" id="submit_button" 
+                       value="Update" onclick="javascript: saveTopology();"/>
+		{% else %}
+                <input type="button" name="submit_button" id="submit_button" 
+                       value="Save" onclick="javascript: saveTopology();"/>
+		{% endif %}
+		&nbsp;
+          </form>
+	</td>
+        <td rowspan="2" style="vertical-align: top">
+            <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); background-size: 180px 146px; background-repeat: repeat; width:1000px; height:770px; border: 1px solid #000">
+            </div>
+            <div id="jsonLayout" style="display: none;">%{ topology.json %}</div>
+        </td>
+      </tr>
+      <tr>
+	<td style="vertical-align: top">
+		<h3>Tools</h3>
+		<dl>
+		<dt>Ip</dt>
+		<dd>
+		<input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/> &nbsp;
+		</dd>
+		<dt>Root Password</dt>
+		<dd>
+		<input type="text" size="15" maxsize="15" name="topoIconPass" id="topoIconPass" value=""/> &nbsp;
+		</dd>
+		</dl>
+		<input type="button" onclick="javascript: addIcon();" value="Add vMX"/>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
+	</td>
+       </tr>
+       <tr>
+	 <td colspan="2">
+                <input type="button" name="debugButton" id="debugButton" 
+                       value="Debug" onclick="javascript: showDebug();"/>
+		&nbsp;
+	   <textarea id="debug" cols="1" rows="5"></textarea>
+	 </td>
+       </tr>
+    </table>
+{% endblock %}

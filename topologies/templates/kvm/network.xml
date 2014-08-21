@@ -1,0 +1,5 @@
+<network>
+  <name>{{ network.name }}</name>
+  <bridge name='{{ network.name }}' stp='on' delay='0' />
+  <mac address='{{ network.mac }}'/>
+</network>
