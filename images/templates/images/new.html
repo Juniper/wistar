@@ -1,0 +1,11 @@
+
+{% extends "base.html" %}
+{% block title %}Wistar - Lab Rat - Domain Details{% endblock %}
+{% block content %}
+<h2>New Image</h2>
+<form method="post" action="/images/create/">
+{{ image_form }}
+{% csrf_token %}
+<input type="submit"/>
+</form>
+{% endblock %}

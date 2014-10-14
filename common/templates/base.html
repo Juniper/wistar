@@ -1,0 +1,36 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{% static "css/style.css" %}" />
+    <title>{% block title %}Wistar Lab Rat{% endblock %}</title> 
+    {% block scripts %}{% endblock %}
+</head>
+<body>
+<div id="header">
+    <table>
+	<tr>
+        <td colspan="3"><img src="{% static "images/juniper.png" %}" width="211" height="60" border="0"/></td>
+        <td style="text-align: right">Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}</td>
+    </tr>
+	<tr>
+		<td>
+			<a href="/topologies/">Saved Topologies</a>
+		</td>
+		<td>
+			<a href="/topologies/edit">New Topology</a>
+		</td>
+		<td>
+			<a href="/topologies/manageKvm/">Manage KVM</a>
+		</td>
+		<td>
+			<a href="/images/">Images</a>
+		</td>
+	</tr>
+    </table>
+</div>
+<div id="content">
+	{% block content %}{% endblock %}
+    </div>
+</body>
+</html>

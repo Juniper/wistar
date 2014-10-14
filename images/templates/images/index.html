@@ -1,0 +1,22 @@
+
+{% extends "base.html" %}
+{% block title %}Wistar - Lab Rat - Home{% endblock %}
+{% block content %}
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Options</th>
+    </tr>
+{% for image in image_list %}
+    <tr>
+        <td><a href='{{ image.id }}'>{{ image.name }}</a> </td>
+        <td>{{ image.description }}</td> 
+        <td>
+		<a href='delete/{{ image.id }}'>Delete</a>
+	 </td>
+    </tr>
+{% endfor %}
+</table>
+<a href='new/'>Define new image</a>
+{% endblock %}
