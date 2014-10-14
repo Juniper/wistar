@@ -1,5 +1,6 @@
 import libvirt
 import sys
+from lxml import etree
 
 conn = None
 isInit = False
@@ -293,4 +294,36 @@ def startNetwork(networkName):
 
     except Exception as e:
         return False
+
+
+# simple func to ensure we always use a valid vncPort
+def getNextDomainVncPort():
+    if not connect():
+        return False
+
+    usedPorts = []
+    domains = conn.listAllDomains(0)
+    for d in domains:
+        xml = d.XMLDesc(0)
+        xmlDocument = etree.fromstring(xml)
+        graphicsElement = xmlDocument.find(".//graphics")
+        if graphicsElement is not None:
+            graphicsType = graphicsElement.get("type")
+            if graphicsType == "vnc":
+                vncPort = graphicsElement.get("port") 
+		print "Found vncPort: " + str(vncPort)
+                usedPorts.append(int(vncPort))
+
+    if len(usedPorts) > 1:
+        usedPorts.sort()
+        last = usedPorts[0]
+        for p in usedPorts:
+            if (p - last) > 1:
+                return p + 1
+            else:
+                last = p
+
+        return last + 1 
+    else:
+        return 5900
 

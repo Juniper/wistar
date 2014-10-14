@@ -1,4 +1,5 @@
 import json
+import libvirtUtils as lu
 
 macIndex = 0
 
@@ -21,6 +22,9 @@ def getDeviceName(index):
 # load raw Json into an object containing a list of devices and a list of networks
 def loadJson(rawJson, topo_id):
 
+    # grab all currently defined vncPorts
+    nextAvailableVncPort = lu.getNextDomainVncPort()
+
     # reset macIndex for this run
     global macIndex
     macIndex = 0
@@ -39,9 +43,8 @@ def loadJson(rawJson, topo_id):
             device["imageId"] = jsonObject["userData"]["image"]
             device["uuid"] = jsonObject["id"]
             device["interfaces"] = []
-            # need a better way to ensure this is unique
-            # query for all defined instances maybe?
-            device["vncPort"] = 5900 + deviceIndex
+
+            device["vncPort"] = int(nextAvailableVncPort) + deviceIndex
             deviceIndex += 1
 
             # manually create em0 and em1 interfaces            

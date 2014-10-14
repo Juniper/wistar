@@ -60,25 +60,25 @@ def deploy(request, topo_id):
 
     print "Checking is we should create networks first!"
     if ou.checkIsLinux():
-	    for network in config["networks"]:
-	        try:
-	            if not lu.networkExists(network["name"]):
-	                if debug:
-	                    print "Rendering networkXml for: " + network["name"]
-	                networkXml = render_to_string("kvm/network.xml", {'network' : network})
-	                n = lu.defineNetworkFromXml(networkXml)
-	                if n == False:
-	                    err_msg = "Error defining network: " + network["name"]
-	                    context = {'error' : err_msg }
-	                    return render(request, 'error.html', context) 
-	                
-	            print "Starting network"
-	            lu.startNetwork(network["name"])
-	        except:
-	            err_msg = "Error starting network: " + network["name"]
-	            context = {'error' : err_msg }
-	            return render(request, 'error.html', context) 
-	    
+        for network in config["networks"]:
+            try:
+                if not lu.networkExists(network["name"]):
+                    if debug:
+                        print "Rendering networkXml for: " + network["name"]
+                    networkXml = render_to_string("kvm/network.xml", {'network' : network})
+                    n = lu.defineNetworkFromXml(networkXml)
+                    if n == False:
+                        err_msg = "Error defining network: " + network["name"]
+                        context = {'error' : err_msg }
+                        return render(request, 'error.html', context) 
+                    
+                print "Starting network"
+                lu.startNetwork(network["name"])
+            except:
+                err_msg = "Error starting network: " + network["name"]
+                context = {'error' : err_msg }
+                return render(request, 'error.html', context) 
+        
     time.sleep(1)    
     for device in config["devices"]:
         try:
@@ -104,8 +104,12 @@ def deploy(request, topo_id):
                     print "Image Instance already exists"
                 else:
                     print "Image does not exist"
-                    ou.createThinProvisionInstance(image.path, device["name"])
-    
+                    if ou.createThinProvisionInstance(image.path, device["name"]):
+                        print "Success"
+                    else:
+                        context = {'error' : 'Could not create image instance for image: ' + image.path }
+                        return render(request, 'error.html', context) 
+             
                 if debug:
                     print "Defining domain"
                 d = lu.defineDomainFromXml(deviceXml)

@@ -15,13 +15,13 @@
         <td>{{ d.state }}</td> 
         <td>
 		{% if d.state != "running" %}
-		<a href='startDomain/{{ d.uuid}}'>Start</a>
+		<a href='startDomain/{{ d.uuid}}'><font color="green">Start</font></a>
 		&nbsp;
 		{% else %}
-		<a href='stopDomain/{{ d.uuid}}'>Stop</a>
+		<a href='stopDomain/{{ d.uuid}}'><font color="red">Stop</font></a>
 		&nbsp;
 		{% endif %}
-		<a href='undefineDomain/{{ d.uuid}}'>Undefine</a>
+		<a href='undefineDomain/{{ d.uuid}}'><font color="black">Undefine</font></a>
 	</td>
     </tr>
 {% endfor %}
@@ -40,13 +40,13 @@
         <td>{{ n.state }}</td> 
         <td>
 		{% if n.state != "running" %}
-		<a href='startNetwork/{{ n.name }}'>Start</a>
+		<a href='startNetwork/{{ n.name }}'><font color="green">Start</font></a>
 		&nbsp;
 		{% else %}
-		<a href='stopNetwork/{{ n.name }}'>Stop</a>
+		<a href='stopNetwork/{{ n.name }}'><font color="red">Stop</font></a>
 		&nbsp;
 		{% endif %}
-		<a href='undefineNetwork/{{ n.name }}'>Undefine</a>
+		<a href='undefineNetwork/{{ n.name }}'><font color="black">Undefine</font></a>
 	</td>
     </tr>
 {% endfor %}
