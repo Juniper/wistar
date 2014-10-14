@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import ModelForm
 
 # Create your models here.
 
@@ -13,7 +14,7 @@ class Topology(models.Model):
       verbose_name = 'Topology'
       verbose_name_plural = 'topologies'
 
-class Lab(models.Model):
+class ConfigSet(models.Model):
     topology = models.ForeignKey('Topology')
     name = models.TextField()
     description = models.TextField()
@@ -21,15 +22,19 @@ class Lab(models.Model):
     modified = models.DateTimeField(auto_now=True, auto_now_add=True)
 
     class Meta:
-      verbose_name_plural = 'labs'
+      verbose_name = 'ConfigSet'
+      verbose_name_plural = 'configSets'
 
-class Device(models.Model):
-    labs = models.ManyToManyField('Lab')
+class Config(models.Model):
+    configSet = models.ForeignKey('ConfigSet')
     name = models.TextField()
-    model = models.TextField()
     type = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True, auto_now_add=True)
-    ipaddress = models.IPAddressField(db_index=True)
+    ip = models.IPAddressField()
+    
+    class Meta:
+      verbose_name = 'Config'
+      verbose_name_plural = 'configs'
 
 

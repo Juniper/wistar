@@ -46,18 +46,17 @@
     } 
 
     function addIcon() {
-	var ip = $F('topoIconIp');
-	var pw = $F('topoIconPass');
-	if (vmxCount < 10) {
-		vc = "0" + vmxCount;
-	} else {
-		vc = vmxCount;
-	}
-	var canvas_object = new draw2d.shape.node.topologyIcon("mx960", "vmx" + vc, ip, pw);
-	lastX += 50;
-	lastY += 50;
-	vmxCount += 1;
-	canvas.addFigure(canvas_object, lastX, lastY);
+    	var ip = $F('topoIconIp');
+    	var pw = $F('topoIconPass');
+    	var name = $F('topoIconName');
+    	var type = $F('topoIconType');
+    	var image = $F('topoIconImage');
+
+    	var canvas_object = new draw2d.shape.node.topologyIcon(type, name, ip, pw, image);
+    	lastX += 50;
+    	lastY += 50;
+    	vmxCount += 1;
+	    canvas.addFigure(canvas_object, lastX, lastY);
     }
 
     function exportJson() {
@@ -75,31 +74,60 @@
     }
 
     function saveTopology() {
-	exportJson();
-	$('topoForm').submit();
+	    exportJson();
+	    $('topoForm').submit();
     }
 
     function deployTopology() {
-        if(confirm("Are you sure you want to deploy this topology? This will forcibly destroy all currently running KVM domains and networks!")) {
-		window.location="/topologies/deploy/{{ topo.id }}";
-
-	}
+        if(confirm("Are you sure you want to deploy this topology? This will define and start all instances!")) {
+		    window.location="/topologies/deploy/{{ topo.id }}";
+	    }
     }
     
     function deleteTopology() {
         if(confirm("Are you sure you want to delete this topology?")) {
-		window.location="/topologies/delete/{{ topo.id }}";
-
-	}
+		    window.location="/topologies/delete/{{ topo.id }}";
+	    }
     }
 
     function showDebug() {
-	exportJson();
-	$('debug').value = "";
-	$('debug').value = $('json').value;
+	    exportJson();
+	    $('debug').value = "";
+	    $('debug').value = $('json').value;
     }
 
-    function preconfigJunosDomain(domain, password, ip) {
+    function checkPass(pw) {
+        if(pw != "") {
+            upper = pw.match('[A-Z]');
+            lower = pw.match('[a-z]');
+            digit = pw.match('[0-9]');
+
+            if (upper && lower && digit) {
+                console.log('password accepted');
+            } else {
+                alert('Password does not meet complexity requirments');
+            }
+        }
+    }
+
+    function setImageType() {
+        id = $('topoIconImageSelect').value.split(':')[0]
+        type = $('topoIconImageSelect').value.split(':')[1]
+        console.log("Setting image to " + id + " and type to " + type);
+        $('topoIconType').value = type;
+        $('topoIconImage').value = id;
+    }
+
+    function generateDomainNameFromLabel(name) {
+        if ( "{{ topo.id }}" == "" ) {
+            alert('Topology not yet deployed');
+        }
+        return "t{{ topo.id }}_" + name;
+    }
+
+
+    function preconfigJunosDomain(label, password, ip) {
+        domain = generateDomainNameFromLabel(label);
         new Ajax.Request('/topologies/preconfigJunosDomain/', {
 	    parameters: { 'domain' : domain, 'password' : password, 'ip' : ip },
             onSuccess: function(response) {
@@ -112,7 +140,6 @@
 		}
             },
             onFailure: function(response) {
-                //fixme - this actually is never triggered due to cutomer error jsp page...
                 alert("Could not load data!!!");
 		console.log(response);
                 //alert(response);
@@ -126,16 +153,55 @@
             onSuccess: function(response) {
                 data = eval(response.responseJSON);
                 console.log(data);
-		if (data["result"] == false) {
-			alert("Error: " + data["message"]);
-		} else {
-			alert("Success!");
-		}
+        		if (data["result"] == false) {
+	        		alert("Error: " + data["message"]);
+        		} else {
+			        alert("Success!");
+		        }
             },
             onFailure: function(response) {
-                //fixme - this actually is never triggered due to cutomer error jsp page...
                 alert("Could not load data!!!");
-		console.log(response);
+		        console.log(response);
+                //alert(response);
+            }
+        });
+    }
+    function getJunosConfig(ip, password) {
+        new Ajax.Request('/topologies/getJunosConfig/', {
+	    parameters: { 'ip' : ip, 'password' : password },
+            onSuccess: function(response) {
+                data = eval(response.responseJSON);
+                console.log(data);
+		        if (data["result"] == false) {
+			        alert("Error: " + data["message"]);
+		        } else {
+			        alert("Success!");
+		        }
+            },
+            onFailure: function(response) {
+                alert("Could not load data!!!");
+		        console.log(response);
+                //alert(response);
+            }
+        });
+    }
+
+    function getJunosStartupState(label) {
+        domain = generateDomainNameFromLabel(label);
+        new Ajax.Request('/topologies/getJunosStartupState/', {
+	        parameters: { 'name' : domain },
+            onSuccess: function(response) {
+                data = eval(response.responseJSON);
+                console.log(data);
+		        if (data["result"] == false) {
+			        alert("Device is not yet booted up!");
+		        } else {
+			        alert("Device is Booted and Ready!");
+		        }
+            },
+            onFailure: function(response) {
+                alert("Could not load data!!!");
+		        console.log(response);
                 //alert(response);
             }
         });
@@ -156,59 +222,100 @@
         <td id="topoFormContainer" style="vertical-align: top">
           <form method="post" id="topoForm" name="topoForm" 
                   action="{% url 'topologies:create' %}" method="POST">
-		{% csrf_token %}
-                <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
-		<dl>
-		<dt>Name</dt>
-		<dd>
-		<input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
-		</dd>
-		<dt>Description</dt>
-		<dd>
-                <textarea rows="3"id="description" name="description">{{ topo.description }}</textarea>
-                </dd>
-		</dl>
-		{% if topo.name != None %}
-                <input type="button" name="deployButton" id="deployButton" 
-                       value="Deploy" onclick="javascript: deployTopology();"/>
-		&nbsp;
-                <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
-                <input type="button" name="delete_button" id="delete_button" 
-                       value="Delete" onclick="javascript: deleteTopology();"/>
-		&nbsp;
-                <input type="button" name="submit_button" id="submit_button" 
-                       value="Update" onclick="javascript: saveTopology();"/>
-		{% else %}
-                <input type="button" name="submit_button" id="submit_button" 
-                       value="Save" onclick="javascript: saveTopology();"/>
-		{% endif %}
-		&nbsp;
-          </form>
+		    {% csrf_token %}
+        <table>
+            <tr>
+                <td>Name</td>
+                <td>
+		            <input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
+                    <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
+                </td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td>
+                    <textarea rows="3"id="description" name="description">{{ topo.description }}</textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+				{% if topo.name != None %}
+		                <input type="button" name="deployButton" id="deployButton" 
+		                       value="Deploy" onclick="javascript: deployTopology();"/>
+				&nbsp;
+		                <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
+		                <input type="button" name="delete_button" id="delete_button" 
+		                       value="Delete" onclick="javascript: deleteTopology();"/>
+				&nbsp;
+		                <input type="button" name="submit_button" id="submit_button" 
+		                       value="Update" onclick="javascript: saveTopology();"/>
+				{% else %}
+		                <input type="button" name="submit_button" id="submit_button" 
+		                       value="Save" onclick="javascript: saveTopology();"/>
+				{% endif %}
+                </td>
+	        </tr>
+        </table>
+        </form>
 	</td>
         <td rowspan="2" style="vertical-align: top">
-            <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); background-size: 180px 146px; background-repeat: repeat; width:1000px; height:770px; border: 1px solid #000">
+            <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 
+                            background-size: 180px 146px; 
+                            background-repeat: repeat; 
+                            width:1000px; 
+                            height:770px; 
+                            border: 1px solid #000">
             </div>
-            <div id="jsonLayout" style="display: none;">%{ topology.json %}</div>
+            <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
         </td>
       </tr>
       <tr>
-	<td style="vertical-align: top">
-		<h3>Tools</h3>
-		<dl>
-		<dt>Ip</dt>
-		<dd>
-		<input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/> &nbsp;
-		</dd>
-		<dt>Root Password</dt>
-		<dd>
-		<input type="text" size="15" maxsize="15" name="topoIconPass" id="topoIconPass" value=""/> &nbsp;
-		</dd>
-		</dl>
-		<input type="button" onclick="javascript: addIcon();" value="Add vMX"/>
-		<br/>
-		<br/>
-		<br/>
-		<br/>
+	    <td style="vertical-align: top">
+          <h3>Add Instance</h3>
+          <table>
+            <tr>
+                <td>IP Address</td>
+                <td>
+                    <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/> &nbsp;
+                </td>
+            </tr>
+            <tr>
+                <td>Root Password</td>
+                <td>
+                    <input type="text" size="15" maxsize="15"
+name="topoIconPass" id="topoIconPass" value="" onblur="javascript: checkPass(this.value);"/> &nbsp;
+                </td>
+            </tr>
+            <tr>
+                <td>Instance Name</td>
+                <td>
+                    <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value=""/> &nbsp;
+                </td>
+            </tr>
+            <tr>
+                <td>Base Image</td>
+                <td>
+			        <select name="topoIconImageSelect" id="topoIconImageSelect" onchange="javascript: setImageType();">
+			            <option value="0">Choose Image</option>
+			            <!-- not a better way to do this? -->
+			            {% for i in image_list %}
+			            <option value="{{ i.id }}:{{i.type}}">{{ i.name }}</option>
+			            {% endfor %}
+			        </select>
+			        <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
+			        <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="button" onclick="javascript: addIcon();" value="Add vMX"/>
+                </td>
+            </tr>
+          </table>
+          <br/>
+          <br/>
+          <br/>
+          <br/>
 	</td>
        </tr>
        <tr>

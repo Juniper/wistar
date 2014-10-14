@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from topologies.models import Lab
+from topologies.models import ConfigSet
 from topologies.models import Topology
-from topologies.models import Device
+from topologies.models import Config
 
-admin.site.register(Lab)
+admin.site.register(ConfigSet)
 admin.site.register(Topology)
-admin.site.register(Device)
+admin.site.register(Config)
