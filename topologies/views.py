@@ -55,33 +55,48 @@ def deploy(request, topo_id):
     config = wu.loadJson(topo.json, topo_id)
     # lu.resetKvm()
     time.sleep(1)
-    for network in config["networks"]:
-        try:
-            if not lu.networkExists(network["name"]):
-                if debug:
-                    print "Rendering networkXml for: " + network["name"]
-                networkXml = render_to_string("kvm/network.xml", {'network' : network})
-                n = lu.defineNetworkFromXml(networkXml)
-                if n == False:
-                    err_msg = "Error defining network: " + network["name"]
-                    context = {'error' : err_msg }
-                    return render(request, 'error.html', context) 
-                
-            print "Starting network"
-            lu.startNetwork(network["name"])
-        except:
-            err_msg = "Error starting network: " + network["name"]
-            context = {'error' : err_msg }
-            return render(request, 'error.html', context) 
     
+    # only create networks on Linux/KVM
+
+    print "Checking is we should create networks first!"
+    if ou.checkIsLinux():
+	    for network in config["networks"]:
+	        try:
+	            if not lu.networkExists(network["name"]):
+	                if debug:
+	                    print "Rendering networkXml for: " + network["name"]
+	                networkXml = render_to_string("kvm/network.xml", {'network' : network})
+	                n = lu.defineNetworkFromXml(networkXml)
+	                if n == False:
+	                    err_msg = "Error defining network: " + network["name"]
+	                    context = {'error' : err_msg }
+	                    return render(request, 'error.html', context) 
+	                
+	            print "Starting network"
+	            lu.startNetwork(network["name"])
+	        except:
+	            err_msg = "Error starting network: " + network["name"]
+	            context = {'error' : err_msg }
+	            return render(request, 'error.html', context) 
+	    
     time.sleep(1)    
     for device in config["devices"]:
         try:
             if not lu.domainExists(device["name"]):
                 if debug:
                     print "Rendering deviceXml for: " + device["name"]
-                deviceXml = render_to_string("kvm/domain.xml", {'device' : device})
+                
                 image = Image.objects.get(pk=device["imageId"])
+                instancePath = ou.getInstancePathFromImage(image.path, device["name"])
+            
+                if ou.checkIsLinux():
+                    deviceXml = render_to_string("kvm/domain.xml", {'device' : device, 'instancePath' : instancePath})
+                else:
+                    deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
+    
+                if debug:
+                    print deviceXml
+           
                 if debug:
                     print "Checking that image instance exists at " + str(image.path)
             
@@ -111,7 +126,11 @@ def deploy(request, topo_id):
 
 def manageKvm(request):
     domains = lu.listDomains()
-    networks = lu.listNetworks()
+    if ou.checkIsLinux(): 
+        networks = lu.listNetworks()
+    else:
+        networks = []
+
     return render(request, 'kvm.html', {'domains': domains, 'networks' : networks})
 
 def viewDomain(request, domain_id):

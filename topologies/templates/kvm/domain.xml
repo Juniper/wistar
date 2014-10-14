@@ -20,7 +20,7 @@
     <emulator>/usr/libexec/qemu-kvm</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='none' io='threads'/>
-      <source file='/opt/images/{{ device.name }}.img'/>
+      <source file='{{ instancePath }}'/>
       <target dev='hda' bus='ide'/>
       <address type='drive' controller='0' bus='0' target='0' unit='0'/>
     </disk>
