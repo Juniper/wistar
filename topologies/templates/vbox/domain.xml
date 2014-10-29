@@ -6,7 +6,6 @@
   <os>
     <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
-    <boot dev='cdrom'/>
   </os>
   <features>
     <acpi/>
@@ -49,7 +48,7 @@
       <target type='serial' port='0'/>
     </console>
     <video>
-      <model type='vbox' vram='128' heads='1'>
+      <model type='vbox' vram='8192' heads='1'>
         <acceleration accel3d='no' accel2d='no'/>
       </model>
     </video>

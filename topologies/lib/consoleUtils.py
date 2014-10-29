@@ -1,4 +1,5 @@
 from topologies.lib.wistarException import wistarException
+from common.lib import osUtils as ou
 import pexpect
 import sys
 import time
@@ -6,13 +7,20 @@ import time
 # simple utility lib to use virsh console to set up a device before 
 # networking is available
 
+def getConsole(dom):
+    if ou.checkIsLinux():
+        return pexpect.spawn("virsh console " + dom, timeout=3)
+    else:
+        return pexpect.spawn("socat /tmp/" + dom + ".pipe - ", timeout=3)
+
+
 # is this Junos device at login yet?
 # open the console and see if there a prompt
 # if we don't see one in 3 seconds, return False!
 def isJunosDeviceAtPrompt(dom):
     print "Getting bootup state of: " + str(dom)
     try:
-        child = pexpect.spawn("virsh console " + dom, timeout=3)
+        child = getConsole(dom)
         child.send("\r")
         indx = child.expect(["error: failed to get domain", "[^\s]>", "[^\s]#", "login:"])
         if indx == 0:
@@ -32,7 +40,7 @@ def preconfigJunosDomain(dom, pw, em0Ip):
     try:
         needsPw = False
         
-        child = pexpect.spawn("virsh console " + dom)
+        child = getConsole(dom)
         child.send("\r")
         indx = child.expect(["[^\s]>", "[^\s]#", "login:"])
         if indx == 0:
@@ -84,8 +92,8 @@ def preconfigJunosDomain(dom, pw, em0Ip):
         child.send("set system services netconf ssh\r")
         child.send("set system services ssh\r")
         child.send("delete interface em0\r");
-        print "Configuring em0 - default to /24 for now!!!"
-        child.send("set interface em0 unit 0 family inet address " + em0Ip + "/24\r")
+        print "Configuring fxp0 - default to /24 for now!!!"
+        child.send("set interface fxp0 unit 0 family inet address " + em0Ip + "/24\r")
         print "Committing changes"
         child.send("commit and-quit\r")
         time.sleep(3)

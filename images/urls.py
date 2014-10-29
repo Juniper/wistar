@@ -7,4 +7,5 @@ urlpatterns = patterns('',
 	url(r'^create/$', views.create, name='create'),
 	url(r'^edit/$', views.edit, name='edit'),
 	url(r'^error/$', views.error, name='error'),
+    url(r'^delete/(?P<image_id>\d+)/$', views.delete, name='delete'),
 )

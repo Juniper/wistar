@@ -327,3 +327,13 @@ def getNextDomainVncPort():
     else:
         return 5900
 
+def getImageForDomain(domainId):
+    domain = getDomainByUUID(domainId)
+    xml = domain.XMLDesc(0)
+    xmlDocument = etree.fromstring(xml)
+    sourceElement = xmlDocument.find(".//source")
+    if sourceElement is not None:
+        sourceFile = sourceElement.get("file")
+        return sourceFile
+    else:
+        return None

@@ -9,6 +9,7 @@ import topologies.lib.libvirtUtils as lu
 import topologies.lib.junosUtils as ju
 import topologies.lib.consoleUtils as cu
 import common.lib.osUtils as ou
+import common.lib.vboxUtils as vu
 from images.models import Image
 import logging
 import time
@@ -95,17 +96,14 @@ def deploy(request, topo_id):
                     deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
     
                 if debug:
-                    print deviceXml
-           
-                if debug:
-                    print "Checking that image instance exists at " + str(image.path)
+                    print "Checking that image instance exists at " + str(instancePath)
             
                 if ou.checkImageInstance(image.path, device["name"]):
                     print "Image Instance already exists"
                 else:
-                    print "Image does not exist"
+                    print "Image Instance does not exist"
                     if ou.createThinProvisionInstance(image.path, device["name"]):
-                        print "Success"
+                        print "Successly created instance"
                     else:
                         context = {'error' : 'Could not create image instance for image: ' + image.path }
                         return render(request, 'error.html', context) 
@@ -118,10 +116,14 @@ def deploy(request, topo_id):
                     context = {'error' : err_msg }
                     return render(request, 'error.html', context) 
 
-            print "Starting domain! " + device["name"]
-            lu.startDomainByName(device["name"])
-        except Exception as e:
-            print e
+            if not ou.checkIsLinux():
+                # perform some special hacks for vbox
+                vu.preconfigureVMX(device["name"])
+
+            #print "Starting domain! " + device["name"]
+            #lu.startDomainByName(device["name"])
+        except Exception as ex:
+            print ex
             err_msg = "Error starting Instance: " + device["name"] 
             context = {'error' : err_msg }
             return render(request, 'error.html', context) 
@@ -156,6 +158,12 @@ def stopDomain(request, domain_id):
         return HttpResponseRedirect('/topologies/error/')
 
 def undefineDomain(request, domain_id):
+    sourceFile = lu.getImageForDomain(domain_id)
+    if sourceFile is not None:
+        ou.removeInstance(sourceFile)
+    else:
+        print "Nothing to delete!"
+
     lu.undefineDomain(domain_id)
     return HttpResponseRedirect('/topologies/manageKvm/')
 

@@ -1,5 +1,6 @@
 import json
 import libvirtUtils as lu
+from common.lib import osUtils as ou
 
 macIndex = 0
 
@@ -23,7 +24,11 @@ def getDeviceName(index):
 def loadJson(rawJson, topo_id):
 
     # grab all currently defined vncPorts
-    nextAvailableVncPort = lu.getNextDomainVncPort()
+    if ou.checkIsLinux():
+        nextAvailableVncPort = lu.getNextDomainVncPort()
+    else:
+        # not required for mac / virtualbox
+        nextAvailableVncPort = 5900
 
     # reset macIndex for this run
     global macIndex
