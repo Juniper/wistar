@@ -3,12 +3,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import render_to_string
 from django.http import HttpResponseRedirect, HttpResponse
 from topologies.models import Topology
-from topologies.lib.wistarException import wistarException
-import topologies.lib.wistarUtils as wu
-import topologies.lib.libvirtUtils as lu
-import topologies.lib.junosUtils as ju
-import topologies.lib.consoleUtils as cu
+from common.lib.wistarException import wistarException
+import common.lib.wistarUtils as wu
+import common.lib.libvirtUtils as lu
+import common.lib.consoleUtils as cu
 import common.lib.osUtils as ou
+import common.lib.junosUtils as ju
 import common.lib.vboxUtils as vu
 from images.models import Image
 import logging
@@ -26,6 +26,12 @@ def index(request):
 def edit(request):
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list}
+    return render(request, 'edit.html', context)
+
+def copy(request, topo_id):
+    topo  = get_object_or_404(Topology, pk=topo_id)
+    image_list = Image.objects.all().order_by('name')
+    context = {'image_list': image_list, 'topo_id' : topo_id, 'topo' : topo}
     return render(request, 'edit.html', context)
 
 def detail(request, topo_id):
@@ -59,7 +65,7 @@ def deploy(request, topo_id):
     
     # only create networks on Linux/KVM
 
-    print "Checking is we should create networks first!"
+    print "Checking if we should create networks first!"
     if ou.checkIsLinux():
         for network in config["networks"]:
             try:
@@ -185,97 +191,6 @@ def stopNetwork(request, network_name):
 def undefineNetwork(request, network_name):
     lu.undefineNetwork(network_name)
     return HttpResponseRedirect('/topologies/manageKvm/')
-
-# FIXME - add the csrf stuff in the ajax calls!
-@csrf_exempt
-def preconfigJunosDomain(request):
-    response_data = {}
-    if request.POST.has_key('domain'):
-        domain = request.POST['domain']
-        if not lu.domainExists(domain):
-            print "Domain not defined!"
-            response_data["result"] = False
-            response_data["message"] = "Domain is not defined!"
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-
-        password = request.POST['password']
-        ip = request.POST['ip']
-        print "Configuring domain:" + str(domain)
-        try:
-            response_data["result"] = cu.preconfigJunosDomain(domain, password, ip)
-            print str(response_data)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except KeyError as k:
-            print repr(k)
-            response_data["result"] = False
-            response_data["message"] = "Invalid Parameters! Is there a password set?"
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except wistarException as we:
-            print we
-            response_data["result"] = False
-            response_data["message"] = str(we)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
-        response_data["result"] = False
-        response_data["message"] = "Invalid POST data"
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
-
-@csrf_exempt
-def configJunosInterfaces(request):
-    response_data = {}
-    if request.POST.has_key('ip'):
-        ip = request.POST['ip']
-        password = request.POST['password']
-        print "Configuring interfaces for " + str(ip)
-        try:
-            response_data["result"] = ju.configJunosInterfaces(ip, password)
-            print str(response_data)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except wistarException as we:
-            print we
-            response_data["result"] = False
-            response_data["message"] = str(we)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
-        response_data["result"] = False
-        response_data["message"] = "No ip in POST"
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
-   
-
-@csrf_exempt
-def getJunosStartupState(request):
-    response_data = {}
-    if request.POST.has_key('name'):
-        name = request.POST['name']
-        response_data["result"] = cu.isJunosDeviceAtPrompt(name)
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
-        response_data["result"] = False
-        response_data["message"] = "No domain name in POST"
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
-
-@csrf_exempt
-def getJunosConfig(request):
-    response_data = {}
-    if request.POST.has_key('ip'):
-        ip = request.POST['ip']
-        password = request.POST['password']
-        print "Getting Config for " + str(ip) + " " + str(password)
-        try:
-            xml = ju.getConfig(ip, password)
-            print xml
-            response_data["result"] = True
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except wistarException as we:
-            print we
-            response_data["result"] = False
-            response_data["message"] = str(we)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
-        response_data["result"] = False
-        response_data["message"] = "No ip in POST"
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
-
 
 def create(request):
     try:

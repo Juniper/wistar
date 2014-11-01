@@ -25,7 +25,7 @@ body {
 	background: #c8c8c8;
 	color: #000;
 	font-family:'lucida grande',verdana,helvetica,arial,sans-serif;
-	font-size:90%;
+	font-size:70%;
 	margin: 0;
 }
 a {
@@ -156,7 +156,7 @@ th a.desc:after {
 	content: ' ⇡';
 }
 table tr td {
-	padding: 6px;
+	padding: 4px;
 	text-align: left;
 	vertical-align: top;
 	border-bottom:1px solid #ddd;
@@ -268,7 +268,7 @@ fieldset {
 }
 fieldset legend {
 	color: #e32;
-	font-size: 160%;
+	font-size: 120%;
 	font-weight: bold;
 }
 fieldset fieldset {
@@ -310,30 +310,29 @@ label {
 	font-size: 110%;
 	margin-bottom:3px;
 }
-input, textarea {
+input[type=text], textarea {
 	clear: both;
-	font-size: 140%;
+	font-size: 100%;
 	font-family: "frutiger linotype", "lucida grande", "verdana", sans-serif;
 	padding: 1%;
 	width:98%;
 }
 input[type=button] {
-	clear: both;
-	font-size: 140%;
+	/* clear: both; */
+	font-size: 110%;
 	font-family: "frutiger linotype", "lucida grande", "verdana", sans-serif;
-	padding: 1%;
-	width: 25%;
+	padding: 5px;
 }
 select {
 	clear: both;
-	font-size: 120%;
+	font-size: 100%;
 	vertical-align: text-bottom;
 }
 select[multiple=multiple] {
 	width: 100%;
 }
 option {
-	font-size: 120%;
+	font-size: 100%;
 	padding: 0 3px;
 }
 input[type=checkbox] {

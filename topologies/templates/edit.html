@@ -18,6 +18,7 @@
     <script type="text/javascript" src="{% static "js/draw2d.js" %}"></script>
     
     <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
   
     <script type="text/javascript" src="{% static "js/prototype.js" %}"></script>
    
@@ -30,18 +31,18 @@
 
     function loadTopology() {
         var test = $('json').value;
-	if (test != null) {
-		var jsonTxt = JSON.stringify(test, null, 2);
-		var json = eval(test);
-		reader = new draw2d.io.json.Reader();
-		reader.unmarshal(canvas, json);
-		for(i=0;i<json.length;i++) {
-			console.log("checking json object");
-			if (json[i]["type"] == "draw2d.shape.node.topologyIcon") {
-				console.log("found json object");
-				vmxCount++;
-			}
-		}
+    	if (test != null) {
+		    var jsonTxt = JSON.stringify(test, null, 2);
+		    var json = eval(test);
+		    reader = new draw2d.io.json.Reader();
+		    reader.unmarshal(canvas, json);
+		    for(i=0;i<json.length;i++) {
+			    console.log("checking json object");
+			    if (json[i]["type"] == "draw2d.shape.node.topologyIcon") {
+				    console.log("found json object");
+				    vmxCount++;
+			    }
+		    }
     	}
     } 
 
@@ -62,7 +63,7 @@
     function exportJson() {
         // Create a JSON writer and convert it into a JSON-String representation.
         
-	var writer = new draw2d.io.json.Writer();
+    	var writer = new draw2d.io.json.Writer();
         var json = writer.marshal(canvas);
 
         // convert the json object into string repesentation
@@ -90,11 +91,6 @@
 	    }
     }
 
-    function showDebug() {
-	    exportJson();
-	    $('debug').value = "";
-	    $('debug').value = $('json').value;
-    }
 
     function checkPass(pw) {
         if(pw != "") {
@@ -107,7 +103,10 @@
             } else {
                 alert('Password does not meet complexity requirments');
             }
+        } else {
+                alert('Password is required');
         }
+
     }
 
     function setImageType() {
@@ -118,6 +117,9 @@
         $('topoIconImage').value = id;
     }
 
+    // get the name that was used to create the vm instance
+    // these use a very simple method to ensure some amount
+    // of uniqueness within the hypervisor
     function generateDomainNameFromLabel(name) {
         if ( "{{ topo.id }}" == "" ) {
             alert('Topology not yet deployed');
@@ -128,27 +130,26 @@
 
     function preconfigJunosDomain(label, password, ip) {
         domain = generateDomainNameFromLabel(label);
-        new Ajax.Request('/topologies/preconfigJunosDomain/', {
+        new Ajax.Request('/ajax/preconfigJunosDomain/', {
 	    parameters: { 'domain' : domain, 'password' : password, 'ip' : ip },
             onSuccess: function(response) {
                 data = eval(response.responseJSON);
                 console.log(data);
-		if (data["result"] == false) {
-			alert("Error: " + data["message"]);
-		} else {
-			alert("Success!");
-		}
+		        if (data["result"] == false) {
+			        alert("Error: " + data["message"]);
+		        } else {
+			        alert("Success!");
+		        }
             },
             onFailure: function(response) {
                 alert("Could not load data!!!");
-		console.log(response);
-                //alert(response);
+        		console.log(response);
             }
         });
     }
 
     function configDeviceInterfaces(ip, password) {
-        new Ajax.Request('/topologies/configJunosInterfaces/', {
+        new Ajax.Request('/ajax/configJunosInterfaces/', {
 	    parameters: { 'ip' : ip, 'password' : password },
             onSuccess: function(response) {
                 data = eval(response.responseJSON);
@@ -166,8 +167,10 @@
             }
         });
     }
+
+    // fixme - do something useful with this data!
     function getJunosConfig(ip, password) {
-        new Ajax.Request('/topologies/getJunosConfig/', {
+        new Ajax.Request('/ajax/getJunosConfig/', {
 	    parameters: { 'ip' : ip, 'password' : password },
             onSuccess: function(response) {
                 data = eval(response.responseJSON);
@@ -186,9 +189,51 @@
         });
     }
 
+    function syncLinkData() {
+        var params = { 
+            'sourceIp' : $F('connectionSourceIp'),
+            'sourceIface' : $F('connectionSourceIface'),
+            'targetIp' : $F('connectionTargetIp'),
+            'targetIface' : $F('connectionTargetIface'),
+            'sourcePortIp' : $F('connectionSourcePortIp'),
+            'targetPortIp' : $F('connectionTargetPortIp'),
+            'sourcePw' : $F('connectionSourcePw'),
+            'targetPw' : $F('connectionTargetPw')
+        };
+        var url = "/ajax/syncLinkData/";
+        var successMessage = "Successly pushed IP addresses to VMs";
+
+        simpleAjaxRequest(url, params, successMessage);
+
+        console.log(params);
+    }
+
+    function simpleAjaxRequest(url, params, successMessage) {
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+        new Ajax.Request(url, {
+	        parameters: params,
+            onSuccess: function(response) {
+                data = eval(response.responseJSON);
+                console.log(data);
+                doc.style.cursor = '';
+		        if (data["result"] == false) {
+			        alert(data["message"]);
+		        } else {
+			        alert(successMessage);
+		        }
+            },
+            onFailure: function(response) {
+                doc.style.cursor = '';
+                alert("Could not perform request!");
+		        console.log(response);
+            }
+        });
+    }
+
     function getJunosStartupState(label) {
         domain = generateDomainNameFromLabel(label);
-        new Ajax.Request('/topologies/getJunosStartupState/', {
+        new Ajax.Request('/ajax/getJunosStartupState/', {
 	        parameters: { 'name' : domain },
             onSuccess: function(response) {
                 data = eval(response.responseJSON);
@@ -207,10 +252,140 @@
         });
     }
 
+    /* UI related function */
+    var currentSelection = "None";
+
+    function hideAllEditors() {
+        manuallyTogglePanel('jsonDebug', 'none');
+        manuallyTogglePanel('junosIconEditor', 'none');
+        manuallyTogglePanel('connectionEditor', 'none');
+    }
+
+    function hideSelection() {
+        hideAllEditors();
+        currentSelection = "None";
+    }
+    
+    function showDebug() {
+        hideAllEditors();
+        manuallyTogglePanel('jsonDebug', '');
+        currentSelection = "debug";
+	    exportJson();
+	    $('debug').value = "";
+	    $('debug').value = $('json').value;
+    }
+
+    function setSelectedObject(objectId) {
+        console.log(objectId);
+        $('selectedObject').value = objectId;
+    }
+
+    function manuallyTogglePanel(el, v) {
+        if(v == "none") {
+            if($(el).style.display == 'none') {
+                return;
+            }
+            $(el).style.display = 'none';
+
+        } else {
+            if($(el).style.display == '') {
+                return;
+            }
+            $(el).style.display = '';
+        }
+    }
+
+    function loadJunosIconEditor(figureId) {
+        if (currentSelection !== "junosIconEditor") {
+            hideAllEditors();
+            manuallyTogglePanel('junosIconEditor', '');
+            currentSelection = "junosIconEditor";
+        }
+
+        $('selectedConnection').value = figureId;
+
+
+    }
+    // fixme - this will be broken for anything other than vmx
+    function loadConnectionEditor(figureId) {
+        var connection = canvas.getLine(figureId);
+        var sourcePort = connection.getSource();
+        var targetPort = connection.getTarget();
+
+        targetConns = targetPort.getConnections();
+        sourceConns = sourcePort.getConnections();
+
+        var sourceIndex = 0;
+        var targetIndex = 0;
+
+        for(s=0;s<sourceConns.size;s++) {
+            sc = sourceConns.get(s);
+            console.log(sc.id);
+            if(sc.id == figureId) {
+                sourceIndex = s;
+                break;
+            }
+        }
+        
+        for(t=0;t<targetConns.size;t++) {
+            tc = targetConns.get(t);
+            console.log(tc.id);
+            if(tc.id == figureId) {
+                targetIndex = t;
+                break;
+            }
+        }
+        // fixme: add type check to port.getParent to do the right thing for Linux and otherOS instances...
+        $('connectionSourceDevice').innerHTML = sourcePort.getParent().getLabel() + " ge-0/0/" + sourceIndex;
+        $('connectionTargetDevice').innerHTML = targetPort.getParent().getLabel() + " ge-0/0/" + targetIndex;
+
+        // keep these values around for later
+        $('connectionSourceIp').value = sourcePort.getParent().getIp();
+        $('connectionTargetIp').value = targetPort.getParent().getIp();
+
+        $('connectionSourcePw').value = sourcePort.getParent().getPassword();
+        $('connectionTargetPw').value = targetPort.getParent().getPassword();
+        
+        $('connectionSourceIface').value = "ge-0/0/" + sourceIndex;
+        $('connectionTargetIface').value = "ge-0/0/" + targetIndex;
+
+        var connData = connection.getUserData();
+
+        $('connectionSourcePortIp').value = "";
+
+        $('connectionTargetPortIp').value = "";
+
+        if (connData != null) {
+            $('connectionSourcePortIp').value = connData["sourceIp"];
+            $('connectionTargetPortIp').value = connData["targetIp"];
+        }
+
+        if (currentSelection !== "connectionEditor") {
+            hideAllEditors();
+            manuallyTogglePanel('connectionEditor', '');
+            currentSelection = "connectionEditor";
+        }
+
+        $('selectedConnection').value = figureId;
+    }
+
+    function saveConnectionData() {
+        var connId = $F('selectedConnection');
+        var sIp = $F('connectionSourcePortIp');
+        var tIp = $F('connectionTargetPortIp');
+        var connData = {
+            "sourceIp": sIp,
+            "targetIp": tIp
+        };
+        var connection = canvas.getLine(connId);
+        connection.setUserData(connData);
+        console.log("saved info on connection Object");
+    }
+
     Event.observe(window, 'load', function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
-        // canvas.addSelectionListener(new networkDiagramSelectionListener());
-	canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
+        canvas.addSelectionListener(new topologySelectionListener());
+	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
         loadTopology();
     });
@@ -229,6 +404,7 @@
                 <td>
 		            <input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
                     <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
+                    <input type="hidden" id="selectedObject" value="0">
                 </td>
             </tr>
             <tr>
@@ -262,8 +438,8 @@
             <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 
                             background-size: 180px 146px; 
                             background-repeat: repeat; 
-                            width:1000px; 
-                            height:770px; 
+                            width:900px; 
+                            height:470px; 
                             border: 1px solid #000">
             </div>
             <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
@@ -312,6 +488,71 @@ name="topoIconPass" id="topoIconPass" value="" onblur="javascript: checkPass(thi
                 </td>
             </tr>
           </table>
+
+          <div id="junosIconEditor" style="display:none">
+            Hi there
+          </div>
+          <div id="connectionEditor" style="display: none;">
+                                    <table>
+                                        <tr>
+                                            <td colspan="2">
+                                                <input type="hidden" id="selectedConnection" value="0">
+                                                <input type="hidden" id="connectionSourceIp" value="0">
+                                                <input type="hidden" id="connectionTargetIp" value="0">
+                                                <input type="hidden" id="connectionSourceIface" value="0">
+                                                <input type="hidden" id="connectionTargetIface" value="0">
+                                                <input type="hidden" id="connectionSourcePw" value="0">
+                                                <input type="hidden" id="connectionTargetPw" value="0">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Source Device:
+                                            </td>
+                                            <td>
+                                                <div style="display: inline;" id="connectionSourceDevice"></div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Source IP Address:
+                                            </td>
+                                            <td>
+                                                <input type="text" onblur="javascript: saveConnectionData();"  id="connectionSourcePortIp">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Target Device:
+                                            </td>
+                                            <td>
+                                                <div style="display: inline;" id="connectionTargetDevice"></div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Target IP Address:
+                                            </td>
+                                            <td>
+                                                <input type="text" onblur="javascript: saveConnectionData();" id="connectionTargetPortIp">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="button" onclick="javascript: syncLinkData();" value="Sync Link Data">
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div id="jsonDebug" style="display: none;">
+                                  <table>
+                                    <tr>
+                                      <td>
+                    	                <textarea id="debug" cols="1" rows="5"></textarea>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </div>
           <br/>
           <br/>
           <br/>
@@ -322,8 +563,6 @@ name="topoIconPass" id="topoIconPass" value="" onblur="javascript: checkPass(thi
 	 <td colspan="2">
                 <input type="button" name="debugButton" id="debugButton" 
                        value="Debug" onclick="javascript: showDebug();"/>
-		&nbsp;
-	   <textarea id="debug" cols="1" rows="5"></textarea>
 	 </td>
        </tr>
     </table>

@@ -40,7 +40,7 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
 		this.setIp(ip);
         this.setImage(image);
 		this.setPassword(pw);
-	        this.setupObject(type, label, width, height);
+	    this.setupObject(type, label, width, height);
     },
     setType: function(type) {
 	    var ud = this.getUserData();

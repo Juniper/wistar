@@ -51,6 +51,7 @@ INSTALLED_APPS = (
     'topologies',
     'images',
     'common',
+    'ajax',
 )
 
 MIDDLEWARE_CLASSES = (
