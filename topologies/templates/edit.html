@@ -46,6 +46,40 @@
     	}
     } 
 
+    function incrementIconIp(ip)  {
+        var iparray = ip.split('.');
+        if(iparray.length == 4) {
+            var last = parseInt(iparray[3]);
+            if(last != NaN) {
+                return iparray[0] + "." + iparray[1] + "." + iparray[2] + "." + (last + 1);
+            } else { 
+                return ip;
+            }
+        } else {
+            return ip;
+        }
+    }
+
+    function incrementIconName(name) {
+        var last = name.substr(-1);
+        if (last == "9") {
+            var lastTwo = name.substr(-2);
+            var lastTwoInt = parseInt(lastTwo);
+            if (lastTwoInt != NaN) {
+                return name.substring(0, name.length -2) + (lastTwoInt + 1);
+            } else {
+                return name;
+            }
+        } else {
+            var lastInt = parseInt(last);
+            if (lastInt != NaN) {
+                return name.substring(0, name.length -1) + (lastInt + 1);
+            } else {
+                return name;
+            }
+        }
+    }
+
     function addIcon() {
     	var ip = $F('topoIconIp');
     	var pw = $F('topoIconPass');
@@ -58,6 +92,10 @@
     	lastY += 50;
     	vmxCount += 1;
 	    canvas.addFigure(canvas_object, lastX, lastY);
+
+        // let's try to increment everything nicely
+    	$('topoIconIp').value = incrementIconIp(ip);
+    	$('topoIconName').value = incrementIconName(name);
     }
 
     function exportJson() {
@@ -384,186 +422,195 @@
 
     Event.observe(window, 'load', function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
-        canvas.addSelectionListener(new topologySelectionListener());
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
+        {% if topo.name != None %}
+        canvas.addSelectionListener(new topologySelectionListener());
         loadTopology();
+        {% endif %}
     });
     </script>
 {% endblock %}
 {% block content %}
     <table border="1">
-    <tr>
+      <tr>
         <td id="topoFormContainer" style="vertical-align: top">
           <form method="post" id="topoForm" name="topoForm" 
-                  action="{% url 'topologies:create' %}" method="POST">
-		    {% csrf_token %}
-        <table>
-            <tr>
-                <td>Name</td>
+            action="{% url 'topologies:create' %}" method="POST">
+            {% csrf_token %}
+            <table>
+              <tr>
                 <td>
-		            <input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
-                    <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
-                    <input type="hidden" id="selectedObject" value="0">
+                  Name
                 </td>
-            </tr>
-            <tr>
-                <td>Description</td>
                 <td>
-                    <textarea rows="3"id="description" name="description">{{ topo.description }}</textarea>
+                  <input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
+                  <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
+                  <input type="hidden" id="selectedObject" value="0">
                 </td>
-            </tr>
-            <tr>
+              </tr>
+              <tr>
+                <td>
+                  Description
+                </td>
+                <td>
+                  <textarea rows="3"id="description" name="description">{{ topo.description }}</textarea>
+                </td>
+              </tr>
+              <tr>
                 <td colspan="2">
-				{% if topo.name != None %}
-		                <input type="button" name="deployButton" id="deployButton" 
-		                       value="Deploy" onclick="javascript: deployTopology();"/>
-				&nbsp;
-		                <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
-		                <input type="button" name="delete_button" id="delete_button" 
-		                       value="Delete" onclick="javascript: deleteTopology();"/>
-				&nbsp;
-		                <input type="button" name="submit_button" id="submit_button" 
-		                       value="Update" onclick="javascript: saveTopology();"/>
-				{% else %}
-		                <input type="button" name="submit_button" id="submit_button" 
-		                       value="Save" onclick="javascript: saveTopology();"/>
-				{% endif %}
+                  {% if topo.name != None %}
+                  <input type="button" name="deployButton" id="deployButton" 
+                    value="Deploy" onclick="javascript: deployTopology();"/>
+                  &nbsp;
+                  <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
+                  <input type="button" name="delete_button" id="delete_button" 
+                    value="Delete" onclick="javascript: deleteTopology();"/>
+                  &nbsp;
+                  <input type="button" name="submit_button" id="submit_button" 
+                    value="Update" onclick="javascript: saveTopology();"/>
+                  {% else %}
+                  <input type="button" name="submit_button" id="submit_button" 
+                    value="Save" onclick="javascript: saveTopology();"/>
+                  {% endif %}
+                  <input type="button" name="debugButton" id="debugButton" 
+                    value="Debug" onclick="javascript: showDebug();"/>
                 </td>
-	        </tr>
-        </table>
-        </form>
-	</td>
-        <td rowspan="2" style="vertical-align: top">
-            <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 
-                            background-size: 180px 146px; 
-                            background-repeat: repeat; 
-                            width:900px; 
-                            height:470px; 
-                            border: 1px solid #000">
-            </div>
-            <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
-        </td>
-      </tr>
-      <tr>
-	    <td style="vertical-align: top">
-          <h3>Add Instance</h3>
-          <table>
-            <tr>
-                <td>IP Address</td>
+              </tr>
+            </table>
+          </form>
+          {% if topo.name != None %}
+          <div id="addInstanceForm" style="display: none">
+          {% else %}
+          <div id="addInstanceForm">
+          {% endif %}
+            <h3>Add Instance</h3>
+            <table>
+              <tr>
                 <td>
-                    <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/> &nbsp;
+                  IP Address
                 </td>
-            </tr>
-            <tr>
-                <td>Root Password</td>
                 <td>
-                    <input type="text" size="15" maxsize="15"
-name="topoIconPass" id="topoIconPass" value="" onblur="javascript: checkPass(this.value);"/> &nbsp;
+                  <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/> &nbsp;
                 </td>
-            </tr>
-            <tr>
-                <td>Instance Name</td>
+              </tr>
+              <tr>
                 <td>
-                    <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value=""/> &nbsp;
+                  Root Password
                 </td>
-            </tr>
-            <tr>
-                <td>Base Image</td>
                 <td>
-			        <select name="topoIconImageSelect" id="topoIconImageSelect" onchange="javascript: setImageType();">
-			            <option value="0">Choose Image</option>
-			            <!-- not a better way to do this? -->
-			            {% for i in image_list %}
-			            <option value="{{ i.id }}:{{i.type}}">{{ i.name }}</option>
-			            {% endfor %}
-			        </select>
-			        <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
-			        <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
+                  <input type="text" size="15" maxsize="15"
+                    name="topoIconPass" id="topoIconPass" value="" 
+                    onblur="javascript: checkPass(this.value);"/> 
+                  &nbsp;
                 </td>
-            </tr>
-            <tr>
+              </tr>
+              <tr>
+                <td>
+                  Instance Name
+                </td>
+                <td>
+                  <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value=""/> &nbsp;
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Base Image
+                </td>
+                <td>
+                  <select name="topoIconImageSelect" id="topoIconImageSelect" onchange="javascript: setImageType();">
+                    <option value="0">Choose Image</option>
+                    <!-- not a better way to do this? -->
+                    {% for i in image_list %}
+                    <option value="{{ i.id }}:{{i.type}}">{{ i.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
+                  <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
+                </td>
+              </tr>
+              <tr>
                 <td colspan="2">
-                    <input type="button" onclick="javascript: addIcon();" value="Add vMX"/>
+                  <input type="button" onclick="javascript: addIcon();" value="Add vMX"/>
                 </td>
-            </tr>
-          </table>
-
+              </tr>
+            </table>
+          </div>
           <div id="junosIconEditor" style="display:none">
             Hi there
           </div>
           <div id="connectionEditor" style="display: none;">
-                                    <table>
-                                        <tr>
-                                            <td colspan="2">
-                                                <input type="hidden" id="selectedConnection" value="0">
-                                                <input type="hidden" id="connectionSourceIp" value="0">
-                                                <input type="hidden" id="connectionTargetIp" value="0">
-                                                <input type="hidden" id="connectionSourceIface" value="0">
-                                                <input type="hidden" id="connectionTargetIface" value="0">
-                                                <input type="hidden" id="connectionSourcePw" value="0">
-                                                <input type="hidden" id="connectionTargetPw" value="0">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                Source Device:
-                                            </td>
-                                            <td>
-                                                <div style="display: inline;" id="connectionSourceDevice"></div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                Source IP Address:
-                                            </td>
-                                            <td>
-                                                <input type="text" onblur="javascript: saveConnectionData();"  id="connectionSourcePortIp">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                Target Device:
-                                            </td>
-                                            <td>
-                                                <div style="display: inline;" id="connectionTargetDevice"></div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                Target IP Address:
-                                            </td>
-                                            <td>
-                                                <input type="text" onblur="javascript: saveConnectionData();" id="connectionTargetPortIp">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <input type="button" onclick="javascript: syncLinkData();" value="Sync Link Data">
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div id="jsonDebug" style="display: none;">
-                                  <table>
-                                    <tr>
-                                      <td>
-                    	                <textarea id="debug" cols="1" rows="5"></textarea>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </div>
-          <br/>
-          <br/>
-          <br/>
-          <br/>
-	</td>
-       </tr>
-       <tr>
-	 <td colspan="2">
-                <input type="button" name="debugButton" id="debugButton" 
-                       value="Debug" onclick="javascript: showDebug();"/>
-	 </td>
-       </tr>
+            <table>
+              <tr>
+                <td colspan="2">
+                  <input type="hidden" id="selectedConnection" value="0">
+                  <input type="hidden" id="connectionSourceIp" value="0">
+                  <input type="hidden" id="connectionTargetIp" value="0">
+                  <input type="hidden" id="connectionSourceIface" value="0">
+                  <input type="hidden" id="connectionTargetIface" value="0">
+                  <input type="hidden" id="connectionSourcePw" value="0">
+                  <input type="hidden" id="connectionTargetPw" value="0">
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Source Device:
+                </td>
+                <td>
+                  <div style="display: inline;" id="connectionSourceDevice"></div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Source IP Address:
+                </td>
+                <td>
+                  <input type="text" onblur="javascript: saveConnectionData();"  id="connectionSourcePortIp">
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Target Device:
+                </td>
+                <td>
+                  <div style="display: inline;" id="connectionTargetDevice"></div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Target IP Address:
+                </td>
+                <td>
+                  <input type="text" onblur="javascript: saveConnectionData();" id="connectionTargetPortIp">
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2">
+                  <input type="button" onclick="javascript: syncLinkData();" value="Sync Link Data">
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div id="jsonDebug" style="display: none;">
+            <table>
+              <tr>
+                <td>
+                  <textarea id="debug" cols="1" rows="5"></textarea>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </td>
+        <td style="vertical-align: top">
+          <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 
+            background-size: 180px 146px; 
+            background-repeat: repeat; 
+            width:900px; 
+            height:470px; 
+            border: 1px solid #000">
+          </div>
+          <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
+        </td>
+      </tr>
     </table>
 {% endblock %}
