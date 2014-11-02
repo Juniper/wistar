@@ -339,14 +339,43 @@
     }
 
     function loadJunosIconEditor(figureId) {
+
+        console.log(figureId);
+        $('selectedConnection').value = figureId;
+        var instance = canvas.getFigure(figureId);
+
+        $('junosIconName').value = instance.getLabel();
+        $('junosIconIp').value = instance.getIp();
+        $('junosIconPass').value = instance.getPassword();
+       
+        var port = instance.getPorts().get(0);
+        
+        var connections = port.getConnections();
+
+        $('junosIconNeighbors').innerHTML = "";
+
+        for (c=0;c<connections.size;c++) {
+            var connection = connections.get(c);
+
+            var sourcePort = connection.getSource();
+            var targetPort = connection.getTarget();
+           
+            var neighbor = "ge-0/0/" + c; 
+
+            if (sourcePort.getId() != port.getId()) {
+                neighbor = neighbor + "   :   " + sourcePort.getParent().getLabel(); 
+            } else {
+                neighbor = neighbor + "   :   " + targetPort.getParent().getLabel(); 
+            }
+
+            $('junosIconNeighbors').innerHTML = $('junosIconNeighbors').innerHTML + neighbor + "<br/>";
+
+        }
         if (currentSelection !== "junosIconEditor") {
             hideAllEditors();
             manuallyTogglePanel('junosIconEditor', '');
             currentSelection = "junosIconEditor";
         }
-
-        $('selectedConnection').value = figureId;
-
 
     }
     // fixme - this will be broken for anything other than vmx
@@ -542,7 +571,42 @@
             </table>
           </div>
           <div id="junosIconEditor" style="display:none">
-            Hi there
+            <table>
+              <tr>
+                <td>
+                  IP Address
+                </td>
+                <td>
+                  <input type="text" size="15" maxsize="15" name="junosIconIp" id="junosIconIp" value=""/> &nbsp;
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Root Password
+                </td>
+                <td>
+                  <input type="text" size="15" maxsize="15"
+                    name="junosIconPass" id="junosIconPass" value=""/>
+                  &nbsp;
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Instance Name
+                </td>
+                <td>
+                  <input type="text" size="15" maxsize="15" name="junosIconName" id="junosIconName" value=""/> &nbsp;
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Neighbors
+                </td>
+                <td>
+                  <div id="junosIconNeighbors"></div>
+                </td>
+              </tr>
+            </table>
           </div>
           <div id="connectionEditor" style="display: none;">
             <table>
