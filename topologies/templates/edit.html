@@ -50,7 +50,7 @@
         var iparray = ip.split('.');
         if(iparray.length == 4) {
             var last = parseInt(iparray[3]);
-            if(last != NaN) {
+            if(! isNaN(last)) {
                 return iparray[0] + "." + iparray[1] + "." + iparray[2] + "." + (last + 1);
             } else { 
                 return ip;
@@ -62,17 +62,22 @@
 
     function incrementIconName(name) {
         var last = name.substr(-1);
+        var lastInt = parseInt(last);
         if (last == "9") {
             var lastTwo = name.substr(-2);
             var lastTwoInt = parseInt(lastTwo);
-            if (lastTwoInt != NaN) {
+            if (! isNaN(lastTwoInt)) {
                 return name.substring(0, name.length -2) + (lastTwoInt + 1);
             } else {
-                return name;
+                // last two are not an int, check for single digit suffix
+                if (! isNaN(lastInt)) {
+                    return name.substring(0, name.length -1) + (lastInt + 1);
+                } else {
+                    return name;
+                }
             }
         } else {
-            var lastInt = parseInt(last);
-            if (lastInt != NaN) {
+            if (! isNaN(lastInt)) {
                 return name.substring(0, name.length -1) + (lastInt + 1);
             } else {
                 return name;
