@@ -37,9 +37,7 @@
 		    reader = new draw2d.io.json.Reader();
 		    reader.unmarshal(canvas, json);
 		    for(i=0;i<json.length;i++) {
-			    console.log("checking json object");
 			    if (json[i]["type"] == "draw2d.shape.node.topologyIcon") {
-				    console.log("found json object");
 				    vmxCount++;
 			    }
 		    }
@@ -91,8 +89,15 @@
     	var name = $F('topoIconName');
     	var type = $F('topoIconType');
     	var image = $F('topoIconImage');
-
-    	var canvas_object = new draw2d.shape.node.topologyIcon(type, name, ip, pw, image);
+    	var iconData = $F('topoIconIcon');
+        
+        var icon = iconData.split(":")[0]; 
+        var width = iconData.split(":")[1]; 
+        var height = iconData.split(":")[2]; 
+        var iconPath = "/static/images/" + icon + ".png";
+        
+    	var canvas_object = new draw2d.shape.node.topologyIcon(iconPath, width, height);
+        canvas_object.setup(type, name, ip, pw, image);
     	lastX += 50;
     	lastY += 50;
     	vmxCount += 1;
@@ -120,6 +125,12 @@
     function saveTopology() {
 	    exportJson();
 	    $('topoForm').submit();
+    }
+
+    function cloneTopology() {
+        if(confirm("Are you sure you want to clone this topology?")) {
+		    window.location="/topologies/clone/{{ topo.id }}";
+	    }
     }
 
     function deployTopology() {
@@ -233,6 +244,11 @@
     }
 
     function syncLinkData() {
+
+        if (! confirm("Are you sure you want to send this information to the VMs?")) {
+            return false;
+        }
+
         var params = { 
             'sourceIp' : $F('connectionSourceIp'),
             'sourceIface' : $F('connectionSourceIface'),
@@ -458,8 +474,10 @@
         window.canvas = new draw2d.Canvas("gfx_holder", true);
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
-        {% if topo.name != None %}
+        {% if topo_id != None %}
         canvas.addSelectionListener(new topologySelectionListener());
+        {% endif %}
+        {% if topo.name != None %}
         loadTopology();
         {% endif %}
     });
@@ -493,7 +511,7 @@
               </tr>
               <tr>
                 <td colspan="2">
-                  {% if topo.name != None %}
+                  {% if topo_id != None %}
                   <input type="button" name="deployButton" id="deployButton" 
                     value="Deploy" onclick="javascript: deployTopology();"/>
                   &nbsp;
@@ -501,8 +519,9 @@
                   <input type="button" name="delete_button" id="delete_button" 
                     value="Delete" onclick="javascript: deleteTopology();"/>
                   &nbsp;
-                  <input type="button" name="submit_button" id="submit_button" 
-                    value="Update" onclick="javascript: saveTopology();"/>
+                  <input type="button" name="clone_button" id="clone_button" 
+                    value="Clone" onclick="javascript: cloneTopology();"/>
+                  &nbsp;
                   {% else %}
                   <input type="button" name="submit_button" id="submit_button" 
                     value="Save" onclick="javascript: saveTopology();"/>
@@ -513,7 +532,7 @@
               </tr>
             </table>
           </form>
-          {% if topo.name != None %}
+          {% if topo_id != None %}
           <div id="addInstanceForm" style="display: none">
           {% else %}
           <div id="addInstanceForm">
@@ -561,6 +580,20 @@
                   </select>
                   <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
                   <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Icon
+                </td>
+                <td>
+                  <select name="topoIconIcon" id="topoIconIcon">
+                    <option value="mx_large:50:60">MX Large</option>
+                    <option value="mx_small:50:40">MX Small</option>
+                    <option value="firefly:40:40">Firefly</option>
+                    <option value="router:40:40">Generic Router</option>
+                    <option value="server:25:50">Generic Server</option>
+                  </select>
                 </td>
               </tr>
               <tr>

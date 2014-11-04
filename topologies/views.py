@@ -28,10 +28,12 @@ def edit(request):
     context = {'image_list': image_list}
     return render(request, 'edit.html', context)
 
-def copy(request, topo_id):
+def clone(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
+    orig_name = topo.name
+    topo.name = "Clone of " + orig_name
     image_list = Image.objects.all().order_by('name')
-    context = {'image_list': image_list, 'topo_id' : topo_id, 'topo' : topo}
+    context = {'image_list': image_list, 'topo' : topo}
     return render(request, 'edit.html', context)
 
 def detail(request, topo_id):

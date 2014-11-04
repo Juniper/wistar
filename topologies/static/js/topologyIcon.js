@@ -25,12 +25,28 @@ BottomCenterLocator = draw2d.layout.locator.Locator.extend({
 draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     NAME: "draw2d.shape.node.topologyIcon",
     EDIT_POLICY: false,
-    
-    init: function(type, label, ip, pw, image) {
+   
+    init: function(icon, width, height) {
+	    this._super(icon, width, height);
+    	var tpl = new topologyIconPortLocator();
+    	this.createPort("hybrid", tpl);
+    },
+     
+    setup: function(type, label, ip, pw, image) {
+		this.setUserData({});
+		this.setIp(ip);
+        this.setImage(image);
+		this.setPassword(pw);
+		this.setType(type);
+		this.setLabel(label);
+    },
+
+    initOld: function(type, label, ip, pw, image) {
 		var icon;
 		var width = 50;
 		var height = 50;
 		if(type == "mx960" || type == "junos") {
+            console.log("setting mx960 icon");
 			icon = "/static/images/mx960.png";	
 		} else {
 			icon = "/static/images/router.png";	
