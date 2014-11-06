@@ -19,7 +19,7 @@ import json
 debug = True
 
 def index(request):
-    latest_topo_list = Topology.objects.all().order_by('modified')[:10]
+    latest_topo_list = Topology.objects.all().order_by('modified')
     context = {'latest_topo_list': latest_topo_list}
     return render(request, 'index.html', context)
 

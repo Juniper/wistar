@@ -86,8 +86,8 @@ def preconfigJunosDomain(dom, pw, em0Ip):
     
             child.send(pw + "\r")
         
-        print "Setting hostname"
-        child.send("set system hostname " + dom + "\r")
+        print "Setting host-name to " + str(dom)
+        child.send("set system host-name " + str(dom) + "\r")
         print "Turning on netconf and ssh"
         child.send("set system services netconf ssh\r")
         child.send("set system services ssh\r")
