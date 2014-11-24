@@ -2,7 +2,7 @@ from django.db import models
 from django.forms import ModelForm
 
 class Image(models.Model):
-    type_choices = (('junos', 'Junos'), ('linux', 'Linux'), ('other', 'Other'))
+    type_choices = (('junos_vmx', 'Junos vMX'), ('junos_firefly', 'Junos Firefly'), ('junos', 'Junos Other'), ('linux', 'Linux'), ('other', 'Other'))
     name = models.CharField(max_length=32)
     type = models.CharField(max_length=32, choices=type_choices, default='junos')
     path = models.CharField(max_length=256)

@@ -96,12 +96,21 @@ def deploy(request, topo_id):
                     print "Rendering deviceXml for: " + device["name"]
                 
                 image = Image.objects.get(pk=device["imageId"])
+
+
+                # fixme - simplify this logic to return just the deviceXml based on 
+                # image.type and host os type (ou.checkIsLinux)
                 instancePath = ou.getInstancePathFromImage(image.path, device["name"])
             
                 if ou.checkIsLinux():
                     deviceXml = render_to_string("kvm/domain.xml", {'device' : device, 'instancePath' : instancePath})
                 else:
-                    deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
+                    # fixme - eventually add custom domain definitions for all possible image types
+                    if image.type == "junos_firefly":
+                        deviceXml = render_to_string("vbox/domain_firefly.xml", {'device' : device, 'instancePath' : instancePath})
+                        print deviceXml
+                    else:
+                        deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
     
                 if debug:
                     print "Checking that image instance exists at " + str(instancePath)

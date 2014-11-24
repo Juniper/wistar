@@ -48,6 +48,7 @@ def loadJson(rawJson, topo_id):
             device["imageId"] = jsonObject["userData"]["image"]
             device["uuid"] = jsonObject["id"]
             device["interfaces"] = []
+            device["managementInterfaces"] = []
 
             device["vncPort"] = int(nextAvailableVncPort) + deviceIndex
             deviceIndex += 1
@@ -62,8 +63,8 @@ def loadJson(rawJson, topo_id):
             em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
             em1["slot"] = "0x05"
 
-            device["interfaces"].append(em0)
-            device["interfaces"].append(em1)
+            device["managementInterfaces"].append(em0)
+            device["managementInterfaces"].append(em1)
 
             devices.append(device)
         #elif jsonObject["type"] == "draw2d.Connection":

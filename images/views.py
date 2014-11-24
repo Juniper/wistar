@@ -13,7 +13,7 @@ import json
 debug = True
 
 def index(request):
-    image_list = Image.objects.all().order_by('modified')[:10]
+    image_list = Image.objects.all().order_by('modified')
     context = {'image_list': image_list}
     return render(request, 'images/index.html', context)
 
@@ -40,10 +40,9 @@ def create(request):
         context = {'error' : "FORM ISN'T VALID"}
         return render(request, 'error.html', context)
 
-
 def detail(request, image_id):
     image  = get_object_or_404(Image, pk=image_id)
-    return render(request, 'edit.html', {'image': image})
+    return render(request, 'images/details.html', {'image': image})
 
 def delete(request, image_id):
     image  = get_object_or_404(Image, pk=image_id)
