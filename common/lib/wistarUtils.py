@@ -48,6 +48,7 @@ def loadJson(rawJson, topo_id):
             device["imageId"] = jsonObject["userData"]["image"]
             device["uuid"] = jsonObject["id"]
             device["interfaces"] = []
+            device["managementInterfaces"] = []
 
             device["vncPort"] = int(nextAvailableVncPort) + deviceIndex
             deviceIndex += 1
@@ -62,8 +63,8 @@ def loadJson(rawJson, topo_id):
             em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
             em1["slot"] = "0x05"
 
-            device["interfaces"].append(em0)
-            device["interfaces"].append(em1)
+            device["managementInterfaces"].append(em0)
+            device["managementInterfaces"].append(em1)
 
             devices.append(device)
         #elif jsonObject["type"] == "draw2d.Connection":
@@ -92,8 +93,8 @@ def loadJson(rawJson, topo_id):
             sourceUUID = jsonObject["source"]["node"]
             for d in devices:
                 if d["uuid"] == sourceUUID:
-                    # slot should always start with 4
-                    slot = "%#04x" % int(len(d["interfaces"]) + 4)
+                    # slot should always start with 6
+                    slot = "%#04x" % int(len(d["interfaces"]) + 6)
                     interface = {}
                     interface["mac"] = generateNextMac(topo_id)
                     interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
@@ -102,8 +103,8 @@ def loadJson(rawJson, topo_id):
                     d["interfaces"].append(interface)
 
                 elif d["uuid"] == targetUUID:
-                    # slot should always start with 4
-                    slot = "%#04x" % int(len(d["interfaces"]) + 4)
+                    # slot should always start with 6
+                    slot = "%#04x" % int(len(d["interfaces"]) + 6)
                     interface = {}
                     interface["mac"] = generateNextMac(topo_id)
                     interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)

@@ -19,7 +19,7 @@ import json
 debug = True
 
 def index(request):
-    latest_topo_list = Topology.objects.all().order_by('modified')[:10]
+    latest_topo_list = Topology.objects.all().order_by('modified')
     context = {'latest_topo_list': latest_topo_list}
     return render(request, 'index.html', context)
 
@@ -96,12 +96,22 @@ def deploy(request, topo_id):
                     print "Rendering deviceXml for: " + device["name"]
                 
                 image = Image.objects.get(pk=device["imageId"])
+
+
+                # fixme - simplify this logic to return just the deviceXml based on 
+                # image.type and host os type (ou.checkIsLinux)
                 instancePath = ou.getInstancePathFromImage(image.path, device["name"])
             
                 if ou.checkIsLinux():
                     deviceXml = render_to_string("kvm/domain.xml", {'device' : device, 'instancePath' : instancePath})
+                    print deviceXml
                 else:
-                    deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
+                    # fixme - eventually add custom domain definitions for all possible image types
+                    if image.type == "junos_firefly":
+                        deviceXml = render_to_string("vbox/domain_firefly.xml", {'device' : device, 'instancePath' : instancePath})
+                        print deviceXml
+                    else:
+                        deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
     
                 if debug:
                     print "Checking that image instance exists at " + str(instancePath)
@@ -222,4 +232,10 @@ def create(request):
         # return render(request, 'topologies/output.html', context)
         return HttpResponseRedirect('/topologies/')
 
+
+def createConfigSet(request, topo_id):
+    topo  = get_object_or_404(Topology, pk=topo_id)
+    # let's parse the json and convert to simple lists and dicts
+    config = wu.loadJson(topo.json, topo_id)
+    return render(request, 'kvmCreateScript.html', {'topo': topo, 'config' : config})
 

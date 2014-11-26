@@ -22,18 +22,20 @@
       <target dev='hda' bus='ide'/>
     </disk>
 {% for interface in device.managementInterfaces %}
+    {% if forloop.first %}
     <interface type='internal'>
       <mac address='{{ interface.mac }}'/>
       <source name='{{ interface.bridge }}'/>
-      <model type='82540EM'/>
+      <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
     </interface>
+    {% endif %}
 {% endfor %}
 {% for interface in device.interfaces %}
     <interface type='internal'>
       <mac address='{{ interface.mac }}'/>
       <source name='{{ interface.bridge }}'/>
-      <model type='82540EM'/>
+      <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
     </interface>
 {% endfor %}
@@ -45,7 +47,7 @@
       <target type='serial' port='0'/>
     </console>
     <video>
-      <model type='vbox' vram='8192' heads='1'>
+      <model type='vbox' vram='4096' heads='1'>
         <acceleration accel3d='no' accel2d='no'/>
       </model>
     </video>
