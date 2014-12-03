@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import render_to_string
 from django.http import HttpResponseRedirect, HttpResponse
+from django.conf import settings
 from topologies.models import Topology
 from common.lib.wistarException import wistarException
 import common.lib.wistarUtils as wu
@@ -100,7 +101,8 @@ def deploy(request, topo_id):
 
                 # fixme - simplify this logic to return just the deviceXml based on 
                 # image.type and host os type (ou.checkIsLinux)
-                instancePath = ou.getInstancePathFromImage(image.path, device["name"])
+                imageBasePath = settings.MEDIA_ROOT + "/" + image.filePath.url 
+                instancePath = ou.getInstancePathFromImage(imageBasePath, device["name"])
             
                 if ou.checkIsLinux():
                     deviceXml = render_to_string("kvm/domain.xml", {'device' : device, 'instancePath' : instancePath})
@@ -116,14 +118,14 @@ def deploy(request, topo_id):
                 if debug:
                     print "Checking that image instance exists at " + str(instancePath)
             
-                if ou.checkImageInstance(image.path, device["name"]):
+                if ou.checkImageInstance(imageBasePath, device["name"]):
                     print "Image Instance already exists"
                 else:
                     print "Image Instance does not exist"
-                    if ou.createThinProvisionInstance(image.path, device["name"]):
+                    if ou.createThinProvisionInstance(imageBasePath, device["name"]):
                         print "Successly created instance"
                     else:
-                        context = {'error' : 'Could not create image instance for image: ' + image.path }
+                        context = {'error' : 'Could not create image instance for image: ' + imageBasePath }
                         return render(request, 'error.html', context) 
              
                 if debug:

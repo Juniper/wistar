@@ -17,7 +17,7 @@ def checkPath(path):
 
 # returns the full path and filename of an image instance
 def getInstancePathFromImage(image, instance):
-    return os.path.dirname(image) + "/" + instance + ".img"
+    return os.path.dirname(image) + "/instances/" + instance + ".img"
     
 # takes an images path and an instance name
 def checkImageInstance(image, instance):

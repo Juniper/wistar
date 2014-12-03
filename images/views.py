@@ -26,12 +26,12 @@ def new(request):
     return render(request, 'images/new.html', context)
 
 def create(request):
-    image_form = ImageForm(request.POST)
+    image_form = ImageForm(request.POST, request.FILES)
     if image_form.is_valid():
-        if not osUtils.checkPath(image_form.cleaned_data['path']):
-            print "PATH DOESN'T EXIST"
-            context = {'error' : "PATH DOESNT EXIST"}
-            return render(request, 'error.html', context)
+        #if not osUtils.checkPath(image_form.cleaned_data['path']):
+        #    print "PATH DOESN'T EXIST"
+        #    context = {'error' : "PATH DOESNT EXIST"}
+        #    return render(request, 'error.html', context)
 
         print "Saving form"
         image_form.save()
@@ -46,6 +46,7 @@ def detail(request, image_id):
 
 def delete(request, image_id):
     image  = get_object_or_404(Image, pk=image_id)
+    image.filePath.delete()
     image.delete()
     return HttpResponseRedirect('/images/')
 

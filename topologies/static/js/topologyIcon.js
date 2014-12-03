@@ -122,7 +122,8 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
         this.setLabel(label);
     },
     onContextMenu: function(x, y) {
-        if(this.getType() == "junos") {
+        // FIXME - add other junos types here as well
+        if(this.getType() == "junos_vmx") {
             items = {
                 "getStartupState": {
                     name: "Get Bootup State"

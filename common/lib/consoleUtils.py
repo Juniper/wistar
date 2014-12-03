@@ -91,9 +91,10 @@ def preconfigJunosDomain(dom, pw, em0Ip):
         print "Turning on netconf and ssh"
         child.send("set system services netconf ssh\r")
         child.send("set system services ssh\r")
+        # FIXME - on virtualBox this appears as fxp0 instead of em0 - nembery
         child.send("delete interface em0\r");
-        print "Configuring fxp0 - default to /24 for now!!!"
-        child.send("set interface fxp0 unit 0 family inet address " + em0Ip + "/24\r")
+        print "Configuring em0- default to /24 for now!!!"
+        child.send("set interface em0 unit 0 family inet address " + em0Ip + "/24\r")
         print "Committing changes"
         child.send("commit and-quit\r")
         time.sleep(3)
