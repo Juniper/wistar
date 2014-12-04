@@ -1,0 +1,73 @@
+            <table>
+              <tr>
+                  <th colspan="3"> Domain Status </th>
+              </tr>
+              {% if domain_list|length == 0 %}
+              <tr>
+                <td>
+                Domains not yet defined in hypervisor!
+                </td>
+              </tr>
+              {% endif %}
+              {% for d in domain_list %}
+              <tr>
+                <td>
+                 {{ d.name }}
+                </td>
+                <td>
+
+                 {{ d.state }}
+                </td>
+                <td>
+                {% if d.state != "running" %}
+                    <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}');">
+                        <font color="green">Start</font>
+                    </a>
+                    &nbsp;
+                {% else %}
+                    <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}');">
+                        <font color="red">Stop</font>
+                    </a>
+                    &nbsp;
+                {% endif %}
+                    <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');">
+                        <font color="black">Undefine</font>
+                    </a>
+                </td>
+              </tr>
+              {% endfor %}
+              <tr>
+                <th colspan="3"> Virtual Network Status </th>
+              </tr>
+              {% if network_list|length == 0 %}
+              <tr>
+                <td>
+                Virtual Networks not yet defined in hypervisor!
+                </td>
+              </tr>
+              {% endif %}
+              {% for n in network_list %}
+              <tr>
+                <td>
+                 {{ n.name }}
+                </td>
+                <td>
+
+                 {{ n.state }}
+                </td>
+                <td>
+                 Options
+                </td>
+              </tr>
+              {% endfor %}
+              <tr>
+                <td colspan="3">
+                  <input type="button" name="deployButton" id="deployButton"
+                    value="Deploy To Hypervisor" onclick="javascript: deployTopology();"/>
+                  &nbsp;
+                  <input type="button" name="refreshDSButton" id="refreshDSButton"
+                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus();"/>
+                </td>
+              </tr>
+            </table>
+
