@@ -48,7 +48,6 @@ def getDomainByUUID(domainId):
     except Exception as e:
         return None
 
-
 def domainExists(domainName):
     if not connect():
         return False
@@ -65,8 +64,8 @@ def domainExists(domainName):
         print repr(e)
         return False
 
-
 def getDomainByName(domainName):
+    """ Get single domain by name """
     if not connect():
         return False
 
@@ -83,6 +82,7 @@ def getDomainByName(domainName):
         return False
 
 def listDomains():
+    """ Get all domains """
     if not connect():
         return False
 
@@ -100,11 +100,28 @@ def listDomains():
                 domain["state"] = "shut off"
             domainList.append(domain)
 
+        domainList.sort(key=lambda k: k["name"])
         return domainList
     except Exception as e:
         print repr(e)
         return None
 
+def getDomainsForTopology(topoId):
+    """ Get all domains for a given topology Id """
+    if not connect():
+        return False
+
+    domainList = []
+    try:
+        domains = listDomains()
+        for d in domains:
+            if d["name"].startswith(topoId):
+                domainList.append(d)
+    
+        return domainList
+    except Exception as e:
+        print repr(e)
+        return None
 
 def networkExists(networkName):
     if not connect():
@@ -140,6 +157,23 @@ def listNetworks():
             else:
                 network["state"] = "shut off"
             networkList.append(network)
+    
+        networkList.sort(key=lambda k: k["name"])
+        return networkList
+    except Exception as e:
+        return None
+
+def getNetworksForTopology(topoId):
+    """ Get Networks for a given topology Id """
+    if not connect():
+        return False
+
+    networkList = []
+    try:
+        networks = listNetworks()
+        for n in networks:
+            if n["name"].startswith(topoId):
+                networkList.append(n)
 
         return networkList
     except Exception as e:

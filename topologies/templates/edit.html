@@ -133,8 +133,8 @@
 	    }
     }
 
-    function deployTopology() {
-        if(confirm("Are you sure you want to deploy this topology? This will define and start all instances!")) {
+    function deployTopologyOld() {
+        if(confirm("Are you sure you want to deploy this topology? This will define all instances in the hypervisor")) {
 		    window.location="/topologies/deploy/{{ topo.id }}";
 	    }
     }
@@ -144,7 +144,6 @@
 		    window.location="/topologies/delete/{{ topo.id }}";
 	    }
     }
-
 
     function checkPass(pw) {
         if(pw != "") {
@@ -181,66 +180,42 @@
         return "t{{ topo.id }}_" + name;
     }
 
-
     function preconfigJunosDomain(label, password, ip) {
         domain = generateDomainNameFromLabel(label);
-        new Ajax.Request('/ajax/preconfigJunosDomain/', {
-	    parameters: { 'domain' : domain, 'password' : password, 'ip' : ip },
-            onSuccess: function(response) {
-                data = eval(response.responseJSON);
-                console.log(data);
-		        if (data["result"] == false) {
-			        alert("Error: " + data["message"]);
-		        } else {
-			        alert("Success!");
-		        }
-            },
-            onFailure: function(response) {
-                alert("Could not load data!!!");
-        		console.log(response);
-            }
-        });
+        var url = "/ajax/preconfigJunosDomain/";
+        var params = {
+            'domain' : domain,
+            'ip' : ip,
+            'password' : password
+        };
+        var successMessage = "Success!";
+        
+        simpleAjaxRequest(url, params, successMessage);
     }
 
     function configDeviceInterfaces(ip, password) {
-        new Ajax.Request('/ajax/configJunosInterfaces/', {
-	    parameters: { 'ip' : ip, 'password' : password },
-            onSuccess: function(response) {
-                data = eval(response.responseJSON);
-                console.log(data);
-        		if (data["result"] == false) {
-	        		alert("Error: " + data["message"]);
-        		} else {
-			        alert("Success!");
-		        }
-            },
-            onFailure: function(response) {
-                alert("Could not load data!!!");
-		        console.log(response);
-                //alert(response);
-            }
-        });
+        var url = "/ajax/configJunosInterfaces/";
+        var params = {
+            'ip' : ip,
+            'password' : password
+        };
+        var successMessage = "Success!";
+        
+        simpleAjaxRequest(url, params, successMessage);
     }
 
     // fixme - do something useful with this data!
     function getJunosConfig(ip, password) {
-        new Ajax.Request('/ajax/getJunosConfig/', {
-	    parameters: { 'ip' : ip, 'password' : password },
-            onSuccess: function(response) {
-                data = eval(response.responseJSON);
-                console.log(data);
-		        if (data["result"] == false) {
-			        alert("Error: " + data["message"]);
-		        } else {
-			        alert("Success!");
-		        }
-            },
-            onFailure: function(response) {
-                alert("Could not load data!!!");
-		        console.log(response);
-                //alert(response);
-            }
-        });
+        
+        var url = "/ajax/getJunosConfig/";
+        var params = {
+            'ip' : ip,
+            'password' : password
+        };
+        var successMessage = "Success!";
+        
+        simpleAjaxRequest(url, params, successMessage);
+        
     }
 
     function syncLinkData() {
@@ -263,8 +238,37 @@
         var successMessage = "Successly pushed IP addresses to VMs";
 
         simpleAjaxRequest(url, params, successMessage);
+    }
 
-        console.log(params);
+    // Simple function to update the deploymentStatusDiv with the current hypervisor state
+    function refreshDeploymentStatus() {
+        new Ajax.Updater('deploymentStatus', '/ajax/refreshDeploymentStatus/', {
+            parameters: { 'topologyId' : '{{ topo.id }}' }
+        });
+    }
+    
+    // Simple function to update the deploymentStatusDiv with the current hypervisor state
+    function manageDomain(action, domainId) {
+        alert(action + " : " + domainId);
+        new Ajax.Updater('deploymentStatus', '/ajax/manageDomain/', {
+            parameters: { 
+                'topologyId' : '{{ topo.id }}',
+                'domainId' : domainId,
+                'action' : action
+        
+            }
+        });
+    }
+
+    function deployTopology() {
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+        new Ajax.Updater('deploymentStatus', '/ajax/deployTopology/', {
+            parameters: { 'topologyId' : '{{ topo.id }}' },
+            onComplete: function() {
+                doc.style.cursor = '';
+            }
+        });
     }
 
     function simpleAjaxRequest(url, params, successMessage) {
@@ -357,7 +361,8 @@
     function loadJunosIconEditor(figureId) {
 
         console.log(figureId);
-        $('selectedConnection').value = figureId;
+        //changed from selectedConnection ?
+        $('selectedObject').value = figureId;
         var instance = canvas.getFigure(figureId);
 
         $('junosIconName').value = instance.getLabel();
@@ -394,6 +399,18 @@
         }
 
     }
+
+    function updateJunosIcon() {
+        var instance = canvas.getFigure($F('selectedObject'));
+
+        instance.setIp($F('junosIconIp'));
+        instance.setLabel($F('junosIconName'));
+        instance.setPassword($F('junosIconPass'));
+
+        instance.repaint();
+        
+    }
+
     // fixme - this will be broken for anything other than vmx
     function loadConnectionEditor(figureId) {
         var connection = canvas.getLine(figureId);
@@ -474,10 +491,11 @@
         window.canvas = new draw2d.Canvas("gfx_holder", true);
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
-        {% if topo_id != None %}
         canvas.addSelectionListener(new topologySelectionListener());
-        {% endif %}
         {% if topo.name != None %}
+            {% if topo.id != 0 %}
+            refreshDeploymentStatus();
+            {% endif %}
         loadTopology();
         {% endif %}
     });
@@ -512,8 +530,6 @@
               <tr>
                 <td colspan="2">
                   {% if topo_id != None %}
-                  <input type="button" name="deployButton" id="deployButton" 
-                    value="Deploy" onclick="javascript: deployTopology();"/>
                   &nbsp;
                   <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
                   <input type="button" name="delete_button" id="delete_button" 
@@ -605,6 +621,9 @@
           </div>
           <div id="junosIconEditor" style="display:none">
             <table>
+              <th colspan="2">
+                 Edit Device
+              </th>
               <tr>
                 <td>
                   IP Address
@@ -639,10 +658,18 @@
                   <div id="junosIconNeighbors"></div>
                 </td>
               </tr>
+              <tr>
+                <td colspan="2">
+                  <input type="button" onclick="javascript: updateJunosIcon();" value="Update"/>
+                </td>
+              </tr>
             </table>
           </div>
           <div id="connectionEditor" style="display: none;">
             <table>
+              <th colspan="2">
+                 Edit Connection
+              </th>
               <tr>
                 <td colspan="2">
                   <input type="hidden" id="selectedConnection" value="0">
@@ -695,12 +722,17 @@
           </div>
           <div id="jsonDebug" style="display: none;">
             <table>
+              <th>
+                 Debug Panel
+              </th>
               <tr>
                 <td>
                   <textarea id="debug" cols="1" rows="5"></textarea>
                 </td>
               </tr>
             </table>
+          </div>
+          <div id="deploymentStatus">
           </div>
         </td>
         <td style="vertical-align: top">

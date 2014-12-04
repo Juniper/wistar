@@ -33,14 +33,16 @@ def clone(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
     orig_name = topo.name
     topo.name = "Clone of " + orig_name
+    topo.id = 0
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo' : topo}
     return render(request, 'edit.html', context)
 
 def detail(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
-    image_list = Image.objects.all().order_by('name')
-    context = {'image_list': image_list, 'topo_id' : topo_id, 'topo' : topo}
+    domain_list = lu.getDomainsForTopology("t" + topo_id)
+    network_list = lu.getNetworksForTopology("t" + topo_id)
+    context = {'domain_list': domain_list, 'network_list' : network_list, 'topo_id' : topo_id, 'topo' : topo}
     return render(request, 'edit.html', context)
 
 def delete(request, topo_id):

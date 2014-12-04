@@ -69,13 +69,15 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     setIp: function(ip) {
 	    var ud = this.getUserData();
 	    ud["ip"] = ip;
-	    if (ip != undefined) {
+	    if (this.ipLabel == undefined) {
 		    this.ipLabel = new draw2d.shape.basic.Label("\n" + ip);
 	        this.ipLabel.setColor("#000");
         	this.ipLabel.setFontColor("#000");
         	this.ipLabel.setStroke(0);
         	this.addFigure(this.ipLabel, new BottomCenterLocator(this));
-	    }
+	    } else {
+            this.ipLabel.text = "\n" + ip;
+        }
     },
     getIp: function() {
     	return this.getUserData()["ip"];
@@ -98,11 +100,15 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     	// console.log("setlabel " + label);
     	var ud = this.getUserData();
     	ud["label"] = label;
-    	this.label = new draw2d.shape.basic.Label(label);
-        this.label.setColor("#0d0d0d");
-        this.label.setFontColor("#0d0d0d");
-        this.label.setStroke(0);
-        this.addFigure(this.label, new BottomCenterLocator(this));
+        if (this.label == undefined) {
+    	    this.label = new draw2d.shape.basic.Label(label);
+            this.label.setColor("#0d0d0d");
+            this.label.setFontColor("#0d0d0d");
+            this.label.setStroke(0);
+            this.addFigure(this.label, new BottomCenterLocator(this));
+        } else {
+            this.label.text = label;
+        }
     },
     getLabel: function() {
     	return this.getUserData()["label"];

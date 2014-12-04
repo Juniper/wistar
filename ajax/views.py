@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, HttpResponse
+from django.template.loader import render_to_string
+from django.conf import settings
 from common.lib.wistarException import wistarException
 import common.lib.wistarUtils as wu
 import common.lib.libvirtUtils as lu
@@ -9,8 +11,9 @@ import common.lib.consoleUtils as cu
 import common.lib.osUtils as ou
 import common.lib.vboxUtils as vu
 from images.models import Image
+from topologies.models import Topology
 # import logging
-# import time
+import time
 import json
 
 # FIXME = debug should be a global setting
@@ -146,3 +149,157 @@ def syncLinkData(request):
         response_data["message"] = "Invalid POST"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
    
+@csrf_exempt
+def refreshDeploymentStatus(request):
+    response_data = {}
+    if request.POST.has_key('topologyId'):
+        topologyId = request.POST['topologyId']
+        domain_list = lu.getDomainsForTopology("t" + topologyId)
+        network_list = lu.getNetworksForTopology("t" + topologyId)
+        context = {'domain_list': domain_list, 'network_list' : network_list }
+        return render(request, 'ajax/deploymentStatus.html', context)
+    else:
+        return render(request, 'ajax/ajaxError.html', "Error in refreshDeploymentStatus")
+
+
+@csrf_exempt
+def manageDomain(request):
+    response_data = {}
+    requiredFields = set([ 'domainId', 'action', 'topologyId' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+   
+    domainId = request.POST['domainId'] 
+    action = request.POST['action'] 
+    topologyId = request.POST['topologyId'] 
+
+    if action == "start": 
+        ret = lu.startDomain(domainId)
+        if ret == True:
+            return refreshDeploymentStatus(request)
+        else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Could not start domain!" } )
+
+    elif action == "stop":
+        ret = lu.stopDomain(domainId)
+        if ret == True:
+            return refreshDeploymentStatus(request)
+        else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
+
+    elif action == "undefine":
+        ret = lu.undefineDomain(domainId)
+        if ret == True:
+            sourceFile = lu.getImageForDomain(domainId)
+            if sourceFile is not None:
+                ou.removeInstance(sourceFile)
+            return refreshDeploymentStatus(request)
+        else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
+    else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Unknown Parameters in POST!" } )
+
+@csrf_exempt
+def deployTopology(request):
+    response_data = {}
+    if not request.POST.has_key('topologyId'):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "No Topology Id in request" })
+    
+    topologyId = request.POST['topologyId']
+    topo = {}
+    try:
+        topo  = Topology.objects.get(pk=topologyId)
+    except Exception as ex:
+        print ex
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Topology not found!" })
+
+    # let's parse the json and convert to simple lists and dicts
+    config = wu.loadJson(topo.json, topologyId)
+    time.sleep(1)
+
+    # only create networks on Linux/KVM
+
+    print "Checking if we should create networks first!"
+    if ou.checkIsLinux():
+        for network in config["networks"]:
+            try:
+                if not lu.networkExists(network["name"]):
+                    if debug:
+                        print "Rendering networkXml for: " + network["name"]
+                    networkXml = render_to_string("ajax/kvm/network.xml", {'network' : network})
+                    print networkXml
+                    n = lu.defineNetworkFromXml(networkXml)
+                    if n == False:
+                        err_msg = "Error defining network: " + network["name"]
+                        context = {'error' : err_msg }
+                        return render(request, 'ajax/ajaxError.html', context)
+
+                print "Starting network"
+                lu.startNetwork(network["name"])
+            except:
+                err_msg = "Error starting network: " + network["name"]
+                context = {'error' : err_msg }
+                return render(request, 'ajax/ajaxError.html', context)
+
+    time.sleep(1)   
+    for device in config["devices"]:
+        try:
+            if not lu.domainExists(device["name"]):
+                if debug:
+                    print "Rendering deviceXml for: " + device["name"]
+
+                image = Image.objects.get(pk=device["imageId"])
+
+                # fixme - simplify this logic to return just the deviceXml based on
+                # image.type and host os type (ou.checkIsLinux)
+                imageBasePath = settings.MEDIA_ROOT + "/" + image.filePath.url
+                instancePath = ou.getInstancePathFromImage(imageBasePath, device["name"])
+
+                if ou.checkIsLinux():
+                    deviceXml = render_to_string("ajax/kvm/domain.xml", {'device' : device, 'instancePath' : instancePath})
+                    print deviceXml
+                else:
+                    # fixme - eventually add custom domain definitions for all possible image types
+                    if image.type == "junos_firefly":
+                        deviceXml = render_to_string("vbox/domain_firefly.xml", {'device' : device, 'instancePath' : instancePath})
+                        print deviceXml
+                    else:
+                        deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
+
+                if debug:
+                    print "Checking that image instance exists at " + str(instancePath)
+
+                if ou.checkImageInstance(imageBasePath, device["name"]):
+                    print "Image Instance already exists"
+                else:
+                    print "Image Instance does not exist"
+                    if ou.createThinProvisionInstance(imageBasePath, device["name"]):
+                        print "Successly created instance"
+                    else:
+                        context = {'error' : 'Could not create image instance for image: ' + imageBasePath }
+                        return render(request, 'ajax/ajaxError.html', context)
+
+                if debug:
+                    print "Defining domain"
+                d = lu.defineDomainFromXml(deviceXml)
+                if d == False:
+                    err_msg = "Error defining Instance: " + device["name"]
+                    context = {'error' : err_msg }
+                    return render(request, 'ajax/ajaxError.html', context)
+
+            if not ou.checkIsLinux():
+                # perform some special hacks for vbox
+                vu.preconfigureVMX(device["name"])
+
+            #print "Starting domain! " + device["name"]
+            #lu.startDomainByName(device["name"])
+        except Exception as ex:
+            print ex
+            err_msg = "Error starting Instance: " + device["name"]
+            context = {'error' : err_msg }
+            return render(request, 'ajax/ajaxError.html', context)
+
+    domain_list = lu.getDomainsForTopology("t" + topologyId)
+    network_list = lu.getNetworksForTopology("t" + topologyId)
+    context = {'domain_list': domain_list, 'network_list' : network_list }
+    return render(request, 'ajax/deploymentStatus.html', context)

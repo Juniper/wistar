@@ -21,7 +21,7 @@ var topologySelectionListener = Class.extend({
                 loadLabelEditor(figure.getId());
             } else if (figure instanceof draw2d.shape.node.topologyIcon) {
                 console.log("found topologyIcon");
-                if (figure.getType() == "junos") {
+                if (figure.getType() == "junos_vmx") {
                     loadJunosIconEditor(figure.getId());
                 } else {
                     loadGenericIconEditor(figure.getId());
