@@ -249,7 +249,6 @@
     
     // Simple function to update the deploymentStatusDiv with the current hypervisor state
     function manageDomain(action, domainId) {
-        alert(action + " : " + domainId);
         new Ajax.Updater('deploymentStatus', '/ajax/manageDomain/', {
             parameters: { 
                 'topologyId' : '{{ topo.id }}',
