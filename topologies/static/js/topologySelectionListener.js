@@ -21,10 +21,11 @@ var topologySelectionListener = Class.extend({
                 loadLabelEditor(figure.getId());
             } else if (figure instanceof draw2d.shape.node.topologyIcon) {
                 console.log("found topologyIcon");
-                if (figure.getType() == "junos_vmx") {
+                if (figure.getType() == "junos_vmx" || figure.getType() == "junos_firefly") {
                     loadJunosIconEditor(figure.getId());
                 } else {
-                    loadGenericIconEditor(figure.getId());
+                    // loadGenericIconEditor(figure.getId());
+                    console.log("FIXME - loadGenericIconEditor");
                 }
                 // hideSelection();
             } else {

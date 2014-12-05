@@ -255,16 +255,17 @@ def deployTopology(request):
                 imageBasePath = settings.MEDIA_ROOT + "/" + image.filePath.url
                 instancePath = ou.getInstancePathFromImage(imageBasePath, device["name"])
 
-                if ou.checkIsLinux():
-                    deviceXml = render_to_string("ajax/kvm/domain.xml", {'device' : device, 'instancePath' : instancePath})
+                # by default, we use kvm as the hypervisor
+                domainXmlPath = "ajax/kvm/"
+                if not ou.checkIsLinux():
+                    # if we're not on Linux, then let's try to use vbox instead
+                    domainXmlPath = "ajax/vbox/" 
+
+                if image.type == "junos_firefly":
+                    deviceXml = render_to_string(domainXmlPath + "domain_firefly.xml", {'device' : device, 'instancePath' : instancePath})
                     print deviceXml
                 else:
-                    # fixme - eventually add custom domain definitions for all possible image types
-                    if image.type == "junos_firefly":
-                        deviceXml = render_to_string("vbox/domain_firefly.xml", {'device' : device, 'instancePath' : instancePath})
-                        print deviceXml
-                    else:
-                        deviceXml = render_to_string("vbox/domain.xml", {'device' : device, 'instancePath' : instancePath})
+                    deviceXml = render_to_string(domainXmlPath + "domain.xml", {'device' : device, 'instancePath' : instancePath})
 
                 if debug:
                     print "Checking that image instance exists at " + str(instancePath)
