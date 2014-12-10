@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
@@ -11,6 +12,18 @@ def checkIsLinux():
 # silly wrapper
 def checkPath(path):
     if os.path.exists(path):
+        return True
+    else:
+        return False
+
+# on linux, let's verify if a process is running
+# used to check on libvirtd process status
+def checkProcess(procName):
+    cmd = "ps aux"
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    (o,e) = p.communicate()
+    if procName in o:
         return True
     else:
         return False

@@ -90,7 +90,18 @@
     	var type = $F('topoIconType');
     	var image = $F('topoIconImage');
     	var iconData = $F('topoIconIcon');
-        
+       
+
+        if (ip == "") {
+            alert("Please add a valid IP address");
+            return;
+        } 
+
+        if (name == "") {
+            alert("Please add a valid instance name");
+            return;
+        } 
+ 
         var icon = iconData.split(":")[0]; 
         var width = iconData.split(":")[1]; 
         var height = iconData.split(":")[2]; 

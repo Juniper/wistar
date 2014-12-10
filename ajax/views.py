@@ -155,7 +155,10 @@ def refreshDeploymentStatus(request):
     if request.POST.has_key('topologyId'):
         topologyId = request.POST['topologyId']
         domain_list = lu.getDomainsForTopology("t" + topologyId)
-        network_list = lu.getNetworksForTopology("t" + topologyId)
+        network_list = []
+        if ou.checkIsLinux():
+            network_list = lu.getNetworksForTopology("t" + topologyId)
+
         context = {'domain_list': domain_list, 'network_list' : network_list }
         return render(request, 'ajax/deploymentStatus.html', context)
     else:
@@ -188,9 +191,9 @@ def manageDomain(request):
             return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
 
     elif action == "undefine":
+        sourceFile = lu.getImageForDomain(domainId)
         ret = lu.undefineDomain(domainId)
         if ret == True:
-            sourceFile = lu.getImageForDomain(domainId)
             if sourceFile is not None:
                 ou.removeInstance(sourceFile)
             return refreshDeploymentStatus(request)
@@ -261,9 +264,10 @@ def deployTopology(request):
                     # if we're not on Linux, then let's try to use vbox instead
                     domainXmlPath = "ajax/vbox/" 
 
+                print "rendering xml for image type: " + str(image.type)
                 if image.type == "junos_firefly":
+                    print "Using firefly definition"
                     deviceXml = render_to_string(domainXmlPath + "domain_firefly.xml", {'device' : device, 'instancePath' : instancePath})
-                    print deviceXml
                 else:
                     deviceXml = render_to_string(domainXmlPath + "domain.xml", {'device' : device, 'instancePath' : instancePath})
 
@@ -301,6 +305,8 @@ def deployTopology(request):
             return render(request, 'ajax/ajaxError.html', context)
 
     domain_list = lu.getDomainsForTopology("t" + topologyId)
-    network_list = lu.getNetworksForTopology("t" + topologyId)
+    network_list = []
+    if ou.checkIsLinux():
+        network_list = lu.getNetworksForTopology("t" + topologyId)
     context = {'domain_list': domain_list, 'network_list' : network_list }
     return render(request, 'ajax/deploymentStatus.html', context)
