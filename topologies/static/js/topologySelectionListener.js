@@ -32,6 +32,8 @@ var topologySelectionListener = Class.extend({
                 console.log("click on unknown object " + figure);
                 hideSelection();
             }
+        } else {
+            hideSelection();
         }
     }
 });

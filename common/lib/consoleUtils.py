@@ -22,6 +22,7 @@ def isJunosDeviceAtPrompt(dom):
     try:
         child = getConsole(dom)
         child.send("\r")
+        child.send("\r")
         indx = child.expect(["error: failed to get domain", "[^\s]>", "[^\s]#", "login:"])
         if indx == 0:
             print "Domain is not configured!"

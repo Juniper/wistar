@@ -100,6 +100,7 @@ def loadJson(rawJson, topo_id):
                     interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
+                    interface["linkId"] = jsonObject["id"]
                     d["interfaces"].append(interface)
 
                 elif d["uuid"] == targetUUID:
@@ -110,6 +111,7 @@ def loadJson(rawJson, topo_id):
                     interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
+                    interface["linkId"] = jsonObject["id"]
                     d["interfaces"].append(interface)
 
 

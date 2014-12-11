@@ -77,6 +77,25 @@ def configJunosInterfaces(request):
         response_data["message"] = "No ip in POST"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
    
+@csrf_exempt
+def executeCli(request):
+    response_data = {}
+    requiredFields = set([ 'ip', 'pw', 'cli' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    ip = request.POST['ip']
+    pw = request.POST['pw']
+    cli  = request.POST['cli']
+
+    result = ju.executeCli(ip,pw,cli)
+    if result == None:
+        response_data["result"] = False
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    else: 
+        response_data["result"] = True
+        response_data["output"] = result 
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
 def getJunosStartupState(request):

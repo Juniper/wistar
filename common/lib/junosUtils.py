@@ -15,6 +15,10 @@ def getDeviceReference(host, user, pw):
         print "Could not connect to device " + str(host) + "!"
         raise wistarException("Could not connect to Device")
 
+def executeCli(ip, pw, cli):
+    dev = getDeviceReference(ip, 'root', pw)
+    return dev.cli(cli)
+
 def getDeviceEmInterfaceMacs(dev):
     emDict = {}
     interfaces = dev.execute("<get-interface-information></get-interface-information>")

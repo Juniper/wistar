@@ -11,4 +11,5 @@ urlpatterns = patterns('',
     url(r'^refreshDeploymentStatus/$', views.refreshDeploymentStatus, name='refreshDeploymentStatus'),
     url(r'^deployTopology/$', views.deployTopology, name='deployTopology'),
     url(r'^manageDomain/$', views.manageDomain, name='manageDomain'),
+    url(r'^executeCli/$', views.executeCli, name='executeCli'),
 )

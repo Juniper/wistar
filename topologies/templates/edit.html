@@ -325,6 +325,42 @@
         });
     }
 
+    function executeCli() {
+        var ip = $F('junosIconIp');
+        var pw = $F('junosIconPass');
+        var cli = $F('cli');
+
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+
+        new Ajax.Request('/ajax/executeCli/', {
+            parameters: { 
+                'pw' : pw,
+                'ip' : ip,
+                'cli' : cli
+            },
+            onSuccess: function(response) {
+                data = eval(response.responseJSON);
+                if (data["result"] == false) {
+                    alert("Device is not yet booted up!");
+                    $F('cliOutput') = "error";
+                } else {
+                    $('cliOutput').value = data['output'];
+                }
+            },
+            onFailure: function(response) {
+                alert("Could not load data!!!");
+                console.log(response);
+                //alert(response);
+            },
+            onComplete: function(response) {
+                doc.style.cursor = '';
+            }
+        });
+    }
+
+
+
     /* UI related function */
     var currentSelection = "None";
 
@@ -378,7 +414,10 @@
         $('junosIconName').value = instance.getLabel();
         $('junosIconIp').value = instance.getIp();
         $('junosIconPass').value = instance.getPassword();
-       
+
+        // clear the cli output      
+        $('cliOutput').value = "";
+ 
         var port = instance.getPorts().get(0);
         
         var connections = port.getConnections();
@@ -674,6 +713,24 @@
                 </td>
               </tr>
             </table>
+            <table>
+              <th colspan="2">
+                 Execute cli
+              </th>
+              <tr>
+                <td>
+                  <input type="text" id="cli" value="show interface terse"/>
+                </td>
+                <td>
+                  <input type="button" onclick="javascript: executeCli();" value="Go">
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2">
+                  <textarea id="cliOutput" rows="4"></textarea>
+                </td>
+              </tr>
+            </table>
           </div>
           <div id="connectionEditor" style="display: none;">
             <table>
@@ -744,6 +801,7 @@
           </div>
           <div id="deploymentStatus">
           </div>
+        </td>
         </td>
         <td style="vertical-align: top">
           <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 
