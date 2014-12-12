@@ -343,13 +343,15 @@
                 data = eval(response.responseJSON);
                 if (data["result"] == false) {
                     alert("Device is not yet booted up!");
-                    $F('cliOutput') = "error";
+                    $('cliOutput').value = "error";
+                    $('cliOutput').style.height = "";
                 } else {
                     $('cliOutput').value = data['output'];
+                    $('cliOutput').style.height = "300px";
                 }
             },
             onFailure: function(response) {
-                alert("Could not load data!!!");
+                alert("Could not contact device!!!");
                 console.log(response);
                 //alert(response);
             },
@@ -417,6 +419,7 @@
 
         // clear the cli output      
         $('cliOutput').value = "";
+        $('cliOutput').style.height = "";
  
         var port = instance.getPorts().get(0);
         
@@ -727,7 +730,7 @@
               </tr>
               <tr>
                 <td colspan="2">
-                  <textarea id="cliOutput" rows="4"></textarea>
+                  <textarea id="cliOutput" rows="1"></textarea>
                 </td>
               </tr>
             </table>

@@ -26,55 +26,43 @@ def index(request):
 @csrf_exempt
 def preconfigJunosDomain(request):
     response_data = {}
-    if request.POST.has_key('domain'):
-        domain = request.POST['domain']
-        # if not lu.domainExists(domain):
-        #    print "Domain not defined!"
-        #    response_data["result"] = False
-        #    response_data["message"] = "Domain is not defined!"
-        #    return HttpResponse(json.dumps(response_data), content_type="application/json")
+    requiredFields = set([ 'domain', 'password', 'ip' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
 
-        password = request.POST['password']
-        ip = request.POST['ip']
-        print "Configuring domain:" + str(domain)
-        try:
-            response_data["result"] = cu.preconfigJunosDomain(domain, password, ip)
-            print str(response_data)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except KeyError as k:
-            print repr(k)
-            response_data["result"] = False
-            response_data["message"] = "Invalid Parameters! Is there a password set?"
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except wistarException as we:
-            print we
-            response_data["result"] = False
-            response_data["message"] = str(we)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
+    domain = request.POST['domain']
+    password = request.POST['password']
+    ip = request.POST['ip']
+    
+    print "Configuring domain:" + str(domain)
+    try:
+        response_data["result"] = cu.preconfigJunosDomain(domain, password, ip)
+        print str(response_data)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    except wistarException as we:
+        print we
         response_data["result"] = False
-        response_data["message"] = "Invalid POST data"
+        response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
 def configJunosInterfaces(request):
     response_data = {}
-    if request.POST.has_key('ip'):
-        ip = request.POST['ip']
-        password = request.POST['password']
-        print "Configuring interfaces for " + str(ip)
-        try:
-            response_data["result"] = ju.configJunosInterfaces(ip, password)
-            print str(response_data)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except wistarException as we:
-            print we
-            response_data["result"] = False
-            response_data["message"] = str(we)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
+    requiredFields = set([ 'password', 'ip' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    ip = request.POST['ip']
+    password = request.POST['password']
+    print "Configuring interfaces for " + str(ip)
+    try:
+        response_data["result"] = ju.configJunosInterfaces(ip, password)
+        print str(response_data)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    except wistarException as we:
+        print we
         response_data["result"] = False
-        response_data["message"] = "No ip in POST"
+        response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
    
 @csrf_exempt
@@ -100,88 +88,86 @@ def executeCli(request):
 @csrf_exempt
 def getJunosStartupState(request):
     response_data = {}
-    if request.POST.has_key('name'):
-        name = request.POST['name']
-        response_data["result"] = cu.isJunosDeviceAtPrompt(name)
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
-        response_data["result"] = False
-        response_data["message"] = "No domain name in POST"
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    requiredFields = set([ 'name' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    name = request.POST['name']
+    response_data["result"] = cu.isJunosDeviceAtPrompt(name)
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
 def getJunosConfig(request):
     response_data = {}
-    if request.POST.has_key('ip'):
-        ip = request.POST['ip']
-        password = request.POST['password']
-        print "Getting Config for " + str(ip) + " " + str(password)
-        try:
-            xml = ju.getConfig(ip, password)
-            print xml
-            response_data["result"] = True
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except wistarException as we:
-            print we
-            response_data["result"] = False
-            response_data["message"] = str(we)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
+    requiredFields = set([ 'ip', 'password' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    ip = request.POST['ip']
+    password = request.POST['password']
+    print "Getting Config for " + str(ip)
+    try:
+        xml = ju.getConfig(ip, password)
+        print xml
+        response_data["result"] = True
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    except wistarException as we:
+        print we
         response_data["result"] = False
-        response_data["message"] = "No ip in POST"
+        response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 @csrf_exempt
 def syncLinkData(request):
     response_data = {}
-    if request.POST.has_key('sourceIp'):
-        sourceIp = request.POST['sourceIp']
-        targetIp = request.POST['targetIp']
-        sourcePortIp = request.POST['sourcePortIp']
-        targetPortIp = request.POST['targetPortIp']
-        sourceIface = request.POST['sourceIface']
-        targetIface = request.POST['targetIface']
-        sourcePw = request.POST['sourcePw']
-        targetPw = request.POST['targetPw']
+    requiredFields = set([ 'sourceIp', 'targetIp', 'sourcePortIp', 'targetPortIp', 'sourceIface', 'targetIface', 'sourcePw', 'targetPw' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+    
+    sourceIp = request.POST['sourceIp']
+    targetIp = request.POST['targetIp']
+    sourcePortIp = request.POST['sourcePortIp']
+    targetPortIp = request.POST['targetPortIp']
+    sourceIface = request.POST['sourceIface']
+    targetIface = request.POST['targetIface']
+    sourcePw = request.POST['sourcePw']
+    targetPw = request.POST['targetPw']
 
-        print "Configuring interfaces for " + str(sourceIp)
-        try:
-            sourceResults =  ju.setInterfaceIpAddress(sourceIp, sourcePw, sourceIface, sourcePortIp)
+    print "Configuring interfaces for " + str(sourceIp)
+    try:
+        sourceResults =  ju.setInterfaceIpAddress(sourceIp, sourcePw, sourceIface, sourcePortIp)
 
-            if sourceResults == False:
-                raise wistarException("Couldn't set ip address on source VM")
-            targetResults =  ju.setInterfaceIpAddress(targetIp, targetPw, targetIface, targetPortIp)
-            if targetResults == False:
-                raise wistarException("Couldn't set ip address on target VM")
+        if sourceResults == False:
+            raise wistarException("Couldn't set ip address on source VM")
+        targetResults =  ju.setInterfaceIpAddress(targetIp, targetPw, targetIface, targetPortIp)
+        if targetResults == False:
+            raise wistarException("Couldn't set ip address on target VM")
 
-            response_data["result"] = "Success"
-            print str(response_data)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-        except wistarException as we:
-            print we
-            response_data["result"] = False
-            response_data["message"] = str(we)
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
+        response_data["result"] = "Success"
+        print str(response_data)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    except wistarException as we:
+        print we
         response_data["result"] = False
-        response_data["message"] = "Invalid POST"
+        response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
    
 @csrf_exempt
 def refreshDeploymentStatus(request):
     response_data = {}
-    if request.POST.has_key('topologyId'):
-        topologyId = request.POST['topologyId']
-        domain_list = lu.getDomainsForTopology("t" + topologyId)
-        network_list = []
-        if ou.checkIsLinux():
-            network_list = lu.getNetworksForTopology("t" + topologyId)
+    requiredFields = set([ 'topologyId' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+    
+    topologyId = request.POST['topologyId']
+    domain_list = lu.getDomainsForTopology("t" + topologyId)
+    network_list = []
+    if ou.checkIsLinux():
+        network_list = lu.getNetworksForTopology("t" + topologyId)
 
-        context = {'domain_list': domain_list, 'network_list' : network_list }
-        return render(request, 'ajax/deploymentStatus.html', context)
-    else:
-        return render(request, 'ajax/ajaxError.html', "Error in refreshDeploymentStatus")
+    context = {'domain_list': domain_list, 'network_list' : network_list }
+    return render(request, 'ajax/deploymentStatus.html', context)
 
 
 @csrf_exempt
