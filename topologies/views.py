@@ -29,6 +29,15 @@ def edit(request):
     context = {'image_list': image_list}
     return render(request, 'edit.html', context)
 
+def exportTopology(request, topo_id):
+    response_data["result"] = True
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+def importTopology(request):
+    image_list = Image.objects.all().order_by('name')
+    context = {'image_list': image_list}
+    return render(request, 'import.html', context)
+
 def clone(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
     orig_name = topo.name

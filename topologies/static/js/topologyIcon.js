@@ -127,6 +127,10 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
         this.setType(type);
         this.setLabel(label);
     },
+    // override default dc handler
+    onDoubleClick: function() {
+        return;
+    },
     onContextMenu: function(x, y) {
         // FIXME - add other junos types here as well
         if(this.getType() == "junos_vmx") {

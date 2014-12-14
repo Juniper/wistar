@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}Wistar - Lab Rat - Import Topology{% endblock %}
+{% block scripts %}
+ <script type="text/javascript" src="{% static "js/prototype.js" %}"></script>
+ <script type="text/javascript">
+    function checkImport() {
+      alert($F("importArea"));
+    }; 
+ </script>
+
+{% endblock %}
+{% block content %}
+
+<h3>Import Topology</h3>
+<textarea rows="20" id="importArea"></textarea>
+<input type="button" onclick="javascript: checkImport()" value="Import"/>
+{% endblock %}
