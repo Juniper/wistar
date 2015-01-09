@@ -5,7 +5,7 @@ import osUtils as ou
 macIndex = 0
 
 # silly attempt to keep mac addresses unique
-# use the topology id to generate 2 octest, and the number of
+# use the topology id to generate 2 octets, and the number of
 # macs used so far to generate the last one
 def generateNextMac(topo_id):
     global macIndex
@@ -44,8 +44,9 @@ def loadJson(rawJson, topo_id):
             ud = jsonObject["userData"]
             print "Found a topoIcon"
             device = {}
-            device["name"] = "t" + str(topo_id) + "_" + jsonObject["userData"]["label"]
-            device["imageId"] = jsonObject["userData"]["image"]
+            device["name"] = "t" + str(topo_id) + "_" + ud["label"]
+            device["imageId"] = ud["image"]
+            device["type"] = ud["type"]
             device["uuid"] = jsonObject["id"]
             device["interfaces"] = []
             device["managementInterfaces"] = []
@@ -53,18 +54,21 @@ def loadJson(rawJson, topo_id):
             device["vncPort"] = int(nextAvailableVncPort) + deviceIndex
             deviceIndex += 1
 
-            # manually create em0 and em1 interfaces            
-            em0 = {}
-            em0["mac"] = generateNextMac(topo_id)
-            em0["bridge"] = "virbr0"
-            em0["slot"] = "0x04"
-            em1 = {}
-            em1["mac"] = generateNextMac(topo_id)
-            em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
-            em1["slot"] = "0x05"
+            # if this is a vmx, let's create the mandatory two mgmt ports in the 
+            # first two slots
+            if ud["type"] == "junos_vmx":
+                # manually create em0 and em1 interfaces            
+                em0 = {}
+                em0["mac"] = generateNextMac(topo_id)
+                em0["bridge"] = "virbr0"
+                em0["slot"] = "0x04"
+                em1 = {}
+                em1["mac"] = generateNextMac(topo_id)
+                em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
+                em1["slot"] = "0x05"
 
-            device["managementInterfaces"].append(em0)
-            device["managementInterfaces"].append(em1)
+                device["managementInterfaces"].append(em0)
+                device["managementInterfaces"].append(em1)
 
             devices.append(device)
         #elif jsonObject["type"] == "draw2d.Connection":
@@ -81,7 +85,8 @@ def loadJson(rawJson, topo_id):
     #em0bridge["name"] = "em0bridge"
     #em0bridge["mac"] = generateNextMac()
     #networks.append(em0bridge)
-    
+   
+    # create the em1_bridge - not really used but necessary for vmx
     em1bridge = {}
     em1bridge["name"] = "t" + str(topo_id) + "_em1bridge"
     em1bridge["mac"] = generateNextMac(topo_id)
@@ -120,6 +125,18 @@ def loadJson(rawJson, topo_id):
             connection["mac"] = generateNextMac(topo_id)
             networks.append(connection)
             connIndex += 1
+  
+    # now let's add a final mgmt interface to all non-vmx instances 
+    # we need to loop again because we didn't know how many interfaces were on this instance
+    # until after we run through the connections first
+    for d in devices: 
+        if d["type"] != "junos_vmx":
+            slot = "%#04x" % int(len(d["interfaces"]) + 6)
+            interface = {}
+            interface["mac"] = generateNextMac(topo_id)
+            interface["bridge"] = "virbr0"
+            interface["slot"] = slot
+            d["interfaces"].append(interface)
 
     returnObject = {}
     returnObject["networks"] = networks

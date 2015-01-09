@@ -26,18 +26,45 @@ def index(request):
 @csrf_exempt
 def preconfigJunosDomain(request):
     response_data = {}
-    requiredFields = set([ 'domain', 'password', 'ip' ])
+    requiredFields = set([ 'domain', 'password', 'ip', 'mgmtInterface' ])
     if not requiredFields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
 
     domain = request.POST['domain']
     password = request.POST['password']
     ip = request.POST['ip']
+    mgmtInterface = request.POST['mgmtInterface']
     
     print "Configuring domain:" + str(domain)
     try:
-        response_data["result"] = cu.preconfigJunosDomain(domain, password, ip)
+        # special check for vbox
+        if mgmtInterface == "em0":
+            if not ou.checkIsLinux():
+                mgmtInterface = "fxp0"
+                
+        response_data["result"] = cu.preconfigJunosDomain(domain, password, ip, mgmtInterface)
         print str(response_data)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    except wistarException as we:
+        print we
+        response_data["result"] = False
+        response_data["message"] = str(we)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+@csrf_exempt
+def preconfigFirefly(request):
+    response_data = {}
+    requiredFields = set([ 'domain', 'password', 'mgmtInterface' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    domain = request.POST['domain']
+    password = request.POST['password']
+    mgmtInterface = request.POST['mgmtInterface']
+    
+    print "Configuring Firefly management zones:" + str(domain)
+    try:
+        response_data["result"] = cu.preconfigFirefly(domain, password, mgmtInterface)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except wistarException as we:
         print we
@@ -291,6 +318,8 @@ def deployTopology(request):
 
                 if debug:
                     print "Defining domain"
+                    print deviceXml
+
                 d = lu.defineDomainFromXml(deviceXml)
                 if d == False:
                     err_msg = "Error defining Instance: " + device["name"]

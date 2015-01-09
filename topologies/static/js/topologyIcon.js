@@ -66,6 +66,22 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     getType: function() {
 	    return this.getUserData()["type"];
     },
+    
+    getMgmtInterface: function() {
+        var port = this.getPorts().get(0);
+        var connections = port.getConnections();
+        mgmtInterfaceIndex = connections.size;
+        if(this.getType() == "junos_vmx") {
+            return "em0";
+        } else if(this.getType() == "junos_firefly") {
+            return "ge-0/0/" + mgmtInterfaceIndex;
+        } else if(this.getType() == "linux") {
+            return "eth" + mgmtInterfaceIndex;
+        } else {
+            return "eth0";
+        } 
+    },
+
     setIp: function(ip) {
 	    var ud = this.getUserData();
 	    ud["ip"] = ip;
@@ -151,6 +167,21 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
                     name: "Delete"
                 }
             };
+        } else if(this.getType() == "junos_firefly") {
+            items = {
+                "getStartupState": {
+                    name: "Get Bootup State"
+                },
+                "preconfigDevice": {
+                    name: "Setup SSH + Netconf"
+                },
+                "preconfigFirefly": {
+                    name: "Setup management Interface"
+                },
+                "delete": {
+                    name: "Delete"
+                }
+            }
         } else {
             items = {
                 "delete": {
@@ -183,7 +214,11 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     		        case "preconfigDevice":
     			        console.log("preconfig on " + this.getLabel());
     			        // defined in templates/edit.html - parent page
-    			        preconfigJunosDomain(this.getLabel(), this.getPassword(), this.getIp());
+    			        preconfigJunosDomain(this.getLabel(), this.getPassword(), this.getIp(), this.getMgmtInterface());
+    			    break;
+    		        case "preconfigFirefly":
+    			        console.log("firefly preconfig in " + this.getLabel());
+    			        preconfigFirefly(this.getLabel(), this.getPassword(), this.getMgmtInterface());
     			    break;
     		        case "getConfig":
     			        console.log("get config on " + this.getLabel());

@@ -191,13 +191,27 @@
         return "t{{ topo.id }}_" + name;
     }
 
-    function preconfigJunosDomain(label, password, ip) {
+    function preconfigJunosDomain(label, password, ip, mgmtInterface) {
         domain = generateDomainNameFromLabel(label);
         var url = "/ajax/preconfigJunosDomain/";
         var params = {
             'domain' : domain,
             'ip' : ip,
-            'password' : password
+            'password' : password,
+            'mgmtInterface' : mgmtInterface 
+        };
+        var successMessage = "Success!";
+        
+        simpleAjaxRequest(url, params, successMessage);
+    }
+
+    function preconfigFirefly(label, password, mgmtInterface) {
+        domain = generateDomainNameFromLabel(label);
+        var url = "/ajax/preconfigFirefly/";
+        var params = {
+            'domain' : domain,
+            'password' : password,
+            'mgmtInterface' : mgmtInterface 
         };
         var successMessage = "Success!";
         

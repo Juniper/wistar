@@ -37,7 +37,50 @@ def isJunosDeviceAtPrompt(dom):
         return False
 
 
-def preconfigJunosDomain(dom, pw, em0Ip):
+def preconfigFirefly(dom, pw, mgmtInterface="em0"):
+    try:
+        if isJunosDeviceAtPrompt(dom):
+            child = getConsole(dom)
+            print "Loggin in as root"
+            child.send("root\r")
+            child.expect("assword:")
+            print "Sending password"
+            child.send(pw + "\r")
+            child.expect("root@.*")
+            print "Sending cli"
+            child.send("cli\r")
+            child.expect("root.*>")
+            print "Sending configure private"
+            child.send("configure private\r")
+            ret = child.expect(["root.*#", "error.*"])
+            if ret == 1:
+                raise wistarException("Could not obtain private lock on db")
+            print "Adding " + str(mgmtInterface) + " to trust zone"
+            longCommand = "set security zones security-zone trust interfaces " + mgmtInterface
+            longCommand = longCommand + " host-inbound-traffic system-services all\r"
+            child.send(longCommand)
+            print "Committing changes"
+            child.send("commit and-quit\r")
+            time.sleep(3)
+            child.send("quit\r")
+            time.sleep(1)
+            child.send("exit\r")
+            time.sleep(1)
+            child.send("exit\r")
+            time.sleep(1)
+            child.send("exit\r")
+            print "all-done"
+        else: 
+            print "console does not appear to be available"
+            return False
+    except pexpect.TIMEOUT as t:
+        print "Error adding interface to trust zone"
+        return False
+    except:
+        print "console does not appear to be available"
+        return False
+
+def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
     try:
         needsPw = False
         
@@ -92,14 +135,9 @@ def preconfigJunosDomain(dom, pw, em0Ip):
         print "Turning on netconf and ssh"
         child.send("set system services netconf ssh\r")
         child.send("set system services ssh\r")
-        if ou.checkIsLinux():
-            child.send("delete interface em0\r");
-            print "Configuring em0- default to /24 for now!!!"
-            child.send("set interface em0 unit 0 family inet address " + em0Ip + "/24\r")
-        else:
-            child.send("delete interface fxp0\r");
-            print "Configuring fpx0 - default to /24 for now!!!"
-            child.send("set interface fpx0 unit 0 family inet address " + em0Ip + "/24\r")
+        child.send("delete interface " + mgmtInterface + "\r");
+        print "Configuring " + mgmtInterface + " default to /24 for now!!!"
+        child.send("set interface " + mgmtInterface + " unit 0 family inet address " + em0Ip + "/24\r")
 
         print "Committing changes"
         child.send("commit and-quit\r")
@@ -109,12 +147,11 @@ def preconfigJunosDomain(dom, pw, em0Ip):
         child.send("exit\r")
         time.sleep(1)
         child.send("exit\r")
+        time.sleep(1)
+        child.send("exit\r")
         print "all-done"
 
         return True
-        print repr(t)
-        print "Failed to preconfig junos domain!"
-        raise wistarException("Timed out trying to preconfigure device!")
     
     except pexpect.EOF as e:
         print repr(e)
