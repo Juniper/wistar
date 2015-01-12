@@ -12,6 +12,8 @@ import common.lib.osUtils as ou
 import common.lib.vboxUtils as vu
 from images.models import Image
 from topologies.models import Topology
+from topologies.models import ConfigSet
+from topologies.models import Config
 # import logging
 import time
 import json
@@ -21,6 +23,17 @@ debug = True
 
 def index(request):
     return HttpResponseRedirect('/topologies/')
+
+def manageHypervisor(request):
+    return render(request, 'ajax/manageHypervisor.html')
+
+def viewDomain(request, domain_id):
+    domain = lu.getDomainByUUID(domain_id)
+    return render(request, 'ajax/viewDomain.html', {'domain': domain, 'xml' : domain.XMLDesc(0)})
+
+def viewNetwork(request, network_name):
+    network = lu.getNetworkByName(network_name)
+    return render(request, 'ajax/viewNetwork.html', {'network': network, 'xml' : network.XMLDesc(0)})
 
 # fixme - remove need for csrf_exempt!
 @csrf_exempt
@@ -188,16 +201,32 @@ def refreshDeploymentStatus(request):
         return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
     
     topologyId = request.POST['topologyId']
+
+
+    if topologyId == "":
+        print "Found a blank topoId, returing full hypervisor status"
+        return refreshHypervisorStatus(request)
+
     domain_list = lu.getDomainsForTopology("t" + topologyId)
     network_list = []
     if ou.checkIsLinux():
         network_list = lu.getNetworksForTopology("t" + topologyId)
 
-    context = {'domain_list': domain_list, 'network_list' : network_list }
+    context = {'domain_list': domain_list, 'network_list' : network_list, 'topologyId' : topologyId }
     return render(request, 'ajax/deploymentStatus.html', context)
 
-
 @csrf_exempt
+def refreshHypervisorStatus(request):
+    domains = lu.listDomains()
+    if ou.checkIsLinux():
+        networks = lu.listNetworks()
+    else:
+        networks = []
+
+    context = {'domain_list': domains, 'network_list' : networks }
+    return render(request, 'ajax/deploymentStatus.html', context )
+
+csrf_exempt
 def manageDomain(request):
     response_data = {}
     requiredFields = set([ 'domainId', 'action', 'topologyId' ])
@@ -209,23 +238,20 @@ def manageDomain(request):
     topologyId = request.POST['topologyId'] 
 
     if action == "start": 
-        ret = lu.startDomain(domainId)
-        if ret == True:
+        if lu.startDomain(domainId):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', { 'error' : "Could not start domain!" } )
 
     elif action == "stop":
-        ret = lu.stopDomain(domainId)
-        if ret == True:
+        if lu.stopDomain(domainId):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
 
     elif action == "undefine":
         sourceFile = lu.getImageForDomain(domainId)
-        ret = lu.undefineDomain(domainId)
-        if ret == True:
+        if lu.undefineDomain(domainId):
             if sourceFile is not None:
                 ou.removeInstance(sourceFile)
             return refreshDeploymentStatus(request)
@@ -233,6 +259,84 @@ def manageDomain(request):
             return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
     else:
             return render(request, 'ajax/ajaxError.html', { 'error' : "Unknown Parameters in POST!" } )
+
+@csrf_exempt
+def manageNetwork(request):
+    response_data = {}
+    requiredFields = set([ 'networkName', 'action', 'topologyId' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    networkName = request.POST['networkName'] 
+    action = request.POST['action'] 
+    topologyId = request.POST['topologyId'] 
+
+    if action == "start": 
+        if lu.startNetwork(networkName):
+            return refreshDeploymentStatus(request)
+        else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Could not start network!" } )
+    elif action == "stop":
+        if lu.stopNetwork(networkName):
+            return refreshDeploymentStatus(request)
+        else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop network!" } )
+
+    elif action == "undefine":
+        if lu.undefineNetwork(networkName):
+            return refreshDeploymentStatus(request)
+        else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
+    else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Unknown Parameters in POST!" } )
+
+@csrf_exempt
+def pushConfigSet(request):
+    print "Pushing ConfigSet"
+    response_data = {}
+    response_data["result"] = True
+
+    requiredFields = set([ 'id' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    configSetId = request.POST['id'] 
+
+    print "csid is " + configSetId
+
+    cs = ConfigSet.objects.get(pk=configSetId)
+
+    print "Got cs"
+    topo = cs.topology
+
+    configs = Config.objects.filter(configSet=cs)
+
+    for config in configs:
+        print config.ip
+        try:
+            ju.pushConfigString(config.deviceConfig, config.ip, config.password)
+        except Exception as e:
+            print "Could not reload config on " + str(config.ip)
+            response_data["message"] = response_data["message"] + " Error pushing to " + str(config.ip)
+            print e
+
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+@csrf_exempt
+def deleteConfigSet(request):
+    print "Deleting ConfigSet"
+    response_data = {}
+    response_data["result"] = True
+
+    requiredFields = set([ 'id' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    configSetId = request.POST['id']
+    cs = ConfigSet.objects.get(pk=configSetId)
+    cs.delete()
+    
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
 def deployTopology(request):

@@ -105,19 +105,20 @@ def pushConfigElement(xmlData, dev):
     try:
         cu = Config(dev)
         cu.lock
-        cu.load(xmlData)
+        cu.load(xmlData, overwrite=True)
         diff = cu.diff()
         print diff
         if diff is not None:
             print "Committing"
-            cu.commit()
+            cu.commit(comment="Commit via wistar")
 
-        time.sleep(2)
-        print "Unlocking config"
-        try:
-            cu.unlock()
-        except UnlockError as ue:
-            print repr(ue)
+            time.sleep(3)
+            print "Unlocking config"
+            try:
+                cu.unlock()
+            except UnlockError as ue:
+                print "Error unlocking config"
+                print repr(ue)
 
         return True
     except RpcError as e:
@@ -125,7 +126,14 @@ def pushConfigElement(xmlData, dev):
         print repr(e)
         return False
 
+def pushConfigString(xmlString, ip, pw):
+    print "Pushing new config to " + str(ip)
+    dev = getDeviceReference(ip, "root", pw)
+    xmlData = etree.fromstring(xmlString)
+    pushConfigElement(xmlData, dev)
 
 def getConfig(ip, pw):
     dev = getDeviceReference(ip, "root", pw)
-    return dev.execute("<get-interface-information></get-interface-information>") 
+    xml = dev.execute("<get-config><source><running/></source></get-config>") 
+    configElement = xml.find('configuration')
+    return etree.tostring(configElement)

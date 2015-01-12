@@ -47,6 +47,8 @@ def loadJson(rawJson, topo_id):
             device["name"] = "t" + str(topo_id) + "_" + ud["label"]
             device["imageId"] = ud["image"]
             device["type"] = ud["type"]
+            device["ip"] = ud["ip"]
+            device["password"] = ud["password"]
             device["uuid"] = jsonObject["id"]
             device["interfaces"] = []
             device["managementInterfaces"] = []

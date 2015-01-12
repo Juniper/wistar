@@ -20,19 +20,28 @@
                 </td>
                 <td>
                 {% if d.state != "running" %}
-                    <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}');">
+                    <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}');"
+                        title="Power on instance in Hypervisor">
                         <font color="green">Start</font>
                     </a>
                     &nbsp;
                 {% else %}
-                    <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}');">
+                    <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}');"
+                        title="Power off instance in Hypervisor">
                         <font color="red">Stop</font>
                     </a>
                     &nbsp;
                 {% endif %}
-                    <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');">
+                    <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');"
+                        title="Delete Instance entirely!">
                         <font color="black">Undefine</font>
                     </a>
+                {% if topologyId == None %}
+                    &nbsp;
+                    <a href="/ajax/viewDomain/{{ d.uuid }}" title="Dump details from Hypervisor in XML">
+                        <font color="black">Detail</font>
+                    </a>
+                {% endif %}
                 </td>
               </tr>
               {% endfor %}
@@ -49,17 +58,39 @@
               {% for n in network_list %}
               <tr>
                 <td>
-                 {{ n.name }}
+                  {{ n.name }}
                 </td>
                 <td>
-
-                 {{ n.state }}
+                  {{ n.state }}
                 </td>
                 <td>
-                 Options
+                {% if n.state != "running" %}
+                    <a href="#" onclick="javascript: manageNetwork('start', '{{ n.name }}');"
+                        title="Power on network in Hypervisor">
+                        <font color="green">Start</font>
+                    </a>
+                    &nbsp;
+                {% else %}
+                    <a href="#" onclick="javascript: manageNetwork('stop', '{{ n.name}}');"
+                        title="Power off network in Hypervisor">
+                        <font color="red">Stop</font>
+                    </a>
+                    &nbsp;
+                {% endif %}
+                    <a href="#" onclick="javascript: manageNetwork('undefine', '{{ n.name}}');"
+                        title="Delete Network entirely">
+                        <font color="black">Undefine</font>
+                    </a>
+                {% if topologyId == None %}
+                    &nbsp;
+                    <a href="/ajax/viewNetwork/{{ n.name }}">
+                        <font color="black">Detail</font>
+                    </a>
+                {% endif %}
                 </td>
               </tr>
               {% endfor %}
+              {% if topologyId != None %}
               <tr>
                 <td colspan="3">
                   <input type="button" name="deployButton" id="deployButton"
@@ -69,5 +100,13 @@
                     value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus();"/>
                 </td>
               </tr>
+              {% else %}
+              <tr>
+                <td colspan="3">
+                  <input type="button" name="refreshDSButton" id="refreshDSButton"
+                    value="Refresh Hypervisor Status" onclick="javascript: refreshHypervisorStatus();"/>
+                </td>
+              </tr>
+              {% endif %}
             </table>
 

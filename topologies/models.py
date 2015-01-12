@@ -32,6 +32,8 @@ class Config(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True, auto_now_add=True)
     ip = models.IPAddressField()
+    deviceConfig = models.TextField()
+    password = models.TextField()
     
     class Meta:
       verbose_name = 'Config'

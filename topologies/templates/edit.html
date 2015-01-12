@@ -133,9 +133,22 @@
         $("json").value = jsonTxt;
     }
 
+    function updateTopology() {
+        alert('You may need to redeploy this topology after this update!');
+	    exportJson();
+	    $('topoForm').submit();
+    }
+
     function saveTopology() {
 	    exportJson();
 	    $('topoForm').submit();
+    }
+
+    function createConfigSet() {
+        var r = confirm("Snapshot configs of all running instances?");
+        if (r == true) {
+            $('configSetForm').submit();
+        }
     }
 
     function cloneTopology() {
@@ -203,6 +216,27 @@
         var successMessage = "Success!";
         
         simpleAjaxRequest(url, params, successMessage);
+    }
+
+    function pushConfigSet(configSetId) {
+        var url = "/ajax/pushConfigSet/"
+        var params = {
+            'id' : configSetId
+        };
+        var successMessage = "Config Set Push Complete!";
+        
+        simpleAjaxRequest(url, params, successMessage);
+    }
+
+    function deleteConfigSet(configSetId) {
+        var url = "/ajax/deleteConfigSet/"
+        var params = {
+            'id' : configSetId
+        };
+        var successMessage = "Config Set Deleted";
+        
+        simpleAjaxRequest(url, params, successMessage);
+        location.reload();
     }
 
     function preconfigFirefly(label, password, mgmtInterface) {
@@ -280,6 +314,17 @@
                 'domainId' : domainId,
                 'action' : action
         
+            }
+        });
+    }
+
+    // Simple function to update the deploymentStatusDiv with the current hypervisor state
+    function manageNetwork(action, networkName) {
+        new Ajax.Updater('deploymentStatus', '/ajax/manageNetwork/', {
+            parameters: {
+                'topologyId' : '{{ topo.id }}',
+                'networkName' : networkName,
+                'action' : action
             }
         });
     }
@@ -398,6 +443,11 @@
 	    exportJson();
 	    $('debug').value = "";
 	    $('debug').value = $('json').value;
+    }
+
+    function importJson() {
+        $('json').value = $('debug').value;
+        loadTopology();
     }
 
     function setSelectedObject(objectId) {
@@ -604,6 +654,8 @@
                   <input type="button" name="clone_button" id="clone_button" 
                     value="Clone" onclick="javascript: cloneTopology();"/>
                   &nbsp;
+                  <input type="button" name="submit_button" id="submit_button" 
+                    value="Update" onclick="javascript: updateTopology();"/>
                   {% else %}
                   <input type="button" name="submit_button" id="submit_button" 
                     value="Save" onclick="javascript: saveTopology();"/>
@@ -817,6 +869,63 @@
             </table>
           </div>
           <div id="deploymentStatus">
+          </div>
+          <div id="configSets">
+            <form method="post" id="configSetForm" name="configSetForm"
+            action="{% url 'topologies:createConfigSet' %}" method="POST">
+            {% csrf_token %}
+            <table>
+              <tr>
+                <th colspan="3">
+                  Config Sets
+                </th>
+              </tr>
+              <tr>
+                <td>
+                  Name
+                </td>
+                <td colspan="2">
+                  <input type="text" size="30" maxsize="30" name="name" id="configSetName" value="New Config Set"/>
+                  <input type="hidden" id="selectedObject" value="0">
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Description
+                </td>
+                <td colspan="2">
+                  <textarea rows="3" id="configSetDescription" name="description">Base Config</textarea>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="3">
+                  <input type="hidden" name="topoId" id="configSetTopoId" value="{{ topo.id}}"/>
+                  <input type="button" name="configSet_create_button" id="configSet_create_button"
+                    value="Create" onclick="javascript: createConfigSet();"/>
+                </td>
+              </tr>
+              {% if configSets|length != 0 %}
+              <tr>
+                <th colspan="3"> Saved Config Sets </th>
+              </tr>
+              {% for c in configSets %}
+              <tr>
+                <td>
+                  {{ c.name }} 
+                </td>
+                <td>
+                  {{ c.description}} 
+                </td>
+                <td>
+                  <a href="#" onclick="javascript: pushConfigSet({{ c.id }})">Push</a>
+                  &nbsp;
+                  <a href="#" onclick="javascript: deleteConfigSet({{ c.id }})">Delete</a>
+                </td>
+              </tr>
+              {% endfor %}
+              {% endif %}
+            </table>
+            </form>
           </div>
         </td>
         </td>
