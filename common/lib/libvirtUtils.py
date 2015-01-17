@@ -329,6 +329,20 @@ def startNetwork(networkName):
     except Exception as e:
         return False
 
+def getDomainVncPort(domain):
+    xml = domain.XMLDesc(0)
+    xmlDocument = etree.fromstring(xml)
+    graphicsElement = xmlDocument.find(".//graphics")
+    if graphicsElement is not None:
+        graphicsType = graphicsElement.get("type")
+        if graphicsType == "vnc":
+            vncPort = graphicsElement.get("port") 
+            print "Found vncPort: " + str(vncPort)
+            return vncPort
+        else:
+            return 0
+    else:
+        return 0
 
 # simple func to ensure we always use a valid vncPort
 def getNextDomainVncPort():
@@ -338,15 +352,9 @@ def getNextDomainVncPort():
     usedPorts = []
     domains = conn.listAllDomains(0)
     for d in domains:
-        xml = d.XMLDesc(0)
-        xmlDocument = etree.fromstring(xml)
-        graphicsElement = xmlDocument.find(".//graphics")
-        if graphicsElement is not None:
-            graphicsType = graphicsElement.get("type")
-            if graphicsType == "vnc":
-                vncPort = graphicsElement.get("port") 
-		print "Found vncPort: " + str(vncPort)
-                usedPorts.append(int(vncPort))
+        vncPort = getDomainVncPort(d)
+        if vncPort != 0:
+            usedPorts.append(int(vncPort))
 
     if len(usedPorts) > 1:
         usedPorts.sort()

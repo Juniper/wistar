@@ -1,6 +1,10 @@
 import json
 import libvirtUtils as lu
 import osUtils as ou
+import os 
+import subprocess
+from multiprocessing import Process
+import time
 
 macIndex = 0
 
@@ -145,4 +149,37 @@ def loadJson(rawJson, topo_id):
     returnObject["devices"] = devices
     return returnObject
 
+
+def launchWebSocket(vncPort, wsPort, server):
+    args = " 127.0.0.1:" + str(vncPort) + " 127.0.0.1:" + str(wsPort) + " &"
+    path = os.path.abspath(os.path.curdir)
+    ws = os.path.join(path, "webConsole/bin/websockify.py")
+    
+    cmd = str(ws) + args
+
+    print cmd
+
+    proc = subprocess.Popen(ws + " " + server + ":" + str(vncPort) + " " + server + ":" + str(wsPort) + " &", 
+        shell=True, close_fds=True)
+    time.sleep(1)
+    return proc.pid
+
+def checkPid(pid):        
+    """ Check For the existence of a unix pid. 
+        shamelessly taken from stackoverflow
+        http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
+    """
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
+
+def checkWebSocket(server, wsPort):
+    rt = os.system('ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | grep -v grep')
+    if rt == 0:
+        return True
+    else:
+        return False
 

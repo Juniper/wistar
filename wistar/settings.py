@@ -53,6 +53,7 @@ INSTALLED_APPS = (
     'images',
     'common',
     'ajax',
+    'webConsole',
 )
 
 MIDDLEWARE_CLASSES = (

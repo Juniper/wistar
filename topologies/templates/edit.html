@@ -204,6 +204,36 @@
         return "t{{ topo.id }}_" + name;
     }
 
+
+    function launchWebConsole(domain) {
+        var url = "/ajax/launchWebConsole/";
+        var params = {
+            'domain' : domain
+        };
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+        new Ajax.Request(url, {
+            parameters: params,
+            onSuccess: function(response) {
+                data = eval(response.responseJSON);
+                console.log(data);
+                doc.style.cursor = '';
+                if (data["result"] == false) {
+                    alert(data["message"]);
+                } else {
+                    console.log("open a window");
+                    windowUrl = "/webConsole/" + data["port"]
+                    window.open(windowUrl);
+                }
+            },
+            onFailure: function(response) {
+                doc.style.cursor = '';
+                alert("Could not perform request!");
+                console.log(response);
+            }
+        });
+    }
+
     function preconfigJunosDomain(label, password, ip, mgmtInterface) {
         domain = generateDomainNameFromLabel(label);
         var url = "/ajax/preconfigJunosDomain/";
@@ -354,6 +384,7 @@
 		        } else {
 			        alert(successMessage);
 		        }
+                return data;
             },
             onFailure: function(response) {
                 doc.style.cursor = '';

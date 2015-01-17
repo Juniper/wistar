@@ -226,7 +226,7 @@ def refreshHypervisorStatus(request):
     context = {'domain_list': domains, 'network_list' : networks }
     return render(request, 'ajax/deploymentStatus.html', context )
 
-csrf_exempt
+@csrf_exempt
 def manageDomain(request):
     response_data = {}
     requiredFields = set([ 'domainId', 'action', 'topologyId' ])
@@ -448,3 +448,87 @@ def deployTopology(request):
         network_list = lu.getNetworksForTopology("t" + topologyId)
     context = {'domain_list': domain_list, 'network_list' : network_list }
     return render(request, 'ajax/deploymentStatus.html', context)
+
+
+@csrf_exempt
+def launchWebConsole(request):
+    print "Let's launch a console!"
+
+    requiredFields = set([ 'domain' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    response_data = {}
+    domain = request.POST["domain"]
+    print "Got domain of: " + domain
+    # this keeps a list of used ports around for us
+    webConsoleDict = request.session.get("webConsoleDict")
+
+    server = request.META["SERVER_NAME"]
+
+    print webConsoleDict
+    if webConsoleDict is None:
+        print "no previous webConsoles Found!"
+        webConsoleDict = {}
+        request.session["webConsoleDict"] = webConsoleDict
+
+    print "OK, do we have this domain?"
+    if webConsoleDict.has_key(domain):
+        print "yep"
+        wsConfig = webConsoleDict[domain]
+        pid = wsConfig["pid"]
+        wsPort = wsConfig["wsPort"]
+        vncPort = wsConfig["vncPort"]
+
+        if wu.checkWebSocket(server, wsPort):
+            print "This websocket is already running"
+            response_data["result"] = True
+            response_data["message"] = "already running on port: " + wsPort
+            response_data["port"] = wsPort
+            return HttpResponse(json.dumps(response_data), content_type="application/json")
+        else:
+            pid = wu.launchWebSocket(wsPort, vncPort, server)
+            if pid is not None:
+                wsConfig["pid"] = pid
+                response_data["result"] = True
+                response_data["message"] = "started webconsole on port: " + wsPort
+                response_data["port"] = wsPort
+                return HttpResponse(json.dumps(response_data), content_type="application/json")
+            else:
+                response_data["result"] = False
+                response_data["message"] = "Could not start webConsole"
+                return HttpResponse(json.dumps(response_data), content_type="application/json")
+    else:
+        print "nope"
+        # start the ws ports at 6900
+        wsPort = len(webConsoleDict.keys()) + 6900
+
+        print "using wsPort of " + str(wsPort)
+        # get the domain from the hypervisor
+        d = lu.getDomainByName(domain)
+        # now grab the configured vncport
+        vncPort = lu.getDomainVncPort(d)
+
+        print "Got VNC port " + str(vncPort)
+        pid = wu.launchWebSocket(wsPort, vncPort, server)
+
+        print "what happend? " + str(pid)
+        if pid is None:
+            print "oh no"
+            response_data["result"] = False
+            response_data["message"] = "Could not start webConsole"
+            print "returning"
+            return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+        print "Launched with pid " + str(pid)
+        wcConfig = {}
+        wcConfig["pid"] = str(pid)
+        wcConfig["vncPort"] = str(vncPort)
+        wcConfig["wsPort"] = str(wsPort)
+      
+        webConsoleDict[domain] = wcConfig 
+        request.session["webConsoleDict"] = webConsoleDict
+        response_data["result"] = True
+        response_data["message"] = "started webconsole on port: " + str(wsPort)
+        response_data["port"] = wsPort
+        return HttpResponse(json.dumps(response_data), content_type="application/json")

@@ -31,6 +31,11 @@
                         <font color="red">Stop</font>
                     </a>
                     &nbsp;
+                    <a href="#" onclick="javascript: launchWebConsole('{{ d.name }}');"
+                        title="Launch Console">
+                        <font color="blue">Console</font>
+                    </a>
+                    &nbsp;
                 {% endif %}
                     <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');"
                         title="Delete Instance entirely!">

@@ -100,12 +100,12 @@ def configJunosInterfaces(ip, pw):
     setAllInterfaceMac(dev, interfaces)
 
 
-def pushConfigElement(xmlData, dev):
+def pushConfigElement(xmlData, dev, overwrite=False):
     print etree.tostring(xmlData, pretty_print=True)
     try:
         cu = Config(dev)
         cu.lock
-        cu.load(xmlData, overwrite=True)
+        cu.load(xmlData, overwrite=overwrite)
         diff = cu.diff()
         print diff
         if diff is not None:
@@ -130,7 +130,7 @@ def pushConfigString(xmlString, ip, pw):
     print "Pushing new config to " + str(ip)
     dev = getDeviceReference(ip, "root", pw)
     xmlData = etree.fromstring(xmlString)
-    pushConfigElement(xmlData, dev)
+    pushConfigElement(xmlData, dev, True)
 
 def getConfig(ip, pw):
     dev = getDeviceReference(ip, "root", pw)
