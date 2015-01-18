@@ -476,6 +476,16 @@
 	    $('debug').value = $('json').value;
     }
 
+    function showConfigSetEditor() {
+        manuallyTogglePanel('configSetCreateForm', '');
+        manuallyTogglePanel('configSetCreateRow', 'none');
+    }
+
+    function showTopoEditor() {
+        manuallyTogglePanel('topoEditorForm', '');
+        manuallyTogglePanel('topoInfo', 'none');
+    }
+
     function importJson() {
         $('json').value = $('debug').value;
         loadTopology();
@@ -649,13 +659,18 @@
     </script>
 {% endblock %}
 {% block content %}
-    <table border="1">
+    <table border="0" style="border: 1px solid #000">
       <tr>
         <td id="topoFormContainer" style="vertical-align: top">
           <form method="post" id="topoForm" name="topoForm" 
             action="{% url 'topologies:create' %}" method="POST">
             {% csrf_token %}
             <table>
+            {% if topo_id != None %}
+             <tbody id="topoEditorForm" style="display: none">
+            {% else %}
+             <tbody id="topoEditorForm">
+            {% endif %}
               <tr>
                 <td>
                   Name
@@ -671,7 +686,7 @@
                   Description
                 </td>
                 <td>
-                  <textarea rows="3"id="description" name="description">{{ topo.description }}</textarea>
+                  <textarea rows="3" id="description" name="description">{{ topo.description }}</textarea>
                 </td>
               </tr>
               <tr>
@@ -679,12 +694,6 @@
                   {% if topo_id != None %}
                   &nbsp;
                   <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
-                  <input type="button" name="delete_button" id="delete_button" 
-                    value="Delete" onclick="javascript: deleteTopology();"/>
-                  &nbsp;
-                  <input type="button" name="clone_button" id="clone_button" 
-                    value="Clone" onclick="javascript: cloneTopology();"/>
-                  &nbsp;
                   <input type="button" name="submit_button" id="submit_button" 
                     value="Update" onclick="javascript: updateTopology();"/>
                   {% else %}
@@ -695,6 +704,47 @@
                     value="Debug" onclick="javascript: showDebug();"/>
                 </td>
               </tr>
+             </tbody>
+            {% if topo_id != None %}
+             <tbody id="topoInfo">
+            {% else %}
+             <tbody id="topoInfo" style="display: none">
+            {% endif %}
+              <tr>
+                <th colspan="2">
+                  Topology Details
+                </th>
+              </tr>
+              <tr>
+                <td>
+                  Name:
+                </td>
+                <td>
+                  {{ topo.name }}
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Description:
+                </td>
+                <td>
+                  {{ topo.description }}
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2">
+                  <input type="button" name="showTopoEditorButton" id="showTopoEditorButton" 
+                    value="Edit" onclick="javascript: showTopoEditor();"/>
+                  &nbsp;
+                  <input type="button" name="delete_button" id="delete_button" 
+                    value="Delete" onclick="javascript: deleteTopology();"/>
+                  &nbsp;
+                  <input type="button" name="clone_button" id="clone_button" 
+                    value="Clone" onclick="javascript: cloneTopology();"/>
+                  &nbsp;
+                </td>
+              </tr>
+             </tbody>
             </table>
           </form>
           {% if topo_id != None %}
@@ -709,7 +759,7 @@
                   IP Address
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/> &nbsp;
+                  <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/>
                 </td>
               </tr>
               <tr>
@@ -720,7 +770,6 @@
                   <input type="text" size="15" maxsize="15"
                     name="topoIconPass" id="topoIconPass" value="" 
                     onblur="javascript: checkPass(this.value);"/> 
-                  &nbsp;
                 </td>
               </tr>
               <tr>
@@ -728,7 +777,7 @@
                   Instance Name
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value=""/> &nbsp;
+                  <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value=""/>
                 </td>
               </tr>
               <tr>
@@ -763,7 +812,7 @@
               </tr>
               <tr>
                 <td colspan="2">
-                  <input type="button" onclick="javascript: addIcon();" value="Add vMX"/>
+                  <input type="button" onclick="javascript: addIcon();" value="Add Instance"/>
                 </td>
               </tr>
             </table>
@@ -778,7 +827,7 @@
                   IP Address
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="junosIconIp" id="junosIconIp" value=""/> &nbsp;
+                  <input type="text" size="15" maxsize="15" name="junosIconIp" id="junosIconIp" value=""/>
                 </td>
               </tr>
               <tr>
@@ -788,7 +837,6 @@
                 <td>
                   <input type="text" size="15" maxsize="15"
                     name="junosIconPass" id="junosIconPass" value=""/>
-                  &nbsp;
                 </td>
               </tr>
               <tr>
@@ -796,7 +844,12 @@
                   Instance Name
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="junosIconName" id="junosIconName" value=""/> &nbsp;
+                  <input type="text" size="15" maxsize="15" name="junosIconName" id="junosIconName" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2">
+                  <input type="button" onclick="javascript: updateJunosIcon();" value="Update"/>
                 </td>
               </tr>
               <tr>
@@ -805,11 +858,6 @@
                 </td>
                 <td>
                   <div id="junosIconNeighbors"></div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <input type="button" onclick="javascript: updateJunosIcon();" value="Update"/>
                 </td>
               </tr>
             </table>
@@ -899,13 +947,13 @@
               </tr>
             </table>
           </div>
-          <div id="deploymentStatus">
-          </div>
+          <div id="deploymentStatus"></div>
+          {% if topo_id != None %}
           <div id="configSets">
-            <form method="post" id="configSetForm" name="configSetForm"
-            action="{% url 'topologies:createConfigSet' %}" method="POST">
+            <form method="post" id="configSetForm" name="configSetForm" action="{% url 'topologies:createConfigSet' %}" method="POST">
             {% csrf_token %}
             <table>
+              <tbody id="configSetCreateForm" style="display: none">
               <tr>
                 <th colspan="3">
                   Config Sets
@@ -932,9 +980,11 @@
                 <td colspan="3">
                   <input type="hidden" name="topoId" id="configSetTopoId" value="{{ topo.id}}"/>
                   <input type="button" name="configSet_create_button" id="configSet_create_button"
-                    value="Create" onclick="javascript: createConfigSet();"/>
+                    value="Save" onclick="javascript: createConfigSet();"/>
                 </td>
               </tr>
+              </tbody>
+              <tbody>
               {% if configSets|length != 0 %}
               <tr>
                 <th colspan="3"> Saved Config Sets </th>
@@ -955,10 +1005,19 @@
               </tr>
               {% endfor %}
               {% endif %}
+              </tbody>
+              <tbody id="configSetCreateRow">
+                <tr>
+                  <td colspan="3">
+                    <input type="button" name="configSet_editor_button" id="configSet_editor_button"
+                    value="Create" onclick="javascript: showConfigSetEditor();"/>
+                  </td>
+                 </tr>
+              </tbody>
             </table>
             </form>
           </div>
-        </td>
+          {% endif %}
         </td>
         <td style="vertical-align: top">
           <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 

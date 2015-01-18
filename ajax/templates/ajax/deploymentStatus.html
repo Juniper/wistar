@@ -1,3 +1,4 @@
+{% load staticfiles %}
             <table>
               <tr>
                   <th colspan="3"> Domain Status </th>
@@ -19,33 +20,34 @@
                  {{ d.state }}
                 </td>
                 <td>
+                    <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');"
+                        title="Delete Instance entirely!">
+                        <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/>
+                    </a>
+                    &nbsp;
+                {% if topologyId == None %}
+                    <a href="/ajax/viewDomain/{{ d.uuid }}" title="Dump details from Hypervisor in XML">
+                        <img src="{% static "images/detail.png" %}" width="20px" height="20px"/>
+                    </a>
+                    &nbsp;
+                {% endif %}
                 {% if d.state != "running" %}
                     <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}');"
                         title="Power on instance in Hypervisor">
-                        <font color="green">Start</font>
+                        <img src="{% static "images/running.png" %}" width="20px" height="20px"/>
                     </a>
                     &nbsp;
                 {% else %}
                     <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}');"
                         title="Power off instance in Hypervisor">
-                        <font color="red">Stop</font>
+                        <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/>
                     </a>
                     &nbsp;
                     <a href="#" onclick="javascript: launchWebConsole('{{ d.name }}');"
                         title="Launch Console">
-                        <font color="blue">Console</font>
+                        <img src="{% static "images/console.png" %}" width="20px" height="20px"/>
                     </a>
                     &nbsp;
-                {% endif %}
-                    <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');"
-                        title="Delete Instance entirely!">
-                        <font color="black">Undefine</font>
-                    </a>
-                {% if topologyId == None %}
-                    &nbsp;
-                    <a href="/ajax/viewDomain/{{ d.uuid }}" title="Dump details from Hypervisor in XML">
-                        <font color="black">Detail</font>
-                    </a>
                 {% endif %}
                 </td>
               </tr>
@@ -69,28 +71,29 @@
                   {{ n.state }}
                 </td>
                 <td>
+                    <a href="#" onclick="javascript: manageNetwork('undefine', '{{ n.name}}');"
+                        title="Delete Network entirely">
+                        <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/>
+                    </a>
+                    &nbsp;
+                {% if topologyId == None %}
+                    <a href="/ajax/viewNetwork/{{ n.name }}">
+                        <img src="{% static "images/detail.png" %}" width="20px" height="20px"/>
+                    </a>
+                    &nbsp;
+                {% endif %}
                 {% if n.state != "running" %}
                     <a href="#" onclick="javascript: manageNetwork('start', '{{ n.name }}');"
                         title="Power on network in Hypervisor">
-                        <font color="green">Start</font>
+                        <img src="{% static "images/running.png" %}" width="20px" height="20px"/>
                     </a>
                     &nbsp;
                 {% else %}
                     <a href="#" onclick="javascript: manageNetwork('stop', '{{ n.name}}');"
                         title="Power off network in Hypervisor">
-                        <font color="red">Stop</font>
+                        <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/>
                     </a>
                     &nbsp;
-                {% endif %}
-                    <a href="#" onclick="javascript: manageNetwork('undefine', '{{ n.name}}');"
-                        title="Delete Network entirely">
-                        <font color="black">Undefine</font>
-                    </a>
-                {% if topologyId == None %}
-                    &nbsp;
-                    <a href="/ajax/viewNetwork/{{ n.name }}">
-                        <font color="black">Detail</font>
-                    </a>
                 {% endif %}
                 </td>
               </tr>

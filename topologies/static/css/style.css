@@ -257,9 +257,9 @@ dd {
 /** Forms **/
 form {
 	clear: both;
-	margin-right: 20px;
+	/* margin-right: 20px; */
 	padding: 0;
-	width: 95%;
+	/* width: 95%; */
 }
 fieldset {
 	border: none;
