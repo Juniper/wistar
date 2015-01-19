@@ -6,7 +6,7 @@ def index(request):
 def console(request, port):
     context = {}
     context["port"] = port
-    context["server"] = request.META["SERVER_NAME"]
+    context["server"] = request.get_host().split(":")[0]
 
     wc = request.session["webConsoleDict"]
     for d in wc.keys():

@@ -464,7 +464,8 @@ def launchWebConsole(request):
     # this keeps a list of used ports around for us
     webConsoleDict = request.session.get("webConsoleDict")
 
-    server = request.META["SERVER_NAME"]
+    # server = request.META["SERVER_NAME"]
+    server = request.get_host().split(":")[0]
 
     print webConsoleDict
     if webConsoleDict is None:

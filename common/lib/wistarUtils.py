@@ -27,13 +27,6 @@ def getDeviceName(index):
 # load raw Json into an object containing a list of devices and a list of networks
 def loadJson(rawJson, topo_id):
 
-    # grab all currently defined vncPorts
-    if ou.checkIsLinux():
-        nextAvailableVncPort = lu.getNextDomainVncPort()
-    else:
-        # not required for mac / virtualbox
-        nextAvailableVncPort = 5900
-
     # reset macIndex for this run
     global macIndex
     macIndex = 0
@@ -42,7 +35,7 @@ def loadJson(rawJson, topo_id):
     devices = []
     networks = []
 
-    deviceIndex = 1
+    deviceIndex = 0
     for jsonObject in jsonData:
         if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
             ud = jsonObject["userData"]
@@ -56,8 +49,11 @@ def loadJson(rawJson, topo_id):
             device["uuid"] = jsonObject["id"]
             device["interfaces"] = []
             device["managementInterfaces"] = []
-
-            device["vncPort"] = int(nextAvailableVncPort) + deviceIndex
+            if ou.checkIsLinux():
+                device["vncPort"] = lu.getNextDomainVncPort(deviceIndex)
+            else :
+                device["vncPort"] = "5900"
+    
             deviceIndex += 1
 
             # if this is a vmx, let's create the mandatory two mgmt ports in the 

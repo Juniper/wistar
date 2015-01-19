@@ -240,6 +240,7 @@ def undefineDomain(domainId):
         return True
 
     except Exception as e:
+        print e
         return False
 
 def stopDomain(domainId):
@@ -252,6 +253,7 @@ def stopDomain(domainId):
         return True
 
     except Exception as e:
+        print e
         return False
 
 def startDomain(domainId):
@@ -264,7 +266,8 @@ def startDomain(domainId):
             domain.create()
         return True
 
-    except:
+    except Exception as e:
+        print e
         return False
 
 def startDomainByName(domainName):
@@ -275,7 +278,8 @@ def startDomainByName(domainName):
     
         return True
     
-    except:
+    except Exception as e:
+        print e
         return False
     
 def undefineNetwork(networkName):
@@ -292,6 +296,7 @@ def undefineNetwork(networkName):
         return True
 
     except Exception as e:
+        print e
         return False
 
 def stopNetwork(networkName):
@@ -308,6 +313,7 @@ def stopNetwork(networkName):
         return True
 
     except Exception as e:
+        print e
         return False
 
 def startNetwork(networkName):
@@ -327,6 +333,7 @@ def startNetwork(networkName):
         return True
 
     except Exception as e:
+        print e
         return False
 
 def getDomainVncPort(domain):
@@ -345,7 +352,9 @@ def getDomainVncPort(domain):
         return 0
 
 # simple func to ensure we always use a valid vncPort
-def getNextDomainVncPort():
+def getNextDomainVncPort(offset=0):
+    print "Getting next vnc port with offset: " + str(offset)
+    currIter = 0
     if not connect():
         return False
 
@@ -358,16 +367,29 @@ def getNextDomainVncPort():
 
     if len(usedPorts) > 1:
         usedPorts.sort()
+        print str(usedPorts)
         last = usedPorts[0]
+        max = usedPorts[-1]
         for p in usedPorts:
-            if (p - last) > 1:
-                return p + 1
+            if (int(p) - int(last)) > 1:
+                next = int(last) + 1
+                if currIter == offset:
+                    print "retuning " + str(next) 
+                    return str(next)
+                else:
+                    print "keep going:" + str(next) 
+                    currIter = currIter + 1
+                    last = p
             else:
                 last = p
 
-        return last + 1 
+        # we ran through all the ports and didn't find a gap we can re-use
+        next = int(max) + 1 + int(offset)
+        print "returning max+1+offset: " + str(next)
+        return next
     else:
-        return 5900
+        print "No vnc ports currently in use"
+        return int(5900) + offset
 
 def getImageForDomain(domainId):
     domain = getDomainByUUID(domainId)
