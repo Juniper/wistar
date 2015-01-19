@@ -148,8 +148,8 @@ def loadJson(rawJson, topo_id):
 
 def launchWebSocket(vncPort, wsPort, server):
     args = " 127.0.0.1:" + str(vncPort) + " 127.0.0.1:" + str(wsPort) + " &"
-    path = os.path.abspath(os.path.curdir)
-    ws = os.path.join(path, "webConsole/bin/websockify.py")
+    path = os.path.abspath(os.path.dirname(__file__))
+    ws = os.path.join(path, "../../webConsole/bin/websockify.py")
     
     cmd = str(ws) + args
 
