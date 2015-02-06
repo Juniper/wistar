@@ -160,9 +160,9 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
                 "configInterfaces": {
                     name: "Configure Interfaces"
                 },
-                "getConfig": {
-                    name: "Dump Config"
-                },
+                //"getConfig": {
+                //    name: "Dump Config"
+                //},
                 "delete": {
                     name: "Delete"
                 }

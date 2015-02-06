@@ -6,13 +6,15 @@
  <script type="text/javascript">
     function checkImport() {
       alert($F("importArea"));
-    }; 
+    };
  </script>
 
 {% endblock %}
 {% block content %}
 
 <h3>Import Topology</h3>
-<textarea rows="20" id="importArea"></textarea>
-<input type="button" onclick="javascript: checkImport()" value="Import"/>
+<form enctype="multipart/form-data" method="POST">{% csrf_token %}
+{{ form }}
+<input type="submit" value="Import"/>
+</form>
 {% endblock %}
