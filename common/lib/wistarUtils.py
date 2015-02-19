@@ -179,3 +179,7 @@ def checkWebSocket(server, wsPort):
     else:
         return False
 
+def killWebSocket(server, wsPort):
+    print "Killing webConsole sessions"
+    cmd = 'ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | awk "{ print $2 }" | xargs -n 1 kill'
+    print "Running cmd: " + cmd

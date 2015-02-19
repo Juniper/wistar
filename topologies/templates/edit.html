@@ -338,6 +338,15 @@
     
     // Simple function to update the deploymentStatusDiv with the current hypervisor state
     function manageDomain(action, domainId) {
+        if (action == "stop") {
+            if (! confirm("This will power off the instance ungracefully!")) {
+                return false;
+            }
+        } else if (action == "undefine") {
+            if (! confirm("This will delete this instance entirely!")) {
+                return false;
+            }
+        }
         new Ajax.Updater('deploymentStatus', '/ajax/manageDomain/', {
             parameters: { 
                 'topologyId' : '{{ topo.id }}',
@@ -460,6 +469,7 @@
         manuallyTogglePanel('jsonDebug', 'none');
         manuallyTogglePanel('junosIconEditor', 'none');
         manuallyTogglePanel('connectionEditor', 'none');
+        manuallyTogglePanel('labelEditor', 'none');
     }
 
     function hideSelection() {
@@ -568,6 +578,25 @@
         
     }
 
+    function loadLabelEditor(figureId) {
+        if (currentSelection !== "labelEditor") {
+            hideAllEditors();
+            manuallyTogglePanel('labelEditor', '');
+            currentSelection = "labelEditor";
+        }
+        p = canvas.getFigure(figureId);
+        $('selectedLabel').value = figureId;
+        $('labelText').value = p.getText();
+        $('labelUrl').value = p.getLink();
+    }
+
+    function updateLabel() {
+        l = canvas.getFigure($('selectedLabel').value);
+        l.setText($('labelText').value);
+        l.setFontSize($('labelFontSize').value);
+        l.setStroke($('labelStroke').value);
+    }
+
     // fixme - this will be broken for anything other than vmx
     function loadConnectionEditor(figureId) {
         var connection = canvas.getLine(figureId);
@@ -642,6 +671,17 @@
         var connection = canvas.getLine(connId);
         connection.setUserData(connData);
         console.log("saved info on connection Object");
+    }
+
+    function addLabel() {
+        console.log("ok");
+        var label = $F('newLabel');
+        var l = new draw2d.shape.basic.Label(label);
+        // l.setBackgroundColor();
+        l.setFontColor("#000000");
+        l.setFontSize("10");
+        l.setStroke("0");
+        canvas.addFigure(l, 150, 150);
     }
 
     Event.observe(window, 'load', function() {
@@ -880,6 +920,59 @@
               </tr>
             </table>
           </div>
+          <div id="labelEditor" style="display: none;">
+            <table>
+              <th colspan="2">
+                 Edit Label
+              </th>
+              <tr>
+                <td>
+                  <input type="hidden" id="selectedLabel" value="0">
+                  Text: 
+                </td>
+                <td>
+                  <input type="text" id="labelText" value="na">
+               </td>
+             </tr>
+             <tr>
+               <td>
+                Size:
+                </td>
+                <td>
+                  <select id="labelFontSize">
+                    <option value="8">8</option>
+                    <option value="10" selected>10</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16">16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="22">22</option>
+                    <option value="24">24</option>
+                    <option value="26">26</option>
+                    <option value="28">28</option>
+                    <option value="30">30</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                 <td>
+                  Border:
+                </td>
+                <td>
+                  <select id="labelStroke">
+                    <option value="0" selected>0</option>
+                    <option value="1">1</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2">
+                  <input type="button" value="Update" onclick="javascript: updateLabel();"/>
+                </td>
+              </tr>
+            </table>
+          </div>
           <div id="connectionEditor" style="display: none;">
             <table>
               <th colspan="2">
@@ -1019,7 +1112,6 @@
         </td>
         <td style="vertical-align: top">
           <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 
-            background-size: 180px 146px; 
             background-repeat: repeat; 
             width:900px; 
             height:470px; 
@@ -1027,6 +1119,10 @@
             border: 1px solid #000">
           </div>
           <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
+          <div id="toolsMenu" style="width: 900px; padding-top: 4px;">
+            <input type="text" id="newLabel" style="padding: 5px; width: 250px;"/>&nbsp;
+            <input type="button" value="Add Label" onclick="javascript: addLabel()"/>
+          </div>
         </td>
       </tr>
     </table>

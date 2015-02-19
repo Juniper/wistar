@@ -23,10 +23,14 @@ def isJunosDeviceAtPrompt(dom):
         child = getConsole(dom)
         child.send("\r")
         child.send("\r")
-        indx = child.expect(["error: failed to get domain", "[^\s]>", "[^\s]#", "login:"])
+        indx = child.expect(["error: failed to get domain", "root@%", "[^\s]>", "[^\s]#", "login:"])
         if indx == 0:
             print "Domain is not configured!"
             return False
+        elif indx == 1:
+            print "at initial root@% prompt"
+            child.send("exit\r")
+            return True
         # no timeout indicates we are at some sort of prompt!
         return True
     except pexpect.TIMEOUT as t:
@@ -41,7 +45,7 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
     try:
         if isJunosDeviceAtPrompt(dom):
             child = getConsole(dom)
-            print "Loggin in as root"
+            print "Logging in as root"
             child.send("root\r")
             child.expect("assword:")
             print "Sending password"

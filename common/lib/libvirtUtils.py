@@ -362,8 +362,17 @@ def getNextDomainVncPort(offset=0):
     domains = conn.listAllDomains(0)
     for d in domains:
         vncPort = getDomainVncPort(d)
-        if vncPort != 0:
-            usedPorts.append(int(vncPort))
+        try:
+            port = int(vncPort)
+            if port != 0 and port != -1:
+                print "adding to usedPorts"
+                usedPorts.append(port)
+        except:
+            # in some cases,port can be something other than int like None
+            # just catch all the here and contine on
+            print "found unhandled error for vncPort! " + str(vncPort)
+            print sys.exc_info()[0]
+            continue
 
     if len(usedPorts) > 1:
         usedPorts.sort()
@@ -371,6 +380,7 @@ def getNextDomainVncPort(offset=0):
         last = usedPorts[0]
         max = usedPorts[-1]
         for p in usedPorts:
+
             if (int(p) - int(last)) > 1:
                 next = int(last) + 1
                 if currIter == offset:

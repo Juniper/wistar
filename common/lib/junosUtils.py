@@ -128,6 +128,7 @@ def pushConfigElement(xmlData, dev, overwrite=False):
 
 def pushConfigString(xmlString, ip, pw):
     print "Pushing new config to " + str(ip)
+    print xmlString
     dev = getDeviceReference(ip, "root", pw)
     xmlData = etree.fromstring(xmlString)
     pushConfigElement(xmlData, dev, True)

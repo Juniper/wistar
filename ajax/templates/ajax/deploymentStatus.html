@@ -22,31 +22,26 @@
                 <td>
                     <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');"
                         title="Delete Instance entirely!">
-                        <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% if topologyId == None %}
                     <a href="/ajax/viewDomain/{{ d.uuid }}" title="Dump details from Hypervisor in XML">
-                        <img src="{% static "images/detail.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/detail.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% endif %}
                 {% if d.state != "running" %}
                     <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}');"
                         title="Power on instance in Hypervisor">
-                        <img src="{% static "images/running.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/running.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% else %}
                     <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}');"
                         title="Power off instance in Hypervisor">
-                        <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                     <a href="#" onclick="javascript: launchWebConsole('{{ d.name }}');"
                         title="Launch Console">
-                        <img src="{% static "images/console.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/console.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% endif %}
                 </td>
@@ -73,26 +68,22 @@
                 <td>
                     <a href="#" onclick="javascript: manageNetwork('undefine', '{{ n.name}}');"
                         title="Delete Network entirely">
-                        <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% if topologyId == None %}
                     <a href="/ajax/viewNetwork/{{ n.name }}">
-                        <img src="{% static "images/detail.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/detail.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% endif %}
                 {% if n.state != "running" %}
                     <a href="#" onclick="javascript: manageNetwork('start', '{{ n.name }}');"
                         title="Power on network in Hypervisor">
-                        <img src="{% static "images/running.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/running.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% else %}
                     <a href="#" onclick="javascript: manageNetwork('stop', '{{ n.name}}');"
                         title="Power off network in Hypervisor">
-                        <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/>
-                    </a>
+                        <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% endif %}
                 </td>
@@ -112,7 +103,7 @@
               <tr>
                 <td colspan="3">
                   <input type="button" name="refreshDSButton" id="refreshDSButton"
-                    value="Refresh Hypervisor Status" onclick="javascript: refreshHypervisorStatus();"/>
+                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus();"/>
                 </td>
               </tr>
               {% endif %}

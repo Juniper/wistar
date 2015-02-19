@@ -50,11 +50,23 @@ def preconfigJunosDomain(request):
     
     print "Configuring domain:" + str(domain)
     try:
-        # special check for vbox
-        if mgmtInterface == "em0":
+
+        # let's see if we need to kill any webConsole sessions first
+        webConsoleDict = request.session.get("webConsoleDict")
+        if webConsoleDict is not None:
+            if webConsoleDict.has_key(domain):
+                wsConfig = webConsoleDict[domain]
+                wsPort = wsConfig["wsPort"]
+                server = request.get_host().split(":")[0]
+                wu.killWebSocket(server, wsPort)
+
+        # FIXME - there is a bug somewhere that this can be blank ?
+        if mgmtInterface == "":
+            mgmtInterface = "em0"
+        elif mgmtInterface == "em0":
             if not ou.checkIsLinux():
                 mgmtInterface = "fxp0"
-                
+        
         response_data["result"] = cu.preconfigJunosDomain(domain, password, ip, mgmtInterface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -77,6 +89,16 @@ def preconfigFirefly(request):
     
     print "Configuring Firefly management zones:" + str(domain)
     try:
+
+        # let's see if we need to kill any webConsole sessions first
+        webConsoleDict = request.session.get("webConsoleDict")
+        if webConsoleDict is not None:
+            if webConsoleDict.has_key(domain):
+                wsConfig = webConsoleDict[domain]
+                wsPort = wsConfig["wsPort"]
+                server = request.get_host().split(":")[0]
+                wu.killWebSocket(server, wsPort)
+
         response_data["result"] = cu.preconfigFirefly(domain, password, mgmtInterface)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except wistarException as we:
