@@ -196,15 +196,18 @@ def syncLinkData(request):
     sourcePw = request.POST['sourcePw']
     targetPw = request.POST['targetPw']
 
-    print "Configuring interfaces for " + str(sourceIp)
     try:
-        sourceResults =  ju.setInterfaceIpAddress(sourceIp, sourcePw, sourceIface, sourcePortIp)
+        if sourceIp != "0.0.0.0":
+            print "Configuring interfaces for " + str(sourceIp)
+            sourceResults =  ju.setInterfaceIpAddress(sourceIp, sourcePw, sourceIface, sourcePortIp)
 
-        if sourceResults == False:
-            raise wistarException("Couldn't set ip address on source VM")
-        targetResults =  ju.setInterfaceIpAddress(targetIp, targetPw, targetIface, targetPortIp)
-        if targetResults == False:
-            raise wistarException("Couldn't set ip address on target VM")
+            if sourceResults == False:
+                raise wistarException("Couldn't set ip address on source VM")
+        
+        if targetIp != "0.0.0.0":
+            targetResults =  ju.setInterfaceIpAddress(targetIp, targetPw, targetIface, targetPortIp)
+            if targetResults == False:
+                raise wistarException("Couldn't set ip address on target VM")
 
         response_data["result"] = "Success"
         print str(response_data)
@@ -470,7 +473,7 @@ def deployTopology(request):
     network_list = []
     if ou.checkIsLinux():
         network_list = lu.getNetworksForTopology("t" + topologyId)
-    context = {'domain_list': domain_list, 'network_list' : network_list }
+    context = {'domain_list': domain_list, 'network_list' : network_list, 'isLinux' : True }
     return render(request, 'ajax/deploymentStatus.html', context)
 
 

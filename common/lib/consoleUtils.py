@@ -21,23 +21,56 @@ def isJunosDeviceAtPrompt(dom):
     print "Getting bootup state of: " + str(dom)
     try:
         child = getConsole(dom)
-        child.send("\r")
-        child.send("\r")
-        indx = child.expect(["error: failed to get domain", "root@%", "[^\s]>", "[^\s]#", "login:"])
-        if indx == 0:
-            print "Domain is not configured!"
-            return False
-        elif indx == 1:
-            print "at initial root@% prompt"
-            child.send("exit\r")
+        try:
+            child.send("\r")
+            child.send("\r")
+            indx = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]>", "[^\s]#", "login:"])
+            print "Found prompt: " + child.before
+            if indx == 0:
+	            print "Domain is not configured!"
+	            return False
+            elif indx == 1:
+                print "at initial root@% prompt"
+                child.send("exit\r")
+                # super tricky bug here. child would exit before the command had actually been sent
+                # exit sh
+                time.sleep(.5)
+                return True
+            elif indx == 2:
+                print "at normal prompt"
+                # exit cli
+                child.send("exit\r")
+                time.sleep(.5)
+                # exit sh
+                child.send("exit\r")
+                time.sleep(.5)
+                return True
+            elif indx == 3:
+                print "at configure prompt"
+                child.send("top\r")
+                time.sleep(.5)
+                child.send("rollback 0\r")
+                time.sleep(1)
+                # exit config
+                child.send("exit\r")
+                time.sleep(.5)
+                # exit cli
+                child.send("exit\r")
+                time.sleep(.5)
+                # exit sh
+                child.send("exit\r")
+                time.sleep(.5)
+                return True
+            # no timeout indicates we are at some sort of prompt!
             return True
-        # no timeout indicates we are at some sort of prompt!
-        return True
-    except pexpect.TIMEOUT as t:
-        print "console is available, but not at login prompt"
-        return False
-    except:
+        except pexpect.TIMEOUT as t:
+            print "console is available, but not at login prompt"
+            print str(child)
+            return False
+    except Exception as e:
+        print str(e)
         print "console does not appear to be available"
+        print str(child)
         return False
 
 

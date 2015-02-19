@@ -35,6 +35,8 @@ def loadJson(rawJson, topo_id):
     devices = []
     networks = []
 
+    externalUUID = "";
+
     deviceIndex = 0
     for jsonObject in jsonData:
         if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
@@ -73,8 +75,8 @@ def loadJson(rawJson, topo_id):
                 device["managementInterfaces"].append(em1)
 
             devices.append(device)
-        #elif jsonObject["type"] == "draw2d.Connection":
-            #print "found a connection"
+        elif jsonObject["type"] == "draw2d.shape.node.externalCloudIcon":
+            externalUUID = jsonObject["id"];
 
     # just run through again to ensure we already have all the devices ready to go!
     # note - set this to 1 to avoid using special name br0 -
@@ -82,12 +84,6 @@ def loadJson(rawJson, topo_id):
     # FIXME - add UI later to specify which host you want to do that for
     connIndex = 1
 
-    # fix - just add em0 to virbr0
-    #em0bridge = {}
-    #em0bridge["name"] = "em0bridge"
-    #em0bridge["mac"] = generateNextMac()
-    #networks.append(em0bridge)
-   
     # create the em1_bridge - not really used but necessary for vmx
     em1bridge = {}
     em1bridge["name"] = "t" + str(topo_id) + "_em1bridge"
@@ -104,7 +100,13 @@ def loadJson(rawJson, topo_id):
                     slot = "%#04x" % int(len(d["interfaces"]) + 6)
                     interface = {}
                     interface["mac"] = generateNextMac(topo_id)
-                    interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
+
+                    if targetUUID != externalUUID:
+                        interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
+                    else:
+                        # FIXME - this is hard coded to br0 - should maybe use a config object asp
+                        interface["bridge"] = "br0"
+
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
                     interface["linkId"] = jsonObject["id"]
@@ -115,7 +117,12 @@ def loadJson(rawJson, topo_id):
                     slot = "%#04x" % int(len(d["interfaces"]) + 6)
                     interface = {}
                     interface["mac"] = generateNextMac(topo_id)
-                    interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
+
+                    if sourceUUID != externalUUID:
+                        interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
+                    else:
+                        interface["bridge"] = "br0"
+
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
                     interface["linkId"] = jsonObject["id"]

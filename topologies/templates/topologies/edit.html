@@ -18,6 +18,7 @@
     <script type="text/javascript" src="{% static "js/draw2d.js" %}"></script>
     
     <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/externalCloudIcon.js" %}"></script>
     <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
   
     <script type="text/javascript" src="{% static "js/prototype.js" %}"></script>
@@ -29,6 +30,8 @@
 
     var vmxCount = 1;
 
+    var externalCloudAdded = false;
+    
     function loadTopology() {
         var test = $('json').value;
     	if (test != null) {
@@ -429,6 +432,10 @@
 
     function getJunosStartupState(label) {
         domain = generateDomainNameFromLabel(label);
+        
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+
         new Ajax.Request('/ajax/getJunosStartupState/', {
 	        parameters: { 'name' : domain },
             onSuccess: function(response) {
@@ -444,6 +451,9 @@
                 alert("Could not load data!!!");
 		        console.log(response);
                 //alert(response);
+            },
+            onComplete: function(response) {
+                doc.style.cursor = '';
             }
         });
     }
@@ -611,14 +621,13 @@
         p = canvas.getFigure(figureId);
         $('selectedLabel').value = figureId;
         $('labelText').value = p.getText();
-        $('labelUrl').value = p.getLink();
+        $('labelFontSize').value = p.fontSize;
     }
 
     function updateLabel() {
         l = canvas.getFigure($('selectedLabel').value);
         l.setText($('labelText').value);
         l.setFontSize($('labelFontSize').value);
-        l.setStroke($('labelStroke').value);
     }
 
     // fixme - this will be broken for anything other than vmx
@@ -650,26 +659,33 @@
                 break;
             }
         }
-        // fixme: add type check to port.getParent to do the right thing for Linux and otherOS instances...
-        $('connectionSourceDevice').innerHTML = sourcePort.getParent().getLabel() + " ge-0/0/" + sourceIndex;
-        $('connectionTargetDevice').innerHTML = targetPort.getParent().getLabel() + " ge-0/0/" + targetIndex;
+        // do the right this if we are connected to an external Bridge
+        if (targetPort.getParent().NAME == "draw2d.shape.node.externalCloudIcon") {
+            $('connectionTargetDevice').innerHTML = targetPort.getParent().getLabel();
+            $('connectionTargetIp').value = "0.0.0.0";
+            $('connectionTargetPortIp').value = "0.0.0.0";
+        } else {
+            $('connectionTargetDevice').innerHTML = targetPort.getParent().getLabel() + " ge-0/0/" + targetIndex;
+            $('connectionTargetIp').value = targetPort.getParent().getIp();
+            $('connectionTargetPw').value = targetPort.getParent().getPassword();
+            $('connectionTargetIface').value = "ge-0/0/" + targetIndex;
+            $('connectionTargetPortIp').value = "";
+        }
 
-        // keep these values around for later
-        $('connectionSourceIp').value = sourcePort.getParent().getIp();
-        $('connectionTargetIp').value = targetPort.getParent().getIp();
+        if (sourcePort.getParent().NAME == "draw2d.shape.node.externalCloudIcon") {
 
-        $('connectionSourcePw').value = sourcePort.getParent().getPassword();
-        $('connectionTargetPw').value = targetPort.getParent().getPassword();
-        
-        $('connectionSourceIface').value = "ge-0/0/" + sourceIndex;
-        $('connectionTargetIface').value = "ge-0/0/" + targetIndex;
+            $('connectionSourceDevice').innerHTML = sourcePort.getParent().getLabel();
+            $('connectionSourceIp').value = "0.0.0.0";
+            $('connectionSourcePortIp').value = "0.0.0.0";
+        } else {
+            $('connectionSourceDevice').innerHTML = sourcePort.getParent().getLabel() + " ge-0/0/" + sourceIndex;
+            $('connectionSourceIp').value = sourcePort.getParent().getIp();
+            $('connectionSourcePw').value = sourcePort.getParent().getPassword();
+            $('connectionSourceIface').value = "ge-0/0/" + sourceIndex;
+            $('connectionSourcePortIp').value = "";
+        }
 
         var connData = connection.getUserData();
-
-        $('connectionSourcePortIp').value = "";
-
-        $('connectionTargetPortIp').value = "";
-
         if (connData != null) {
             $('connectionSourcePortIp').value = connData["sourceIp"];
             $('connectionTargetPortIp').value = connData["targetIp"];
@@ -698,14 +714,33 @@
     }
 
     function addLabel() {
-        console.log("ok");
         var label = $F('newLabel');
         var l = new draw2d.shape.basic.Label(label);
         // l.setBackgroundColor();
         l.setFontColor("#000000");
-        l.setFontSize("10");
+        l.setFontSize("14");
         l.setStroke("0");
         canvas.addFigure(l, 150, 150);
+    }
+
+    function addExternalCloud() {
+        if (externalCloudAdded == false) {
+            var c = new draw2d.shape.node.externalCloudIcon();
+            canvas.addFigure(c, 385, 15);
+            externalCloudAdded = true;
+        } else {
+            alert("You may only add one external connection!");
+            return false;
+        }
+    }
+
+    // are we editing an existing topology?
+    function isNewTopology() {
+        {% if topo_id != None %}
+        return false;
+        {% else %}
+        return true;
+        {% endif %}
     }
 
     Event.observe(window, 'load', function() {
@@ -978,17 +1013,8 @@
                     <option value="26">26</option>
                     <option value="28">28</option>
                     <option value="30">30</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                 <td>
-                  Border:
-                </td>
-                <td>
-                  <select id="labelStroke">
-                    <option value="0" selected>0</option>
-                    <option value="1">1</option>
+                    <option value="40">40</option>
+                    <option value="48">48</option>
                   </select>
                 </td>
               </tr>
@@ -1147,7 +1173,8 @@
           <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
           <div id="toolsMenu" style="width: 900px; padding-top: 4px;">
             <input type="text" id="newLabel" style="padding: 5px; width: 250px;"/>&nbsp;
-            <input type="button" value="Add Label" onclick="javascript: addLabel()"/>
+            <input type="button" value="Add Label" onclick="javascript: addLabel()"/> &nbsp;
+            <input type="button" value="Add External Bridge" onclick="javascript: addExternalCloud()"/> &nbsp;
           </div>
         </td>
       </tr>

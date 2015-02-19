@@ -5412,12 +5412,12 @@ draw2d.shape.basic.Label = draw2d.SetFigure.extend({NAME: "draw2d.shape.basic.La
         this.cachedHeight = null;
         this.cachedMinWidth = null;
         this.cachedMinHeight = null;
-        this.fontSize = 12;
-        this.fontColor = new draw2d.util.Color("#080808");
+        this.fontSize = 14;
+        this.fontColor = new draw2d.util.Color("#000");
         this.fontFamily = null;
         this.padding = 4;
         this.bold = false;
-        this.setStroke(1);
+        this.setStroke(0);
         this.setDimension(10, 10);
         this.editor = null;
         this.installEditPolicy(new draw2d.policy.figure.AntSelectionFeedbackPolicy());
