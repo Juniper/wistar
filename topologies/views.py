@@ -6,6 +6,7 @@ from django.conf import settings
 from topologies.models import Topology
 from topologies.models import ConfigSet
 from topologies.models import Config
+from topologies.forms import ImportForm
 from common.lib.wistarException import wistarException
 import common.lib.wistarUtils as wu
 import common.lib.libvirtUtils as lu
@@ -24,22 +25,71 @@ debug = True
 def index(request):
     latest_topo_list = Topology.objects.all().order_by('modified')
     context = {'latest_topo_list': latest_topo_list}
-    return render(request, 'index.html', context)
+    return render(request, 'topologies/index.html', context)
 
 def edit(request):
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list}
-    return render(request, 'edit.html', context)
+    return render(request, 'topologies/edit.html', context)
 
 def exportTopology(request, topo_id):
-    response_data = {}
-    response_data["result"] = True
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
+    topo  = get_object_or_404(Topology, pk=topo_id)
+    jsonData = json.loads(topo.json)
+    infoData = {}
+    infoData["type"] = "wistar.info"
+    infoData["name"] = topo.name
+    infoData["description"] = topo.description
+    jsonData.append(infoData)
+    response = HttpResponse(json.dumps(jsonData), content_type="application/json")
+    response['Content-Disposition'] = 'attachment; filename=' + str(topo.name) + '.json'
+    return response
 
+@csrf_exempt
 def importTopology(request):
-    image_list = Image.objects.all().order_by('name')
-    context = {'image_list': image_list}
-    return render(request, 'import.html', context)
+    try:
+        if request.method == "POST":
+            print str(request.FILES)
+            form = ImportForm(request.POST, request.FILES)
+            jsonFile = request.FILES['file']
+            print str(jsonFile)
+            jsonString = jsonFile.read()
+            jsonData = json.loads(jsonString)
+            
+            topo = Topology()
+            topo.name = "Imported Topology"
+            topo.id = 0
+           
+            for jsonObject in jsonData:
+                if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
+                    ud = jsonObject["userData"]
+                    # check if we have this type of image
+                    imageList = Image.objects.filter(type = ud["type"])
+                    if len(imageList) == 0:
+                        # nope, bail out and let the user know what happened!
+                        print "Could not find image of type " + ud["type"]
+                        return error(request, 'Could not find a valid image of type ' + ud['type'] + '! Please upload an image of this type and try again')
+
+                    image = imageList[0]
+                    print str(image.id)
+                    jsonObject["userData"]["image"] = image.id
+                
+                elif jsonObject["type"] == "wistar.info":
+                    topo.name = jsonObject["name"]
+                    topo.description = jsonObject["description"]
+
+            topo.json = json.dumps(jsonData)
+
+            image_list = Image.objects.all().order_by('name')
+            context = {'image_list': image_list, 'topo' : topo}
+            return render(request, 'topologies/edit.html', context)
+
+        else:
+            form = ImportForm()
+            context = {'form': form }
+            return render(request, 'topologies/import.html', context)
+    except Exception as e:
+        print str(e)   
+        return error(request, 'Could not parse imported data')
 
 def clone(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
@@ -48,7 +98,7 @@ def clone(request, topo_id):
     topo.id = 0
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo' : topo}
-    return render(request, 'edit.html', context)
+    return render(request, 'topologies/edit.html', context)
 
 def detail(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
@@ -56,15 +106,15 @@ def detail(request, topo_id):
     network_list = lu.getNetworksForTopology("t" + topo_id)
     configSets = ConfigSet.objects.filter(topology=topo)
     context = {'domain_list': domain_list, 'network_list' : network_list, 'topo_id' : topo_id, 'configSets' : configSets, 'topo' : topo}
-    return render(request, 'edit.html', context)
+    return render(request, 'topologies/edit.html', context)
 
 def delete(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
     topo.delete()
     return HttpResponseRedirect('/topologies/')
 
-def error(request):
-    return render(request, 'error.html')
+def error(request, message):
+    return render(request, 'topologies/error.html', { 'error_message' : message })
 
 def create(request):
     try:
@@ -84,7 +134,7 @@ def create(request):
 
     except (KeyError):
         return render(request, 'topologies/error.html', { 
-            'error_message': "error"
+            'error_message': "Invalid data in POST"
     })
     else:
         # Always return an HttpResponseRedirect after successfully dealing # with POST data. This prevents data from being posted twice if a

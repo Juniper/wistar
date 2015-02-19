@@ -14,10 +14,14 @@
         <td>{{ topo.description }}</td> 
         <td>
 		<a href='delete/{{ topo.id }}'>Delete</a>
+        &nbsp;
+		<a href='export/{{ topo.id }}'>Export</a>
 	 </td>
     </tr>
 {% endfor %}
 </table>
 
 <a href="edit">New Topology</a>
+&nbsp;
+<a href="import">Import Topology</a>
 {% endblock %}

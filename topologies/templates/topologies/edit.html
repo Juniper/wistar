@@ -204,8 +204,32 @@
         return "t{{ topo.id }}_" + name;
     }
 
-
     function launchWebConsole(domain) {
+        var url = "/ajax/launchWebConsole/";
+        var params = {
+            'domain' : domain
+        };
+
+        var doc = jQuery(document);
+        doc.css('cursor' , 'progress' );
+        var success = function(response) {
+            data = eval(response);
+            console.log(data);
+            doc.css('cursor' , '');
+            if (data["result"] == false) {
+                alert(data["message"]);
+            } else {
+               console.log("open a window");
+               windowUrl = "/webConsole/" + data["port"]
+               window.open(windowUrl);
+            }
+        };
+
+        jQuery.post(url, params, success);
+
+    }
+
+    function launchWebConsoleOld(domain) {
         var url = "/ajax/launchWebConsole/";
         var params = {
             'domain' : domain
@@ -740,8 +764,10 @@
                   <input type="button" name="submit_button" id="submit_button" 
                     value="Save" onclick="javascript: saveTopology();"/>
                   {% endif %}
+                  <!--
                   <input type="button" name="debugButton" id="debugButton" 
                     value="Debug" onclick="javascript: showDebug();"/>
+                  -->
                 </td>
               </tr>
              </tbody>

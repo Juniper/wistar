@@ -231,10 +231,12 @@ def refreshDeploymentStatus(request):
 
     domain_list = lu.getDomainsForTopology("t" + topologyId)
     network_list = []
+    isLinux = False
     if ou.checkIsLinux():
+        isLinux = True
         network_list = lu.getNetworksForTopology("t" + topologyId)
 
-    context = {'domain_list': domain_list, 'network_list' : network_list, 'topologyId' : topologyId }
+    context = {'domain_list': domain_list, 'network_list' : network_list, 'topologyId' : topologyId, 'isLinux' : isLinux }
     return render(request, 'ajax/deploymentStatus.html', context)
 
 @csrf_exempt

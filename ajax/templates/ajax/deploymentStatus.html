@@ -47,6 +47,7 @@
                 </td>
               </tr>
               {% endfor %}
+              {% if isLinux == True  %}
               <tr>
                 <th colspan="3"> Virtual Network Status </th>
               </tr>
@@ -57,10 +58,11 @@
                 </td>
               </tr>
               {% endif %}
+            
               {% for n in network_list %}
               <tr>
                 <td>
-                  {{ n.name }}
+                  {{ n.name }} 
                 </td>
                 <td>
                   {{ n.state }}
@@ -89,6 +91,7 @@
                 </td>
               </tr>
               {% endfor %}
+              {% endif %}
               {% if topologyId != None %}
               <tr>
                 <td colspan="3">
