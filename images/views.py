@@ -31,14 +31,14 @@ def create(request):
         #if not osUtils.checkPath(image_form.cleaned_data['path']):
         #    print "PATH DOESN'T EXIST"
         #    context = {'error' : "PATH DOESNT EXIST"}
-        #    return render(request, 'error.html', context)
+        #    return render(request, 'images/error.html', context)
 
         print "Saving form"
         image_form.save()
         return HttpResponseRedirect('/images')
     else:
-        context = {'error' : "FORM ISN'T VALID"}
-        return render(request, 'error.html', context)
+        context = {'error' : "Form isn't valid!"}
+        return render(request, 'images/error.html', context)
 
 def detail(request, image_id):
     image  = get_object_or_404(Image, pk=image_id)
@@ -51,5 +51,6 @@ def delete(request, image_id):
     return HttpResponseRedirect('/images/')
 
 def error(request):
-    return render(request, 'error.html')
+    context = {'error' : "Unknown Error"}
+    return render(request, 'images/error.html')
 
