@@ -499,6 +499,22 @@
     /* UI related function */
     var currentSelection = "None";
 
+    function deleteSelectedObject() {
+        var so = $F('selectedObject');
+        if (so != 0) {
+            var figure = canvas.getFigure(so);
+            if (figure == null) {
+                console.log('deleting line');
+                figure  = canvas.getLine(so);
+            } 
+            if (figure.NAME == "draw2d.shape.node.externalCloudIcon") {
+                externalCloudAdded = false;
+            }
+            canvas.removeFigure(figure);
+            $('selectedObject').value = "0";
+        }
+    }
+
     function hideAllEditors() {
         manuallyTogglePanel('jsonDebug', 'none');
         manuallyTogglePanel('junosIconEditor', 'none');
@@ -715,12 +731,15 @@
 
     function addLabel() {
         var label = $F('newLabel');
+        var labelSize = $F('newLabelFontSize');
         var l = new draw2d.shape.basic.Label(label);
         // l.setBackgroundColor();
         l.setFontColor("#000000");
-        l.setFontSize("14");
+        l.setFontSize(labelSize);
         l.setStroke("0");
-        canvas.addFigure(l, 150, 150);
+        lastX += 50;
+        lastY += 50;
+        canvas.addFigure(l, lastX, lastY);
     }
 
     function addExternalCloud() {
@@ -853,6 +872,7 @@
           {% else %}
           <div id="addInstanceForm">
           {% endif %}
+            <br/>
             <h3>Add Instance</h3>
             <table>
               <tr>
@@ -914,6 +934,70 @@
               <tr>
                 <td colspan="2">
                   <input type="button" onclick="javascript: addIcon();" value="Add Instance"/>
+                </td>
+              </tr>
+            </table>
+            <br/>
+            <h3>Add Object</h3>
+            <table>
+              <tr>
+                <td>
+                  External Access:
+                </td>
+                <td>
+                  <input type="button" value="Add External Bridge" title="Add br0" onclick="javascript: addExternalCloud()"/>
+                </td>
+              </tr>
+            </table>
+            <br/>
+            <h3>Add Label</h3>
+            <table>
+              <tr>
+                <td>
+                  Text:
+                </td>
+                <td>
+                  <input type="text" id="newLabel"/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Font Size:
+                </td>
+                <td>
+                  <select id="newLabelFontSize">
+                    <option value="8">8</option>
+                    <option value="10">10</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16" selected>16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="22">22</option>
+                    <option value="24">24</option>
+                    <option value="26">26</option>
+                    <option value="28">28</option>
+                    <option value="30">30</option>
+                    <option value="40">40</option>
+                    <option value="48">48</option>
+                  </select>
+                </td>
+                </tr>
+              <tr>
+                <td colspan="2">
+                  <input type="button" value="Add Label" onclick="javascript: addLabel()"/>
+                </td>
+              </tr>
+            </table>
+            <br/>
+            <h3>Tools</h3>
+            <table>
+              <tr>
+                <td>
+                  Delete Object:
+                </td>
+                <td>
+                  <input type="button" value="Delete" title="Remove selected Object from Topology" onclick="javascript: deleteSelectedObject()"/>
                 </td>
               </tr>
             </table>
@@ -1166,15 +1250,12 @@
           <div id="gfx_holder" style="background-image: url({% static "images/grid.png" %}); 
             background-repeat: repeat; 
             width:900px; 
-            height:470px; 
+            height:650px; 
             position:relative; 
             border: 1px solid #000">
           </div>
           <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
           <div id="toolsMenu" style="width: 900px; padding-top: 4px;">
-            <input type="text" id="newLabel" style="padding: 5px; width: 250px;"/>&nbsp;
-            <input type="button" value="Add Label" onclick="javascript: addLabel()"/> &nbsp;
-            <input type="button" value="Add External Bridge" onclick="javascript: addExternalCloud()"/> &nbsp;
           </div>
         </td>
       </tr>

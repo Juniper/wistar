@@ -5,8 +5,8 @@ var topologySelectionListener = Class.extend({
     },
     onSelectionChanged: function(figure) {
         if (figure != null) {
+            setSelectedObject(figure.getId());
             if (! isNewTopology()) {
-                setSelectedObject(figure.getId());
 
                 if (figure instanceof draw2d.Connection) {
                     console.log('found connection');
