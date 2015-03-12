@@ -32,13 +32,15 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     	this.createPort("hybrid", tpl);
     },
      
-    setup: function(type, label, ip, pw, image) {
+    setup: function(type, label, ip, pw, image, cpu, ram) {
 		this.setUserData({});
 		this.setIp(ip);
         this.setImage(image);
 		this.setPassword(pw);
 		this.setType(type);
 		this.setLabel(label);
+		this.setCpu(cpu);
+		this.setRam(ram);
     },
 
     initOld: function(type, label, ip, pw, image) {
@@ -61,12 +63,34 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     setType: function(type) {
 	    var ud = this.getUserData();
 	    ud["type"] = type;
-	    //this.setUserData(ud);
     },
     getType: function() {
 	    return this.getUserData()["type"];
     },
-    
+    setCpu: function(cpu) {
+	    var ud = this.getUserData();
+	    ud["cpu"] = cpu;
+    },
+    getCpu: function() {
+        if (this.getUserData()["cpu"] != undefined) {
+	        return this.getUserData()["cpu"];
+        } else {
+            // return magic number 2 - all older version of wistar defaulted to 2 vCPU
+            return "2";
+        }
+    },
+    setRam: function(ram) {
+	    var ud = this.getUserData();
+	    ud["ram"] = ram;
+    },
+    getRam: function() {
+        if (this.getUserData()["ram"] != undefined) {
+	        return this.getUserData()["ram"];
+        } else {
+            // return magic number 2 - all older version of wistar defaulted to 2048MB RAM
+            return "2048";
+        }
+    },
     getMgmtInterface: function() {
         var port = this.getPorts().get(0);
         var connections = port.getConnections();
@@ -81,7 +105,6 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
             return "eth0";
         } 
     },
-
     setIp: function(ip) {
 	    var ud = this.getUserData();
 	    ud["ip"] = ip;

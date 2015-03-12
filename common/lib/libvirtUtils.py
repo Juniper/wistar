@@ -256,6 +256,19 @@ def stopDomain(domainId):
         print e
         return False
 
+def suspendDomain(domainId, saveFile):
+    if not connect():
+        return False
+
+    try:
+        domain = getDomainByUUID(domainId)
+        domain.save(saveFile)
+        return True
+
+    except Exception as e:
+        print e
+        return False
+
 def startDomain(domainId):
     if not connect():
         return False

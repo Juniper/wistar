@@ -20,6 +20,8 @@
     <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script>
     <script type="text/javascript" src="{% static "js/externalCloudIcon.js" %}"></script>
     <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
+    
+    <script type="text/javascript" src="{% static "js/wistar_utils.js" %}"></script>
   
     <script type="text/javascript" src="{% static "js/prototype.js" %}"></script>
    
@@ -92,9 +94,10 @@
     	var name = $F('topoIconName');
     	var type = $F('topoIconType');
     	var image = $F('topoIconImage');
+    	var cpu = $F('topoIconCpu');
+    	var ram = $F('topoIconRam');
     	var iconData = $F('topoIconIcon');
        
-
         if (ip == "") {
             alert("Please add a valid IP address");
             return;
@@ -111,7 +114,7 @@
         var iconPath = "/static/images/" + icon + ".png";
         
     	var canvas_object = new draw2d.shape.node.topologyIcon(iconPath, width, height);
-        canvas_object.setup(type, name, ip, pw, image);
+        canvas_object.setup(type, name, ip, pw, image, cpu, ram);
     	lastX += 50;
     	lastY += 50;
     	vmxCount += 1;
@@ -205,60 +208,6 @@
             alert('Topology not yet deployed');
         }
         return "t{{ topo.id }}_" + name;
-    }
-
-    function launchWebConsole(domain) {
-        var url = "/ajax/launchWebConsole/";
-        var params = {
-            'domain' : domain
-        };
-
-        var doc = jQuery(document);
-        doc.css('cursor' , 'progress' );
-        var success = function(response) {
-            data = eval(response);
-            console.log(data);
-            doc.css('cursor' , '');
-            if (data["result"] == false) {
-                alert(data["message"]);
-            } else {
-               console.log("open a window");
-               windowUrl = "/webConsole/" + data["port"]
-               window.open(windowUrl);
-            }
-        };
-
-        jQuery.post(url, params, success);
-
-    }
-
-    function launchWebConsoleOld(domain) {
-        var url = "/ajax/launchWebConsole/";
-        var params = {
-            'domain' : domain
-        };
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
-        new Ajax.Request(url, {
-            parameters: params,
-            onSuccess: function(response) {
-                data = eval(response.responseJSON);
-                console.log(data);
-                doc.style.cursor = '';
-                if (data["result"] == false) {
-                    alert(data["message"]);
-                } else {
-                    console.log("open a window");
-                    windowUrl = "/webConsole/" + data["port"]
-                    window.open(windowUrl);
-                }
-            },
-            onFailure: function(response) {
-                doc.style.cursor = '';
-                alert("Could not perform request!");
-                console.log(response);
-            }
-        });
     }
 
     function preconfigJunosDomain(label, password, ip, mgmtInterface) {
@@ -581,6 +530,8 @@
         $('junosIconName').value = instance.getLabel();
         $('junosIconIp').value = instance.getIp();
         $('junosIconPass').value = instance.getPassword();
+        $('junosIconCpu').value = instance.getCpu();
+        $('junosIconRam').value = instance.getRam();
 
         // clear the cli output      
         $('cliOutput').value = "";
@@ -919,6 +870,36 @@
               </tr>
               <tr>
                 <td>
+                  vCPU
+                </td>
+                <td>
+                  <select name="topoIconCpu" id="topoIconCpu">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="4">4</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  vRAM
+                </td>
+                <td>
+                  <select name="topoIconRam" id="topoIconRam">
+                    <option value="512">512</option>
+                    <option value="768">768</option>
+                    <option value="1024">1024</option>
+                    <option value="2048" selected>2048</option>
+                    <option value="4096">4096</option>
+                    <option value="8192">8192</option>
+                    <option value="16384">16384</option>
+                  </select> MB
+                </td>
+              </tr>
+              <tr>
+                <td>
+              <tr>
+                <td>
                   Icon
                 </td>
                 <td>
@@ -1005,37 +986,50 @@
           <div id="junosIconEditor" style="display:none">
             <table>
               <th colspan="2">
-                 Edit Device
+                 Instance Details
               </th>
               <tr>
                 <td>
-                  IP Address
+                   Name
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="junosIconIp" id="junosIconIp" value=""/>
+                  <input type="text" disabled="true" name="junosIconName" id="junosIconName" value=""/>
                 </td>
               </tr>
               <tr>
                 <td>
-                  Root Password
+                   IP Address
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15"
+                  <input type="text" disabled="true" name="junosIconIp" id="junosIconIp" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                   Root Password
+                </td>
+                <td>
+                  <input type="text" disabled="true"
                     name="junosIconPass" id="junosIconPass" value=""/>
                 </td>
               </tr>
               <tr>
                 <td>
-                  Instance Name
+                   vCPU
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="junosIconName" id="junosIconName" value=""/>
-                </td>
+                  <input type="text" disabled="true"
+                    name="junosIconCPU" id="junosIconCpu" value="2"/>
+                </td>   
               </tr>
               <tr>
-                <td colspan="2">
-                  <input type="button" onclick="javascript: updateJunosIcon();" value="Update"/>
+                <td>
+                  vRAM 
                 </td>
+                <td>
+                  <input type="text" disabled="true"
+                    name="junosIconRam" id="junosIconRam" value="2"/>
+                </td>   
               </tr>
               <tr>
                 <td>

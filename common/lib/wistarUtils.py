@@ -43,10 +43,23 @@ def loadJson(rawJson, topo_id):
             ud = jsonObject["userData"]
             print "Found a topoIcon"
             device = {}
+
             device["name"] = "t" + str(topo_id) + "_" + ud["label"]
             device["imageId"] = ud["image"]
             device["type"] = ud["type"]
             device["ip"] = ud["ip"]
+
+            # sanity check in case this is an old topology without these keys
+            # keys introducted in 20150306
+            # set sensible defaults
+            device["ram"] = "2048"
+            device["cpu"] = "2"
+            if ud.has_key("cpu"):
+                device["cpu"] = ud["cpu"]
+            
+            if ud.has_key("ram"):
+                device["ram"] = ud["ram"]
+
             device["password"] = ud["password"]
             device["uuid"] = jsonObject["id"]
             device["interfaces"] = []
