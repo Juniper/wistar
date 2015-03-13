@@ -37,12 +37,9 @@
         post.fail(function() {
             alert('Could not perform request!');
         });
-
-        // updateAllBootState();
     }
    
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function manageDomain(action, domainId) {
+    function manageDomain(action, domainId, topoId) {
         if (action == "stop") {
             if (! confirm("This will power off the instance ungracefully!")) {
                 return false;
@@ -54,7 +51,7 @@
         }
         var url = '/ajax/manageDomain/';
         var params = {
-            'topologyId' : '',
+            'topologyId' : topoId,
             'domainId' : domainId,
             'action' : action
         };
@@ -67,11 +64,10 @@
         });
     }
 
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function manageNetwork(action, networkName) {
+    function manageNetwork(action, networkName, topoId) {
         var url = '/ajax/manageNetwork/';
         var params = {
-            'topologyId' : '',
+            'topologyId' : topoId,
             'networkName' : networkName,
             'action' : action
         };

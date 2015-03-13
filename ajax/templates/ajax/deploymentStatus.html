@@ -20,7 +20,7 @@
                  {{ d.state }}
                 </td>
                 <td>
-                    <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}');"
+                    <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}', '{{ topologyId }}');"
                         title="Delete Instance entirely!">
                         <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
@@ -30,12 +30,12 @@
                     &nbsp;
                 {% endif %}
                 {% if d.state != "running" %}
-                    <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}');"
+                    <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}' '{{ topologyId }}');"
                         title="Power on instance in Hypervisor">
                         <img src="{% static "images/running.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% else %}
-                    <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}');"
+                    <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}', '{{ topologyId }}');"
                         title="Power off instance in Hypervisor">
                         <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
@@ -68,7 +68,7 @@
                   {{ n.state }}
                 </td>
                 <td>
-                    <a href="#" onclick="javascript: manageNetwork('undefine', '{{ n.name}}');"
+                    <a href="#" onclick="javascript: manageNetwork('undefine', '{{ n.name}}', '{{ topologyId }}');"
                         title="Delete Network entirely">
                         <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
@@ -78,12 +78,12 @@
                     &nbsp;
                 {% endif %}
                 {% if n.state != "running" %}
-                    <a href="#" onclick="javascript: manageNetwork('start', '{{ n.name }}');"
+                    <a href="#" onclick="javascript: manageNetwork('start', '{{ n.name }}', '{{ topologyId }}');"
                         title="Power on network in Hypervisor">
                         <img src="{% static "images/running.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
                 {% else %}
-                    <a href="#" onclick="javascript: manageNetwork('stop', '{{ n.name}}');"
+                    <a href="#" onclick="javascript: manageNetwork('stop', '{{ n.name}}', '{{ topologyId }}');"
                         title="Power off network in Hypervisor">
                         <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
@@ -99,14 +99,15 @@
                     value="Deploy To Hypervisor" onclick="javascript: deployTopology();"/>
                   &nbsp;
                   <input type="button" name="refreshDSButton" id="refreshDSButton"
-                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus({{ topologyId }});"/>
+                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus('{{ topologyId }}');"/>
                 </td>
               </tr>
               {% else %}
               <tr>
                 <td colspan="3">
+                  topo is {{ topologyId }}
                   <input type="button" name="refreshDSButton" id="refreshDSButton"
-                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus('');"/>
+                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus('{{ topologyId }}');"/>
                 </td>
               </tr>
               {% endif %}

@@ -117,6 +117,7 @@ def pushConfigElement(xmlData, dev, overwrite=False):
                 return True
         else:
             # nothing to commit
+            print "Nothing to commit - no diff found"
             return True
     except CommitError as ce:
         print "Could not load config!"
