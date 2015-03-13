@@ -475,7 +475,7 @@ def deployTopology(request):
     network_list = []
     if ou.checkIsLinux():
         network_list = lu.getNetworksForTopology("t" + topologyId)
-    context = {'domain_list': domain_list, 'network_list' : network_list, 'isLinux' : True }
+    context = {'domain_list': domain_list, 'network_list' : network_list, 'isLinux' : True, 'topologyId' : topologyId }
     return render(request, 'ajax/deploymentStatus.html', context)
 
 
