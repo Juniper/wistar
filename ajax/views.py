@@ -459,7 +459,10 @@ def deployTopology(request):
 
             if not ou.checkIsLinux():
                 # perform some special hacks for vbox
-                vu.preconfigureVMX(device["name"])
+                dev_mgmt_ifaces = device["managementInterfaces"]
+                mgmt_ip_addr = str(dev_mgmt_ifaces[0]["ip"])
+                vu.preconfigureVMX(device["name"], mgmt_ip_addr)
+                # vu.preconfigureVMX(device["name"])
 
             #print "Starting domain! " + device["name"]
             #lu.startDomainByName(device["name"])

@@ -79,6 +79,7 @@ def loadJson(rawJson, topo_id):
                 em0["mac"] = generateNextMac(topo_id)
                 em0["bridge"] = "virbr0"
                 em0["slot"] = "0x04"
+                em0["ip"] = jsonObject["userData"]["ip"]
                 em1 = {}
                 em1["mac"] = generateNextMac(topo_id)
                 em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
