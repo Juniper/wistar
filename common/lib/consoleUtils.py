@@ -65,7 +65,7 @@ def isJunosDeviceAtPrompt(dom):
             return True
         except pexpect.TIMEOUT as t:
             print "console is available, but not at login prompt"
-            print str(child)
+            # print str(child)
             return False
     except Exception as e:
         print str(e)

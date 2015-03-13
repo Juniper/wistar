@@ -40,6 +40,9 @@
     }
    
     function manageDomain(action, domainId, topoId) {
+        var doc = jQuery(document);
+        doc.css('cursor' , 'progress' );
+       
         if (action == "stop") {
             if (! confirm("This will power off the instance ungracefully!")) {
                 return false;
@@ -62,9 +65,15 @@
         post.fail(function() {
             alert('Could not perform request!');
         });
+        post.always(function() {
+            doc.css('cursor' , '');
+        });
     }
 
     function manageNetwork(action, networkName, topoId) {
+        var doc = jQuery(document);
+        doc.css('cursor' , 'progress' );
+
         var url = '/ajax/manageNetwork/';
         var params = {
             'topologyId' : topoId,
@@ -77,6 +86,9 @@
         });
         post.fail(function() {
             alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor' , '');
         });
     }
 
