@@ -280,6 +280,9 @@
     // selected topology icon and create an ajax request
     // that will configure device access in the background
     function configureJunosAccess() {
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
 
@@ -316,10 +319,17 @@
             alert(message);
         };
 
-        jQuery.post(url, params, success);
+        var post = jQuery.post(url, params, success);
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });
     }
 
     function configureJunosInterfaces() {
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+        
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
 
@@ -335,7 +345,20 @@
             'ip' : ip,
             'password' : password
         };
-        jQuery.post(url, params, success);
+        
+        var success = function(response) {
+            data = eval(response);
+            var message = "Could not configure access";
+            if (data["result"] == true) {
+                message = "Success";
+            }
+            alert(message);
+        };
+        var post = jQuery.post(url, params, success);
+        
+        post.always(function() {
+            doc.style.cursor = '';
+        });
     }
 
     function pushConfigSet(configSetId) {
