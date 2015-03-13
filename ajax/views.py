@@ -119,7 +119,6 @@ def configJunosInterfaces(request):
     print "Configuring interfaces for " + str(ip)
     try:
         response_data["result"] = ju.configJunosInterfaces(ip, password)
-        print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except wistarException as we:
         print we

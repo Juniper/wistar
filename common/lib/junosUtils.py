@@ -44,7 +44,7 @@ def setAllInterfaceMac(dev, interfaces):
         macElement = etree.SubElement(ifaceElement, "mac")
         macElement.text = interfaces[i]
 
-    pushConfigElement(xmlData, dev)    
+    return pushConfigElement(xmlData, dev)    
 
 
 def getInterfaceIpConfigElement(name, ip):
@@ -97,7 +97,7 @@ def configJunosInterfaces(ip, pw):
             # let's grab the mac here
             interfaces[ge] = emInterfaces[em]
 
-    setAllInterfaceMac(dev, interfaces)
+    return setAllInterfaceMac(dev, interfaces)
 
 
 def pushConfigElement(xmlData, dev, overwrite=False):
@@ -110,17 +110,20 @@ def pushConfigElement(xmlData, dev, overwrite=False):
         print diff
         if diff is not None:
             print "Committing"
-            cu.commit(comment="Commit via wistar")
+            if cu.commit_check():
+                print "Committing config!"
+                cu.commit(comment="Commit via wistar")
+                time.sleep(3)
+                return True
+        else:
+            # nothing to commit
+            return True
+    except CommitError as ce:
+        print "Could not load config!"
+        cu.rollback()
+        print repr(ce)
+        return False
 
-            time.sleep(3)
-            print "Unlocking config"
-            try:
-                cu.unlock()
-            except UnlockError as ue:
-                print "Error unlocking config"
-                print repr(ue)
-
-        return True
     except RpcError as e:
         print "caught exception pushing config"
         print repr(e)
