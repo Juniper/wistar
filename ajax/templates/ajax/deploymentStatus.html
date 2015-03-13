@@ -99,14 +99,14 @@
                     value="Deploy To Hypervisor" onclick="javascript: deployTopology();"/>
                   &nbsp;
                   <input type="button" name="refreshDSButton" id="refreshDSButton"
-                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus();"/>
+                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus({{ topologyId }});"/>
                 </td>
               </tr>
               {% else %}
               <tr>
                 <td colspan="3">
                   <input type="button" name="refreshDSButton" id="refreshDSButton"
-                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus();"/>
+                    value="Refresh Hypervisor Status" onclick="javascript: refreshDeploymentStatus('');"/>
                 </td>
               </tr>
               {% endif %}

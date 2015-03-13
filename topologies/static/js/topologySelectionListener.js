@@ -25,8 +25,8 @@ var topologySelectionListener = Class.extend({
 	                if (figure.getType() == "junos_vmx" || figure.getType() == "junos_firefly") {
 	                    loadJunosIconEditor(figure.getId());
 	                } else {
-	                    // loadGenericIconEditor(figure.getId());
-	                    console.log("FIXME - loadGenericIconEditor");
+	                    loadGenericIconEditor(figure.getId());
+	                    // console.log("FIXME - loadGenericIconEditor");
 	                }
 	                // hideSelection();
 	            } else {

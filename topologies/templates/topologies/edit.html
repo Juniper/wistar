@@ -23,7 +23,7 @@
     
     <script type="text/javascript" src="{% static "js/wistar_utils.js" %}"></script>
   
-    <script type="text/javascript" src="{% static "js/prototype.js" %}"></script>
+    <!-- <script type="text/javascript" src="{% static "js/prototype.js" %}"></script> -->
    
     <script type="text/javascript">
     var canvas;
@@ -31,24 +31,84 @@
     var lastY = 0;
 
     var vmxCount = 1;
+    var instanceArray = []
 
     var externalCloudAdded = false;
-    
+
+    // loads initial topology from json stoped in the 'json' div
+    // also creates the instance array variable on page context    
     function loadTopology() {
-        var test = $('json').value;
+        var test = jQuery('#json').val();
     	if (test != null) {
-		    var jsonTxt = JSON.stringify(test, null, 2);
+		    // var jsonTxt = JSON.stringify(test, null, 2);
 		    var json = eval(test);
 		    reader = new draw2d.io.json.Reader();
 		    reader.unmarshal(canvas, json);
 		    for(i=0;i<json.length;i++) {
 			    if (json[i]["type"] == "draw2d.shape.node.topologyIcon") {
 				    vmxCount++;
+				    instanceArray.push({ 
+                        "label" : json[i]["userData"]["label"], 
+                        "type" : json[i]["userData"]["type"], 
+                        "state" : "down",
+                        "id"    : json[i]["id"]
+                    });
 			    }
 		    }
     	}
     } 
 
+    // iterate instanceArray and grab the latest boot up state for each
+    // this runs silently
+    function updateAllBootState() {
+        console.log("updating boot up state for topology");
+        for(v=0;v<instanceArray.length;v++) {
+            var instance = instanceArray[v];
+            if (instance["type"] == "junos_vmx" || instance["type"] == "junos_firefly") {
+                updateBootState(instance["id"], instance["label"]);
+            }
+        }
+    }
+
+    // get instance var form instance array by label
+    function getInstanceByLabel(label) {
+        for(v=0;v<instanceArray.length;v++) {
+            var instance = instanceArray[v];
+            if (instance["label"] == "label") {
+                return instance;
+            }
+        } 
+    }
+
+    // silently updates the boot state of an instance
+    function updateBootState(id, label) {
+        domain = generateDomainNameFromLabel(label);
+        
+        var url = "/ajax/getJunosStartupState/";
+        var params = {
+            'name' : domain
+        };
+
+        var success = function(response) {
+            data = eval(response);
+            var state = "down";
+            if (data["result"] == false) {
+                state = "down";
+            } else {
+                state = "up";
+            }
+            console.log("setting state to: " + state);
+            topo_object = canvas.getFigure(id);
+            topo_object.setBootState(state);
+        };
+
+        jQuery.post(url, params, success);
+    }
+
+    // used when a new instance is added to the topology
+    // convience func to increment the previously entered ip by 1
+    // as wistar currently only supports a /24 for mgmt access
+    // there is no need to account for wrapping beyond 255
     function incrementIconIp(ip)  {
         var iparray = ip.split('.');
         if(iparray.length == 4) {
@@ -63,6 +123,8 @@
         }
     }
 
+    // convience func to increment icon name is it happens to end
+    // in a digit
     function incrementIconName(name) {
         var last = name.substr(-1);
         var lastInt = parseInt(last);
@@ -88,15 +150,16 @@
         }
     }
 
+    // add icon to the topology with the indicated values
     function addIcon() {
-    	var ip = $F('topoIconIp');
-    	var pw = $F('topoIconPass');
-    	var name = $F('topoIconName');
-    	var type = $F('topoIconType');
-    	var image = $F('topoIconImage');
-    	var cpu = $F('topoIconCpu');
-    	var ram = $F('topoIconRam');
-    	var iconData = $F('topoIconIcon');
+    	var ip = jQuery('#topoIconIp').val();
+    	var pw = jQuery('#topoIconPass').val();
+    	var name = jQuery('#topoIconName').val();
+    	var type = jQuery('#topoIconType').val();
+    	var image = jQuery('#topoIconImage').val();
+    	var cpu = jQuery('#topoIconCpu').val();
+    	var ram = jQuery('#topoIconRam').val();
+    	var iconData = jQuery('#topoIconIcon').val();
        
         if (ip == "") {
             alert("Please add a valid IP address");
@@ -121,10 +184,12 @@
 	    canvas.addFigure(canvas_object, lastX, lastY);
 
         // let's try to increment everything nicely
-    	$('topoIconIp').value = incrementIconIp(ip);
-    	$('topoIconName').value = incrementIconName(name);
+    	jQuery('#topoIconIp').val(incrementIconIp(ip));
+    	jQuery('#topoIconName').val(incrementIconName(name));
     }
 
+    // export topology as JSON and stuff it back in the
+    // json div element for later retrieval and storage
     function exportJson() {
         // Create a JSON writer and convert it into a JSON-String representation.
         
@@ -136,45 +201,45 @@
 
         // insert the json string into a DIV for preview or post
         // it via ajax to the server....
-        $("json").value = jsonTxt;
+        jQuery("#json").val(jsonTxt);
     }
 
+    // export and submit form 
     function updateTopology() {
         alert('You may need to redeploy this topology after this update!');
 	    exportJson();
-	    $('topoForm').submit();
+	    jQuery('#topoForm').submit();
     }
 
+    // export and submit form 
     function saveTopology() {
 	    exportJson();
-	    $('topoForm').submit();
+	    jQuery('#topoForm').submit();
     }
 
+    // simple validation
     function createConfigSet() {
         var r = confirm("Snapshot configs of all running instances?");
         if (r == true) {
-            $('configSetForm').submit();
+            jQuery('#configSetForm').submit();
         }
     }
 
+    // simple validation
     function cloneTopology() {
         if(confirm("Are you sure you want to clone this topology?")) {
 		    window.location="/topologies/clone/{{ topo.id }}";
 	    }
     }
 
-    function deployTopologyOld() {
-        if(confirm("Are you sure you want to deploy this topology? This will define all instances in the hypervisor")) {
-		    window.location="/topologies/deploy/{{ topo.id }}";
-	    }
-    }
-    
+    // simple validation
     function deleteTopology() {
         if(confirm("Are you sure you want to delete this topology?")) {
 		    window.location="/topologies/delete/{{ topo.id }}";
 	    }
     }
 
+    // simple validation against Junos password rules
     function checkPass(pw) {
         if(pw != "") {
             upper = pw.match('[A-Z]');
@@ -192,12 +257,13 @@
 
     }
 
+    // breaks up image type string into data members and sets on the icon
     function setImageType() {
-        id = $('topoIconImageSelect').value.split(':')[0]
-        type = $('topoIconImageSelect').value.split(':')[1]
+        id = jQuery('#topoIconImageSelect').val().split(':')[0]
+        type = jQuery('#topoIconImageSelect').val().split(':')[1]
         console.log("Setting image to " + id + " and type to " + type);
-        $('topoIconType').value = type;
-        $('topoIconImage').value = id;
+        jQuery('#topoIconType').val(type);
+        jQuery('#topoIconImage').val(id);
     }
 
     // get the name that was used to create the vm instance
@@ -210,18 +276,66 @@
         return "t{{ topo.id }}_" + name;
     }
 
-    function preconfigJunosDomain(label, password, ip, mgmtInterface) {
-        domain = generateDomainNameFromLabel(label);
+    // grab the relevant information from the currently
+    // selected topology icon and create an ajax request
+    // that will configure device access in the background
+    function configureJunosAccess() {
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        if (figure.getBootState() != "up") {
+            alert("Instance must be booted up before access can be configured!");
+            return false;
+        }
+        
+        var label = figure.getLabel();
+        var ip = figure.getIp();
+        var password = figure.getPassword();
+        var mgmtInterface = figure.getMgmtInterface();
+
+        // default url for junos devices 
         var url = "/ajax/preconfigJunosDomain/";
         var params = {
-            'domain' : domain,
-            'ip' : ip,
-            'password' : password,
-            'mgmtInterface' : mgmtInterface 
+                'domain' : domain,
+                'ip' : ip,
+                'password' : password,
+                'mgmtInterface' : mgmtInterface
         };
-        var successMessage = "Success!";
+
+        // special case for firefly 
+        if (figure.getType() == "junos_firefly") {
+            url = "/ajax/preconfigFirefly/";
+        }
+
+        var success = function(response) {
+            data = eval(response);
+            var message = "Could not configure access";
+            if (data["result"] == true) {
+                message = "Success";
+            }
+            alert(message);
+        };
+
+        jQuery.post(url, params, success);
+    }
+
+    function configureJunosInterfaces() {
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        if (figure.getBootState() != "up") {
+            alert("Instance must be booted up before interfaces can be configured!");
+            return false;
+        }
         
-        simpleAjaxRequest(url, params, successMessage);
+        var ip = figure.getIp();
+        var password = figure.getPassword();
+        var url = "/ajax/configJunosInterfaces/";
+        var params = {
+            'ip' : ip,
+            'password' : password
+        };
+        jQuery.post(url, params, success);
     }
 
     function pushConfigSet(configSetId) {
@@ -290,14 +404,14 @@
         }
 
         var params = { 
-            'sourceIp' : $F('connectionSourceIp'),
-            'sourceIface' : $F('connectionSourceIface'),
-            'targetIp' : $F('connectionTargetIp'),
-            'targetIface' : $F('connectionTargetIface'),
-            'sourcePortIp' : $F('connectionSourcePortIp'),
-            'targetPortIp' : $F('connectionTargetPortIp'),
-            'sourcePw' : $F('connectionSourcePw'),
-            'targetPw' : $F('connectionTargetPw')
+            'sourceIp' : jQuery('#connectionSourceIp').val(),
+            'sourceIface' : jQuery('#connectionSourceIface').val(),
+            'targetIp' : jQuery('#connectionTargetIp').val(),
+            'targetIface' : jQuery('#connectionTargetIface').val(),
+            'sourcePortIp' : jQuery('#connectionSourcePortIp').val(),
+            'targetPortIp' : jQuery('#connectionTargetPortIp').val(),
+            'sourcePw' : jQuery('#connectionSourcePw').val(),
+            'targetPw' : jQuery('#connectionTargetPw').val()
         };
         var url = "/ajax/syncLinkData/";
         var successMessage = "Successly pushed IP addresses to VMs";
@@ -305,151 +419,133 @@
         simpleAjaxRequest(url, params, successMessage);
     }
 
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function refreshDeploymentStatus() {
-        new Ajax.Updater('deploymentStatus', '/ajax/refreshDeploymentStatus/', {
-            parameters: { 'topologyId' : '{{ topo.id }}' }
-        });
-    }
-    
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function manageDomain(action, domainId) {
-        if (action == "stop") {
-            if (! confirm("This will power off the instance ungracefully!")) {
-                return false;
-            }
-        } else if (action == "undefine") {
-            if (! confirm("This will delete this instance entirely!")) {
-                return false;
-            }
-        }
-        new Ajax.Updater('deploymentStatus', '/ajax/manageDomain/', {
-            parameters: { 
-                'topologyId' : '{{ topo.id }}',
-                'domainId' : domainId,
-                'action' : action
-        
-            }
-        });
-    }
-
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function manageNetwork(action, networkName) {
-        new Ajax.Updater('deploymentStatus', '/ajax/manageNetwork/', {
-            parameters: {
-                'topologyId' : '{{ topo.id }}',
-                'networkName' : networkName,
-                'action' : action
-            }
-        });
-    }
-
     function deployTopology() {
         var doc = document.getElementsByTagName('html')[0];
         doc.style.cursor = 'progress';
-        new Ajax.Updater('deploymentStatus', '/ajax/deployTopology/', {
-            parameters: { 'topologyId' : '{{ topo.id }}' },
-            onComplete: function() {
-                doc.style.cursor = '';
-            }
+
+       var url = '/ajax/deployTopology/';
+        var params = {
+            'topologyId' : '{{ topo.id }}'
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#deploymentStatus').empty().append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.style.cursor = '';
         });
     }
 
     function simpleAjaxRequest(url, params, successMessage) {
         var doc = document.getElementsByTagName('html')[0];
         doc.style.cursor = 'progress';
-        new Ajax.Request(url, {
-	        parameters: params,
-            onSuccess: function(response) {
-                data = eval(response.responseJSON);
-                console.log(data);
-                doc.style.cursor = '';
-		        if (data["result"] == false) {
-			        alert(data["message"]);
-		        } else {
-			        alert(successMessage);
-		        }
-                return data;
-            },
-            onFailure: function(response) {
-                doc.style.cursor = '';
-                alert("Could not perform request!");
-		        console.log(response);
+
+        var post = jQuery.post(url, params, function(response) {
+            data = eval(response);
+            console.log(data);
+            doc.style.cursor = '';
+            if (data["result"] == false) {
+                if(data["message"] != undefined) {
+                    alert(data['message']);
+                } else {
+                    alert('Could not complete request');
+                }
+            } else {
+                    alert(successMessage);
             }
         });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });  
     }
 
-    function getJunosStartupState(label) {
+    function getJunosStartupState() {
+
+        console.log('getting boot up state');
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        var label = figure.getLabel();
+        
         domain = generateDomainNameFromLabel(label);
         
         var doc = document.getElementsByTagName('html')[0];
         doc.style.cursor = 'progress';
+   
+        var url = "/ajax/getJunosStartupState/";
+        var params = {
+            "name" : domain
+        };
 
-        new Ajax.Request('/ajax/getJunosStartupState/', {
-	        parameters: { 'name' : domain },
-            onSuccess: function(response) {
-                data = eval(response.responseJSON);
-                console.log(data);
-		        if (data["result"] == false) {
-			        alert("Device is not yet booted up!");
-		        } else {
-			        alert("Device is Booted and Ready!");
-		        }
-            },
-            onFailure: function(response) {
-                alert("Could not load data!!!");
-		        console.log(response);
-                //alert(response);
-            },
-            onComplete: function(response) {
-                doc.style.cursor = '';
+        var post = jQuery.post(url, params, function(response) {
+            data = eval(response);
+            console.log(data);
+            doc.style.cursor = '';
+            if (data["result"] == false) {
+                figure.setBootState("down");
+                alert('Device is not yet booted up!');
+            } else {
+                figure.setBootState("up");
+                alert('Device is booted and ready!');
             }
         });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });  
+        console.log('getting boot up state');
     }
 
     function executeCli() {
-        var ip = $F('junosIconIp');
-        var pw = $F('junosIconPass');
-        var cli = $F('cli');
+        var ip = jQuery('#junosIconIp').val();
+        var pw = jQuery('#junosIconPass').val();
+        var cli = jQuery('#cli').val();
 
         var doc = document.getElementsByTagName('html')[0];
         doc.style.cursor = 'progress';
-
-        new Ajax.Request('/ajax/executeCli/', {
-            parameters: { 
-                'pw' : pw,
-                'ip' : ip,
-                'cli' : cli
-            },
-            onSuccess: function(response) {
-                data = eval(response.responseJSON);
-                if (data["result"] == false) {
-                    alert("Device is not yet booted up!");
-                    $('cliOutput').value = "error";
-                    $('cliOutput').style.height = "";
-                } else {
-                    $('cliOutput').value = data['output'];
-                    $('cliOutput').style.height = "300px";
-                }
-            },
-            onFailure: function(response) {
-                alert("Could not contact device!!!");
-                console.log(response);
-                //alert(response);
-            },
-            onComplete: function(response) {
-                doc.style.cursor = '';
+        
+        var url = '/ajax/executeCli/';
+        var params = {
+             'pw' : pw,
+             'ip' : ip,
+             'cli' : cli
+        };
+        var post = jQuery.post(url, params, function(response) {
+            data = eval(response);
+            console.log(data);
+            doc.style.cursor = '';
+            if (data["result"] == false) {
+                alert("Device is not yet booted up!");
+                jQuery('#cliOutput').val('error');
+                jQuery('#cliOutput').style.height = '';
+            } else {
+                jQuery('#cliOutput').val(data['output']);
+                jQuery('#cliOutput').style.height = "300px";
             }
         });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });  
     }
-
-
 
     /* UI related function */
     var currentSelection = "None";
 
     function deleteSelectedObject() {
-        var so = $F('selectedObject');
+        var so = jQuery('#selectedObject').val();
         if (so != 0) {
             var figure = canvas.getFigure(so);
             if (figure == null) {
@@ -460,7 +556,7 @@
                 externalCloudAdded = false;
             }
             canvas.removeFigure(figure);
-            $('selectedObject').value = "0";
+            jQuery('#selectedObject').val("0");
         }
     }
 
@@ -481,8 +577,8 @@
         manuallyTogglePanel('jsonDebug', '');
         currentSelection = "debug";
 	    exportJson();
-	    $('debug').value = "";
-	    $('debug').value = $('json').value;
+	    jQuery('#debug').val("");
+	    jQuery('#debug').val(jQuery('#json').val());
     }
 
     function showConfigSetEditor() {
@@ -496,27 +592,30 @@
     }
 
     function importJson() {
-        $('json').value = $('debug').value;
+        jQuery('#json').val(jQuery('#debug').val());
         loadTopology();
     }
 
     function setSelectedObject(objectId) {
         console.log(objectId);
-        $('selectedObject').value = objectId;
+        jQuery('#selectedObject').val(objectId);
     }
 
     function manuallyTogglePanel(el, v) {
+        var sel = '#' + el;
         if(v == "none") {
-            if($(el).style.display == 'none') {
+            if(jQuery(sel).css("display") == 'none' || jQuery(sel).css("display") == undefined) {
+                console.log("hidden");
                 return;
             }
-            $(el).style.display = 'none';
+            console.log("HIDEME!");
+            jQuery(sel).css("display", "none");
 
         } else {
-            if($(el).style.display == '') {
-                return;
-            }
-            $(el).style.display = '';
+            console.log("SHOWME");
+            jQuery(sel).css("display", "block");
+            console.log(jQuery(sel).css("display"));
+            console.log("SHOWME");
         }
     }
 
@@ -524,24 +623,29 @@
 
         console.log(figureId);
         //changed from selectedConnection ?
-        $('selectedObject').value = figureId;
+        jQuery('#selectedObject').val(figureId);
         var instance = canvas.getFigure(figureId);
-
-        $('junosIconName').value = instance.getLabel();
-        $('junosIconIp').value = instance.getIp();
-        $('junosIconPass').value = instance.getPassword();
-        $('junosIconCpu').value = instance.getCpu();
-        $('junosIconRam').value = instance.getRam();
+        jQuery('#junosIconName').val(instance.getLabel());
+        jQuery('#junosIconIp').val(instance.getIp());
+        jQuery('#junosIconPass').val(instance.getPassword());
+        jQuery('#junosIconCpu').val(instance.getCpu());
+        jQuery('#junosIconRam').val(instance.getRam());
 
         // clear the cli output      
-        $('cliOutput').value = "";
-        $('cliOutput').style.height = "";
+        jQuery('#cliOutput').val("");
+        jQuery('#cliOutput').height("");
  
         var port = instance.getPorts().get(0);
         
         var connections = port.getConnections();
 
-        $('junosIconNeighbors').innerHTML = "";
+        jQuery('#junosIconNeighbors').html("");
+        
+        if (instance.getBootState() == "up") { 
+            jQuery('#junosIconStatus').html("Ready");
+        } else {
+            jQuery('#junosIconStatus').html("Not Ready");
+        }
 
         for (c=0;c<connections.size;c++) {
             var connection = connections.get(c);
@@ -549,7 +653,7 @@
             var sourcePort = connection.getSource();
             var targetPort = connection.getTarget();
            
-            var neighbor = "ge-0/0/" + c; 
+            var neighbor = " ge-0/0/" + c; 
 
             if (sourcePort.getId() != port.getId()) {
                 neighbor = neighbor + "   :   " + sourcePort.getParent().getLabel(); 
@@ -557,7 +661,7 @@
                 neighbor = neighbor + "   :   " + targetPort.getParent().getLabel(); 
             }
 
-            $('junosIconNeighbors').innerHTML = $('junosIconNeighbors').innerHTML + neighbor + "<br/>";
+            jQuery('#junosIconNeighbors').html(jQuery('#junosIconNeighbors').html() + neighbor + "<br/>");
 
         }
         if (currentSelection !== "junosIconEditor") {
@@ -568,12 +672,18 @@
 
     }
 
-    function updateJunosIcon() {
-        var instance = canvas.getFigure($F('selectedObject'));
+    function loadGenericIconEditor(figureId) {
+        jQuery('#selectedObject').val(figureId);
+        hideAllEditors();
+        currentSelection = "genericIconEditor";
+    }
 
-        instance.setIp($F('junosIconIp'));
-        instance.setLabel($F('junosIconName'));
-        instance.setPassword($F('junosIconPass'));
+    function updateJunosIcon() {
+        var instance = canvas.getFigure(jQuery('#selectedObject').val());
+
+        instance.setIp(jQuery('#junosIconIp').val());
+        instance.setLabel(jQuery('#junosIconName').val());
+        instance.setPassword(jQuery('#junosIconPass').val());
 
         instance.repaint();
         
@@ -586,15 +696,15 @@
             currentSelection = "labelEditor";
         }
         p = canvas.getFigure(figureId);
-        $('selectedLabel').value = figureId;
-        $('labelText').value = p.getText();
-        $('labelFontSize').value = p.fontSize;
+        jQuery('#selectedLabel').val(figureId);
+        jQuery('#labelText').val(p.getText());
+        jQuery('#labelFontSize').val(p.fontSize);
     }
 
     function updateLabel() {
-        l = canvas.getFigure($('selectedLabel').value);
-        l.setText($('labelText').value);
-        l.setFontSize($('labelFontSize').value);
+        l = canvas.getFigure(jQuery('#selectedLabel').val());
+        l.setText(jQuery('#labelText').val());
+        l.setFontSize(jQuery('#labelFontSize').val());
     }
 
     // fixme - this will be broken for anything other than vmx
@@ -628,34 +738,34 @@
         }
         // do the right this if we are connected to an external Bridge
         if (targetPort.getParent().NAME == "draw2d.shape.node.externalCloudIcon") {
-            $('connectionTargetDevice').innerHTML = targetPort.getParent().getLabel();
-            $('connectionTargetIp').value = "0.0.0.0";
-            $('connectionTargetPortIp').value = "0.0.0.0";
+            jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel());
+            jQuery('#connectionTargetIp').val("0.0.0.0");
+            jQuery('#connectionTargetPortIp').val("0.0.0.0");
         } else {
-            $('connectionTargetDevice').innerHTML = targetPort.getParent().getLabel() + " ge-0/0/" + targetIndex;
-            $('connectionTargetIp').value = targetPort.getParent().getIp();
-            $('connectionTargetPw').value = targetPort.getParent().getPassword();
-            $('connectionTargetIface').value = "ge-0/0/" + targetIndex;
-            $('connectionTargetPortIp').value = "";
+            jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel() + " ge-0/0/" + targetIndex);
+            jQuery('#connectionTargetIp').val(targetPort.getParent().getIp());
+            jQuery('#connectionTargetPw').val(targetPort.getParent().getPassword());
+            jQuery('#connectionTargetIface').val("ge-0/0/" + targetIndex);
+            jQuery('#connectionTargetPortIp').val("");
         }
 
         if (sourcePort.getParent().NAME == "draw2d.shape.node.externalCloudIcon") {
 
-            $('connectionSourceDevice').innerHTML = sourcePort.getParent().getLabel();
-            $('connectionSourceIp').value = "0.0.0.0";
-            $('connectionSourcePortIp').value = "0.0.0.0";
+            jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel());
+            jQuery('#connectionSourceIp').val("0.0.0.0");
+            jQuery('#connectionSourcePortIp').val("0.0.0.0");
         } else {
-            $('connectionSourceDevice').innerHTML = sourcePort.getParent().getLabel() + " ge-0/0/" + sourceIndex;
-            $('connectionSourceIp').value = sourcePort.getParent().getIp();
-            $('connectionSourcePw').value = sourcePort.getParent().getPassword();
-            $('connectionSourceIface').value = "ge-0/0/" + sourceIndex;
-            $('connectionSourcePortIp').value = "";
+            jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel() + " ge-0/0/" + sourceIndex);
+            jQuery('#connectionSourceIp').val(sourcePort.getParent().getIp());
+            jQuery('#connectionSourcePw').val(sourcePort.getParent().getPassword());
+            jQuery('#connectionSourceIface').val("ge-0/0/" + sourceIndex);
+            jQuery('#connectionSourcePortIp').val("");
         }
 
         var connData = connection.getUserData();
         if (connData != null) {
-            $('connectionSourcePortIp').value = connData["sourceIp"];
-            $('connectionTargetPortIp').value = connData["targetIp"];
+            jQuery('#connectionSourcePortIp').val(connData["sourceIp"]);
+            jQuery('#connectionTargetPortIp').val(connData["targetIp"]);
         }
 
         if (currentSelection !== "connectionEditor") {
@@ -664,13 +774,13 @@
             currentSelection = "connectionEditor";
         }
 
-        $('selectedConnection').value = figureId;
+        jQuery('#selectedConnection').val(figureId);
     }
 
     function saveConnectionData() {
-        var connId = $F('selectedConnection');
-        var sIp = $F('connectionSourcePortIp');
-        var tIp = $F('connectionTargetPortIp');
+        var connId = jQuery('#selectedConnection').val();
+        var sIp = jQuery('#connectionSourcePortIp').val();
+        var tIp = jQuery('#connectionTargetPortIp').val();
         var connData = {
             "sourceIp": sIp,
             "targetIp": tIp
@@ -681,8 +791,8 @@
     }
 
     function addLabel() {
-        var label = $F('newLabel');
-        var labelSize = $F('newLabelFontSize');
+        var label = jQuery('#newLabel').val();
+        var labelSize = jQuery('#newLabelFontSize').val();
         var l = new draw2d.shape.basic.Label(label);
         // l.setBackgroundColor();
         l.setFontColor("#000000");
@@ -713,16 +823,17 @@
         {% endif %}
     }
 
-    Event.observe(window, 'load', function() {
+    jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
         canvas.addSelectionListener(new topologySelectionListener());
         {% if topo.name != None %}
+            loadTopology();
             {% if topo.id != 0 %}
-            refreshDeploymentStatus();
+                refreshDeploymentStatus( {{ topo.id }} );
+                updateAllBootState();
             {% endif %}
-        loadTopology();
         {% endif %}
     });
     </script>
@@ -1037,6 +1148,33 @@
                 </td>
                 <td>
                   <div id="junosIconNeighbors"></div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Bootup Status
+                </td>
+                <td>
+                  <div id="junosIconStatus"></div>
+                </td>
+              </tr>
+            </table>
+            <table>
+              <th colspan="2">
+                 Automation Tools
+              </th>
+              <tr>
+                <td>
+                  Instance Configuration
+                </td>
+                <td>
+                  <input type="button" onclick="javascript: getJunosStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready"> 
+                    <br/>
+                    <br/>
+                  <input type="button" onclick="javascript: configureJunosAccess();" value="Configure Access" title="Configures SSH + Netconf"> 
+                    <br/>
+                    <br/>
+                  <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
                 </td>
               </tr>
             </table>

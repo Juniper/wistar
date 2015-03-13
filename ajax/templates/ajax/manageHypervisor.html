@@ -5,49 +5,15 @@
 
     <script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
     <script type="text/javascript" src="{% static "js/wistar_utils.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/prototype.js" %}"></script>
+    <!-- <script type="text/javascript" src="{% static "js/prototype.js" %}"></script> -->
     <script type="text/javascript">
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function refreshDeploymentStatus() {
-        new Ajax.Updater('deploymentStatus', '/ajax/refreshDeploymentStatus/', {
-            parameters: { 'topologyId' : '{{ topo.id }}' }
-        });
-    }
-  
-    function refreshHypervisorStatus() {
-        new Ajax.Updater('hypervisorStatus', '/ajax/refreshHypervisorStatus/');
-    }
-
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function manageDomain(action, domainId) {
-        new Ajax.Updater('hypervisorStatus', '/ajax/manageDomain/', {
-            parameters: {
-                'topologyId' : '{{ topo.id }}',
-                'domainId' : domainId,
-                'action' : action
-
-            }
-        });
-    }
-
-    // Simple function to update the deploymentStatusDiv with the current hypervisor state
-    function manageNetwork(action, networkName) {
-        new Ajax.Updater('hypervisorStatus', '/ajax/manageNetwork/', {
-            parameters: {
-                'topologyId' : '{{ topo.id }}',
-                'networkName' : networkName,
-                'action' : action
-            }
-        });
-    }
-
-    Event.observe(window, 'load', function() {
-            refreshHypervisorStatus();
+    jQuery( window ).load( function() {
+        refreshDeploymentStatus('');
     });
     </script>
 
 {% endblock %}
 {% block content %}
 
-<div id="hypervisorStatus"></div>
+<div id="deploymentStatus"></div>
 {% endblock %}

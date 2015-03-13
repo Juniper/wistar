@@ -22,6 +22,17 @@ BottomCenterLocator = draw2d.layout.locator.Locator.extend({
         target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 5);
     }
 });
+BootStateLocator = draw2d.layout.locator.Locator.extend({
+    init: function(parent) {
+        this._super(parent);
+    },
+    relocate: function(index, target) {
+        var node = this.getParent()
+        var x = node.getWidth() - 11;
+        var y = 3;
+        target.setPosition(x, y);
+    }
+});
 draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     NAME: "draw2d.shape.node.topologyIcon",
     EDIT_POLICY: false,
@@ -30,6 +41,7 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
 	    this._super(icon, width, height);
     	var tpl = new topologyIconPortLocator();
     	this.createPort("hybrid", tpl);
+        this.setBootState("down");
     },
      
     setup: function(type, label, ip, pw, image, cpu, ram) {
@@ -42,23 +54,23 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
 		this.setCpu(cpu);
 		this.setRam(ram);
     },
+    setBootState: function(state) {
+        this.bootState = state;
+        if (this.bootStateIcon == undefined) {
+            this.bootStateIcon = new draw2d.shape.basic.Circle();
+            this.bootStateIcon.setBackgroundColor("#FF0000");
+            this.bootStateIcon.setDimension(8, 8);
+            this.addFigure(this.bootStateIcon, new BootStateLocator(this));
+        }
+        if (state == "up") {
+            this.bootStateIcon.setBackgroundColor("#00FF00");
+        } else {
+            this.bootStateIcon.setBackgroundColor("#FF0000");
+        }
+    },
 
-    initOld: function(type, label, ip, pw, image) {
-		var icon;
-		var width = 50;
-		var height = 50;
-		if(type == "mx960" || type == "junos") {
-            console.log("setting mx960 icon");
-			icon = "/static/images/mx960.png";	
-		} else {
-			icon = "/static/images/router.png";	
-		}
-	    this._super(icon, width, height);
-		this.setUserData({});
-		this.setIp(ip);
-        this.setImage(image);
-		this.setPassword(pw);
-	    this.setupObject(type, label, width, height);
+    getBootState: function() {
+        return this.bootState;
     },
     setType: function(type) {
 	    var ud = this.getUserData();
@@ -170,7 +182,8 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     onDoubleClick: function() {
         return;
     },
-    onContextMenu: function(x, y) {
+    // GONEZO
+    onContextMenuOLD: function(x, y) {
         // FIXME - add other junos types here as well
         if(this.getType() == "junos_vmx") {
             items = {
@@ -251,7 +264,7 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     		        case "getStartupState":
     			        console.log("get startup start on " + this.getLabel());
     			        // defined in templates/edit.html - parent page
-    			        getJunosStartupState(this.getLabel());
+    			        getJunosStartupState();
                     break;
                     default:
                         break;
