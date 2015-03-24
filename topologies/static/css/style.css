@@ -19,7 +19,9 @@
 	margin:0;
 	padding:0;
 }
-
+html {
+    height: 100%;
+}
 /** General Style Info **/
 body {
 	background: #c8c8c8;
@@ -27,6 +29,11 @@ body {
 	font-family:'lucida grande',verdana,helvetica,arial,sans-serif;
 	font-size:70%;
 	margin: 0;
+    height: 100%;
+}
+pre {
+    font-family: monospace;
+    font-size: 12px;
 }
 a {
 	color: #445e88;
@@ -106,84 +113,47 @@ p {
 #header a, #footer a {
 	color: #fff;
 }
-#cake-powered {
-	float: right;
-}
-
-/** containers **/
-div.form,
-div.index,
-div.view {
-	float:right;
-	width:76%;
-	border-left:1px solid #666;
-	padding:10px 2%;
-}
-div.actions {
-	float:left;
-	width:16%;
-	padding:10px 1.5%;
-}
-div.actions h3 {
-	padding-top:0;
-	color:#777;
-}
-
-
 /** Tables **/
 table {
-	border-right:0;
-	clear: both;
-	color: #445e88;
-	margin-bottom: 10px;
-	width: 100%;
+       border-right:0;
+       clear: both;
+       color: #445e88;
+       margin-bottom: 10px;
+       width: 100%;
 }
 th {
-	border:0;
-	border-bottom:2px solid #555;
-	text-align: left;
-	padding:4px;
+       border:0;
+       border-bottom:2px solid #555;
+       text-align: left;
+       padding:4px;
 }
 th a {
-	display: block;
-	padding: 2px 4px;
-	text-decoration: none;
+       display: block;
+       padding: 2px 4px;
+       text-decoration: none;
 }
 th a.asc:after {
-	content: ' ⇣';
+       content: ' ⇣';
 }
 th a.desc:after {
-	content: ' ⇡';
+       content: ' ⇡';
 }
 table tr td {
-	padding: 4px;
-	text-align: left;
-	vertical-align: top;
-	border-bottom:1px solid #ddd;
+       padding: 4px;
+       text-align: left;
+       vertical-align: top;
+       border-bottom:1px solid #ddd;
 }
 table tr:nth-child(even) {
-	background: #f9f9f9;
+       background: #f9f9f9;
 }
 td.actions {
-	text-align: center;
-	white-space: nowrap;
+       text-align: center;
+       white-space: nowrap;
 }
 table td.actions a {
-	margin: 0px 6px;
-	padding:2px 5px;
-}
-
-/* SQL log */
-.cake-sql-log {
-	background: #fff;
-}
-.cake-sql-log td {
-	padding: 4px 8px;
-	text-align: left;
-	font-family: Monaco, Consolas, "Courier New", monospaced;
-}
-.cake-sql-log caption {
-	color:#fff;
+       margin: 0px 6px;
+       padding:2px 5px;
 }
 
 /** Paging **/
@@ -314,7 +284,7 @@ input[type=text], textarea {
 	clear: both;
 	font-size: 100%;
 	font-family: "frutiger linotype", "lucida grande", "verdana", sans-serif;
-	padding: 1%;
+	padding: 5px;
 	width:98%;
 }
 input[type=button] {
@@ -374,6 +344,18 @@ form .submit input[type=submit]:hover {
 	background: #5BA150;
 }
 
+.screen-overlay {
+    position: fixed;
+    margin: 0px;
+    padding: 0px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:rgba(0,0,0,0.75);
+    z-index: 1000;
+}
+
 .context-menu-list {
     margin:0; 
     padding:0;
@@ -394,7 +376,7 @@ form .submit input[type=submit]:hover {
     font-size: 11px;
 }
 .context-menu-item {
-    padding: 2px 2px 2px 24px;
+    padding: 2px 2px 2px 2px;
     background-color: #EEE;
     position: relative;
     -webkit-user-select: none;

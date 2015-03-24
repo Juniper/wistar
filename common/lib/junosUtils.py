@@ -99,6 +99,49 @@ def configJunosInterfaces(ip, pw):
 
     return setAllInterfaceMac(dev, interfaces)
 
+# push random config to the device
+# let pyez figure out what format it is in
+# used by configTemplates from user that can be in any format
+def pushConfig(conf_string, ip, pw):
+    dev = getDeviceReference(ip, "root", pw)
+
+    # try to determine the format of our config_string
+    format = 'set'
+    if re.search(r'^\s*<.*>$', conf_string, re.MULTILINE):
+        format = 'xml'
+    elif re.search(r'^\s*(set|delete|replace|rename)\s', conf_string):
+        format = 'set'
+    elif re.search(r'^[a-z:]*\s*\w+\s+{', conf_string, re.I) and re.search(r'.*}\s*$', conf_string):
+        format = 'text'
+
+    print "using format: " + format
+    try:
+        cu = Config(dev)
+        cu.lock
+        cu.load(conf_string, format=format)
+        diff = cu.diff()
+        print diff
+        if diff is not None:
+            print "Committing"
+            if cu.commit_check():
+                print "Committing config!"
+                cu.commit(comment="Commit via wistar")
+                time.sleep(3)
+                return True
+        else:
+            # nothing to commit
+            print "Nothing to commit - no diff found"
+            return True
+    except CommitError as ce:
+        print "Could not load config!"
+        cu.rollback()
+        print repr(ce)
+        return False
+
+    except RpcError as e:
+        print "caught exception pushing config"
+        print repr(e)
+        return False
 
 def pushConfigElement(xmlData, dev, overwrite=False):
     print etree.tostring(xmlData, pretty_print=True)

@@ -18,7 +18,7 @@
     <script type="text/javascript" src="{% static "js/draw2d.js" %}"></script>
     
     <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/externalCloudIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/cloudIcon.js" %}"></script>
     <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
     
     <script type="text/javascript" src="{% static "js/wistar_utils.js" %}"></script>
@@ -34,6 +34,8 @@
     var instanceArray = []
 
     var externalCloudAdded = false;
+
+    var internalCloudCounter = 0;
 
     // loads initial topology from json stoped in the 'json' div
     // also creates the instance array variable on page context    
@@ -361,6 +363,79 @@
         });
     }
 
+   function loadConfigTemplates(topoId) {
+        var doc = jQuery(document);
+        doc.css('cursor' , 'progress' );
+
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        if (figure.getBootState() != "up") {
+            alert("Instance must be booted up before interfaces can be configured!");
+            return false;
+        }
+
+        var ip = figure.getIp();
+
+        var cso = jQuery('<div/>').attr("id", "configTemplatesOverlay").addClass("screen-overlay");
+
+        jQuery('#content').append(cso);
+
+        var url = '/ajax/getConfigTemplates/';
+        var params = {
+            'ip' : ip
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            cso.append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor' , '');
+        });
+    }
+    
+    function applyConfigurationTemplate(template_id) {
+        
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+ 
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        var ip = figure.getIp();
+        var password = figure.getPassword();
+
+        var url = "/ajax/applyConfigTemplate/"
+        var params = {
+            'id' : template_id,
+            'ip' : ip,
+            'password' : password
+        };
+        
+        var successMessage = "Config Template Applied!";
+        var post = jQuery.post(url, params, function(response) {
+            var data = eval(response);
+            if(data["result"] == "true") {
+                alert(successMessage);
+            } else {
+                console.log(data);
+                alert(data["message"]);
+            }
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.style.cursor = '';
+            var cto = jQuery('#configTemplatesOverlay');
+            cto.empty();
+            cto.removeClass("screen-overlay");
+        });
+    }
+
     function pushConfigSet(configSetId) {
         var url = "/ajax/pushConfigSet/"
         var params = {
@@ -549,10 +624,10 @@
             if (data["result"] == false) {
                 alert("Device is not yet booted up!");
                 jQuery('#cliOutput').val('error');
-                jQuery('#cliOutput').style.height = '';
+                jQuery('#cliOutput').css("height", '');
             } else {
                 jQuery('#cliOutput').val(data['output']);
-                jQuery('#cliOutput').style.height = "300px";
+                jQuery('#cliOutput').css("height", '300px');
             }
         });
         post.fail(function() {
@@ -628,17 +703,12 @@
         var sel = '#' + el;
         if(v == "none") {
             if(jQuery(sel).css("display") == 'none' || jQuery(sel).css("display") == undefined) {
-                console.log("hidden");
                 return;
             }
-            console.log("HIDEME!");
             jQuery(sel).css("display", "none");
 
         } else {
-            console.log("SHOWME");
             jQuery(sel).css("display", "block");
-            console.log(jQuery(sel).css("display"));
-            console.log("SHOWME");
         }
     }
 
@@ -760,7 +830,9 @@
             }
         }
         // do the right this if we are connected to an external Bridge
-        if (targetPort.getParent().NAME == "draw2d.shape.node.externalCloudIcon") {
+        if (targetPort.getParent().NAME == "draw2d.shape.node.externalCloudIcon" ||
+            targetPort.getParent().NAME == "draw2d.shape.node.internalCloudIcon") 
+        {
             jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel());
             jQuery('#connectionTargetIp').val("0.0.0.0");
             jQuery('#connectionTargetPortIp').val("0.0.0.0");
@@ -772,10 +844,13 @@
             jQuery('#connectionTargetPortIp').val("");
         }
 
-        if (sourcePort.getParent().NAME == "draw2d.shape.node.externalCloudIcon") {
+        if (sourcePort.getParent().NAME == "draw2d.shape.node.externalCloudIcon" ||
+            sourcePort.getParent().NAME == "draw2d.shape.node.internalCloudIcon") 
+        {
 
             jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel());
             jQuery('#connectionSourceIp').val("0.0.0.0");
+            jQuery('#connectionSourceIp').disabled = true;
             jQuery('#connectionSourcePortIp').val("0.0.0.0");
         } else {
             jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel() + " ge-0/0/" + sourceIndex);
@@ -835,6 +910,11 @@
             alert("You may only add one external connection!");
             return false;
         }
+    }
+    function addInternalCloud() {
+        internalCloudCounter = internalCloudCounter + 1; 
+        var c = new draw2d.shape.node.internalCloudIcon("Private " + internalCloudCounter);
+        canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
     }
 
     // are we editing an existing topology?
@@ -1063,6 +1143,14 @@
                   <input type="button" value="Add External Bridge" title="Add br0" onclick="javascript: addExternalCloud()"/>
                 </td>
               </tr>
+              <tr>
+                <td>
+                  Private Network:
+                </td>
+                <td>
+                  <input type="button" value="Add Private Bridge" title="Add int_br0" onclick="javascript: addInternalCloud()"/>
+                </td>
+              </tr>
             </table>
             <br/>
             <h3>Add Label</h3>
@@ -1198,6 +1286,9 @@
                     <br/>
                     <br/>
                   <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
+                    <br/>
+                    <br/>
+                  <input type="button" onclick="javascript: loadConfigTemplates();" value="Load Configuration Templates" title="Select a configuration template to push to the device"/>
                 </td>
               </tr>
             </table>

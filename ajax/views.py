@@ -11,9 +11,11 @@ import common.lib.consoleUtils as cu
 import common.lib.osUtils as ou
 import common.lib.vboxUtils as vu
 from images.models import Image
+from templates.models import ConfigTemplate
 from topologies.models import Topology
 from topologies.models import ConfigSet
 from topologies.models import Config
+
 # import logging
 import time
 import json
@@ -86,10 +88,9 @@ def preconfigFirefly(request):
     domain = request.POST['domain']
     password = request.POST['password']
     mgmtInterface = request.POST['mgmtInterface']
+    ip = request.POST['ip']
     
-    print "Configuring Firefly management zones:" + str(domain)
     try:
-
         # let's see if we need to kill any webConsole sessions first
         webConsoleDict = request.session.get("webConsoleDict")
         if webConsoleDict is not None:
@@ -99,8 +100,17 @@ def preconfigFirefly(request):
                 server = request.get_host().split(":")[0]
                 wu.killWebSocket(server, wsPort)
 
-        response_data["result"] = cu.preconfigFirefly(domain, password, mgmtInterface)
+        print "Configuring management Access"
+        if cu.preconfigJunosDomain(domain, password, ip, mgmtInterface):
+            print "Configuring Firefly management zones:" + str(domain)
+            time.sleep(3)
+            response_data["result"] = cu.preconfigFirefly(domain, password, mgmtInterface)
+        else:
+            response_data["result"] = False
+            response_data["message"] = "Could not configure Firefly access"
+
         return HttpResponse(json.dumps(response_data), content_type="application/json")
+
     except wistarException as we:
         print we
         response_data["result"] = False
@@ -178,6 +188,18 @@ def getJunosConfig(request):
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
+@csrf_exempt
+def getConfigTemplates(request):
+    response_data = {}
+    requiredFields = set([ 'ip' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    template_list = ConfigTemplate.objects.all().order_by('modified')
+    
+    ip = request.POST['ip']
+    context = {'template_list' : template_list, 'ip' : ip }
+    return render(request, 'ajax/configTemplates.html', context )
 
 @csrf_exempt
 def syncLinkData(request):
@@ -274,6 +296,12 @@ def manageDomain(request):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
+    
+    elif action == "suspend":
+        if lu.suspendDomain(domainId):
+            return refreshDeploymentStatus(request)
+        else:
+            return render(request, 'ajax/ajaxError.html', { 'error' : "Could not suspend domain!" } )
 
     elif action == "undefine":
         sourceFile = lu.getImageForDomain(domainId)
@@ -315,6 +343,31 @@ def manageNetwork(request):
             return render(request, 'ajax/ajaxError.html', { 'error' : "Could not stop domain!" } )
     else:
             return render(request, 'ajax/ajaxError.html', { 'error' : "Unknown Parameters in POST!" } )
+
+@csrf_exempt
+def applyConfigTemplate(request):
+    print "Pushing Config Template"
+    response_data = {}
+    response_data["result"] = True
+
+    requiredFields = set([ 'id', 'ip', 'password' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    config_template_id = request.POST['id'] 
+    ip = request.POST['ip'] 
+    password = request.POST['password']
+
+    configTemplate = ConfigTemplate.objects.get(pk=config_template_id)
+    template = configTemplate.template
+    cleaned_template = template.replace('\r\n', '\n')
+    print cleaned_template
+    if ju.pushConfig(cleaned_template, ip, password):
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    else:
+        response_data["result"] = False
+        response_data["message"] = "Could not apply config template"
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
 def pushConfigSet(request):

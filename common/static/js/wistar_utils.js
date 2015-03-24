@@ -51,6 +51,10 @@
             if (! confirm("This will delete this instance entirely!")) {
                 return false;
             }
+        } else if (action == "suspend") {
+            if (! confirm("This will suspend this domain! THIS IS EXPERIEMENTAL!")) {
+                return false;
+            }
         }
         var url = '/ajax/manageDomain/';
         var params = {
@@ -92,3 +96,26 @@
         });
     }
 
+    function loadConfigTemplates(topoId) {
+        var doc = jQuery(document);
+        doc.css('cursor' , 'progress' );
+       
+        var cso = jQuery('<div/>').attr("id", "configTemplatesOverlay").addClass("screen-overlay");
+
+        jQuery('#content').append(cso);
+ 
+        var url = '/ajax/getConfigTemplates/';
+        var params = {
+            'topologyId' : topoId
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            cso.append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor' , '');
+        });
+    }

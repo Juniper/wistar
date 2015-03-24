@@ -35,7 +35,14 @@ def loadJson(rawJson, topo_id):
     devices = []
     networks = []
 
+    # do we need to create the em1 as well? 
+    # only if we have at least 1 vmx
+    em1_required = False
+
+    # external bridge is a highlander (there can be only one)
     externalUUID = "";
+    # allow multiple internal bridges
+    internalUUIDs = [];
 
     deviceIndex = 0
     for jsonObject in jsonData:
@@ -74,6 +81,10 @@ def loadJson(rawJson, topo_id):
             # if this is a vmx, let's create the mandatory two mgmt ports in the 
             # first two slots
             if ud["type"] == "junos_vmx":
+
+                # ok, we need this network to be created later
+                em1_required = True
+
                 # manually create em0 and em1 interfaces            
                 em0 = {}
                 em0["mac"] = generateNextMac(topo_id)
@@ -91,6 +102,8 @@ def loadJson(rawJson, topo_id):
             devices.append(device)
         elif jsonObject["type"] == "draw2d.shape.node.externalCloudIcon":
             externalUUID = jsonObject["id"];
+        elif jsonObject["type"] == "draw2d.shape.node.internalCloudIcon":
+            internalUUIDs.append(jsonObject["id"]);
 
     # just run through again to ensure we already have all the devices ready to go!
     # note - set this to 1 to avoid using special name br0 -
@@ -98,16 +111,23 @@ def loadJson(rawJson, topo_id):
     # FIXME - add UI later to specify which host you want to do that for
     connIndex = 1
 
-    # create the em1_bridge - not really used but necessary for vmx
-    em1bridge = {}
-    em1bridge["name"] = "t" + str(topo_id) + "_em1bridge"
-    em1bridge["mac"] = generateNextMac(topo_id)
-    networks.append(em1bridge)
+    # create the em1bridge if necessary
+    if em1_required == True:
+        em1bridge = {}
+        em1bridge["name"] = "t" + str(topo_id) + "_em1bridge"
+        em1bridge["mac"] = generateNextMac(topo_id)
+        networks.append(em1bridge)
 
     for jsonObject in jsonData:
         if jsonObject["type"] == "draw2d.Connection":
             targetUUID = jsonObject["target"]["node"]
             sourceUUID = jsonObject["source"]["node"]
+
+            # should we create a new bridge for this connection?
+            createBridge = True
+
+            bridge_name = "t" + str(topo_id) + "_br" + str(connIndex)
+
             for d in devices:
                 if d["uuid"] == sourceUUID:
                     # slot should always start with 6
@@ -115,11 +135,15 @@ def loadJson(rawJson, topo_id):
                     interface = {}
                     interface["mac"] = generateNextMac(topo_id)
 
-                    if targetUUID != externalUUID:
-                        interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
-                    else:
+                    if targetUUID in internalUUIDs:
+                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internalUUIDs.index(targetUUID))
+                        interface["bridge"] = bridge_name
+                    elif targetUUID == externalUUID:
                         # FIXME - this is hard coded to br0 - should maybe use a config object asp
-                        interface["bridge"] = "br0"
+                        bridge_name = "br0"
+                        interface["bridge"] = bridge_name
+                    else:
+                        interface["bridge"] = bridge_name
 
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
@@ -132,22 +156,35 @@ def loadJson(rawJson, topo_id):
                     interface = {}
                     interface["mac"] = generateNextMac(topo_id)
 
-                    if sourceUUID != externalUUID:
-                        interface["bridge"] = "t" + str(topo_id) + "_br" + str(connIndex)
+                    if sourceUUID in internalUUIDs:
+                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internalUUIDs.index(sourceUUID))
+                        interface["bridge"] = bridge_name
+                    if sourceUUID == externalUUID:
+                        bridge_name = "br0"
+                        interface["bridge"] = bridge_name
                     else:
-                        interface["bridge"] = "br0"
+                        interface["bridge"] = bridge_name
 
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
                     interface["linkId"] = jsonObject["id"]
                     d["interfaces"].append(interface)
 
+            # let's check to see if we've already marked this internal bridge for creation
+            for c in networks:
+                if c["name"] == bridge_name:
+                    print "Skipping bridge creation for " + bridge_name
+                    createBridge = False
+                    continue
 
-            connection = {}
-            connection["name"] = "t" + str(topo_id) + "_br" + str(connIndex)
-            connection["mac"] = generateNextMac(topo_id)
-            networks.append(connection)
-            connIndex += 1
+            if createBridge == True and bridge_name != "br0":
+                print "Setting " + bridge_name +  " for creation"
+                connection = {}
+                connection["name"] = bridge_name
+                connection["mac"] = generateNextMac(topo_id)
+                networks.append(connection)
+                connIndex += 1
+
   
     # now let's add a final mgmt interface to all non-vmx instances 
     # we need to loop again because we didn't know how many interfaces were on this instance

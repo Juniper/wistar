@@ -39,6 +39,10 @@
                         title="Power off instance in Hypervisor">
                         <img src="{% static "images/stopped.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
+                    <a href="#" onclick="javascript: manageDomain('suspend', '{{ d.uuid }}', '{{ topologyId }}');"
+                        title="Suspend instance in Hypervisor">
+                        <img src="{% static "images/suspended.png" %}" width="20px" height="20px"/></a>
+                    &nbsp;
                     <a href="#" onclick="javascript: launchWebConsole('{{ d.name }}');"
                         title="Launch Console">
                         <img src="{% static "images/console.png" %}" width="20px" height="20px"/></a>

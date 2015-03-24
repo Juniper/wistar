@@ -1,0 +1,24 @@
+
+{% extends "base.html" %}
+{% block title %}Wistar - Lab Rat - Home{% endblock %}
+{% block content %}
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Options</th>
+    </tr>
+{% for template in template_list %}
+    <tr>
+        <td><a href='{{ template.id }}'>{{ template.name }}</a> </td>
+        <td>{{ template.description }}</td> 
+        <td>
+		<a href='delete/{{ template.id }}'>Delete</a>
+        &nbsp;
+		<a href='edit/{{ template.id }}'>Edit</a>
+	 </td>
+    </tr>
+{% endfor %}
+</table>
+<a href='new/'>Define new template</a>
+{% endblock %}

@@ -6005,7 +6005,9 @@ draw2d.shape.basic.PolyLine = draw2d.shape.basic.Line.extend({NAME: "draw2d.shap
         this.router.setPersistentAttributes(this, memento);
     }});
 //draw2d.shape.basic.PolyLine.DEFAULT_ROUTER = new draw2d.layout.connection.ManhattanConnectionRouter();
-draw2d.shape.basic.PolyLine.DEFAULT_ROUTER = new draw2d.layout.connection.DirectRouter();
+//draw2d.shape.basic.PolyLine.DEFAULT_ROUTER = new draw2d.layout.connection.DirectRouter();
+draw2d.shape.basic.PolyLine.DEFAULT_ROUTER = new draw2d.layout.connection.FanConnectionRouter();
+//draw2d.shape.basic.PolyLine.DEFAULT_ROUTER = new draw2d.layout.connection.SplineConnectionRouter();
 draw2d.shape.basic.Diamond = draw2d.VectorFigure.extend({NAME: "draw2d.shape.basic.Diamond", init: function(width, height) {
         this._super();
         this.setBackgroundColor("#00a3f6");

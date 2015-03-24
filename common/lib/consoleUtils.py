@@ -107,6 +107,7 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
             time.sleep(1)
             child.send("exit\r")
             print "all-done"
+            return True
         else: 
             print "console does not appear to be available"
             return False

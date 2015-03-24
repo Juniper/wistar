@@ -256,13 +256,13 @@ def stopDomain(domainId):
         print e
         return False
 
-def suspendDomain(domainId, saveFile):
+def suspendDomain(domainId):
     if not connect():
         return False
 
     try:
         domain = getDomainByUUID(domainId)
-        domain.save(saveFile)
+        domain.managedSave(0)
         return True
 
     except Exception as e:
@@ -357,7 +357,6 @@ def getDomainVncPort(domain):
         graphicsType = graphicsElement.get("type")
         if graphicsType == "vnc":
             vncPort = graphicsElement.get("port") 
-            print "Found vncPort: " + str(vncPort)
             return vncPort
         else:
             return 0
@@ -378,7 +377,6 @@ def getNextDomainVncPort(offset=0):
         try:
             port = int(vncPort)
             if port != 0 and port != -1:
-                print "adding to usedPorts"
                 usedPorts.append(port)
         except:
             # in some cases,port can be something other than int like None

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}Wistar - Lab Rat - Edit Template{% endblock %}
+{% block scripts %}
+    <script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+    <script type="text/javascript">
+    function validateForm() {
+        var d = $('#id_description');
+        var n = $('#id_name');
+        var f = $('#id_template');
+        if (n.val() == "") {
+            alert("Please enter a name!");
+            n.focus();
+            return false;
+        }
+        if (d.val() == "") {
+            alert("Please enter a description!");
+            d.focus();
+            return false;
+        }
+        if (f.val() == "") {
+            alert("Please enter config information!");
+            f.focus();
+            return false;
+        }
+    }
+    </script>
+{% endblock %}
+{% block content %}
+<h2>Edit Template</h2>
+<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/templates/update/">
+{% csrf_token %}
+{{ template_form }}
+<input type="hidden" name="id" value="{{ template.id }}"/>
+<input type="submit"/>
+</form>
+{% endblock %}

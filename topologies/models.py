@@ -39,4 +39,3 @@ class Config(models.Model):
       verbose_name = 'Config'
       verbose_name_plural = 'configs'
 
-

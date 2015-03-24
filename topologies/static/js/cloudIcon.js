@@ -28,11 +28,17 @@ draw2d.shape.node.externalCloudIcon = draw2d.shape.icon.Cloud2.extend({
    
     init: function() {
         this._super();
+        this.setUserData({});
+        this.setup();
+    },
+    setup: function() {
         var pl = new externalCloudIconPortLocator();
         this.createPort("hybrid", pl);
         this.setLabel("External");
     },
     setLabel: function(label) {
+        var ud = this.getUserData();
+        ud["label"] = label;
         l = new draw2d.shape.basic.Label(label);
         l.setColor("#000");
         l.setFontColor("#000");
@@ -43,4 +49,24 @@ draw2d.shape.node.externalCloudIcon = draw2d.shape.icon.Cloud2.extend({
         return "External";
     }
 });
-
+draw2d.shape.node.internalCloudIcon = draw2d.shape.node.externalCloudIcon.extend({
+    NAME: "draw2d.shape.node.internalCloudIcon",
+    EDIT_POLICY: false,
+    
+    init: function(label) {
+        this._super();
+        this.setup(label);
+    },
+    setup: function(label) {
+        var pl = new externalCloudIconPortLocator();
+        this.createPort("hybrid", pl);
+        this.setLabel(label);
+    },
+    getLabel: function() {
+        return this.getUserData()["label"]
+    },
+    setPersistentAttributes: function(memento) {
+        this._super(memento);
+        this.setLabel(memento.userData.label);
+    }
+});
