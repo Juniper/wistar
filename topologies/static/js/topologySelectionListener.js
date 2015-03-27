@@ -24,9 +24,10 @@ var topologySelectionListener = Class.extend({
 	                console.log("found topologyIcon");
 	                if (figure.getType() == "junos_vmx" || figure.getType() == "junos_firefly") {
 	                    loadJunosIconEditor(figure.getId());
-	                } else {
+	                } else if(figure.getType() == "linux") {
+	                    loadLinuxIconEditor(figure.getId());
+                    } else {
 	                    loadGenericIconEditor(figure.getId());
-	                    // console.log("FIXME - loadGenericIconEditor");
 	                }
 	                // hideSelection();
 	            } else {

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import platform
 
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
@@ -8,6 +9,14 @@ def checkIsLinux():
         return True
     else:
         return False        
+
+# Is this version of linux Ubuntu based?
+def checkIsUbuntu():
+    dist = platform.dist()[0]
+    if "buntu" in dist:
+        return True
+    else:
+        return False
 
 # silly wrapper
 def checkPath(path):

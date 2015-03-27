@@ -73,6 +73,47 @@ def isJunosDeviceAtPrompt(dom):
         print str(child)
         return False
 
+def isLinuxDeviceAtPrompt(dom):
+    print "Getting bootup state of: " + str(dom)
+    try:
+        child = getConsole(dom)
+        print "got child"
+        try:
+            child.send("\r")
+            child.send("\r")
+            print "sent enter enter"
+            indx = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]#", ".*login:", "error: operation failed"])
+            print "Found prompt: " + child.before
+            if indx == 0:
+	            print "Domain is not configured!"
+	            return False
+            elif indx == 1:
+                print "Root is logged in, logging her out"
+                child.send("exit\r")
+                # super tricky bug here. child would exit before the command had actually been sent
+                # exit sh
+                time.sleep(.5)
+                return True
+            elif indx == 2:
+                print "User is logged in, logging her out"
+                child.send("exit\r")
+                time.sleep(.5)
+                return True
+            elif indx == 3:
+                print "At login prompt"
+                return True
+            elif indx == 4:
+                print "Could not get console"
+                return False
+        except pexpect.TIMEOUT as t:
+            print "console is available, but not at login prompt"
+            # print str(child)
+            return False
+    except Exception as e:
+        print str(e)
+        print "console does not appear to be available"
+        print str(child)
+        return False
 
 def preconfigFirefly(dom, pw, mgmtInterface="em0"):
     try:
@@ -118,6 +159,53 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
         print "console does not appear to be available"
         return False
 
+def preconfigLinuxDomain(dom, pw, ip, mgmtInterface="eth0"):
+    print "in preconfigLinuxDomain"
+    child = getConsole(dom)
+    try:
+        time.sleep(.5)
+        child.send("\r")
+        child.send("\r")
+        indx = child.expect(["[^\s]$", "[^\s]#", ".*login:"])
+        print "Found prompt: " + child.before
+        if indx == 0 or indx == 1:
+            # someone is already logged in on the console
+            child.send("exit\r")
+    
+        print "Logging in as root"
+        child.send("root\r")
+        child.expect("assword:")
+        child.send(pw + "\r")
+        indx = child.expect(["root.*#", "Login incorrect"])
+        if indx == 1:
+            print "Incorrect login information"
+            raise wistarException("Incorrect Login Information")
+
+        print "sending ip information"
+        child.send("ip addr add " + ip + "/24 dev " + mgmtInterface + "\r")
+        child.expect("root.*#")
+        print "sending link up"
+        child.send("ip link set " + mgmtInterface + " up\r")
+        child.expect("root.*#")
+        print "sending hostnamectl"
+        child.send("hostnamectl set-hostname " + dom + "\r")
+        child.expect("root.*#")
+        print "sending exit"
+        child.send("exit\r")
+        
+        return True
+    
+    except pexpect.TIMEOUT as t:
+        print "Error configuring Linux domain"
+        print str(child)
+        return False
+    
+    except pexpect.EOF as e:
+        print repr(e)
+        print "Failed to preconfig linux domain!"
+        raise wistarException("Console process unexpectidly quit! Is the console already open?")
+
+
 def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
     try:
         needsPw = False
@@ -134,7 +222,7 @@ def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
             print "User is in config mode on the console!"
             raise wistarException("User is in configure mode on the console!")
     
-        print "Loggin in as root"
+        print "Logging in as root"
         child.send("root\r")
         
         ret = child.expect(["assword:", "root@%"])

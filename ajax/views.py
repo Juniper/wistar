@@ -78,6 +78,31 @@ def preconfigJunosDomain(request):
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
+
+@csrf_exempt
+def preconfigLinuxDomain(request):
+    response_data = {}
+    requiredFields = set([ 'domain', 'password', 'ip', 'mgmtInterface' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    domain = request.POST['domain']
+    password = request.POST['password']
+    ip = request.POST['ip']
+    mgmtInterface = request.POST['mgmtInterface']
+
+    print "Configuring linux domain:" + str(domain)
+    try:
+        response_data["result"] = cu.preconfigLinuxDomain(domain, password, ip, mgmtInterface)
+        print str(response_data)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    except wistarException as we:
+        print we
+        response_data["result"] = False
+        response_data["message"] = str(we)
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+
 @csrf_exempt
 def preconfigFirefly(request):
     response_data = {}
@@ -165,6 +190,17 @@ def getJunosStartupState(request):
 
     name = request.POST['name']
     response_data["result"] = cu.isJunosDeviceAtPrompt(name)
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+@csrf_exempt
+def getLinuxStartupState(request):
+    response_data = {}
+    requiredFields = set([ 'name' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    name = request.POST['name']
+    response_data["result"] = cu.isLinuxDeviceAtPrompt(name)
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
@@ -433,10 +469,10 @@ def deployTopology(request):
 
     # let's parse the json and convert to simple lists and dicts
     config = wu.loadJson(topo.json, topologyId)
+
     time.sleep(1)
 
     # only create networks on Linux/KVM
-
     print "Checking if we should create networks first!"
     if ou.checkIsLinux():
         for network in config["networks"]:
@@ -460,6 +496,21 @@ def deployTopology(request):
                 return render(request, 'ajax/ajaxError.html', context)
 
     time.sleep(1)   
+
+    # are we on linux? are we on Ubuntu linux? set kvm emulator accordingly
+    vm_env = {}
+    vm_env["emulator"] = "/usr/libexec/qemu-kvm"
+    vm_env["pcType"] = "rhel6.5.0"
+    if ou.checkIsLinux() and ou.checkIsUbuntu():
+        vm_env["emulator"] = "/usr/bin/kvm-spice"
+        vm_env["pcType"] = "pc"
+
+    # by default, we use kvm as the hypervisor
+    domainXmlPath = "ajax/kvm/"
+    if not ou.checkIsLinux():
+        # if we're not on Linux, then let's try to use vbox instead
+        domainXmlPath = "ajax/vbox/" 
+
     for device in config["devices"]:
         try:
             if not lu.domainExists(device["name"]):
@@ -473,18 +524,12 @@ def deployTopology(request):
                 imageBasePath = settings.MEDIA_ROOT + "/" + image.filePath.url
                 instancePath = ou.getInstancePathFromImage(imageBasePath, device["name"])
 
-                # by default, we use kvm as the hypervisor
-                domainXmlPath = "ajax/kvm/"
-                if not ou.checkIsLinux():
-                    # if we're not on Linux, then let's try to use vbox instead
-                    domainXmlPath = "ajax/vbox/" 
-
                 print "rendering xml for image type: " + str(image.type)
                 if image.type == "junos_firefly":
                     print "Using firefly definition"
-                    deviceXml = render_to_string(domainXmlPath + "domain_firefly.xml", {'device' : device, 'instancePath' : instancePath})
+                    deviceXml = render_to_string(domainXmlPath + "domain_firefly.xml", {'device' : device, 'instancePath' : instancePath, 'vm_env' : vm_env})
                 else:
-                    deviceXml = render_to_string(domainXmlPath + "domain.xml", {'device' : device, 'instancePath' : instancePath})
+                    deviceXml = render_to_string(domainXmlPath + "domain.xml", {'device' : device, 'instancePath' : instancePath, 'vm_env' : vm_env})
 
                 if debug:
                     print "Checking that image instance exists at " + str(instancePath)

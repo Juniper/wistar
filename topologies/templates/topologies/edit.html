@@ -66,7 +66,7 @@
         console.log("updating boot up state for topology");
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
-            if (instance["type"] == "junos_vmx" || instance["type"] == "junos_firefly") {
+            if (instance["type"] == "junos_vmx" || instance["type"] == "junos_firefly" || instance["type"] == "linux") {
                 updateBootState(instance["id"], instance["label"]);
             }
         }
@@ -85,7 +85,12 @@
     // silently updates the boot state of an instance
     function updateBootState(id, label) {
         domain = generateDomainNameFromLabel(label);
-        
+        var figure = canvas.getFigure(id);
+        var type = figure.getType();
+
+        if (type == "linux") {
+            url = "/ajax/getLinuxStartupState/";
+        } 
         var url = "/ajax/getJunosStartupState/";
         var params = {
             'name' : domain
@@ -281,7 +286,7 @@
     // grab the relevant information from the currently
     // selected topology icon and create an ajax request
     // that will configure device access in the background
-    function configureJunosAccess() {
+    function configureInstanceAccess() {
         var doc = document.getElementsByTagName('html')[0];
         doc.style.cursor = 'progress';
 
@@ -298,6 +303,8 @@
         var password = figure.getPassword();
         var mgmtInterface = figure.getMgmtInterface();
 
+        domain = generateDomainNameFromLabel(label);
+
         // default url for junos devices 
         var url = "/ajax/preconfigJunosDomain/";
         var params = {
@@ -310,6 +317,8 @@
         // special case for firefly 
         if (figure.getType() == "junos_firefly") {
             url = "/ajax/preconfigFirefly/";
+        } else if (figure.getType() == "linux") {
+            url = "/ajax/preconfigLinuxDomain/";
         }
 
         var success = function(response) {
@@ -503,8 +512,10 @@
 
         var params = { 
             'sourceIp' : jQuery('#connectionSourceIp').val(),
+            'sourceType' : jQuery('#connectionSourceType').val(),
             'sourceIface' : jQuery('#connectionSourceIface').val(),
             'targetIp' : jQuery('#connectionTargetIp').val(),
+            'targetType' : jQuery('#connectionTargetType').val(),
             'targetIface' : jQuery('#connectionTargetIface').val(),
             'sourcePortIp' : jQuery('#connectionSourcePortIp').val(),
             'targetPortIp' : jQuery('#connectionTargetPortIp').val(),
@@ -562,6 +573,51 @@
         post.always(function() {
             doc.style.cursor = '';
         });  
+    }
+
+    function getInstanceStartupState() {
+
+        console.log('getting boot up state');
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        var label = figure.getLabel();
+        var type = figure.getType();
+ 
+        domain = generateDomainNameFromLabel(label);
+        
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+  
+        var url = "/ajax/getJunosStartupState/";
+
+        if (type == "linux") { 
+            url = "/ajax/getLinuxStartupState/";
+        }
+
+        var params = {
+            "name" : domain
+        };
+
+        var post = jQuery.post(url, params, function(response) {
+            data = eval(response);
+            console.log(data);
+            doc.style.cursor = '';
+            if (data["result"] == false) {
+                figure.setBootState("down");
+                alert('Device is not yet booted up!');
+            } else {
+                figure.setBootState("up");
+                alert('Device is booted and ready!');
+            }
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });  
+        console.log('getting boot up state');
     }
 
     function getJunosStartupState() {
@@ -661,6 +717,7 @@
     function hideAllEditors() {
         manuallyTogglePanel('jsonDebug', 'none');
         manuallyTogglePanel('junosIconEditor', 'none');
+        manuallyTogglePanel('linuxIconEditor', 'none');
         manuallyTogglePanel('connectionEditor', 'none');
         manuallyTogglePanel('labelEditor', 'none');
     }
@@ -770,6 +827,25 @@
         hideAllEditors();
         currentSelection = "genericIconEditor";
     }
+    
+    function loadLinuxIconEditor(figureId) {
+        
+        jQuery('#selectedObject').val(figureId);
+        var instance = canvas.getFigure(figureId);
+
+        console.log(instance.getLabel());
+        jQuery('#linuxIconName').val(instance.getLabel());
+        jQuery('#linuxIconIp').val(instance.getIp());
+        jQuery('#linuxIconPass').val(instance.getPassword());
+        jQuery('#linuxIconCpu').val(instance.getCpu());
+        jQuery('#linuxIconRam').val(instance.getRam());
+        
+        if (currentSelection !== "linuxIconEditor") {
+            hideAllEditors();
+            manuallyTogglePanel('linuxIconEditor', '');
+            currentSelection = "linuxIconEditor";
+        }
+    }
 
     function updateJunosIcon() {
         var instance = canvas.getFigure(jQuery('#selectedObject').val());
@@ -835,13 +911,21 @@
         {
             jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel());
             jQuery('#connectionTargetIp').val("0.0.0.0");
+            jQuery('#connectionTargetType').val("cloud");
             jQuery('#connectionTargetPortIp').val("0.0.0.0");
+            jQuery('#connectionTargetPortIp').prop("disabled", true);
         } else {
-            jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel() + " ge-0/0/" + targetIndex);
+            var targetPortString = "ge-0/0/";
+            if (targetPort.getParent().getType() == "linux") {
+                targetPortString = "eth";    
+            }
+            jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel() + " " + targetPortString + targetIndex);
             jQuery('#connectionTargetIp').val(targetPort.getParent().getIp());
+            jQuery('#connectionTargetType').val(targetPort.getParent().getType());
             jQuery('#connectionTargetPw').val(targetPort.getParent().getPassword());
-            jQuery('#connectionTargetIface').val("ge-0/0/" + targetIndex);
+            jQuery('#connectionTargetIface').val(targetPortString + targetIndex);
             jQuery('#connectionTargetPortIp').val("");
+            jQuery('#connectionTargetPortIp').prop("disabled", false);
         }
 
         if (sourcePort.getParent().NAME == "draw2d.shape.node.externalCloudIcon" ||
@@ -850,14 +934,21 @@
 
             jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel());
             jQuery('#connectionSourceIp').val("0.0.0.0");
-            jQuery('#connectionSourceIp').disabled = true;
+            jQuery('#connectionSourceType').val("cloud");
             jQuery('#connectionSourcePortIp').val("0.0.0.0");
+            jQuery('#connectionSourcePortIp').prop("disabled", true);
         } else {
-            jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel() + " ge-0/0/" + sourceIndex);
+            var sourcePortString = "ge-0/0/";
+            if (sourcePort.getParent().getType() == "linux") {
+                sourcePortString = "eth";    
+            }
+            jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel() + " " + sourcePortString + sourceIndex);
             jQuery('#connectionSourceIp').val(sourcePort.getParent().getIp());
+            jQuery('#connectionSourceType').val(sourcePort.getParent().getType());
             jQuery('#connectionSourcePw').val(sourcePort.getParent().getPassword());
-            jQuery('#connectionSourceIface').val("ge-0/0/" + sourceIndex);
+            jQuery('#connectionSourceIface').val(sourcePortString + sourceIndex);
             jQuery('#connectionSourcePortIp').val("");
+            jQuery('#connectionSourcePortIp').prop("disabled", false);
         }
 
         var connData = connection.getUserData();
@@ -1205,6 +1296,75 @@
               </tr>
             </table>
           </div>
+          <div id="linuxIconEditor" style="display:none">
+            <table>
+              <th colspan="2">
+                 Instance Details
+              </th>
+              <tr>
+                <td>
+                   Name
+                </td>
+                <td>
+                  <input type="text" disabled="true" name="linuxIconName" id="linuxIconName" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                   IP Address
+                </td>
+                <td>
+                  <input type="text" disabled="true" title="management address" name="linuxIconIp" id="linuxIconIp" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                   Root Password
+                </td>
+                <td>
+                  <input type="text" disabled="true"
+                    name="linuxIconPass" id="linuxIconPass" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                   vCPU
+                </td>
+                <td>
+                  <input type="text" disabled="true"
+                    name="linuxIconCPU" id="linuxIconCpu" value="2"/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  vRAM
+                </td>
+                <td>
+                  <input type="text" disabled="true"
+                    name="linuxIconRam" id="linuxIconRam" value="2"/>
+                </td>
+              </tr>
+            </table>
+            <table>
+              <th colspan="2">
+                 Automation Tools
+              </th>
+              <tr>
+                <td>
+                  Instance Configuration
+                </td>
+                <td>
+                  <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                    <br/>
+                    <br/>
+                  <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures Management IP Address">
+                    <br/>
+                    <br/>
+                </td>
+              </tr>
+            </table>
+
+          </div>
           <div id="junosIconEditor" style="display:none">
             <table>
               <th colspan="2">
@@ -1223,7 +1383,7 @@
                    IP Address
                 </td>
                 <td>
-                  <input type="text" disabled="true" name="junosIconIp" id="junosIconIp" value=""/>
+                  <input type="text" disabled="true" title="management address" name="junosIconIp" id="junosIconIp" value=""/>
                 </td>
               </tr>
               <tr>
@@ -1279,10 +1439,10 @@
                   Instance Configuration
                 </td>
                 <td>
-                  <input type="button" onclick="javascript: getJunosStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready"> 
+                  <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready"> 
                     <br/>
                     <br/>
-                  <input type="button" onclick="javascript: configureJunosAccess();" value="Configure Access" title="Configures SSH + Netconf"> 
+                  <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures SSH + Netconf"> 
                     <br/>
                     <br/>
                   <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
@@ -1364,7 +1524,9 @@
                 <td colspan="2">
                   <input type="hidden" id="selectedConnection" value="0">
                   <input type="hidden" id="connectionSourceIp" value="0">
+                  <input type="hidden" id="connectionSourceType" value="0">
                   <input type="hidden" id="connectionTargetIp" value="0">
+                  <input type="hidden" id="connectionTargetType" value="0">
                   <input type="hidden" id="connectionSourceIface" value="0">
                   <input type="hidden" id="connectionTargetIface" value="0">
                   <input type="hidden" id="connectionSourcePw" value="0">

@@ -3,7 +3,7 @@
   <memory unit='MiB'>{{ device.ram }}</memory>
   <vcpu placement='static'>{{ device.cpu }}</vcpu>
   <os>
-    <type arch='x86_64' machine='rhel6.5.0'>hvm</type>
+    <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
     <boot dev='hd'/>
   </os>
   <features>
@@ -16,9 +16,9 @@
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
   <devices>
-    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <emulator>{{ vm_env.emulator }}</emulator>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' cache='none' io='threads'/>
+      <driver name='qemu' type='qcow2' cache='none' io='native'/>
       <source file='{{ instancePath }}'/>
       <target dev='hda' bus='ide'/>
       <address type='drive' controller='0' bus='0' target='0' unit='0'/>
