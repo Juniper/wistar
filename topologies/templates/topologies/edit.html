@@ -554,8 +554,6 @@
 
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
-            console.log(data);
-            doc.style.cursor = '';
             if (data["result"] == false) {
                 if(data["message"] != undefined) {
                     alert(data['message']);
@@ -600,8 +598,6 @@
 
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
-            console.log(data);
-            doc.style.cursor = '';
             if (data["result"] == false) {
                 figure.setBootState("down");
                 alert('Device is not yet booted up!');
@@ -639,8 +635,6 @@
 
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
-            console.log(data);
-            doc.style.cursor = '';
             if (data["result"] == false) {
                 figure.setBootState("down");
                 alert('Device is not yet booted up!');
@@ -675,8 +669,6 @@
         };
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
-            console.log(data);
-            doc.style.cursor = '';
             if (data["result"] == false) {
                 alert("Device is not yet booted up!");
                 jQuery('#cliOutput').val('error');
@@ -684,6 +676,40 @@
             } else {
                 jQuery('#cliOutput').val(data['output']);
                 jQuery('#cliOutput').css("height", '300px');
+            }
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });  
+    }
+
+    function executeLinuxCli() {
+        var ip = jQuery('#linuxIconIp').val();
+        var pw = jQuery('#linuxIconPass').val();
+        var cli = jQuery('#linuxCli').val();
+
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+        
+        var url = '/ajax/executeLinuxCli/';
+        var params = {
+             'pw' : pw,
+             'ip' : ip,
+             'cli' : cli
+        };
+        var post = jQuery.post(url, params, function(response) {
+            data = eval(response);
+            if (data["result"] == false) {
+                alert("Device is not yet booted up!");
+                jQuery('#linuxCliOutput').val('error');
+                jQuery('#linuxCliOutput').css("height", '');
+            } else {
+                jQuery('#linuxCliOutput').val(data['output']);
+                jQuery('#linuxCliOutput').css("height", '300px');
             }
         });
         post.fail(function() {
@@ -832,6 +858,10 @@
         
         jQuery('#selectedObject').val(figureId);
         var instance = canvas.getFigure(figureId);
+
+        // clear the cli output
+        jQuery('#linuxCliOutput').val("");
+        jQuery('#linuxCliOutput').height("");
 
         console.log(instance.getLabel());
         jQuery('#linuxIconName').val(instance.getLabel());
@@ -1342,6 +1372,24 @@
                 <td>
                   <input type="text" disabled="true"
                     name="linuxIconRam" id="linuxIconRam" value="2"/>
+                </td>
+              </tr>
+            </table>
+            <table>
+              <th colspan="2">
+                 Execute cli
+              </th>
+              <tr>
+                <td>
+                  <input type="text" id="linuxCli" value="cat /proc/loadavg"/>
+                </td>
+                <td>
+                  <input type="button" onclick="javascript: executeLinuxCli();" value="Go">
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2">
+                  <textarea id="linuxCliOutput" rows="1"></textarea>
                 </td>
               </tr>
             </table>

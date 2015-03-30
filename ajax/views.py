@@ -7,6 +7,7 @@ from common.lib.wistarException import wistarException
 import common.lib.wistarUtils as wu
 import common.lib.libvirtUtils as lu
 import common.lib.junosUtils as ju
+import common.lib.linuxUtils as lxu
 import common.lib.consoleUtils as cu
 import common.lib.osUtils as ou
 import common.lib.vboxUtils as vu
@@ -182,6 +183,26 @@ def executeCli(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
+def executeLinuxCli(request):
+    response_data = {}
+    requiredFields = set([ 'ip', 'pw', 'cli' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    ip = request.POST['ip']
+    pw = request.POST['pw']
+    cli  = request.POST['cli']
+
+    result = lxu.executeCli(ip,"root", pw,cli)
+    if result == None:
+        response_data["result"] = False
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    else: 
+        response_data["result"] = True
+        response_data["output"] = result 
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+@csrf_exempt
 def getJunosStartupState(request):
     response_data = {}
     requiredFields = set([ 'name' ])
@@ -240,12 +261,14 @@ def getConfigTemplates(request):
 @csrf_exempt
 def syncLinkData(request):
     response_data = {}
-    requiredFields = set([ 'sourceIp', 'targetIp', 'sourcePortIp', 'targetPortIp', 'sourceIface', 'targetIface', 'sourcePw', 'targetPw' ])
+    requiredFields = set([ 'sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp', 'sourceIface', 'targetIface', 'sourcePw', 'targetPw' ])
     if not requiredFields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
     
     sourceIp = request.POST['sourceIp']
+    sourceType = request.POST['sourceType']
     targetIp = request.POST['targetIp']
+    targetType = request.POST['targetType']
     sourcePortIp = request.POST['sourcePortIp']
     targetPortIp = request.POST['targetPortIp']
     sourceIface = request.POST['sourceIface']
@@ -256,13 +279,20 @@ def syncLinkData(request):
     try:
         if sourceIp != "0.0.0.0":
             print "Configuring interfaces for " + str(sourceIp)
-            sourceResults =  ju.setInterfaceIpAddress(sourceIp, sourcePw, sourceIface, sourcePortIp)
+            if sourceType == "linux":
+                sourceResults =  lxu.setInterfaceIpAddress(sourceIp, "root", sourcePw, sourceIface, sourcePortIp)
+            else:
+                sourceResults =  ju.setInterfaceIpAddress(sourceIp, sourcePw, sourceIface, sourcePortIp)
 
             if sourceResults == False:
                 raise wistarException("Couldn't set ip address on source VM")
         
         if targetIp != "0.0.0.0":
-            targetResults =  ju.setInterfaceIpAddress(targetIp, targetPw, targetIface, targetPortIp)
+            if targetType == "linux":
+                targetResults =  lxu.setInterfaceIpAddress(targetIp, "root", targetPw, targetIface, targetPortIp)
+            else:
+                targetResults =  ju.setInterfaceIpAddress(targetIp, targetPw, targetIface, targetPortIp)
+
             if targetResults == False:
                 raise wistarException("Couldn't set ip address on target VM")
 
