@@ -15,7 +15,10 @@ def executeCli(host, username, password, cli):
 
 # set an IP on an interface and return to user
 def setInterfaceIpAddress(ip, username, pw, iface, ifaceIp):
+    flushCmd = "ip addr flush dev " + iface
+    executeCli(ip, username, pw, flushCmd)
     cmd = "ip addr add " + ifaceIp + "/24 dev " + iface
+    cmd = cmd + " && ip link set dev " + iface + " up"
     # fixme - there needs to be a better way to inform of failure
     # always returning a string isn't the best...
     print executeCli(ip, username, pw, cmd)

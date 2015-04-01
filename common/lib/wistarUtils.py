@@ -204,6 +204,35 @@ def loadJson(rawJson, topo_id):
     return returnObject
 
 
+# iterate through topology json and increment
+# all found management IPs to provide for some
+# small uniqueness protection. The right way to do this
+# would be to track all used management ips, but I would rather
+# each topology be a transient thing to be used and thrownaway
+def cloneTopology(rawJson):
+    jsonData = json.loads(rawJson)
+
+    numTopoIcons = 0
+
+    for jsonObject in jsonData:
+        if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
+            numTopoIcons = numTopoIcons + 1
+
+    for jsonObject in jsonData:
+        if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
+            ud = jsonObject["userData"]
+            ip = ud["ip"]
+            ipOctets = ip.split('.')
+            newOctet = int(ipOctets[3]) + numTopoIcons
+            if newOctet > 255:
+                newOctet = newOctet - 255
+            ipOctets[3] = str(newOctet)
+            newIp = ".".join(ipOctets)
+            ud["ip"] = newIp
+
+    return json.dumps(jsonData)
+
+
 def launchWebSocket(vncPort, wsPort, server):
     args = " 127.0.0.1:" + str(vncPort) + " 127.0.0.1:" + str(wsPort) + " &"
     path = os.path.abspath(os.path.dirname(__file__))

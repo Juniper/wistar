@@ -88,10 +88,11 @@
         var figure = canvas.getFigure(id);
         var type = figure.getType();
 
+        var url = "/ajax/getJunosStartupState/";
+        
         if (type == "linux") {
             url = "/ajax/getLinuxStartupState/";
         } 
-        var url = "/ajax/getJunosStartupState/";
         var params = {
             'name' : domain
         };
@@ -304,6 +305,14 @@
         var mgmtInterface = figure.getMgmtInterface();
 
         domain = generateDomainNameFromLabel(label);
+        // special case for firefly 
+        if (figure.getType() == "junos_firefly") {
+            url = "/ajax/preconfigFirefly/";
+        } else if (figure.getType() == "linux") {
+            url = "/ajax/preconfigLinuxDomain/";
+            # do not prepend topology id to hostname for linux
+            domain = label;
+        }
 
         // default url for junos devices 
         var url = "/ajax/preconfigJunosDomain/";
@@ -314,12 +323,6 @@
                 'mgmtInterface' : mgmtInterface
         };
 
-        // special case for firefly 
-        if (figure.getType() == "junos_firefly") {
-            url = "/ajax/preconfigFirefly/";
-        } else if (figure.getType() == "linux") {
-            url = "/ajax/preconfigLinuxDomain/";
-        }
 
         var success = function(response) {
             data = eval(response);

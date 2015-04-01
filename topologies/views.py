@@ -95,6 +95,7 @@ def clone(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
     orig_name = topo.name
     topo.name = "Clone of " + orig_name
+    topo.json = wu.cloneTopology(topo.json)
     topo.id = 0
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo' : topo}

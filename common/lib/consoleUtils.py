@@ -82,7 +82,7 @@ def isLinuxDeviceAtPrompt(dom):
             child.send("\r")
             child.send("\r")
             print "sent enter enter"
-            indx = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]#", ".*login:", "error: operation failed"])
+            indx = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]#", ".*login:", "error: operation failed", '.*assword:'])
             print "Found prompt: " + child.before
             if indx == 0:
 	            print "Domain is not configured!"
@@ -105,6 +105,10 @@ def isLinuxDeviceAtPrompt(dom):
             elif indx == 4:
                 print "Could not get console"
                 return False
+            elif indx == 5:
+                child.send("\r")
+                time.sleep(1)
+                return True
         except pexpect.TIMEOUT as t:
             print "console is available, but not at login prompt"
             # print str(child)
@@ -162,25 +166,35 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
 def preconfigLinuxDomain(dom, pw, ip, mgmtInterface="eth0"):
     print "in preconfigLinuxDomain"
     child = getConsole(dom)
+    child.logfile=sys.stdout
     try:
-        time.sleep(.5)
         child.send("\r")
         child.send("\r")
-        indx = child.expect(["[^\s]$", "[^\s]#", ".*login:"])
+        child.send("\r")
+        indx = child.expect(["[^\s]\$", "[^\s]#", ".*login:", ".*assword:"], timeout=5)
         print "Found prompt: " + child.before
         if indx == 0 or indx == 1:
             # someone is already logged in on the console
+            print "Logging out existing user session"
             child.send("exit\r")
-    
+        elif indx == 3:
+            print "At password prompt"
+            child.send("\r");
+            time.sleep(1) 
+        print "looking for login prompt"
+        child.expect(".*login:", timeout=5)
         print "Logging in as root"
         child.send("root\r")
-        child.expect("assword:")
+        child.expect("assword:", timeout=5)
         child.send(pw + "\r")
-        indx = child.expect(["root.*#", "Login incorrect"])
+        indx = child.expect(["root.*#", "Login incorrect"], timeout=5)
         if indx == 1:
             print "Incorrect login information"
             raise wistarException("Incorrect Login Information")
 
+        print "flushing ip information"
+        child.send("ip addr flush dev " + mgmtInterface + "\r")
+        child.expect("root.*#")
         print "sending ip information"
         child.send("ip addr add " + ip + "/24 dev " + mgmtInterface + "\r")
         child.expect("root.*#")
@@ -192,6 +206,8 @@ def preconfigLinuxDomain(dom, pw, ip, mgmtInterface="eth0"):
         child.expect("root.*#")
         print "sending exit"
         child.send("exit\r")
+        print "looking for login prompt"
+        child.expect(".*login:", timeout=5)
         
         return True
     
