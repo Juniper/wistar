@@ -313,17 +313,15 @@
             url = "/ajax/preconfigFirefly/";
         } else if (figure.getType() == "linux") {
             url = "/ajax/preconfigLinuxDomain/";
-            // do not prepend topology id to hostname for linux
-            domain = label;
         }
 
         var params = {
                 'domain' : domain,
+                'hostname' : label,
                 'ip' : ip,
                 'password' : password,
                 'mgmtInterface' : mgmtInterface
         };
-
 
         var success = function(response) {
             data = eval(response);

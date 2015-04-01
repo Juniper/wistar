@@ -163,7 +163,7 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
         print "console does not appear to be available"
         return False
 
-def preconfigLinuxDomain(dom, pw, ip, mgmtInterface="eth0"):
+def preconfigLinuxDomain(dom, hostname, pw, ip, mgmtInterface="eth0"):
     print "in preconfigLinuxDomain"
     child = getConsole(dom)
     child.logfile=sys.stdout
@@ -202,7 +202,7 @@ def preconfigLinuxDomain(dom, pw, ip, mgmtInterface="eth0"):
         child.send("ip link set " + mgmtInterface + " up\r")
         child.expect("root.*#")
         print "sending hostnamectl"
-        child.send("hostnamectl set-hostname " + dom + "\r")
+        child.send("hostnamectl set-hostname " + hostname + "\r")
         child.expect("root.*#")
         print "sending exit"
         child.send("exit\r")

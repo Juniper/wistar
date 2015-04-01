@@ -83,7 +83,7 @@ def preconfigJunosDomain(request):
 @csrf_exempt
 def preconfigLinuxDomain(request):
     response_data = {}
-    requiredFields = set([ 'domain', 'password', 'ip', 'mgmtInterface' ])
+    requiredFields = set([ 'domain', 'hostname', 'password', 'ip', 'mgmtInterface' ])
     if not requiredFields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
 
@@ -91,10 +91,11 @@ def preconfigLinuxDomain(request):
     password = request.POST['password']
     ip = request.POST['ip']
     mgmtInterface = request.POST['mgmtInterface']
+    hostname = request.POST['hostname']
 
     print "Configuring linux domain:" + str(domain)
     try:
-        response_data["result"] = cu.preconfigLinuxDomain(domain, password, ip, mgmtInterface)
+        response_data["result"] = cu.preconfigLinuxDomain(domain, hostname, password, ip, mgmtInterface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except wistarException as we:
