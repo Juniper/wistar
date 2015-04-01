@@ -303,6 +303,9 @@
         var ip = figure.getIp();
         var password = figure.getPassword();
         var mgmtInterface = figure.getMgmtInterface();
+        
+        // default url for junos devices 
+        var url = "/ajax/preconfigJunosDomain/";
 
         domain = generateDomainNameFromLabel(label);
         // special case for firefly 
@@ -310,12 +313,10 @@
             url = "/ajax/preconfigFirefly/";
         } else if (figure.getType() == "linux") {
             url = "/ajax/preconfigLinuxDomain/";
-            # do not prepend topology id to hostname for linux
+            // do not prepend topology id to hostname for linux
             domain = label;
         }
 
-        // default url for junos devices 
-        var url = "/ajax/preconfigJunosDomain/";
         var params = {
                 'domain' : domain,
                 'ip' : ip,
