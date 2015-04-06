@@ -1,4 +1,5 @@
 import paramiko
+import re
 
 # simple method to execute a cli on a remote host
 # fixme - improve error handling
@@ -17,7 +18,13 @@ def executeCli(host, username, password, cli):
 def setInterfaceIpAddress(ip, username, pw, iface, ifaceIp):
     flushCmd = "ip addr flush dev " + iface
     executeCli(ip, username, pw, flushCmd)
-    cmd = "ip addr add " + ifaceIp + "/24 dev " + iface
+
+    # did the user include a subnet?
+    if not re.match('\d+\.\d+\.\d+\.\d+/\d+', ifaceIp):
+        # no, let's add a default /24 then
+        ifaceIp = ifaceIp + "/24"
+
+    cmd = "ip addr add " + ifaceIp + " dev " + iface
     cmd = cmd + " && ip link set dev " + iface + " up"
     # fixme - there needs to be a better way to inform of failure
     # always returning a string isn't the best...

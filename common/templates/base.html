@@ -11,7 +11,11 @@
       <table>
     	<tr>
           <td colspan="2"><img src="{% static "images/juniper.png" %}" width="211" height="60" border="0"/></td>
-          <td colspan="2" style="text-align: right">Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}</td>
+          <td colspan="2" style="text-align: right" id="hostLoad">
+            <a href="javascript: refreshHostLoad()">
+              Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}
+            </a>
+          </td>
         </tr>
     	<tr>
           <td>

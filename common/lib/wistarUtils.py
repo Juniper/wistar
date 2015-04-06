@@ -52,6 +52,7 @@ def loadJson(rawJson, topo_id):
             device = {}
 
             device["name"] = "t" + str(topo_id) + "_" + ud["label"]
+            device["label"] = ud["label"]
             device["imageId"] = ud["image"]
             device["type"] = ud["type"]
             device["ip"] = ud["ip"]
@@ -196,6 +197,10 @@ def loadJson(rawJson, topo_id):
             interface["mac"] = generateNextMac(topo_id)
             interface["bridge"] = "virbr0"
             interface["slot"] = slot
+            if d["type"] == "linux":
+                interface["name"] = "eth" + str(len(d["interfaces"]))
+            else: 
+                interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
             d["interfaces"].append(interface)
 
     returnObject = {}
@@ -270,3 +275,4 @@ def killWebSocket(server, wsPort):
     print "Killing webConsole sessions"
     cmd = 'ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | awk "{ print $2 }" | xargs -n 1 kill'
     print "Running cmd: " + cmd
+

@@ -1,0 +1,4 @@
+#cloud-config
+hostname: {{ config.hostname }}
+password: 'Juniper123!!!'
+passwd: { expire: False }

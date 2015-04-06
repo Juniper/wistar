@@ -11,6 +11,7 @@ import common.lib.linuxUtils as lxu
 import common.lib.consoleUtils as cu
 import common.lib.osUtils as ou
 import common.lib.vboxUtils as vu
+import os
 from images.models import Image
 from templates.models import ConfigTemplate
 from topologies.models import Topology
@@ -262,7 +263,7 @@ def getConfigTemplates(request):
 @csrf_exempt
 def syncLinkData(request):
     response_data = {}
-    requiredFields = set([ 'sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp', 'sourceIface', 'targetIface', 'sourcePw', 'targetPw' ])
+    requiredFields = set([ 'sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp', 'sourceIface', 'targetIface', 'sourcePw', 'targetPw', 'json', 'topologyId' ])
     if not requiredFields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
     
@@ -276,6 +277,8 @@ def syncLinkData(request):
     targetIface = request.POST['targetIface']
     sourcePw = request.POST['sourcePw']
     targetPw = request.POST['targetPw']
+    jsonData = request.POST['json']
+    topologyId = request.POST['topologyId']
 
     try:
         if sourceIp != "0.0.0.0":
@@ -297,6 +300,11 @@ def syncLinkData(request):
             if targetResults == False:
                 raise wistarException("Couldn't set ip address on target VM")
 
+        print "saving sync data on topology json as well"
+        topo = Topology.objects.get(pk=topologyId)
+        topo.json = jsonData
+        topo.save()
+
         response_data["result"] = "Success"
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -305,6 +313,56 @@ def syncLinkData(request):
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+
+@csrf_exempt
+def startTopology(request):
+    response_data = {}
+    requiredFields = set([ 'topologyId' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+    
+    topologyId = request.POST['topologyId']
+
+    if topologyId == "":
+        print "Found a blank topoId, returing full hypervisor status"
+        response_data["result"] = False
+        response_data["message"] = "Blank Topo Id found"
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+    domain_list = lu.getDomainsForTopology("t" + topologyId + "_")
+    network_list = []
+    isLinux = False
+    if ou.checkIsLinux():
+        isLinux = True
+        network_list = lu.getNetworksForTopology("t" + topologyId + "_")
+
+    for network in network_list:
+        print "Starting network: " + network["name"]
+        if lu.startNetwork(network["name"]):
+            time.sleep(1)
+        else:
+            response_data["result"] = False
+            response_data["message"] = "Could not start network: " + network["name"]
+            return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+    num_domains = len(domain_list)
+    iter = 1
+    for domain in domain_list:
+        print "Starting domain " + domain["name"]
+        if lu.startDomain(domain["uuid"]):
+            if iter < num_domains:
+                time.sleep(180)
+            iter = iter + 1
+        else:
+            response_data["result"] = False
+            response_data["message"] = "Could not start domain: " + domain["name"]
+            return HttpResponse(json.dumps(response_data), content_type="application/json")
+    
+    time.sleep(5)
+    print "All domains started"
+    return refreshDeploymentStatus(request)
+
    
 @csrf_exempt
 def refreshDeploymentStatus(request):
@@ -320,15 +378,22 @@ def refreshDeploymentStatus(request):
         print "Found a blank topoId, returing full hypervisor status"
         return refreshHypervisorStatus(request)
 
-    domain_list = lu.getDomainsForTopology("t" + topologyId)
+    domain_list = lu.getDomainsForTopology("t" + topologyId + "_")
     network_list = []
     isLinux = False
     if ou.checkIsLinux():
         isLinux = True
-        network_list = lu.getNetworksForTopology("t" + topologyId)
+        network_list = lu.getNetworksForTopology("t" + topologyId + "_")
 
     context = {'domain_list': domain_list, 'network_list' : network_list, 'topologyId' : topologyId, 'isLinux' : isLinux }
     return render(request, 'ajax/deploymentStatus.html', context)
+
+@csrf_exempt
+def refreshHostLoad(request):
+    (one, five, ten) = os.getloadavg()
+    load = { 'one' : one, 'five' : five, 'ten' : ten }
+    context = { 'load': load }
+    return render(request, 'ajax/hostLoad.html', context )
 
 @csrf_exempt
 def refreshHypervisorStatus(request):
@@ -347,7 +412,7 @@ def manageDomain(request):
     requiredFields = set([ 'domainId', 'action', 'topologyId' ])
     if not requiredFields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
-   
+
     domainId = request.POST['domainId'] 
     action = request.POST['action'] 
     topologyId = request.POST['topologyId'] 
@@ -485,6 +550,39 @@ def deleteConfigSet(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
+def multiCloneTopology(request):
+    response_data = {}
+    response_data["result"] = True
+    
+    requiredFields = set([ 'clones', 'topologyId' ])
+    if not requiredFields.issubset(request.POST):
+        response_data["result"] = True
+        response_data["message"] = "Invalid Parameters in Post"
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+    topo_id = request.POST["topologyId"]
+    num_clones = request.POST["clones"]
+
+    print num_clones
+
+    topo = Topology.objects.get(pk=topo_id)
+    orig_name = topo.name
+    json_data = topo.json
+    i = 0
+    while i < int(num_clones):
+        print "index:" + str(i)
+        print "goal: " + str(num_clones)
+        new_topo = topo
+        new_topo.name = orig_name + " " + str(i + 1).zfill(2)
+        new_topo.json = wu.cloneTopology(json_data)
+        json_data = new_topo.json
+        new_topo.id = None
+        new_topo.save()
+        i = i + 1
+
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+@csrf_exempt
 def deployTopology(request):
     response_data = {}
     if not request.POST.has_key('topologyId'):
@@ -493,16 +591,31 @@ def deployTopology(request):
     topologyId = request.POST['topologyId']
     topo = {}
     try:
-        topo  = Topology.objects.get(pk=topologyId)
+        topo = Topology.objects.get(pk=topologyId)
     except Exception as ex:
         print ex
         return render(request, 'ajax/ajaxError.html', { 'error' : "Topology not found!" })
 
     # let's parse the json and convert to simple lists and dicts
     config = wu.loadJson(topo.json, topologyId)
+   
+    try: 
+        # FIXME - should this be pushed into another module?
+        inlineDeployTopology(config)
+    except Exception as e:
+        return render(request, 'ajax/ajaxError.html', { 'error' : str(e) })
 
-    time.sleep(1)
+    domain_list = lu.getDomainsForTopology("t" + topologyId + "_")
+    network_list = []
+        
+    if ou.checkIsLinux():
+        network_list = lu.getNetworksForTopology("t" + topologyId + "_")
+    context = {'domain_list': domain_list, 'network_list' : network_list, 'isLinux' : True, 'topologyId' : topologyId }
+    return render(request, 'ajax/deploymentStatus.html', context)
 
+
+@csrf_exempt
+def inlineDeployTopology(config):
     # only create networks on Linux/KVM
     print "Checking if we should create networks first!"
     if ou.checkIsLinux():
@@ -515,18 +628,12 @@ def deployTopology(request):
                     print networkXml
                     n = lu.defineNetworkFromXml(networkXml)
                     if n == False:
-                        err_msg = "Error defining network: " + network["name"]
-                        context = {'error' : err_msg }
-                        return render(request, 'ajax/ajaxError.html', context)
+                        raise Exception("Error defning network: " + network["name"])
 
                 print "Starting network"
                 lu.startNetwork(network["name"])
-            except:
-                err_msg = "Error starting network: " + network["name"]
-                context = {'error' : err_msg }
-                return render(request, 'ajax/ajaxError.html', context)
-
-    time.sleep(1)   
+            except Exception as e:
+                raise Exception(str(e))
 
     # are we on linux? are we on Ubuntu linux? set kvm emulator accordingly
     vm_env = {}
@@ -560,7 +667,16 @@ def deployTopology(request):
                     print "Using firefly definition"
                     deviceXml = render_to_string(domainXmlPath + "domain_firefly.xml", {'device' : device, 'instancePath' : instancePath, 'vm_env' : vm_env})
                 else:
-                    deviceXml = render_to_string(domainXmlPath + "domain.xml", {'device' : device, 'instancePath' : instancePath, 'vm_env' : vm_env})
+                    cloud_init_path = None
+                    if image.type == "linux":
+                        # grab the last interface
+                        mgmt_iface = device["interfaces"][-1]["name"]
+                        # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
+                        mgmt_ip_addr = device["ip"] + "/24"
+                        # domain_name, host_name, mgmt_ip, mgmt_interface
+                        cloud_init_path = ou.create_cloud_init_img(device["name"], device["label"], mgmt_ip_addr, mgmt_iface)
+
+                    deviceXml = render_to_string(domainXmlPath + "domain.xml", {'device' : device, 'instancePath' : instancePath, 'vm_env' : vm_env, 'cloud_init_path' : cloud_init_path })
 
                 if debug:
                     print "Checking that image instance exists at " + str(instancePath)
@@ -572,8 +688,7 @@ def deployTopology(request):
                     if ou.createThinProvisionInstance(imageBasePath, device["name"]):
                         print "Successly created instance"
                     else:
-                        context = {'error' : 'Could not create image instance for image: ' + imageBasePath }
-                        return render(request, 'ajax/ajaxError.html', context)
+                        raise Exception("Could not create image instance for image: " + imageBasePath)
 
                 if debug:
                     print "Defining domain"
@@ -581,31 +696,16 @@ def deployTopology(request):
 
                 d = lu.defineDomainFromXml(deviceXml)
                 if d == False:
-                    err_msg = "Error defining Instance: " + device["name"]
-                    context = {'error' : err_msg }
-                    return render(request, 'ajax/ajaxError.html', context)
+                    raise Exception("Error defining instance: " + device["name"])
 
             if not ou.checkIsLinux():
                 # perform some special hacks for vbox
                 dev_mgmt_ifaces = device["managementInterfaces"]
                 mgmt_ip_addr = str(dev_mgmt_ifaces[0]["ip"])
                 vu.preconfigureVMX(device["name"], mgmt_ip_addr)
-                # vu.preconfigureVMX(device["name"])
 
-            #print "Starting domain! " + device["name"]
-            #lu.startDomainByName(device["name"])
         except Exception as ex:
-            print ex
-            err_msg = "Error starting Instance: " + device["name"]
-            context = {'error' : err_msg }
-            return render(request, 'ajax/ajaxError.html', context)
-
-    domain_list = lu.getDomainsForTopology("t" + topologyId)
-    network_list = []
-    if ou.checkIsLinux():
-        network_list = lu.getNetworksForTopology("t" + topologyId)
-    context = {'domain_list': domain_list, 'network_list' : network_list, 'isLinux' : True, 'topologyId' : topologyId }
-    return render(request, 'ajax/deploymentStatus.html', context)
+            raise Exception(str(ex))
 
 
 @csrf_exempt

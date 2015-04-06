@@ -40,6 +40,22 @@
             alert('Could not perform request!');
         });
     }
+    
+    // Simple function to update the host load in the header
+    function refreshHostLoad() {
+
+        var url = '/ajax/refreshHostLoad/';
+        var params = {
+            'dummy' : "111278" 
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#hostLoad').empty().append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+    }
    
     function manageDomain(action, domainId, topoId) {
         var doc = document.getElementsByTagName('html')[0];

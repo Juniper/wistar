@@ -166,7 +166,7 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
 def preconfigLinuxDomain(dom, hostname, pw, ip, mgmtInterface="eth0"):
     print "in preconfigLinuxDomain"
     child = getConsole(dom)
-    child.logfile=sys.stdout
+    # child.logfile=sys.stdout
     try:
         child.send("\r")
         child.send("\r")

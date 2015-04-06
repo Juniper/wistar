@@ -236,6 +236,14 @@ def undefineDomain(domainId):
 
     try:
         domain = getDomainByUUID(domainId)
+
+        if domain.hasManagedSaveImage(0):
+            print "Removing saved state for domain " + domain.name()
+            domain.managedSaveRemove(0)
+
+        if domain.info()[0] == 1:
+            domain.destroy()
+
         domain.undefine()
         return True
 
@@ -305,6 +313,10 @@ def undefineNetwork(networkName):
 
     try:
         network = getNetworkByName(networkName)
+        if network.isActive() == 1:
+            print "Stopping network before destroy"
+            network.destroy()
+
         network.undefine()
         return True
 
@@ -330,7 +342,7 @@ def stopNetwork(networkName):
         return False
 
 def startNetwork(networkName):
-    print "LU start network " + str(networkName)
+    print "Starting network " + str(networkName)
     if not connect():
         return False
 
@@ -340,7 +352,6 @@ def startNetwork(networkName):
 
     try:
         network = getNetworkByName(networkName)
-        print "LU we have the network " + str(network.isActive())
         if network.isActive() != 1:
             network.create()
         return True

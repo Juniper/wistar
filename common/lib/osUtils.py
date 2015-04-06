@@ -1,6 +1,8 @@
 import os
 import subprocess
 import platform
+from jinja2 import Environment
+from netaddr import *
 
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
@@ -73,5 +75,68 @@ def removeInstance(instance_path):
     else:
         return False
 
+def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface):
+ 
+    try: 
+        seed_dir = "/tmp/" + domain_name
+        seed_img_name = seed_dir + "/seed.iso"
+
+        rv = os.system('ls ' + seed_img_name)
+        if rv == 0:
+            print "seed.img already created!"
+            return seed_img_name
+ 
+        # read template 
+        meta_data_template = open('./common/templates/cloud_init_meta_data')
+        meta_data_template_string = meta_data_template.read()
+        meta_data_template.close()
+
+        user_data_template = open('./common/templates/cloud_init_user_data')
+        user_data_template_string = user_data_template.read()
+        user_data_template.close()
+
+        env = Environment()
+        meta_data = env.from_string(meta_data_template_string)
+        user_data = env.from_string(user_data_template_string)
+        
+        ip_network = IPNetwork(mgmt_ip)
+    
+        config = {}
+        config["hostname"] = host_name
+        config["ip_address"] = ip_network.ip.format()
+        config["broadcast_address"] = ip_network.broadcast.format()
+        config["network_address"] = ip_network.network.format()
+        config["netmask"] = ip_network.netmask.format()
+        config["mgmt_interface"] = mgmt_interface
+    
+        meta_data_string = meta_data.render(config=config)
+        user_data_string = user_data.render(config=config)
+    
+        if not os.system('ls ' + seed_dir):
+            if not os.system('mkdir ' + seed_dir):
+                return None
+   
+        print "writing meta-data file" 
+        mdf = open(seed_dir + "/meta-data", "w")
+        mdf.write(meta_data_string)
+        mdf.close()
 
 
+        print "writing user-data file"
+        udf = open(seed_dir + "/user-data", "w")
+        udf.write(user_data_string)
+        udf.close()
+
+
+        rv = os.system('genisoimage -output ' + seed_img_name + ' -volid cidata -joliet -rock ' + seed_dir + '/user-data ' + seed_dir + '/meta-data')
+        if rv != 0:
+            print "Could not create iso image!"
+            return None
+
+        return seed_img_name
+    
+    except Exception as e:
+        print "Caught exception in create_cloud_init_img " + str(e)
+        return None
+
+     

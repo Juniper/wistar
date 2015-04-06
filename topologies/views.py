@@ -18,6 +18,7 @@ from images.models import Image
 import logging
 import time
 import json
+import re
 
 # FIXME = debug should be a global setting
 debug = True
@@ -99,6 +100,28 @@ def clone(request, topo_id):
     topo.id = 0
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo' : topo}
+    return render(request, 'topologies/edit.html', context)
+
+def multiClone(request):
+    requiredFields = set([ 'clones', 'topoId' ])
+    if not requiredFields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', { 'error' : "Invalid Parameters in POST" } )
+
+    topo_id = request.POST["topoId"]
+    num_clones = request.POST["clones"]
+
+    topo  = get_object_or_404(Topology, pk=topo_id)
+    json = topo.json 
+    i = 0
+    while i < num_clones: 
+        new_topo = topo
+        orig_name = topo.name 
+        new_topo.name = orig_name
+        new_topo.json = wu.cloneTopology(json)
+        json = new_topo.json
+        new_topo.id = None
+        new_topo.save()
+
     return render(request, 'topologies/edit.html', context)
 
 def detail(request, topo_id):
