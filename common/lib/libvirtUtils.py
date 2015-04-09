@@ -1,6 +1,8 @@
-import libvirt
 import sys
+
+import libvirt
 from lxml import etree
+
 
 conn = None
 isInit = False
@@ -10,23 +12,26 @@ isInit = False
 # FIXME - should be global setting
 debug = True
 
+
 def connect():
     global isInit
     global conn
-    if isInit == True:
+    if isInit is True:
         return True
     else:
         conn = libvirt.open(None)
-        if conn == None:
+        if conn is None:
             return False
         else:
             isInit = True
             return True
 
+
 def close():
-    if isInit == True:
+    if isInit is True:
         conn.close()
         isInit = False
+
 
 def getNetworkByName(networkName):
     if not connect():
@@ -38,6 +43,7 @@ def getNetworkByName(networkName):
     except Exception as e:
         return None
 
+
 def getDomainByUUID(domainId):
     if not connect():
         return False
@@ -47,6 +53,7 @@ def getDomainByUUID(domainId):
 
     except Exception as e:
         return None
+
 
 def domainExists(domainName):
     if not connect():
@@ -64,6 +71,7 @@ def domainExists(domainName):
         print repr(e)
         return False
 
+
 def getDomainByName(domainName):
     """ Get single domain by name """
     if not connect():
@@ -78,8 +86,9 @@ def getDomainByName(domainName):
         return False
 
     except Exception as ee:
-        print repr(e)
+        print repr(ee)
         return False
+
 
 def listDomains():
     """ Get all domains """
@@ -106,6 +115,7 @@ def listDomains():
         print repr(e)
         return None
 
+
 def getDomainsForTopology(topoId):
     """ Get all domains for a given topology Id """
     if not connect():
@@ -123,11 +133,11 @@ def getDomainsForTopology(topoId):
         print repr(e)
         return None
 
+
 def networkExists(networkName):
     if not connect():
         return False
 
-    networkList = []
     try:
         networks = conn.listAllNetworks(0)
         for n in networks:
@@ -163,6 +173,7 @@ def listNetworks():
     except Exception as e:
         return None
 
+
 def getNetworksForTopology(topoId):
     """ Get Networks for a given topology Id """
     if not connect():
@@ -178,6 +189,7 @@ def getNetworksForTopology(topoId):
         return networkList
     except Exception as e:
         return None
+
 
 # blow away everything and start from scratch!
 def resetKvm():
@@ -230,6 +242,7 @@ def defineNetworkFromXml(xml):
             print "Could not define network from xml!"
         return False
 
+
 def undefineDomain(domainId):
     if not connect():
         return False
@@ -251,6 +264,7 @@ def undefineDomain(domainId):
         print e
         return False
 
+
 def stopDomain(domainId):
     if not connect():
         return False
@@ -264,6 +278,7 @@ def stopDomain(domainId):
         print e
         return False
 
+
 def suspendDomain(domainId):
     if not connect():
         return False
@@ -276,6 +291,7 @@ def suspendDomain(domainId):
     except Exception as e:
         print e
         return False
+
 
 def startDomain(domainId):
     if not connect():
@@ -291,6 +307,7 @@ def startDomain(domainId):
         print e
         return False
 
+
 def startDomainByName(domainName):
     try:
         d = getDomainByName(domainName)
@@ -302,7 +319,8 @@ def startDomainByName(domainName):
     except Exception as e:
         print e
         return False
-    
+
+
 def undefineNetwork(networkName):
     if not connect():
         return False
@@ -324,6 +342,7 @@ def undefineNetwork(networkName):
         print e
         return False
 
+
 def stopNetwork(networkName):
     if not connect():
         return False
@@ -340,6 +359,7 @@ def stopNetwork(networkName):
     except Exception as e:
         print e
         return False
+
 
 def startNetwork(networkName):
     print "Starting network " + str(networkName)
@@ -360,6 +380,7 @@ def startNetwork(networkName):
         print e
         return False
 
+
 def getDomainVncPort(domain):
     xml = domain.XMLDesc(0)
     xmlDocument = etree.fromstring(xml)
@@ -373,6 +394,7 @@ def getDomainVncPort(domain):
             return 0
     else:
         return 0
+
 
 # simple func to ensure we always use a valid vncPort
 def getNextDomainVncPort(offset=0):
@@ -422,6 +444,7 @@ def getNextDomainVncPort(offset=0):
     else:
         print "No vnc ports currently in use"
         return int(5900) + offset
+
 
 def getImageForDomain(domainId):
     domain = getDomainByUUID(domainId)

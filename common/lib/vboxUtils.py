@@ -3,10 +3,12 @@ import virtualbox
 
 vbox = ""
 
+
 def initSession():
     global vbox
     if vbox == "":
         vbox = virtualbox.VirtualBox()
+
 
 def getVMHONetName(hoNetIPAddr):
     from vbhonetutil import VBHONetUtil
@@ -16,6 +18,7 @@ def getVMHONetName(hoNetIPAddr):
         honetName = vbhoNetUtil.getHostOnlyNetworkNameByGuestIP(hoNetIPAddr)
     print " getVMHONetName():  %s ==> %s" % (hoNetIPAddr, honetName)
     return honetName
+
 
 def getInstance(name):
     initSession()
@@ -32,6 +35,7 @@ def getVMSession(name):
     except Exception:
         print "Could not get VM Session"
         return None
+
 
 def saveSession(session, instance):
     try:
@@ -75,6 +79,7 @@ def removeExtraniousControllers(instance):
         print "Could not modify controllers"
         return False
 
+
 # get the first interface and set it to be a host only network called vboxnet0
 def setManagementNetwork(instance, mgmtipaddr):
     try:
@@ -95,7 +100,7 @@ def setSerialPortAsServer(instance):
     try:
         sp = instance.get_serial_port(0)
 
-        if sp.server == True:
+        if sp.server is True:
             return True
 
         sp.server = True

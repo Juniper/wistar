@@ -1,7 +1,9 @@
 from django.shortcuts import render
 
+
 def index(request):
     return render(request, 'webConsole/vnc.html')
+
 
 def console(request, port):
     context = {}

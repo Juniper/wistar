@@ -132,7 +132,7 @@
     }
 
     // used when a new instance is added to the topology
-    // convience func to increment the previously entered ip by 1
+    // convenience func to increment the previously entered ip by 1
     // as wistar currently only supports a /24 for mgmt access
     // there is no need to account for wrapping beyond 255
     function incrementIconIp(ip)  {
@@ -149,7 +149,7 @@
         }
     }
 
-    // convience func to increment icon name is it happens to end
+    // convenience func to increment icon name is it happens to end
     // in a digit
     function incrementIconName(name) {
         var last = name.substr(-1);
@@ -222,7 +222,7 @@
     	var writer = new draw2d.io.json.Writer();
         var json = writer.marshal(canvas);
 
-        // convert the json object into string repesentation
+        // convert the json object into string representation
         var jsonTxt = JSON.stringify(json, null, 2);
 
         // insert the json string into a DIV for preview or post
@@ -293,7 +293,7 @@
             if (upper && lower && digit) {
                 console.log('password accepted');
             } else {
-                alert('Password does not meet complexity requirments');
+                alert('Password does not meet complexity requirements');
             }
         } else {
                 alert('Password is required');
@@ -578,7 +578,7 @@
             'topologyId'  :  "{{ topo.id }}"
         };
         var url = "/ajax/syncLinkData/";
-        var successMessage = "Successly pushed IP addresses to VMs";
+        var successMessage = "Successfully pushed IP addresses to VMs";
 
         simpleAjaxRequest(url, params, successMessage);
     }
@@ -1707,7 +1707,7 @@
                 </td>
                 <td colspan="2">
                   <input type="text" size="30" maxsize="30" name="name" id="configSetName" value="New Config Set"/>
-                  <input type="hidden" id="selectedObject" value="0">
+                  <!-- <input type="hidden" id="selectedObject" value="0"> -->
                 </td>
               </tr>
               <tr>

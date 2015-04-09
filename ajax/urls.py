@@ -1,5 +1,7 @@
 from django.conf.urls import patterns, url
+
 from ajax import views
+
 
 urlpatterns = patterns('',
     url(r'^$', views.index, name='index'),
@@ -21,7 +23,7 @@ urlpatterns = patterns('',
     url(r'^startTopology/$', views.startTopology, name='startTopology'),
     url(r'^manageDomain/$', views.manageDomain, name='manageDomain'),
     url(r'^manageNetwork/$', views.manageNetwork, name='manageNetwork'),
-    url(r'^manageHypervisor/$', views.manageHypervisor, name='manageHypervisor'),
+    url(r'^manageHypervisor/$', views.manage_hypervisor, name='manage_hypervisor'),
     url(r'^executeCli/$', views.executeCli, name='executeCli'),
     url(r'^executeLinuxCli/$', views.executeLinuxCli, name='executeLinuxCli'),
     url(r'^launchWebConsole/$', views.launchWebConsole, name='launchWebConsole'),

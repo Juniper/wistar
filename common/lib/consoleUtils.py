@@ -1,11 +1,14 @@
-from wistarException import wistarException
-import osUtils as ou
-import pexpect
-import sys
 import time
+
+import pexpect
+
+from WistarException import WistarException
+import osUtils as ou
+
 
 # simple utility lib to use virsh console to set up a device before 
 # networking is available
+
 
 def getConsole(dom):
     if ou.checkIsLinux():
@@ -18,7 +21,7 @@ def getConsole(dom):
 # open the console and see if there a prompt
 # if we don't see one in 3 seconds, return False!
 def isJunosDeviceAtPrompt(dom):
-    print "Getting bootup state of: " + str(dom)
+    print "Getting boot up state of: " + str(dom)
     try:
         child = getConsole(dom)
         try:
@@ -27,8 +30,8 @@ def isJunosDeviceAtPrompt(dom):
             indx = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]>", "[^\s]#", "login:"])
             print "Found prompt: " + child.before
             if indx == 0:
-	            print "Domain is not configured!"
-	            return False
+                print "Domain is not configured!"
+                return False
             elif indx == 1:
                 print "at initial root@% prompt"
                 child.send("exit\r")
@@ -73,8 +76,9 @@ def isJunosDeviceAtPrompt(dom):
         print str(child)
         return False
 
+
 def isLinuxDeviceAtPrompt(dom):
-    print "Getting bootup state of: " + str(dom)
+    print "Getting boot up state of: " + str(dom)
     try:
         child = getConsole(dom)
         print "got child"
@@ -82,11 +86,12 @@ def isLinuxDeviceAtPrompt(dom):
             child.send("\r")
             child.send("\r")
             print "sent enter enter"
-            indx = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]#", ".*login:", "error: operation failed", '.*assword:'])
+            indx = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]#", ".*login:",
+                                 "error: operation failed", '.*assword:'])
             print "Found prompt: " + child.before
             if indx == 0:
-	            print "Domain is not configured!"
-	            return False
+                print "Domain is not configured!"
+                return False
             elif indx == 1:
                 print "Root is logged in, logging her out"
                 child.send("exit\r")
@@ -119,6 +124,7 @@ def isLinuxDeviceAtPrompt(dom):
         print str(child)
         return False
 
+
 def preconfigFirefly(dom, pw, mgmtInterface="em0"):
     try:
         if isJunosDeviceAtPrompt(dom):
@@ -136,11 +142,11 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
             child.send("configure private\r")
             ret = child.expect(["root.*#", "error.*"])
             if ret == 1:
-                raise wistarException("Could not obtain private lock on db")
+                raise WistarException("Could not obtain private lock on db")
             print "Adding " + str(mgmtInterface) + " to trust zone"
-            longCommand = "set security zones security-zone trust interfaces " + mgmtInterface
-            longCommand = longCommand + " host-inbound-traffic system-services all\r"
-            child.send(longCommand)
+            long_command = "set security zones security-zone trust interfaces " + mgmtInterface
+            long_command += " host-inbound-traffic system-services all\r"
+            child.send(long_command)
             print "Committing changes"
             child.send("commit and-quit\r")
             time.sleep(3)
@@ -162,6 +168,7 @@ def preconfigFirefly(dom, pw, mgmtInterface="em0"):
     except:
         print "console does not appear to be available"
         return False
+
 
 def preconfigLinuxDomain(dom, hostname, pw, ip, mgmtInterface="eth0"):
     print "in preconfigLinuxDomain"
@@ -190,7 +197,7 @@ def preconfigLinuxDomain(dom, hostname, pw, ip, mgmtInterface="eth0"):
         indx = child.expect(["root.*#", "Login incorrect"], timeout=5)
         if indx == 1:
             print "Incorrect login information"
-            raise wistarException("Incorrect Login Information")
+            raise WistarException("Incorrect Login Information")
 
         print "flushing ip information"
         child.send("ip addr flush dev " + mgmtInterface + "\r")
@@ -219,7 +226,7 @@ def preconfigLinuxDomain(dom, hostname, pw, ip, mgmtInterface="eth0"):
     except pexpect.EOF as e:
         print repr(e)
         print "Failed to preconfig linux domain!"
-        raise wistarException("Console process unexpectidly quit! Is the console already open?")
+        raise WistarException("Console process unexpectidly quit! Is the console already open?")
 
 
 def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
@@ -236,7 +243,7 @@ def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
         elif indx == 1:
             # someone is logged in and in configure mode!
             print "User is in config mode on the console!"
-            raise wistarException("User is in configure mode on the console!")
+            raise WistarException("User is in configure mode on the console!")
     
         print "Logging in as root"
         child.send("root\r")
@@ -258,7 +265,7 @@ def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
         child.send("configure private\r")
         ret = child.expect(["root.*#", "error.*"])
         if ret == 1:
-            raise wistarException("Could not obtain private lock on db")
+            raise WistarException("Could not obtain private lock on db")
     
         if needsPw:
             print "Setting root authentication"
@@ -268,7 +275,7 @@ def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
             child.send(pw + "\r")
             indx = child.expect(["assword:", "error:"])
             if indx == 1: 
-                raise wistarException("Password Complexity Error")
+                raise WistarException("Password Complexity Error")
     
             child.send(pw + "\r")
         
@@ -298,5 +305,5 @@ def preconfigJunosDomain(dom, pw, em0Ip, mgmtInterface="em0"):
     except pexpect.EOF as e:
         print repr(e)
         print "Failed to preconfig junos domain!"
-        raise wistarException("Console process unexpectidly quit! Is the console already open?")
-    
+        raise WistarException("Console process unexpectedly quit! Is the console already open?")
+

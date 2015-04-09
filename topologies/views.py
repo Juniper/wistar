@@ -1,37 +1,34 @@
+import json
+
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.template.loader import render_to_string
 from django.http import HttpResponseRedirect, HttpResponse
-from django.conf import settings
+
 from topologies.models import Topology
 from topologies.models import ConfigSet
 from topologies.models import Config
 from topologies.forms import ImportForm
-from common.lib.wistarException import wistarException
 import common.lib.wistarUtils as wu
 import common.lib.libvirtUtils as lu
-import common.lib.consoleUtils as cu
-import common.lib.osUtils as ou
 import common.lib.junosUtils as ju
-import common.lib.vboxUtils as vu
 from images.models import Image
-import logging
-import time
-import json
-import re
+
 
 # FIXME = debug should be a global setting
 debug = True
+
 
 def index(request):
     latest_topo_list = Topology.objects.all().order_by('modified')
     context = {'latest_topo_list': latest_topo_list}
     return render(request, 'topologies/index.html', context)
 
+
 def edit(request):
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list}
     return render(request, 'topologies/edit.html', context)
+
 
 def exportTopology(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
@@ -44,6 +41,7 @@ def exportTopology(request, topo_id):
     response = HttpResponse(json.dumps(jsonData), content_type="application/json")
     response['Content-Disposition'] = 'attachment; filename=' + str(topo.name) + '.json'
     return response
+
 
 @csrf_exempt
 def importTopology(request):
@@ -92,6 +90,7 @@ def importTopology(request):
         print str(e)   
         return error(request, 'Could not parse imported data')
 
+
 def clone(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
     orig_name = topo.name
@@ -101,6 +100,7 @@ def clone(request, topo_id):
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo' : topo}
     return render(request, 'topologies/edit.html', context)
+
 
 def multiClone(request):
     requiredFields = set([ 'clones', 'topoId' ])
@@ -124,6 +124,7 @@ def multiClone(request):
 
     return render(request, 'topologies/edit.html', context)
 
+
 def detail(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
     domain_list = lu.getDomainsForTopology("t" + topo_id)
@@ -132,13 +133,16 @@ def detail(request, topo_id):
     context = {'domain_list': domain_list, 'network_list' : network_list, 'topo_id' : topo_id, 'configSets' : configSets, 'topo' : topo}
     return render(request, 'topologies/edit.html', context)
 
+
 def delete(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
     topo.delete()
     return HttpResponseRedirect('/topologies/')
 
+
 def error(request, message):
     return render(request, 'topologies/error.html', { 'error_message' : message })
+
 
 def create(request):
     try:
@@ -156,12 +160,13 @@ def create(request):
             t = Topology(name=name, description=description, json=json)
             t.save()
 
-    except (KeyError):
+    except KeyError:
         return render(request, 'topologies/error.html', { 
             'error_message': "Invalid data in POST"
-    })
+        })
     else:
-        # Always return an HttpResponseRedirect after successfully dealing # with POST data. This prevents data from being posted twice if a
+        # Always return an HttpResponseRedirect after successfully dealing # with POST data.
+        # This prevents data from being posted twice if a
         # user hits the Back button.
         # return HttpResponseRedirect(reverse('topologies:converted', args=(p.id,)))
         # context = { 'json': json, 'name' : name, 'description' : description }
@@ -178,7 +183,7 @@ def createConfigSet(request):
     name = request.POST["name"]
     description = request.POST["description"]
 
-    topo  = get_object_or_404(Topology, pk=topo_id)
+    topo = get_object_or_404(Topology, pk=topo_id)
     # let's parse the json and convert to simple lists and dicts
     config = wu.loadJson(topo.json, topo_id)
 

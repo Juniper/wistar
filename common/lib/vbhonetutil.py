@@ -4,15 +4,11 @@
 # 
 
 import sys
-import re
-import os.path
-from pprint import pprint, pformat
+from pprint import pformat
 
-# import libvirtmod
-# from vboxapi import VirtualBoxManager
 import virtualbox
-
 import netaddr
+
 
 
 # VirtualBox API: http://pythonhosted.org/pyvbox/virtualbox/library.html

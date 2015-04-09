@@ -1,5 +1,8 @@
-import paramiko
 import re
+
+import paramiko
+
+
 
 # simple method to execute a cli on a remote host
 # fixme - improve error handling
@@ -13,6 +16,7 @@ def executeCli(host, username, password, cli):
         return err
     else:
         return stdout.read()
+
 
 # set an IP on an interface and return to user
 def setInterfaceIpAddress(ip, username, pw, iface, ifaceIp):

@@ -1,8 +1,11 @@
 import os
 import subprocess
 import platform
+
 from jinja2 import Environment
 from netaddr import *
+
+
 
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
@@ -12,6 +15,7 @@ def checkIsLinux():
     else:
         return False        
 
+
 # Is this version of linux Ubuntu based?
 def checkIsUbuntu():
     dist = platform.dist()[0]
@@ -20,12 +24,14 @@ def checkIsUbuntu():
     else:
         return False
 
+
 # silly wrapper
 def checkPath(path):
     if os.path.exists(path):
         return True
     else:
         return False
+
 
 # on linux, let's verify if a process is running
 # used to check on libvirtd process status
@@ -39,14 +45,17 @@ def checkProcess(procName):
     else:
         return False
 
+
 # returns the full path and filename of an image instance
 def getInstancePathFromImage(image, instance):
     return os.path.dirname(image) + "/instances/" + instance + ".img"
-    
+
+
 # takes an images path and an instance name
 def checkImageInstance(image, instance):
     i = getInstancePathFromImage(image, instance)
     return checkPath(i)
+
 
 # creates a thinly provisioned instance of the given image
 # *If on KVM, otherwise, clone the full hd for virtualbox
@@ -63,6 +72,7 @@ def createThinProvisionInstance(image, instance):
     else:
         return False
 
+
 def removeInstance(instance_path):
     rv = 0
     if checkIsLinux():        
@@ -74,6 +84,7 @@ def removeInstance(instance_path):
         return True
     else:
         return False
+
 
 def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface):
  
@@ -121,14 +132,15 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface):
         mdf.write(meta_data_string)
         mdf.close()
 
-
         print "writing user-data file"
         udf = open(seed_dir + "/user-data", "w")
         udf.write(user_data_string)
         udf.close()
 
-
-        rv = os.system('genisoimage -output ' + seed_img_name + ' -volid cidata -joliet -rock ' + seed_dir + '/user-data ' + seed_dir + '/meta-data')
+        rv = os.system(
+            'genisoimage -output {0} -volid cidata -joliet -rock {1}/user-data {2}/meta-data'.format(seed_img_name,
+                                                                                                     seed_dir,
+                                                                                                     seed_dir))
         if rv != 0:
             print "Could not create iso image!"
             return None
@@ -138,5 +150,3 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface):
     except Exception as e:
         print "Caught exception in create_cloud_init_img " + str(e)
         return None
-
-     

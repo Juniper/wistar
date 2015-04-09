@@ -1,12 +1,14 @@
 import json
-import libvirtUtils as lu
-import osUtils as ou
-import os 
+import os
 import subprocess
-from multiprocessing import Process
 import time
 
+import libvirtUtils as lu
+import osUtils as ou
+
+
 macIndex = 0
+
 
 # silly attempt to keep mac addresses unique
 # use the topology id to generate 2 octets, and the number of
@@ -21,8 +23,10 @@ def generateNextMac(topo_id):
     macIndex += 1
     return mac
 
+
 def getDeviceName(index):
     return "vmx" + str("%02i" % index)
+
 
 # load raw Json into an object containing a list of devices and a list of networks
 def loadJson(rawJson, topo_id):
@@ -113,7 +117,7 @@ def loadJson(rawJson, topo_id):
     connIndex = 1
 
     # create the em1bridge if necessary
-    if em1_required == True:
+    if em1_required is True:
         em1bridge = {}
         em1bridge["name"] = "t" + str(topo_id) + "_em1bridge"
         em1bridge["mac"] = generateNextMac(topo_id)
@@ -178,7 +182,7 @@ def loadJson(rawJson, topo_id):
                     createBridge = False
                     continue
 
-            if createBridge == True and bridge_name != "br0":
+            if createBridge is True and bridge_name != "br0":
                 print "Setting " + bridge_name +  " for creation"
                 connection = {}
                 connection["name"] = bridge_name
@@ -247,10 +251,12 @@ def launchWebSocket(vncPort, wsPort, server):
 
     print cmd
 
-    proc = subprocess.Popen(ws + " " + server + ":" + str(vncPort) + " " + server + ":" + str(wsPort) + " &", 
-        shell=True, close_fds=True)
+    proc = subprocess.Popen(ws + " " + server + ":" + str(vncPort) + " " + server + ":" + str(wsPort) + " &",
+                            shell=True, close_fds=True
+                            )
     time.sleep(1)
     return proc.pid
+
 
 def checkPid(pid):        
     """ Check For the existence of a unix pid. 
@@ -264,12 +270,14 @@ def checkPid(pid):
     else:
         return True
 
+
 def checkWebSocket(server, wsPort):
     rt = os.system('ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | grep -v grep')
     if rt == 0:
         return True
     else:
         return False
+
 
 def killWebSocket(server, wsPort):
     print "Killing webConsole sessions"
