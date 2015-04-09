@@ -38,12 +38,12 @@ def manage_hypervisor(request):
 
 
 def viewDomain(request, domain_id):
-    domain = lu.getDomainByUUID(domain_id)
+    domain = lu.get_domain_by_uuid(domain_id)
     return render(request, 'ajax/viewDomain.html', {'domain': domain, 'xml': domain.XMLDesc(0)})
 
 
 def viewNetwork(request, network_name):
-    network = lu.getNetworkByName(network_name)
+    network = lu.get_network_by_name(network_name)
     return render(request, 'ajax/viewNetwork.html', {'network': network, 'xml': network.XMLDesc(0)})
 
 
@@ -78,7 +78,7 @@ def preconfigJunosDomain(request):
             if not ou.checkIsLinux():
                 mgmtInterface = "fxp0"
         
-        response_data["result"] = cu.preconfigJunosDomain(domain, password, ip, mgmtInterface)
+        response_data["result"] = cu.preconfig_junos_domain(domain, password, ip, mgmtInterface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
@@ -103,7 +103,7 @@ def preconfigLinuxDomain(request):
 
     print "Configuring linux domain:" + str(domain)
     try:
-        response_data["result"] = cu.preconfigLinuxDomain(domain, hostname, password, ip, mgmtInterface)
+        response_data["result"] = cu.preconfig_linux_domain(domain, hostname, password, ip, mgmtInterface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
@@ -136,10 +136,10 @@ def preconfigFirefly(request):
                 wu.killWebSocket(server, wsPort)
 
         print "Configuring management Access"
-        if cu.preconfigJunosDomain(domain, password, ip, mgmtInterface):
+        if cu.preconfig_junos_domain(domain, password, ip, mgmtInterface):
             print "Configuring Firefly management zones:" + str(domain)
             time.sleep(3)
-            response_data["result"] = cu.preconfigFirefly(domain, password, mgmtInterface)
+            response_data["result"] = cu.preconfig_firefly(domain, password, mgmtInterface)
         else:
             response_data["result"] = False
             response_data["message"] = "Could not configure Firefly access"
@@ -163,7 +163,7 @@ def configJunosInterfaces(request):
     password = request.POST['password']
     print "Configuring interfaces for " + str(ip)
     try:
-        response_data["result"] = ju.configJunosInterfaces(ip, password)
+        response_data["result"] = ju.config_junos_interfaces(ip, password)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
         print we
@@ -220,7 +220,7 @@ def getJunosStartupState(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
-    response_data["result"] = cu.isJunosDeviceAtPrompt(name)
+    response_data["result"] = cu.is_junos_device_at_prompt(name)
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -232,7 +232,7 @@ def getLinuxStartupState(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
-    response_data["result"] = cu.isLinuxDeviceAtPrompt(name)
+    response_data["result"] = cu.is_linux_device_at_prompt(name)
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -247,7 +247,7 @@ def getJunosConfig(request):
     password = request.POST['password']
     print "Getting Config for " + str(ip)
     try:
-        xml = ju.getConfig(ip, password)
+        xml = ju.get_config(ip, password)
         print xml
 
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -298,7 +298,7 @@ def syncLinkData(request):
             if sourceType == "linux":
                 sourceResults = lxu.setInterfaceIpAddress(sourceIp, "root", sourcePw, sourceIface, sourcePortIp)
             else:
-                sourceResults = ju.setInterfaceIpAddress(sourceIp, sourcePw, sourceIface, sourcePortIp)
+                sourceResults = ju.set_interface_ip_address(sourceIp, sourcePw, sourceIface, sourcePortIp)
 
             if sourceResults is False:
                 raise WistarException("Couldn't set ip address on source VM")
@@ -307,7 +307,7 @@ def syncLinkData(request):
             if targetType == "linux":
                 targetResults = lxu.setInterfaceIpAddress(targetIp, "root", targetPw, targetIface, targetPortIp)
             else:
-                targetResults = ju.setInterfaceIpAddress(targetIp, targetPw, targetIface, targetPortIp)
+                targetResults = ju.set_interface_ip_address(targetIp, targetPw, targetIface, targetPortIp)
 
             if targetResults is False:
                 raise WistarException("Couldn't set ip address on target VM")
@@ -342,15 +342,15 @@ def startTopology(request):
         response_data["message"] = "Blank Topology Id found"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
-    domain_list = lu.getDomainsForTopology("t" + topologyId + "_")
+    domain_list = lu.get_domains_for_topology("t" + topologyId + "_")
     network_list = []
 
     if ou.checkIsLinux():
-        network_list = lu.getNetworksForTopology("t" + topologyId + "_")
+        network_list = lu.get_networks_for_topology("t" + topologyId + "_")
 
     for network in network_list:
         print "Starting network: " + network["name"]
-        if lu.startNetwork(network["name"]):
+        if lu.start_network(network["name"]):
             time.sleep(1)
         else:
             response_data["result"] = False
@@ -361,7 +361,7 @@ def startTopology(request):
     iter_counter = 1
     for domain in domain_list:
         print "Starting domain " + domain["name"]
-        if lu.startDomain(domain["uuid"]):
+        if lu.start_domain(domain["uuid"]):
             if iter_counter < num_domains:
                 time.sleep(180)
             iter_counter += 1
@@ -389,12 +389,12 @@ def refreshDeploymentStatus(request):
         print "Found a blank topoId, returing full hypervisor status"
         return refreshHypervisorStatus(request)
 
-    domain_list = lu.getDomainsForTopology("t" + topologyId + "_")
+    domain_list = lu.get_domains_for_topology("t" + topologyId + "_")
     network_list = []
     isLinux = False
     if ou.checkIsLinux():
         isLinux = True
-        network_list = lu.getNetworksForTopology("t" + topologyId + "_")
+        network_list = lu.get_networks_for_topology("t" + topologyId + "_")
 
     context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topologyId, 'isLinux': isLinux}
     return render(request, 'ajax/deploymentStatus.html', context)
@@ -410,9 +410,9 @@ def refreshHostLoad(request):
 
 @csrf_exempt
 def refreshHypervisorStatus(request):
-    domains = lu.listDomains()
+    domains = lu.list_domains()
     if ou.checkIsLinux():
-        networks = lu.listNetworks()
+        networks = lu.list_networks()
     else:
         networks = []
 
@@ -432,26 +432,26 @@ def manageDomain(request):
 
 
     if action == "start": 
-        if lu.startDomain(domainId):
+        if lu.start_domain(domainId):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not start domain!"})
 
     elif action == "stop":
-        if lu.stopDomain(domainId):
+        if lu.stop_domain(domainId):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
     
     elif action == "suspend":
-        if lu.suspendDomain(domainId):
+        if lu.suspend_domain(domainId):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not suspend domain!"})
 
     elif action == "undefine":
-        sourceFile = lu.getImageForDomain(domainId)
-        if lu.undefineDomain(domainId):
+        sourceFile = lu.get_image_for_domain(domainId)
+        if lu.undefine_domain(domainId):
             if sourceFile is not None:
                 ou.removeInstance(sourceFile)
             return refreshDeploymentStatus(request)
@@ -472,18 +472,18 @@ def manageNetwork(request):
     action = request.POST['action']
 
     if action == "start": 
-        if lu.startNetwork(networkName):
+        if lu.start_network(networkName):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not start network!"})
     elif action == "stop":
-        if lu.stopNetwork(networkName):
+        if lu.stop_network(networkName):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop network!"})
 
     elif action == "undefine":
-        if lu.undefineNetwork(networkName):
+        if lu.undefine_network(networkName):
             return refreshDeploymentStatus(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
@@ -508,7 +508,7 @@ def applyConfigTemplate(request):
     template = configTemplate.template
     cleaned_template = template.replace('\r\n', '\n')
     print cleaned_template
-    if ju.pushConfig(cleaned_template, ip, password):
+    if ju.push_config(cleaned_template, ip, password):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     else:
         response_data["result"] = False
@@ -539,7 +539,7 @@ def pushConfigSet(request):
     for config in configs:
         print config.ip
         try:
-            ju.pushConfigString(config.deviceConfig, config.ip, config.password)
+            ju.push_config_string(config.deviceConfig, config.ip, config.password)
         except Exception as e:
             print "Could not reload config on " + str(config.ip)
             response_data["message"] = response_data["message"] + " Error pushing to " + str(config.ip)
@@ -619,11 +619,11 @@ def deployTopology(request):
     except Exception as e:
         return render(request, 'ajax/ajaxError.html', {'error': str(e)})
 
-    domain_list = lu.getDomainsForTopology("t" + topologyId + "_")
+    domain_list = lu.get_domains_for_topology("t" + topologyId + "_")
     network_list = []
         
     if ou.checkIsLinux():
-        network_list = lu.getNetworksForTopology("t" + topologyId + "_")
+        network_list = lu.get_networks_for_topology("t" + topologyId + "_")
     context = {'domain_list': domain_list, 'network_list': network_list, 'isLinux': True, 'topologyId': topologyId}
     return render(request, 'ajax/deploymentStatus.html', context)
 
@@ -635,17 +635,17 @@ def inlineDeployTopology(config):
     if ou.checkIsLinux():
         for network in config["networks"]:
             try:
-                if not lu.networkExists(network["name"]):
+                if not lu.network_exists(network["name"]):
                     if debug:
                         print "Rendering networkXml for: " + network["name"]
                     networkXml = render_to_string("ajax/kvm/network.xml", {'network': network})
                     print networkXml
-                    n = lu.defineNetworkFromXml(networkXml)
+                    n = lu.define_network_from_xml(networkXml)
                     if n is False:
                         raise Exception("Error defning network: " + network["name"])
 
                 print "Starting network"
-                lu.startNetwork(network["name"])
+                lu.start_network(network["name"])
             except Exception as e:
                 raise Exception(str(e))
 
@@ -665,7 +665,7 @@ def inlineDeployTopology(config):
 
     for device in config["devices"]:
         try:
-            if not lu.domainExists(device["name"]):
+            if not lu.domain_exists(device["name"]):
                 if debug:
                     print "Rendering deviceXml for: " + device["name"]
 
@@ -708,7 +708,7 @@ def inlineDeployTopology(config):
                     print "Defining domain"
                     print deviceXml
 
-                d = lu.defineDomainFromXml(deviceXml)
+                d = lu.define_domain_from_xml(deviceXml)
                 if d is False:
                     raise Exception("Error defining instance: " + device["name"])
 
@@ -776,9 +776,9 @@ def launchWebConsole(request):
 
         print "using wsPort of " + str(wsPort)
         # get the domain from the hypervisor
-        d = lu.getDomainByName(domain)
+        d = lu.get_domain_by_name(domain)
         # now grab the configured vncport
-        vncPort = lu.getDomainVncPort(d)
+        vncPort = lu.get_domain_vnc_port(d)
 
         print "Got VNC port " + str(vncPort)
         pid = wu.launchWebSocket(wsPort, vncPort, server)

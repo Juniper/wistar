@@ -127,8 +127,8 @@ def multiClone(request):
 
 def detail(request, topo_id):
     topo  = get_object_or_404(Topology, pk=topo_id)
-    domain_list = lu.getDomainsForTopology("t" + topo_id)
-    network_list = lu.getNetworksForTopology("t" + topo_id)
+    domain_list = lu.get_domains_for_topology("t" + topo_id)
+    network_list = lu.get_networks_for_topology("t" + topo_id)
     configSets = ConfigSet.objects.filter(topology=topo)
     context = {'domain_list': domain_list, 'network_list' : network_list, 'topo_id' : topo_id, 'configSets' : configSets, 'topo' : topo}
     return render(request, 'topologies/edit.html', context)
@@ -194,7 +194,7 @@ def createConfigSet(request):
     for device in config["devices"]:
         if device["type"] == "junos_vmx" or device["type"] == "junos_firefly":
             try:
-                deviceConfig = ju.getConfig(device["ip"], device["password"])
+                deviceConfig = ju.get_config(device["ip"], device["password"])
 
                 cfg = Config(ip=device["ip"], name=device["name"], password=device["password"], deviceConfig=deviceConfig, configSet=c)
                 cfg.save()

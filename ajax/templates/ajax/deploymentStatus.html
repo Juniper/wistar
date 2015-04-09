@@ -28,6 +28,17 @@
                     <a href="/ajax/viewDomain/{{ d.uuid }}" title="Dump details from Hypervisor in XML">
                         <img src="{% static "images/detail.png" %}" width="20px" height="20px"/></a>
                     &nbsp;
+                    {% if d.state != "running" %}
+                    <a href="/image/createFromInstance/{{ d.uuid }}"
+                       title="Clone Instance to new Image. A BlockPull MUST be done before a Clone">
+                        CL</a>
+                    &nbsp;
+                    {% else %}
+                    <a href="/image/blockPull/{{ d.uuid }}"
+                       title="Perform a BlockPull. This MUST be done before a Clone">
+                        BP</a>
+                    &nbsp;
+                    {% endif %}
                 {% endif %}
                 {% if d.state != "running" %}
                     <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}', '{{ topologyId }}');"

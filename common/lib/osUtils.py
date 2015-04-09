@@ -1,9 +1,11 @@
 import os
 import subprocess
 import platform
+import shutil
 
 from jinja2 import Environment
 from netaddr import *
+
 
 
 
@@ -56,6 +58,9 @@ def checkImageInstance(image, instance):
     i = getInstancePathFromImage(image, instance)
     return checkPath(i)
 
+
+def copy_image_to_clone(old_path, new_path):
+    shutil.copy(old_path, new_path)
 
 # creates a thinly provisioned instance of the given image
 # *If on KVM, otherwise, clone the full hd for virtualbox

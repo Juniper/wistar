@@ -77,7 +77,7 @@ def loadJson(rawJson, topo_id):
             device["interfaces"] = []
             device["managementInterfaces"] = []
             if ou.checkIsLinux():
-                device["vncPort"] = lu.getNextDomainVncPort(deviceIndex)
+                device["vncPort"] = lu.get_next_domain_vnc_port(deviceIndex)
             else :
                 device["vncPort"] = "5900"
     

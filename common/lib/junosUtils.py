@@ -49,59 +49,59 @@ def set_all_interface_mac(dev, interfaces):
         mac_el = etree.SubElement(interface_el, "mac")
         mac_el.text = interfaces[i]
 
-    return pushConfigElement(xml_data, dev)
+    return push_config_element(xml_data, dev)
 
 
 def get_interface_ip_config_element(name, ip):
     try:
-        xmlData = etree.Element("interfaces")
-        ifaceElement = etree.SubElement(xmlData, "interface")
-        nameElement = etree.SubElement(ifaceElement, "name")
-        nameElement.text = name
-        unitElement = etree.SubElement(ifaceElement, "unit")
-        unitNameElement = etree.SubElement(unitElement, "name")
-        unitNameElement.text = "0"
-        familyElement = etree.SubElement(unitElement, "family")
-        inetElement = etree.SubElement(familyElement, "inet")
-        inetAddressElement = etree.SubElement(inetElement, "address")
-        inetAddressNameElement = etree.SubElement(inetAddressElement, "name")
-        inetAddressNameElement.text = ip
+        xml_data = etree.Element("interfaces")
+        interface_el = etree.SubElement(xml_data, "interface")
+        name_el = etree.SubElement(interface_el, "name")
+        name_el.text = name
+        unit_el = etree.SubElement(interface_el, "unit")
+        unit_name_el = etree.SubElement(unit_el, "name")
+        unit_name_el.text = "0"
+        family_el = etree.SubElement(unit_el, "family")
+        inet_el = etree.SubElement(family_el, "inet")
+        inet_address_el = etree.SubElement(inet_el, "address")
+        inet_address_name_el = etree.SubElement(inet_address_el, "name")
+        inet_address_name_el.text = ip
     except Exception as e:
         print "Error creating interfaceIpConfig element!"
         print repr(e)
         raise WistarException("Could not create interface configuration")
 
-    return xmlData
+    return xml_data
 
 
 # netconf to box and set the address
-def setInterfaceIpAddress(deviceIp, pw, name, ifaceIp):
-    dev = get_device_reference(deviceIp, "root", pw)
-    xmlData = get_interface_ip_config_element(name, ifaceIp)
-    return pushConfigElement(xmlData, dev)
+def set_interface_ip_address(device_ip, pw, name, interface_ip):
+    dev = get_device_reference(device_ip, "root", pw)
+    xml_data = get_interface_ip_config_element(name, interface_ip)
+    return push_config_element(xml_data, dev)
 
 
 # log into each device, get the list of em interfaces
 # create the corresponding ge-0/0/X interfaces
 # then netconf in and configure them with appropriate mac appropriately
-def configJunosInterfaces(ip, pw):
+def config_junos_interfaces(ip, pw):
     interfaces = {}
     # FIXME - move un and pw to config object
     dev = get_device_reference(ip, "root", pw)
-    emInterfaces = get_device_em_interface_macs(dev)
+    em_interfaces = get_device_em_interface_macs(dev)
     # we have the em interfaces with their macs
     # now, lets convert those to ge-0/0/X names ...
-    for em in emInterfaces:
+    for em in em_interfaces:
         if not em == "em0" and not em  == "em1":
             print "em should not be em0 or em1"
             print em
-            emNum = re.sub("\D", "", em)
-            print emNum
-            geNum = int(emNum) - 2
-            print str(geNum)
-            ge = "ge-0/0/" + str(geNum)
+            em_num = re.sub("\D", "", em)
+            print em_num
+            ge_num = int(em_num) - 2
+            print str(ge_num)
+            ge = "ge-0/0/" + str(ge_num)
             # let's grab the mac here
-            interfaces[ge] = emInterfaces[em]
+            interfaces[ge] = em_interfaces[em]
 
     return set_all_interface_mac(dev, interfaces)
 
@@ -109,23 +109,23 @@ def configJunosInterfaces(ip, pw):
 # push random config to the device
 # let pyez figure out what format it is in
 # used by configTemplates from user that can be in any format
-def pushConfig(conf_string, ip, pw):
+def push_config(conf_string, ip, pw):
     dev = get_device_reference(ip, "root", pw)
 
     # try to determine the format of our config_string
-    format = 'set'
+    config_format = 'set'
     if re.search(r'^\s*<.*>$', conf_string, re.MULTILINE):
-        format = 'xml'
+        config_format = 'xml'
     elif re.search(r'^\s*(set|delete|replace|rename)\s', conf_string):
-        format = 'set'
+        config_format = 'set'
     elif re.search(r'^[a-z:]*\s*\w+\s+{', conf_string, re.I) and re.search(r'.*}\s*$', conf_string):
-        format = 'text'
+        config_format = 'text'
 
-    print "using format: " + format
+    print "using format: " + config_format
+    cu = Config(dev)
     try:
-        cu = Config(dev)
-        cu.lock
-        cu.load(conf_string, format=format)
+        cu.lock()
+        cu.load(conf_string, format=config_format)
         diff = cu.diff()
         print diff
         if diff is not None:
@@ -151,12 +151,12 @@ def pushConfig(conf_string, ip, pw):
         return False
 
 
-def pushConfigElement(xmlData, dev, overwrite=False):
-    print etree.tostring(xmlData, pretty_print=True)
+def push_config_element(xml_data, dev, overwrite=False):
+    print etree.tostring(xml_data, pretty_print=True)
+    cu = Config(dev)
     try:
-        cu = Config(dev)
-        cu.lock
-        cu.load(xmlData, overwrite=overwrite)
+        cu.lock()
+        cu.load(xml_data, overwrite=overwrite)
         diff = cu.diff()
         print diff
         if diff is not None:
@@ -182,16 +182,16 @@ def pushConfigElement(xmlData, dev, overwrite=False):
         return False
 
 
-def pushConfigString(xmlString, ip, pw):
+def push_config_string(xml_string, ip, pw):
     print "Pushing new config to " + str(ip)
-    print xmlString
+    print xml_string
     dev = get_device_reference(ip, "root", pw)
-    xmlData = etree.fromstring(xmlString)
-    pushConfigElement(xmlData, dev, True)
+    xml_data = etree.fromstring(xml_string)
+    push_config_element(xml_data, dev, True)
 
 
-def getConfig(ip, pw):
+def get_config(ip, pw):
     dev = get_device_reference(ip, "root", pw)
     xml = dev.execute("<get-config><source><running/></source></get-config>") 
-    configElement = xml.find('configuration')
-    return etree.tostring(configElement)
+    config_el = xml.find('configuration')
+    return etree.tostring(config_el)
