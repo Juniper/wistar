@@ -37,7 +37,7 @@ def create(request):
         image_form.save()
         return HttpResponseRedirect('/images')
     else:
-        context = {'error' : "Form isn't valid!"}
+        context = {'error': "Form isn't valid!"}
         return render(request, 'images/error.html', context)
 
 

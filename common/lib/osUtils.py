@@ -76,7 +76,7 @@ def createThinProvisionInstance(image, instance):
 def removeInstance(instance_path):
     rv = 0
     if checkIsLinux():        
-        rv = os.remove(instance_path)
+        os.remove(instance_path)
     else:
         rv = os.system("vboxmanage closemedium disk \"" + instance_path  + "\" --delete")
     

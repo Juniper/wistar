@@ -1,5 +1,7 @@
 class WistarException(Exception):
-
+    """ Simple exception to catch
+        application related exceptions
+    """
     def __get_message(self):
         return self.__message
 
