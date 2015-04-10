@@ -8,10 +8,9 @@ from netaddr import *
 
 
 
-
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
-def checkIsLinux():
+def check_is_linux():
     if os.uname()[0] == "Linux":
         return True
     else:
@@ -19,7 +18,7 @@ def checkIsLinux():
 
 
 # Is this version of linux Ubuntu based?
-def checkIsUbuntu():
+def check_is_ubuntu():
     dist = platform.dist()[0]
     if "buntu" in dist:
         return True
@@ -28,7 +27,7 @@ def checkIsUbuntu():
 
 
 # silly wrapper
-def checkPath(path):
+def check_path(path):
     if os.path.exists(path):
         return True
     else:
@@ -37,7 +36,7 @@ def checkPath(path):
 
 # on linux, let's verify if a process is running
 # used to check on libvirtd process status
-def checkProcess(procName):
+def check_process(procName):
     cmd = "ps aux"
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
@@ -49,25 +48,26 @@ def checkProcess(procName):
 
 
 # returns the full path and filename of an image instance
-def getInstancePathFromImage(image, instance):
+def get_instance_path_from_image(image, instance):
     return os.path.dirname(image) + "/instances/" + instance + ".img"
 
 
 # takes an images path and an instance name
-def checkImageInstance(image, instance):
-    i = getInstancePathFromImage(image, instance)
-    return checkPath(i)
+def check_image_instance(image, instance):
+    i = get_instance_path_from_image(image, instance)
+    return check_path(i)
 
 
 def copy_image_to_clone(old_path, new_path):
     shutil.copy(old_path, new_path)
 
+
 # creates a thinly provisioned instance of the given image
 # *If on KVM, otherwise, clone the full hd for virtualbox
-def createThinProvisionInstance(image, instance):
-    instance_file = getInstancePathFromImage(image, instance)
+def create_thin_provision_instance(image, instance):
+    instance_file = get_instance_path_from_image(image, instance)
     rv = 0
-    if checkIsLinux():        
+    if check_is_linux():
         rv = os.system("qemu-img create -b '" + image + "' -f qcow2 '" + instance_file + "'")
     else:
         rv = os.system("vboxmanage clonehd '" + image + "' '" + instance_file + "'")
@@ -78,9 +78,9 @@ def createThinProvisionInstance(image, instance):
         return False
 
 
-def removeInstance(instance_path):
+def remove_instance(instance_path):
     rv = 0
-    if checkIsLinux():        
+    if check_is_linux():
         os.remove(instance_path)
     else:
         rv = os.system("vboxmanage closemedium disk \"" + instance_path  + "\" --delete")

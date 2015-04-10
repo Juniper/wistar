@@ -12,12 +12,13 @@ class ConfigTemplate(models.Model):
     modified = models.DateTimeField(auto_now=True, auto_now_add=True)
 
     class Meta:
-      verbose_name = 'ConfigTemplate'
-      verbose_name_plural = 'configTemplates'
+        verbose_name = 'ConfigTemplate'
+        verbose_name_plural = 'configTemplates'
 
 class ConfigTemplateForm(ModelForm):
     description = forms.CharField(widget=forms.Textarea(attrs={'rows': '2'})) 
     template = forms.CharField(widget=forms.Textarea(attrs={'rows': '20', 'title' : 'Configuration Template' })) 
+
     class Meta:
         model = ConfigTemplate
         fields = ['name', 'description', 'template']

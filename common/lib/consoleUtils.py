@@ -11,7 +11,7 @@ import osUtils as ou
 
 
 def get_console(dom):
-    if ou.checkIsLinux():
+    if ou.check_is_linux():
         return pexpect.spawn("virsh console " + dom, timeout=3)
     else:
         return pexpect.spawn("socat /tmp/" + dom + ".pipe - ", timeout=3)

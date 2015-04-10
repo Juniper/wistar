@@ -92,14 +92,20 @@ def clone_domain(domain_name):
     try:
         domain = get_domain_by_name(domain_name)
         image_path = get_image_for_domain(domain.UUIDString())
+
+        if domain.blockJobInfo(image_path) != {}:
+                print "block job already in progress"
+                return True
+
         print "Performing blockPull on " + domain_name
-        domain.blockpull(image_path)
+        domain.blockPull(image_path)
         while True:
             if domain.blockJobInfo(image_path) == {}:
+                print "All Done! Feel Free to Clone!"
                 return True
             else:
                 print "Waiting on blockPull"
-                time.slee(5)
+                time.sleep(5)
 
     except Exception as e:
         print str(e)

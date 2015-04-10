@@ -1,5 +1,5 @@
 from django.db import models
-from django.forms import ModelForm
+
 
 # Create your models here.
 
@@ -11,8 +11,9 @@ class Topology(models.Model):
     modified = models.DateTimeField(verbose_name="modified", auto_now=True, auto_now_add=True)
 
     class Meta:
-      verbose_name = 'Topology'
-      verbose_name_plural = 'topologies'
+        verbose_name = 'Topology'
+        verbose_name_plural = 'topologies'
+
 
 class ConfigSet(models.Model):
     topology = models.ForeignKey('Topology')
@@ -22,8 +23,9 @@ class ConfigSet(models.Model):
     modified = models.DateTimeField(auto_now=True, auto_now_add=True)
 
     class Meta:
-      verbose_name = 'ConfigSet'
-      verbose_name_plural = 'configSets'
+        verbose_name = 'ConfigSet'
+        verbose_name_plural = 'configSets'
+
 
 class Config(models.Model):
     configSet = models.ForeignKey('ConfigSet')
@@ -36,6 +38,6 @@ class Config(models.Model):
     password = models.TextField()
     
     class Meta:
-      verbose_name = 'Config'
-      verbose_name_plural = 'configs'
+        verbose_name = 'Config'
+        verbose_name_plural = 'configs'
 

@@ -1,31 +1,31 @@
 {% load staticfiles %}
-            <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
-              <tr>
-                  <th colspan="4">Push Config Template to device: {{ ip }}</th>
-              </tr>
-              {% if template_list|length == 0 %}
-              <tr>
-                <td>
-                No Templates defined
-                </td>
-              </tr>
-              {% endif %}
-              {% for t in template_list %}
-              <tr>
-                <td>
-                 {{ t.name }}
-                </td>
-                <td>
-                 {{ t.description }}
-               </td>
-                <td>
-                 {{ t.modified}}
-               </td>
-                <td>
-                 <input type="button" onclick="javascript: applyConfigurationTemplate({{ t.id }});" value="Apply"/>
-               </td>
-              </tr>
-             {% endfor %}
-           </table>
+<table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
+    <tr>
+        <th colspan="4">Push Config Template to device: {{ ip }}</th>
+    </tr>
+    {% if template_list|length == 0 %}
+    <tr>
+        <td>
+            No Templates defined
+        </td>
+    </tr>
+    {% endif %}
+    {% for t in template_list %}
+    <tr>
+        <td>
+            {{ t.name }}
+        </td>
+        <td>
+            {{ t.description }}
+        </td>
+        <td>
+            {{ t.modified}}
+        </td>
+        <td>
+            <input type="button" onclick="javascript: applyConfigurationTemplate({{ t.id }});" value="Apply"/>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
 
 

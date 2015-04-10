@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 
 import common.lib.osUtils as ou
+import wistar.settings as settings
 
 from images.models import Image
 from images.models import ImageForm
@@ -17,6 +18,15 @@ def index(request):
     image_list = Image.objects.all().order_by('modified')
     context = {'image_list': image_list}
     return render(request, 'images/index.html', context)
+
+
+def edit_form(request, image_id):
+    if "image_id" in request.POST:
+        image_id = request.POST["image_id"]
+        image = get_object_or_404(Image, pk=image_id)
+        return render(request, 'edit.html', {{'image': image}})
+    else:
+        return HttpResponseRedirect('/images/')
 
 
 def edit(request):
@@ -51,7 +61,7 @@ def create(request):
     if image_form.is_valid():
         # if not osUtils.checkPath(image_form.cleaned_data['path']):
         # print "PATH DOESN'T EXIST"
-        #    context = {'error' : "PATH DOESNT EXIST"}
+        # context = {'error' : "PATH DOESNT EXIST"}
         #    return render(request, 'images/error.html', context)
 
         print "Saving form"
@@ -67,7 +77,7 @@ def block_pull(request, uuid):
     domain = lu.get_domain_by_uuid(uuid)
     domain_name = domain.name()
     lu.clone_domain(domain_name)
-    return HttpResponseRedirect('/images')
+    return HttpResponseRedirect('/ajax/manageHypervisor/')
 
 
 def create_from_instance(request, uuid):
@@ -79,22 +89,34 @@ def create_from_instance(request, uuid):
 
     domain_name = domain.name()
 
-    file_path_array = domain_image.split('/')
+    # FIXME - make these variable names a bit more clear about their meaning
+    # we need to get the path of the image relative to the MEDIA_ROOT
+    media_root = settings.MEDIA_ROOT
+    media_root_array = media_root.split("/")
+    len_media_root = len(media_root_array)
+
+    full_path_array = domain_image.split("/")
+    full_path = "/".join(full_path_array[:full_path_array.index('instances')])
+
+    # grab the file path of the domain image without the MEDIA_ROOT prepended
+    file_path_array = domain_image.split('/')[len_media_root:]
     images_dir = "/".join(file_path_array[:file_path_array.index('instances')])
 
-    new_image_path = images_dir + "/image_" + str(domain.ID()) + ".img"
+    new_relative_image_path = images_dir + "/image_" + str(domain.UUIDString()) + ".img"
+    new_full_image_path = full_path + "/image_" + str(domain.UUIDString()) + ".img"
+
     print "Copying image from " + domain_image
 
-    print "To " + new_image_path
+    print "To " + new_full_image_path
 
-    ou.copy_image_to_clone(domain_image, new_image_path)
+    ou.copy_image_to_clone(domain_image, new_full_image_path)
 
     image = Image()
-    image.name = "image_" + str(domain.ID())
+    image.name = "image_" + str(domain.UUIDString())
     image.description = "Clone of " + domain_name
-    image.filePath = new_image_path
-    image.save()
-    return HttpResponseRedirect('/images')
+    image.filePath = new_relative_image_path
+    new_id = image.save()
+    return HttpResponseRedirect('/images/editImage/' + new_id)
 
 
 def detail(request, image_id):

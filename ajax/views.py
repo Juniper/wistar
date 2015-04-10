@@ -1,4 +1,6 @@
 import os
+import time
+import json
 
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -21,10 +23,6 @@ from topologies.models import ConfigSet
 from topologies.models import Config
 
 
-# import logging
-import time
-import json
-
 # FIXME = debug should be a global setting
 debug = True
 
@@ -37,19 +35,19 @@ def manage_hypervisor(request):
     return render(request, 'ajax/manageHypervisor.html')
 
 
-def viewDomain(request, domain_id):
+def view_domain(request, domain_id):
     domain = lu.get_domain_by_uuid(domain_id)
     return render(request, 'ajax/viewDomain.html', {'domain': domain, 'xml': domain.XMLDesc(0)})
 
 
-def viewNetwork(request, network_name):
+def view_network(request, network_name):
     network = lu.get_network_by_name(network_name)
     return render(request, 'ajax/viewNetwork.html', {'network': network, 'xml': network.XMLDesc(0)})
 
 
 @csrf_exempt
-def preconfigJunosDomain(request):
-    response_data = { "result": True}
+def preconfig_junos_domain(request):
+    response_data = {"result": True}
     required_fields = {'domain', 'password', 'ip', 'mgmtInterface'}
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -57,28 +55,28 @@ def preconfigJunosDomain(request):
     domain = request.POST['domain']
     password = request.POST['password']
     ip = request.POST['ip']
-    mgmtInterface = request.POST['mgmtInterface']
+    mgmt_interface = request.POST['mgmtInterface']
     
     print "Configuring domain:" + str(domain)
     try:
 
         # let's see if we need to kill any webConsole sessions first
-        webConsoleDict = request.session.get("webConsoleDict")
-        if webConsoleDict is not None:
-            if webConsoleDict.has_key(domain):
-                wsConfig = webConsoleDict[domain]
-                wsPort = wsConfig["wsPort"]
+        wc_dict = request.session.get("webConsoleDict")
+        if wc_dict is not None:
+            if wc_dict.has_key(domain):
+                wc_config = wc_dict[domain]
+                wc_port = wc_config["wsPort"]
                 server = request.get_host().split(":")[0]
-                wu.killWebSocket(server, wsPort)
+                wu.killWebSocket(server, wc_port)
 
         # FIXME - there is a bug somewhere that this can be blank ?
-        if mgmtInterface == "":
-            mgmtInterface = "em0"
-        elif mgmtInterface == "em0":
-            if not ou.checkIsLinux():
-                mgmtInterface = "fxp0"
+        if mgmt_interface == "":
+            mgmt_interface = "em0"
+        elif mgmt_interface == "em0":
+            if not ou.check_is_linux():
+                mgmt_interface = "fxp0"
         
-        response_data["result"] = cu.preconfig_junos_domain(domain, password, ip, mgmtInterface)
+        response_data["result"] = cu.preconfig_junos_domain(domain, password, ip, mgmt_interface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
@@ -89,7 +87,7 @@ def preconfigJunosDomain(request):
 
 
 @csrf_exempt
-def preconfigLinuxDomain(request):
+def preconfig_linux_domain(request):
     response_data = {"result": True}
     required_fields = {'domain', 'hostname', 'password', 'ip', 'mgmtInterface'}
     if not required_fields.issubset(request.POST):
@@ -98,12 +96,12 @@ def preconfigLinuxDomain(request):
     domain = request.POST['domain']
     password = request.POST['password']
     ip = request.POST['ip']
-    mgmtInterface = request.POST['mgmtInterface']
+    mgmt_interface = request.POST['mgmtInterface']
     hostname = request.POST['hostname']
 
     print "Configuring linux domain:" + str(domain)
     try:
-        response_data["result"] = cu.preconfig_linux_domain(domain, hostname, password, ip, mgmtInterface)
+        response_data["result"] = cu.preconfig_linux_domain(domain, hostname, password, ip, mgmt_interface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
@@ -114,7 +112,7 @@ def preconfigLinuxDomain(request):
 
 
 @csrf_exempt
-def preconfigFirefly(request):
+def preconfig_firefly(request):
     response_data = {"result": True}
     required_fields = {'domain', 'password', 'mgmtInterface'}
     if not required_fields.issubset(request.POST):
@@ -122,24 +120,24 @@ def preconfigFirefly(request):
 
     domain = request.POST['domain']
     password = request.POST['password']
-    mgmtInterface = request.POST['mgmtInterface']
+    mgmt_interface = request.POST['mgmtInterface']
     ip = request.POST['ip']
     
     try:
         # let's see if we need to kill any webConsole sessions first
-        webConsoleDict = request.session.get("webConsoleDict")
-        if webConsoleDict is not None:
-            if webConsoleDict.has_key(domain):
-                wsConfig = webConsoleDict[domain]
-                wsPort = wsConfig["wsPort"]
+        wc_dict = request.session.get("webConsoleDict")
+        if wc_dict is not None:
+            if wc_dict.has_key(domain):
+                wc_config = wc_dict[domain]
+                wc_port = wc_config["wsPort"]
                 server = request.get_host().split(":")[0]
-                wu.killWebSocket(server, wsPort)
+                wu.killWebSocket(server, wc_port)
 
         print "Configuring management Access"
-        if cu.preconfig_junos_domain(domain, password, ip, mgmtInterface):
+        if cu.preconfig_junos_domain(domain, password, ip, mgmt_interface):
             print "Configuring Firefly management zones:" + str(domain)
             time.sleep(3)
-            response_data["result"] = cu.preconfig_firefly(domain, password, mgmtInterface)
+            response_data["result"] = cu.preconfig_firefly(domain, password, mgmt_interface)
         else:
             response_data["result"] = False
             response_data["message"] = "Could not configure Firefly access"
@@ -153,7 +151,7 @@ def preconfigFirefly(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
-def configJunosInterfaces(request):
+def config_junos_interfaces(request):
     response_data = {"result": True}
     required_fields = {'password', 'ip'}
     if not required_fields.issubset(request.POST):
@@ -172,7 +170,7 @@ def configJunosInterfaces(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
    
 @csrf_exempt
-def executeCli(request):
+def execute_cli(request):
     response_data = {"result": True}
     required_fields = {'ip', 'pw', 'cli'}
     if not required_fields.issubset(request.POST):
@@ -192,7 +190,7 @@ def executeCli(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
-def executeLinuxCli(request):
+def execute_linux_cli(request):
     response_data = {"result": True}
     required_fields = {'ip', 'pw', 'cli'}
     if not required_fields.issubset(request.POST):
@@ -213,7 +211,7 @@ def executeLinuxCli(request):
 
 
 @csrf_exempt
-def getJunosStartupState(request):
+def get_junos_startup_state(request):
     response_data = {"result": True}
     required_fields = {'name'}
     if not required_fields.issubset(request.POST):
@@ -225,7 +223,7 @@ def getJunosStartupState(request):
 
 
 @csrf_exempt
-def getLinuxStartupState(request):
+def get_linux_startup_state(request):
     response_data = {"result": True}
     required_fields = {'name'}
     if not required_fields.issubset(request.POST):
@@ -237,7 +235,7 @@ def getLinuxStartupState(request):
 
 
 @csrf_exempt
-def getJunosConfig(request):
+def get_junos_config(request):
     response_data = {"result": True}
     required_fields = {'ip', 'password'}
     if not required_fields.issubset(request.POST):
@@ -259,7 +257,7 @@ def getJunosConfig(request):
 
 
 @csrf_exempt
-def getConfigTemplates(request):
+def get_config_templates(request):
     required_fields = {'ip'}
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -272,50 +270,50 @@ def getConfigTemplates(request):
 
 
 @csrf_exempt
-def syncLinkData(request):
+def sync_link_data(request):
     response_data = {"result": True}
     required_fields = {'sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp',
                        'sourceIface', 'targetIface', 'sourcePw', 'targetPw', 'json', 'topologyId'}
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
     
-    sourceIp = request.POST['sourceIp']
-    sourceType = request.POST['sourceType']
-    targetIp = request.POST['targetIp']
-    targetType = request.POST['targetType']
-    sourcePortIp = request.POST['sourcePortIp']
-    targetPortIp = request.POST['targetPortIp']
-    sourceIface = request.POST['sourceIface']
-    targetIface = request.POST['targetIface']
-    sourcePw = request.POST['sourcePw']
-    targetPw = request.POST['targetPw']
-    jsonData = request.POST['json']
-    topologyId = request.POST['topologyId']
+    source_ip = request.POST['sourceIp']
+    source_type = request.POST['sourceType']
+    target_ip = request.POST['targetIp']
+    target_type = request.POST['targetType']
+    source_port_ip = request.POST['sourcePortIp']
+    target_port_ip = request.POST['targetPortIp']
+    source_interface = request.POST['sourceIface']
+    target_interface = request.POST['targetIface']
+    source_pw = request.POST['sourcePw']
+    target_pw = request.POST['targetPw']
+    json_data = request.POST['json']
+    topology_id = request.POST['topologyId']
 
     try:
-        if sourceIp != "0.0.0.0":
-            print "Configuring interfaces for " + str(sourceIp)
-            if sourceType == "linux":
-                sourceResults = lxu.setInterfaceIpAddress(sourceIp, "root", sourcePw, sourceIface, sourcePortIp)
+        if source_ip != "0.0.0.0":
+            print "Configuring interfaces for " + str(source_ip)
+            if source_type == "linux":
+                source_results = lxu.setInterfaceIpAddress(source_ip, "root", source_pw, source_interface, source_port_ip)
             else:
-                sourceResults = ju.set_interface_ip_address(sourceIp, sourcePw, sourceIface, sourcePortIp)
+                source_results = ju.set_interface_ip_address(source_ip, source_pw, source_interface, source_port_ip)
 
-            if sourceResults is False:
+            if source_results is False:
                 raise WistarException("Couldn't set ip address on source VM")
         
-        if targetIp != "0.0.0.0":
-            if targetType == "linux":
-                targetResults = lxu.setInterfaceIpAddress(targetIp, "root", targetPw, targetIface, targetPortIp)
+        if target_ip != "0.0.0.0":
+            if target_type == "linux":
+                target_results = lxu.setInterfaceIpAddress(target_ip, "root", target_pw, target_interface, target_port_ip)
             else:
-                targetResults = ju.set_interface_ip_address(targetIp, targetPw, targetIface, targetPortIp)
+                target_results = ju.set_interface_ip_address(target_ip, target_pw, target_interface, target_port_ip)
 
-            if targetResults is False:
+            if target_results is False:
                 raise WistarException("Couldn't set ip address on target VM")
 
         print "saving sync data on topology json as well"
-        topo = Topology.objects.get(pk=topologyId)
-        topo.json = jsonData
-        topo.save()
+        topology = Topology.objects.get(pk=topology_id)
+        topology.json = json_data
+        topology.save()
 
         response_data["result"] = "Success"
         print str(response_data)
@@ -328,25 +326,25 @@ def syncLinkData(request):
 
 
 @csrf_exempt
-def startTopology(request):
+def start_topology(request):
     response_data = {"result": True}
     required_fields = {'topologyId'}
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
     
-    topologyId = request.POST['topologyId']
+    topology_id = request.POST['topologyId']
 
-    if topologyId == "":
+    if topology_id == "":
         print "Found a blank topoId, returning full hypervisor status"
         response_data["result"] = False
         response_data["message"] = "Blank Topology Id found"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
-    domain_list = lu.get_domains_for_topology("t" + topologyId + "_")
+    domain_list = lu.get_domains_for_topology("t" + topology_id + "_")
     network_list = []
 
-    if ou.checkIsLinux():
-        network_list = lu.get_networks_for_topology("t" + topologyId + "_")
+    if ou.check_is_linux():
+        network_list = lu.get_networks_for_topology("t" + topology_id + "_")
 
     for network in network_list:
         print "Starting network: " + network["name"]
@@ -372,36 +370,35 @@ def startTopology(request):
     
     time.sleep(5)
     print "All domains started"
-    return refreshDeploymentStatus(request)
+    return refresh_deployment_status(request)
 
    
 @csrf_exempt
-def refreshDeploymentStatus(request):
-    response_data = {"result": True}
+def refresh_deployment_status(request):
     required_fields = {'topologyId'}
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
     
-    topologyId = request.POST['topologyId']
+    topology_id = request.POST['topologyId']
 
 
-    if topologyId == "":
-        print "Found a blank topoId, returing full hypervisor status"
-        return refreshHypervisorStatus(request)
+    if topology_id == "":
+        print "Found a blank topology_id, returning full hypervisor status"
+        return refresh_hypervisor_status(request)
 
-    domain_list = lu.get_domains_for_topology("t" + topologyId + "_")
+    domain_list = lu.get_domains_for_topology("t" + topology_id + "_")
     network_list = []
     isLinux = False
-    if ou.checkIsLinux():
+    if ou.check_is_linux():
         isLinux = True
-        network_list = lu.get_networks_for_topology("t" + topologyId + "_")
+        network_list = lu.get_networks_for_topology("t" + topology_id + "_")
 
-    context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topologyId, 'isLinux': isLinux}
+    context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topology_id, 'isLinux': isLinux}
     return render(request, 'ajax/deploymentStatus.html', context)
 
 
 @csrf_exempt
-def refreshHostLoad(request):
+def refresh_host_load(request):
     (one, five, ten) = os.getloadavg()
     load = {'one': one, 'five': five, 'ten': ten}
     context = {'load': load}
@@ -409,9 +406,9 @@ def refreshHostLoad(request):
 
 
 @csrf_exempt
-def refreshHypervisorStatus(request):
+def refresh_hypervisor_status(request):
     domains = lu.list_domains()
-    if ou.checkIsLinux():
+    if ou.check_is_linux():
         networks = lu.list_networks()
     else:
         networks = []
@@ -421,40 +418,39 @@ def refreshHypervisorStatus(request):
 
 
 @csrf_exempt
-def manageDomain(request):
+def manage_domain(request):
 
     required_fields = {'domainId', 'action', 'topologyId'}
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
-    domainId = request.POST['domainId'] 
+    domain_id = request.POST['domainId']
     action = request.POST['action'] 
 
-
     if action == "start": 
-        if lu.start_domain(domainId):
-            return refreshDeploymentStatus(request)
+        if lu.start_domain(domain_id):
+            return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not start domain!"})
 
     elif action == "stop":
-        if lu.stop_domain(domainId):
-            return refreshDeploymentStatus(request)
+        if lu.stop_domain(domain_id):
+            return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
     
     elif action == "suspend":
-        if lu.suspend_domain(domainId):
-            return refreshDeploymentStatus(request)
+        if lu.suspend_domain(domain_id):
+            return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not suspend domain!"})
 
     elif action == "undefine":
-        sourceFile = lu.get_image_for_domain(domainId)
-        if lu.undefine_domain(domainId):
-            if sourceFile is not None:
-                ou.removeInstance(sourceFile)
-            return refreshDeploymentStatus(request)
+        source_file = lu.get_image_for_domain(domain_id)
+        if lu.undefine_domain(domain_id):
+            if source_file is not None:
+                ou.remove_instance(source_file)
+            return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
     else:
@@ -462,29 +458,29 @@ def manageDomain(request):
 
 
 @csrf_exempt
-def manageNetwork(request):
+def manage_network(request):
 
     required_fields = {'networkName', 'action', 'topologyId'}
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
-    networkName = request.POST['networkName'] 
+    network_name = request.POST['networkName']
     action = request.POST['action']
 
     if action == "start": 
-        if lu.start_network(networkName):
-            return refreshDeploymentStatus(request)
+        if lu.start_network(network_name):
+            return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not start network!"})
     elif action == "stop":
-        if lu.stop_network(networkName):
-            return refreshDeploymentStatus(request)
+        if lu.stop_network(network_name):
+            return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop network!"})
 
     elif action == "undefine":
-        if lu.undefine_network(networkName):
-            return refreshDeploymentStatus(request)
+        if lu.undefine_network(network_name):
+            return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
     else:
@@ -492,7 +488,7 @@ def manageNetwork(request):
 
 
 @csrf_exempt
-def applyConfigTemplate(request):
+def apply_config_template(request):
     print "Pushing Config Template"
     response_data = {"result": True}
 
@@ -504,8 +500,8 @@ def applyConfigTemplate(request):
     ip = request.POST['ip'] 
     password = request.POST['password']
 
-    configTemplate = ConfigTemplate.objects.get(pk=config_template_id)
-    template = configTemplate.template
+    config_template = ConfigTemplate.objects.get(pk=config_template_id)
+    template = config_template.template
     cleaned_template = template.replace('\r\n', '\n')
     print cleaned_template
     if ju.push_config(cleaned_template, ip, password):
@@ -517,7 +513,7 @@ def applyConfigTemplate(request):
 
 
 @csrf_exempt
-def pushConfigSet(request):
+def push_config_set(request):
     print "Pushing ConfigSet"
     response_data = {"result": True}
 
@@ -525,14 +521,11 @@ def pushConfigSet(request):
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
-    configSetId = request.POST['id'] 
+    config_set_id = request.POST['id']
 
-    print "csid is " + configSetId
+    print "csid is " + config_set_id
 
-    cs = ConfigSet.objects.get(pk=configSetId)
-
-    print "Got cs"
-    topo = cs.topology
+    cs = ConfigSet.objects.get(pk=config_set_id)
 
     configs = Config.objects.filter(configSet=cs)
 
@@ -549,7 +542,7 @@ def pushConfigSet(request):
 
 
 @csrf_exempt
-def deleteConfigSet(request):
+def delete_config_set(request):
     print "Deleting ConfigSet"
     response_data = {"result": True}
 
@@ -557,15 +550,15 @@ def deleteConfigSet(request):
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
-    configSetId = request.POST['id']
-    cs = ConfigSet.objects.get(pk=configSetId)
+    config_set_id = request.POST['id']
+    cs = ConfigSet.objects.get(pk=config_set_id)
     cs.delete()
     
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 @csrf_exempt
-def multiCloneTopology(request):
+def multi_clone_topology(request):
     response_data = {"result": True}
     required_fields = {'clones', 'topologyId'}
     if not required_fields.issubset(request.POST):
@@ -573,76 +566,74 @@ def multiCloneTopology(request):
         response_data["message"] = "Invalid Parameters in Post"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
-    topo_id = request.POST["topologyId"]
+    topology_id = request.POST["topologyId"]
     num_clones = request.POST["clones"]
 
     print num_clones
 
-    topo = Topology.objects.get(pk=topo_id)
-    orig_name = topo.name
-    json_data = topo.json
+    topology = Topology.objects.get(pk=topology_id)
+    orig_name = topology.name
+    json_data = topology.json
     i = 0
     while i < int(num_clones):
-        print "index:" + str(i)
-        print "goal: " + str(num_clones)
-        new_topo = topo
-        new_topo.name = orig_name + " " + str(i + 1).zfill(2)
-        new_topo.json = wu.cloneTopology(json_data)
-        json_data = new_topo.json
-        new_topo.id = None
-        new_topo.save()
+        new_topology = topology
+        new_topology.name = orig_name + " " + str(i + 1).zfill(2)
+        new_topology.json = wu.cloneTopology(json_data)
+        json_data = new_topology.json
+        new_topology.id = None
+        new_topology.save()
         i += 1
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 @csrf_exempt
-def deployTopology(request):
+def deploy_topology(request):
 
     if not request.POST.has_key('topologyId'):
         return render(request, 'ajax/ajaxError.html', {'error': "No Topology Id in request"})
     
-    topologyId = request.POST['topologyId']
+    topology_id = request.POST['topologyId']
     topo = {}
     try:
-        topo = Topology.objects.get(pk=topologyId)
+        topo = Topology.objects.get(pk=topology_id)
     except Exception as ex:
         print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
     # let's parse the json and convert to simple lists and dicts
-    config = wu.loadJson(topo.json, topologyId)
+    config = wu.loadJson(topo.json, topology_id)
    
     try: 
         # FIXME - should this be pushed into another module?
-        inlineDeployTopology(config)
+        inline_deploy_topology(config)
     except Exception as e:
         return render(request, 'ajax/ajaxError.html', {'error': str(e)})
 
-    domain_list = lu.get_domains_for_topology("t" + topologyId + "_")
+    domain_list = lu.get_domains_for_topology("t" + topology_id + "_")
     network_list = []
         
-    if ou.checkIsLinux():
-        network_list = lu.get_networks_for_topology("t" + topologyId + "_")
-    context = {'domain_list': domain_list, 'network_list': network_list, 'isLinux': True, 'topologyId': topologyId}
+    if ou.check_is_linux():
+        network_list = lu.get_networks_for_topology("t" + topology_id + "_")
+    context = {'domain_list': domain_list, 'network_list': network_list, 'isLinux': True, 'topologyId': topology_id}
     return render(request, 'ajax/deploymentStatus.html', context)
 
 
 @csrf_exempt
-def inlineDeployTopology(config):
+def inline_deploy_topology(config):
     # only create networks on Linux/KVM
     print "Checking if we should create networks first!"
-    if ou.checkIsLinux():
+    if ou.check_is_linux():
         for network in config["networks"]:
             try:
                 if not lu.network_exists(network["name"]):
                     if debug:
                         print "Rendering networkXml for: " + network["name"]
-                    networkXml = render_to_string("ajax/kvm/network.xml", {'network': network})
-                    print networkXml
-                    n = lu.define_network_from_xml(networkXml)
+                    network_xml = render_to_string("ajax/kvm/network.xml", {'network': network})
+                    print network_xml
+                    n = lu.define_network_from_xml(network_xml)
                     if n is False:
-                        raise Exception("Error defning network: " + network["name"])
+                        raise Exception("Error defining network: " + network["name"])
 
                 print "Starting network"
                 lu.start_network(network["name"])
@@ -653,15 +644,15 @@ def inlineDeployTopology(config):
     vm_env = {}
     vm_env["emulator"] = "/usr/libexec/qemu-kvm"
     vm_env["pcType"] = "rhel6.5.0"
-    if ou.checkIsLinux() and ou.checkIsUbuntu():
+    if ou.check_is_linux() and ou.check_is_ubuntu():
         vm_env["emulator"] = "/usr/bin/kvm-spice"
         vm_env["pcType"] = "pc"
 
     # by default, we use kvm as the hypervisor
-    domainXmlPath = "ajax/kvm/"
-    if not ou.checkIsLinux():
+    domain_xml_path = "ajax/kvm/"
+    if not ou.check_is_linux():
         # if we're not on Linux, then let's try to use vbox instead
-        domainXmlPath = "ajax/vbox/" 
+        domain_xml_path = "ajax/vbox/"
 
     for device in config["devices"]:
         try:
@@ -673,57 +664,62 @@ def inlineDeployTopology(config):
 
                 # fixme - simplify this logic to return just the deviceXml based on
                 # image.type and host os type (ou.checkIsLinux)
-                imageBasePath = settings.MEDIA_ROOT + "/" + image.filePath.url
-                instancePath = ou.getInstancePathFromImage(imageBasePath, device["name"])
+                image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
+                instance_path = ou.get_instance_path_from_image(image_base_path, device["name"])
 
                 print "rendering xml for image type: " + str(image.type)
                 if image.type == "junos_firefly":
                     print "Using firefly definition"
-                    deviceXml = render_to_string(domainXmlPath + "domain_firefly.xml", {'device': device, 'instancePath': instancePath, 'vm_env': vm_env})
+                    device_xml = render_to_string(domain_xml_path + "domain_firefly.xml",
+                                                 {'device': device, 'instancePath': instance_path, 'vm_env': vm_env})
                 else:
                     cloud_init_path = None
                     if image.type == "linux":
                         # grab the last interface
-                        mgmt_iface = device["interfaces"][-1]["name"]
+                        management_interface = device["interfaces"][-1]["name"]
                         # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
-                        mgmt_ip_addr = device["ip"] + "/24"
+                        management_ip = device["ip"] + "/24"
                         # domain_name, host_name, mgmt_ip, mgmt_interface
-                        cloud_init_path = ou.create_cloud_init_img(device["name"], device["label"], mgmt_ip_addr, mgmt_iface)
+                        cloud_init_path = ou.create_cloud_init_img(device["name"], device["label"],
+                                                                   management_ip, management_interface)
 
-                    deviceXml = render_to_string(domainXmlPath + "domain.xml", {'device': device, 'instancePath': instancePath, 'vm_env': vm_env, 'cloud_init_path': cloud_init_path})
+                    device_xml = render_to_string(domain_xml_path + "domain.xml",
+                                                  {'device': device, 'instancePath': instance_path,
+                                                   'vm_env': vm_env, 'cloud_init_path': cloud_init_path}
+                                                  )
 
                 if debug:
-                    print "Checking that image instance exists at " + str(instancePath)
+                    print "Checking that image instance exists at " + str(instance_path)
 
-                if ou.checkImageInstance(imageBasePath, device["name"]):
+                if ou.check_image_instance(image_base_path, device["name"]):
                     print "Image Instance already exists"
                 else:
                     print "Image Instance does not exist"
-                    if ou.createThinProvisionInstance(imageBasePath, device["name"]):
+                    if ou.create_thin_provision_instance(image_base_path, device["name"]):
                         print "Successfully created instance"
                     else:
-                        raise Exception("Could not create image instance for image: " + imageBasePath)
+                        raise Exception("Could not create image instance for image: " + image_base_path)
 
                 if debug:
                     print "Defining domain"
-                    print deviceXml
+                    print device_xml
 
-                d = lu.define_domain_from_xml(deviceXml)
+                d = lu.define_domain_from_xml(device_xml)
                 if d is False:
                     raise Exception("Error defining instance: " + device["name"])
 
-            if not ou.checkIsLinux():
+            if not ou.check_is_linux():
                 # perform some special hacks for vbox
-                dev_mgmt_ifaces = device["managementInterfaces"]
-                mgmt_ip_addr = str(dev_mgmt_ifaces[0]["ip"])
-                vu.preconfigureVMX(device["name"], mgmt_ip_addr)
+                management_interfaces = device["managementInterfaces"]
+                management_ip = str(management_interfaces[0]["ip"])
+                vu.preconfigureVMX(device["name"], management_ip)
 
         except Exception as ex:
             raise Exception(str(ex))
 
 
 @csrf_exempt
-def launchWebConsole(request):
+def launch_web_console(request):
     print "Let's launch a console!"
 
     required_fields = {'domain'}
@@ -734,36 +730,36 @@ def launchWebConsole(request):
     domain = request.POST["domain"]
     print "Got domain of: " + domain
     # this keeps a list of used ports around for us
-    webConsoleDict = request.session.get("webConsoleDict")
+    wc_dict = request.session.get("webConsoleDict")
 
     # server = request.META["SERVER_NAME"]
     server = request.get_host().split(":")[0]
 
-    print webConsoleDict
-    if webConsoleDict is None:
+    print wc_dict
+    if wc_dict is None:
         print "no previous webConsoles Found!"
-        webConsoleDict = {}
-        request.session["webConsoleDict"] = webConsoleDict
+        wc_dict = {}
+        request.session["webConsoleDict"] = wc_dict
 
     print "OK, do we have this domain?"
-    if domain in webConsoleDict:
-        wsConfig = webConsoleDict[domain]
-        wsPort = wsConfig["wsPort"]
-        vncPort = wsConfig["vncPort"]
+    if domain in wc_dict:
+        wc_config = wc_dict[domain]
+        wc_port = wc_config["wsPort"]
+        vnc_port = wc_config["vncPort"]
 
-        if wu.checkWebSocket(server, wsPort):
+        if wu.checkWebSocket(server, wc_port):
             print "This WebSocket is already running"
 
-            response_data["message"] = "already running on port: " + wsPort
-            response_data["port"] = wsPort
+            response_data["message"] = "already running on port: " + wc_port
+            response_data["port"] = wc_port
             return HttpResponse(json.dumps(response_data), content_type="application/json")
         else:
-            pid = wu.launchWebSocket(wsPort, vncPort, server)
+            pid = wu.launchWebSocket(wc_port, vnc_port, server)
             if pid is not None:
-                wsConfig["pid"] = pid
+                wc_config["pid"] = pid
 
-                response_data["message"] = "started WebConsole on port: " + wsPort
-                response_data["port"] = wsPort
+                response_data["message"] = "started WebConsole on port: " + wc_port
+                response_data["port"] = wc_port
                 return HttpResponse(json.dumps(response_data), content_type="application/json")
             else:
                 response_data["result"] = False
@@ -772,16 +768,16 @@ def launchWebConsole(request):
     else:
         print "nope"
         # start the ws ports at 6900
-        wsPort = len(webConsoleDict.keys()) + 6900
+        wc_port = len(wc_dict.keys()) + 6900
 
-        print "using wsPort of " + str(wsPort)
+        print "using wsPort of " + str(wc_port)
         # get the domain from the hypervisor
         d = lu.get_domain_by_name(domain)
         # now grab the configured vncport
-        vncPort = lu.get_domain_vnc_port(d)
+        vnc_port = lu.get_domain_vnc_port(d)
 
-        print "Got VNC port " + str(vncPort)
-        pid = wu.launchWebSocket(wsPort, vncPort, server)
+        print "Got VNC port " + str(vnc_port)
+        pid = wu.launchWebSocket(wc_port, vnc_port, server)
 
         if pid is None:
             print "oh no"
@@ -793,12 +789,12 @@ def launchWebConsole(request):
         print "Launched with pid " + str(pid)
         wcConfig = {}
         wcConfig["pid"] = str(pid)
-        wcConfig["vncPort"] = str(vncPort)
-        wcConfig["wsPort"] = str(wsPort)
+        wcConfig["vncPort"] = str(vnc_port)
+        wcConfig["wsPort"] = str(wc_port)
       
-        webConsoleDict[domain] = wcConfig 
-        request.session["webConsoleDict"] = webConsoleDict
+        wc_dict[domain] = wcConfig
+        request.session["webConsoleDict"] = wc_dict
 
-        response_data["message"] = "started WebConsole on port: " + str(wsPort)
-        response_data["port"] = wsPort
+        response_data["message"] = "started WebConsole on port: " + str(wc_port)
+        response_data["port"] = wc_port
         return HttpResponse(json.dumps(response_data), content_type="application/json")

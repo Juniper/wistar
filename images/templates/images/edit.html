@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block title %}Wistar - Lab Rat - New Image{% endblock %}
 {% block scripts %}
-<script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+<script type="text/javascript" src="{% static " js/jquery-1.8.1.min.js" %}"></script>
     <script type="text/javascript">
     function validateForm() {
         var d = $('#id_description');
@@ -28,12 +28,12 @@
             <label for="id_name">Name:</label>
         </th>
         <td>
-            <input id="id_name" maxlength="32" name="name" type="text" value="{{image.name}}/>
-            </td>
-        </tr>
-        <tr>
-            <th>
-                <label for="id_description">Description:</label>
+            <input id="id_name" maxlength="32" name="name" type="text" value="{{image.name}}"/>
+        </td>
+    </tr>
+    <tr>
+        <th>
+            <label for="id_description">Description:</label>
         </th>
         <td>
             <textarea cols="40" id="id_description" name="description" rows="10">{{image.description}}</textarea>
