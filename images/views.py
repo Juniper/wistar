@@ -20,16 +20,12 @@ def index(request):
     return render(request, 'images/index.html', context)
 
 
-def edit_form(request, image_id):
-    if "image_id" in request.POST:
-        image_id = request.POST["image_id"]
-        image = get_object_or_404(Image, pk=image_id)
-        return render(request, 'edit.html', {'image': image})
-    else:
-        return HttpResponseRedirect('/images/')
+def edit(request, image_id):
+    image = get_object_or_404(Image, pk=image_id)
+    return render(request, 'images/edit.html', {'image': image})
 
 
-def edit(request):
+def update(request):
     if "name" in request.POST:
         image_id = request.POST["image_id"]
         image_name = request.POST["name"]
@@ -133,7 +129,7 @@ def create_from_instance(request, uuid):
     image.description = "Clone of " + domain_name
     image.filePath = new_relative_image_path
     new_id = image.save()
-    return HttpResponseRedirect('/images/editImage/' + new_id)
+    return HttpResponseRedirect('/images/edit/' + new_id)
 
 
 def detail(request, image_id):
