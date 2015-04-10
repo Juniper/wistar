@@ -177,7 +177,7 @@ def create(request):
 
 
 def create_config_set(request):
-    required_fields = {'name', 'description', 'topoId'}
+    required_fields = set(['name', 'description', 'topoId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 

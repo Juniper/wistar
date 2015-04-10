@@ -76,7 +76,7 @@ def domain_exists(domain_name):
         return False
 
 
-def clone_domain(domain_name):
+def promote_instance_to_image(domain_name):
     """
     Takes a domains instance file and performs a
     blockPull operation. This results in the instance file
@@ -93,22 +93,24 @@ def clone_domain(domain_name):
         domain = get_domain_by_name(domain_name)
         image_path = get_image_for_domain(domain.UUIDString())
 
-        if domain.blockJobInfo(image_path) != {}:
+        if domain.blockJobInfo(image_path, 0) != {}:
                 print "block job already in progress"
                 return True
 
-        print "Performing blockPull on " + domain_name
-        domain.blockPull(image_path)
-        while True:
-            if domain.blockJobInfo(image_path) == {}:
-                print "All Done! Feel Free to Clone!"
-                return True
-            else:
-                print "Waiting on blockPull"
-                time.sleep(5)
+        print "Performing blockPull on " + image_path
+        domain.blockPull(image_path, 0, 0)
+        time.sleep(2)
 
     except Exception as e:
         print str(e)
+        return False
+
+
+def is_image_in_block_pull(domain, image_path):
+    if domain.blockJobInfo(image_path) != {}:
+        print "block job already in progress"
+        return True
+    else:
         return False
 
 

@@ -24,7 +24,7 @@ def edit_form(request, image_id):
     if "image_id" in request.POST:
         image_id = request.POST["image_id"]
         image = get_object_or_404(Image, pk=image_id)
-        return render(request, 'edit.html', {{'image': image}})
+        return render(request, 'edit.html', {'image': image})
     else:
         return HttpResponseRedirect('/images/')
 
@@ -45,7 +45,7 @@ def edit(request):
         if "image_id" in request.POST:
             image_id = request.POST["image_id"]
             image = get_object_or_404(Image, pk=image_id)
-            return render(request, 'edit.html', {{'image': image}})
+            return render(request, 'edit.html', {'image': image})
         else:
             return HttpResponseRedirect('/images/')
 
@@ -73,10 +73,16 @@ def create(request):
 
 
 def block_pull(request, uuid):
-    print "Performing blockPull on domain"
     domain = lu.get_domain_by_uuid(uuid)
     domain_name = domain.name()
-    lu.clone_domain(domain_name)
+    image_path = lu.get_image_for_domain(domain.UUIDString())
+
+    if ou.is_image_thin_provisioned(image_path):
+        print "Found thinly provisioned image, promoting..."
+        lu.promote_instance_to_image(domain_name)
+    else:
+        print "Image is already promoted"
+
     return HttpResponseRedirect('/ajax/manageHypervisor/')
 
 
@@ -86,6 +92,12 @@ def create_from_instance(request, uuid):
 
     print "got domain " + domain.name()
     domain_image = lu.get_image_for_domain(uuid)
+    print "got domain_image: " + domain_image
+
+    if ou.is_image_thin_provisioned(domain_image):
+        print "Cannot clone disk that is thinly provisioned! Please perform a block pull before continueing"
+        context = {'error': "Cannot Clone thinly provisioned disk! Please perform a block pull!"}
+        return render(request, 'images/error.html', context)
 
     domain_name = domain.name()
 
@@ -104,6 +116,11 @@ def create_from_instance(request, uuid):
 
     new_relative_image_path = images_dir + "/image_" + str(domain.UUIDString()) + ".img"
     new_full_image_path = full_path + "/image_" + str(domain.UUIDString()) + ".img"
+
+    if ou.check_path(new_full_image_path):
+        print "Image has already been cloned"
+        context = {'error': "Instance has already been cloned!"}
+        return render(request, 'images/error.html', context)
 
     print "Copying image from " + domain_image
 

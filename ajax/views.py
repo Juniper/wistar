@@ -48,7 +48,7 @@ def view_network(request, network_name):
 @csrf_exempt
 def preconfig_junos_domain(request):
     response_data = {"result": True}
-    required_fields = {'domain', 'password', 'ip', 'mgmtInterface'}
+    required_fields = set(['domain', 'password', 'ip', 'mgmtInterface'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -89,7 +89,7 @@ def preconfig_junos_domain(request):
 @csrf_exempt
 def preconfig_linux_domain(request):
     response_data = {"result": True}
-    required_fields = {'domain', 'hostname', 'password', 'ip', 'mgmtInterface'}
+    required_fields = set(['domain', 'hostname', 'password', 'ip', 'mgmtInterface'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -114,7 +114,7 @@ def preconfig_linux_domain(request):
 @csrf_exempt
 def preconfig_firefly(request):
     response_data = {"result": True}
-    required_fields = {'domain', 'password', 'mgmtInterface'}
+    required_fields = set(['domain', 'password', 'mgmtInterface'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -153,7 +153,7 @@ def preconfig_firefly(request):
 @csrf_exempt
 def config_junos_interfaces(request):
     response_data = {"result": True}
-    required_fields = {'password', 'ip'}
+    required_fields = set(['password', 'ip'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -172,7 +172,7 @@ def config_junos_interfaces(request):
 @csrf_exempt
 def execute_cli(request):
     response_data = {"result": True}
-    required_fields = {'ip', 'pw', 'cli'}
+    required_fields = set(['ip', 'pw', 'cli'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -192,7 +192,7 @@ def execute_cli(request):
 @csrf_exempt
 def execute_linux_cli(request):
     response_data = {"result": True}
-    required_fields = {'ip', 'pw', 'cli'}
+    required_fields = set(['ip', 'pw', 'cli'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -213,7 +213,7 @@ def execute_linux_cli(request):
 @csrf_exempt
 def get_junos_startup_state(request):
     response_data = {"result": True}
-    required_fields = {'name'}
+    required_fields = set(['name'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -225,7 +225,7 @@ def get_junos_startup_state(request):
 @csrf_exempt
 def get_linux_startup_state(request):
     response_data = {"result": True}
-    required_fields = {'name'}
+    required_fields = set(['name'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -237,7 +237,7 @@ def get_linux_startup_state(request):
 @csrf_exempt
 def get_junos_config(request):
     response_data = {"result": True}
-    required_fields = {'ip', 'password'}
+    required_fields = set(['ip', 'password'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -258,7 +258,7 @@ def get_junos_config(request):
 
 @csrf_exempt
 def get_config_templates(request):
-    required_fields = {'ip'}
+    required_fields = set(['ip'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -272,8 +272,8 @@ def get_config_templates(request):
 @csrf_exempt
 def sync_link_data(request):
     response_data = {"result": True}
-    required_fields = {'sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp',
-                       'sourceIface', 'targetIface', 'sourcePw', 'targetPw', 'json', 'topologyId'}
+    required_fields = set(['sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp',
+                       'sourceIface', 'targetIface', 'sourcePw', 'targetPw', 'json', 'topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
     
@@ -328,7 +328,7 @@ def sync_link_data(request):
 @csrf_exempt
 def start_topology(request):
     response_data = {"result": True}
-    required_fields = {'topologyId'}
+    required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
     
@@ -375,7 +375,7 @@ def start_topology(request):
    
 @csrf_exempt
 def refresh_deployment_status(request):
-    required_fields = {'topologyId'}
+    required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
     
@@ -420,7 +420,7 @@ def refresh_hypervisor_status(request):
 @csrf_exempt
 def manage_domain(request):
 
-    required_fields = {'domainId', 'action', 'topologyId'}
+    required_fields = set(['domainId', 'action', 'topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -460,7 +460,7 @@ def manage_domain(request):
 @csrf_exempt
 def manage_network(request):
 
-    required_fields = {'networkName', 'action', 'topologyId'}
+    required_fields = set(['networkName', 'action', 'topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -492,7 +492,7 @@ def apply_config_template(request):
     print "Pushing Config Template"
     response_data = {"result": True}
 
-    required_fields = {'id', 'ip', 'password'}
+    required_fields = set(['id', 'ip', 'password'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -517,7 +517,7 @@ def push_config_set(request):
     print "Pushing ConfigSet"
     response_data = {"result": True}
 
-    required_fields = {'id'}
+    required_fields = set(['id'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -546,7 +546,7 @@ def delete_config_set(request):
     print "Deleting ConfigSet"
     response_data = {"result": True}
 
-    required_fields = {'id'}
+    required_fields = set(['id'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
@@ -560,7 +560,7 @@ def delete_config_set(request):
 @csrf_exempt
 def multi_clone_topology(request):
     response_data = {"result": True}
-    required_fields = {'clones', 'topologyId'}
+    required_fields = set(['clones', 'topologyId'])
     if not required_fields.issubset(request.POST):
 
         response_data["message"] = "Invalid Parameters in Post"
@@ -722,7 +722,7 @@ def inline_deploy_topology(config):
 def launch_web_console(request):
     print "Let's launch a console!"
 
-    required_fields = {'domain'}
+    required_fields = set(['domain'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 

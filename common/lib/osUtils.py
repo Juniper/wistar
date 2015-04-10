@@ -78,6 +78,20 @@ def create_thin_provision_instance(image, instance):
         return False
 
 
+def is_image_thin_provisioned(image_path):
+    """ Check to see if the qemu-img info command reports a backing file """
+    if check_is_linux():
+        rv = os.system("qemu-img info " + image_path + " | grep backing")
+        if rv == 0:
+            print "Found a backing file!"
+            return True
+        else:
+            return False
+    else:
+        # non linux hosts (i.e. virtualbox) will never have a backing file
+        return False
+
+
 def remove_instance(instance_path):
     rv = 0
     if check_is_linux():
