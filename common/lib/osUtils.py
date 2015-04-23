@@ -7,7 +7,6 @@ from jinja2 import Environment
 from netaddr import *
 
 
-
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
 def check_is_linux():
@@ -40,8 +39,19 @@ def check_process(procName):
     cmd = "ps aux"
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
-    (o,e) = p.communicate()
+    (o, e) = p.communicate()
     if procName in o:
+        return True
+    else:
+        return False
+
+
+def check_ip(ip_address):
+    """ check to see if the given ip address is already reachable """
+
+    rv = os.system("ping -c 1 -q %s " % ip_address)
+    if rv == 0:
+        print "IP Exists and is pingable"
         return True
     else:
         return False

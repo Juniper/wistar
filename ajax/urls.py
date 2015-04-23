@@ -33,4 +33,5 @@ urlpatterns = patterns('',
                        url(r'^deleteConfigSet/$', views.delete_config_set, name='deleteConfigSet'),
                        url(r'^viewNetwork/(?P<network_name>[^/]+)$', views.view_network, name='viewNetwork'),
                        url(r'^viewDomain/(?P<domain_id>[^/]+)$', views.view_domain, name='viewDomain'),
+                       url(r'^checkIp/$', views.check_ip, name='check_ip'),
                        )

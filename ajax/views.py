@@ -150,6 +150,7 @@ def preconfig_firefly(request):
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
+
 @csrf_exempt
 def config_junos_interfaces(request):
     response_data = {"result": True}
@@ -168,7 +169,8 @@ def config_junos_interfaces(request):
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
-   
+
+
 @csrf_exempt
 def execute_cli(request):
     response_data = {"result": True}
@@ -188,6 +190,7 @@ def execute_cli(request):
 
         response_data["output"] = result 
         return HttpResponse(json.dumps(response_data), content_type="application/json")
+
 
 @csrf_exempt
 def execute_linux_cli(request):
@@ -415,6 +418,18 @@ def refresh_hypervisor_status(request):
 
     context = {'domain_list': domains, 'network_list': networks}
     return render(request, 'ajax/deploymentStatus.html', context)
+
+
+@csrf_exempt
+def check_ip(request):
+    required_fields = set(['ip'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    ip_address = request.POST['ip']
+    ip_exists = ou.check_ip(ip_address)
+    response_data = {"result": ip_exists}
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 @csrf_exempt

@@ -131,6 +131,34 @@
         jQuery.post(url, params, success);
     }
 
+    // check if an IP address is currently available
+    function checkIp() {
+        var ip = jQuery('#topoIconIp').val();
+
+        if (! ip.match('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')) {
+            alert('IP format is not valid!');
+            return False;
+        }
+
+        var url = "/ajax/checkIp/";
+
+        var params = {
+            'ip' : ip
+        };
+
+        var success = function(response) {
+            data = eval(response);
+
+            if (data["result"] == false) {
+                console.log("ip is not currently pingable");
+            } else {
+                alert("IP Address " + ip + " is already in use!");
+            }
+        };
+
+        jQuery.post(url, params, success);
+    }
+
     // used when a new instance is added to the topology
     // convenience func to increment the previously entered ip by 1
     // as wistar currently only supports a /24 for mgmt access
@@ -1225,7 +1253,9 @@
                   IP Address
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value=""/>
+                  <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value="192.168.122."
+                         title="Choose an IP from the 192.168.122.0/24 range"
+                         onblur="javascript: checkIp();"/>
                 </td>
               </tr>
               <tr>
@@ -1271,6 +1301,7 @@
                     <option value="1">1</option>
                     <option value="2" selected>2</option>
                     <option value="4">4</option>
+                    <option value="8">8</option>
                   </select>
                 </td>
               </tr>
@@ -1318,7 +1349,8 @@
                   External Access:
                 </td>
                 <td>
-                  <input type="button" value="Add External Bridge" title="Add br0" onclick="javascript: addExternalCloud()"/>
+                  <input type="button" value="Add External Bridge" title="Add br0"
+                         onclick="javascript: addExternalCloud()"/>
                 </td>
               </tr>
               <tr>
@@ -1326,7 +1358,8 @@
                   Private Network:
                 </td>
                 <td>
-                  <input type="button" value="Add Private Bridge" title="Add int_br0" onclick="javascript: addInternalCloud()"/>
+                  <input type="button" value="Add Private Bridge" title="Add int_br0"
+                         onclick="javascript: addInternalCloud()"/>
                 </td>
               </tr>
             </table>
@@ -1378,7 +1411,8 @@
                   Delete Object:
                 </td>
                 <td>
-                  <input type="button" value="Delete" title="Remove selected Object from Topology" onclick="javascript: deleteSelectedObject()"/>
+                  <input type="button" value="Delete" title="Remove selected Object from Topology"
+                         onclick="javascript: deleteSelectedObject()"/>
                 </td>
               </tr>
             </table>
@@ -1459,10 +1493,12 @@
                   Instance Configuration
                 </td>
                 <td>
-                  <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                  <input type="button" onclick="javascript: getInstanceStartupState();"
+                         value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
                     <br/>
                     <br/>
-                  <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures Management IP Address">
+                  <input type="button" onclick="javascript: configureInstanceAccess();"
+                         value="Configure Access" title="Configures Management IP Address">
                     <br/>
                     <br/>
                 </td>
@@ -1480,7 +1516,8 @@
                    Name
                 </td>
                 <td>
-                  <input type="text" disabled="true" name="junosIconName" id="junosIconName" value=""/>
+                  <input type="text" disabled="true" name="junosIconName"
+                         id="junosIconName" value=""/>
                 </td>
               </tr>
               <tr>
@@ -1488,7 +1525,8 @@
                    IP Address
                 </td>
                 <td>
-                  <input type="text" disabled="true" title="management address" name="junosIconIp" id="junosIconIp" value=""/>
+                  <input type="text" disabled="true" title="management address"
+                         name="junosIconIp" id="junosIconIp" value=""/>
                 </td>
               </tr>
               <tr>
@@ -1672,7 +1710,8 @@
               </tr>
               <tr>
                 <td colspan="2">
-                  <input type="button" onclick="javascript: syncLinkData();" value="Sync IP Addresses" title="Push IP information to devices for this connection">
+                  <input type="button" onclick="javascript: syncLinkData();" value="Sync IP Addresses"
+                         title="Push IP information to devices for this connection">
                 </td>
               </tr>
             </table>
