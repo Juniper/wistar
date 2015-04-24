@@ -12,9 +12,9 @@ import osUtils as ou
 
 def get_console(dom):
     if ou.check_is_linux():
-        return pexpect.spawn("virsh console " + dom, timeout=3)
+        return pexpect.spawn("virsh console " + dom, timeout=60)
     else:
-        return pexpect.spawn("socat /tmp/" + dom + ".pipe - ", timeout=3)
+        return pexpect.spawn("socat /tmp/" + dom + ".pipe - ", timeout=60)
 
 
 # is this Junos device at login yet?
@@ -233,7 +233,7 @@ def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
         
         child = get_console(dom)
         child.send("\r")
-        index = child.expect(["[^\s]>", "[^\s]#", "login:"])
+        index = child.expect(["[^\s]>", "[^\s]#", "root@%", "login:"])
         if index == 0:
             # someone is already logged in on the console
             child.send("exit\r")
@@ -242,7 +242,13 @@ def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
             # someone is logged in and in configure mode!
             print "User is in config mode on the console!"
             raise WistarException("User is in configure mode on the console!")
-    
+        elif index == 2:
+            # still at shell
+            child.send("exit\r")
+   
+        child.send("\r")
+        # we should now be back at login prompt!
+        child.expect("login:")
         print "Logging in as root"
         child.send("root\r")
         
@@ -258,6 +264,7 @@ def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
             # there is no password or hostname set yet
             needs_pw = True
             
+        child.send("\r")
         child.expect("root.*>")
         print "Sending configure private"
         child.send("configure private\r")
@@ -289,17 +296,23 @@ def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
         print "Committing changes"
         child.send("commit and-quit\r")
         time.sleep(3)
-        child.send("quit\r")
-        time.sleep(1)
+        ret = child.expect(["root.*#", "error.*"])
+        if ret == 1:
+            raise WistarException("Error committing confirguration")
         child.send("exit\r")
         time.sleep(1)
         child.send("exit\r")
         time.sleep(1)
-        child.send("exit\r")
+        child.expect(".*login:")
         print "all-done"
 
         return True
-    
+
+    except pexpect.TIMEOUT:
+        print "Timeout configuring Junos Domain"
+        print str(child)
+        return False
+   
     except pexpect.EOF as e:
         print repr(e)
         print "Failed to preconfig junos domain!"
