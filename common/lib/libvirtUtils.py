@@ -161,7 +161,7 @@ def list_domains():
 def get_domains_for_topology(topology_id):
     """ Get all domains for a given topology Id """
     if not connect():
-        return False
+        return []
 
     domain_list = []
     try:
@@ -173,7 +173,20 @@ def get_domains_for_topology(topology_id):
         return domain_list
     except Exception as e:
         print repr(e)
-        return None
+        return []
+
+
+def undefine_all_in_topology(topology_id):
+
+    network_list = get_networks_for_topology(topology_id)
+    for network in network_list:
+        print "Undefining network: " + network["name"]
+        undefine_network(network["name"])
+
+    domain_list = get_domains_for_topology(topology_id)
+    for domain in domain_list:
+        print "undefining domain: " + domain["name"]
+        undefine_domain(domain["uuid"])
 
 
 def network_exists(network_name):
@@ -220,7 +233,7 @@ def list_networks():
 def get_networks_for_topology(topology_id):
     """ Get Networks for a given topology Id """
     if not connect():
-        return False
+        return []
 
     network_list = []
     try:
@@ -232,7 +245,7 @@ def get_networks_for_topology(topology_id):
         return network_list
     except Exception as e:
         print str(e)
-        return None
+        return network_list
 
 
 # blow away everything and start from scratch!

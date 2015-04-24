@@ -137,6 +137,10 @@ def detail(request, topo_id):
 
 
 def delete(request, topo_id):
+    print "undefining all in topology: " + str(topo_id)
+    # this expects topo_id in format t01, t33, etc
+    lu.undefine_all_in_topology("t" + topo_id)
+
     topology = get_object_or_404(Topology, pk=topo_id)
     topology.delete()
     return HttpResponseRedirect('/topologies/')
