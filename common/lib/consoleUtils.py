@@ -37,15 +37,21 @@ def is_junos_device_at_prompt(dom):
                 child.send("exit\r")
                 # super tricky bug here. child would exit before the command had actually been sent
                 time.sleep(.5)
+                child.send("\r")
+                # we should now be back at login prompt!
+                child.expect("login:")
                 return True
             elif index == 2:
                 print "at normal prompt"
                 # exit cli
                 child.send("exit\r")
                 time.sleep(.5)
+                child.expect("[^\s]%")
                 # exit sh
                 child.send("exit\r")
                 time.sleep(.5)
+                # we should now be back at login prompt!
+                child.expect("login:")
                 return True
             elif index == 3:
                 print "at configure prompt"

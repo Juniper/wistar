@@ -115,14 +115,16 @@ def remove_instance(instance_path):
         return False
 
 
-def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface):
+def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, password):
  
     try: 
         seed_dir = "/tmp/" + domain_name
         seed_img_name = seed_dir + "/seed.iso"
 
-        rv = os.system('ls ' + seed_img_name)
-        if rv == 0:
+        if not check_path(seed_dir):
+            os.mkdir(seed_dir)
+
+        if check_path(seed_img_name):
             print "seed.img already created!"
             return seed_img_name
  
@@ -148,14 +150,11 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface):
         config["network_address"] = ip_network.network.format()
         config["netmask"] = ip_network.netmask.format()
         config["mgmt_interface"] = mgmt_interface
+        config["password"] = password
     
         meta_data_string = meta_data.render(config=config)
         user_data_string = user_data.render(config=config)
     
-        if not os.system('ls ' + seed_dir):
-            if not os.system('mkdir ' + seed_dir):
-                return None
-   
         print "writing meta-data file" 
         mdf = open(seed_dir + "/meta-data", "w")
         mdf.write(meta_data_string)

@@ -695,9 +695,11 @@ def inline_deploy_topology(config):
                         # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
                         management_ip = device["ip"] + "/24"
                         # domain_name, host_name, mgmt_ip, mgmt_interface
+                        print "Creating cloud init path for linux image"
                         cloud_init_path = ou.create_cloud_init_img(device["name"], device["label"],
-                                                                   management_ip, management_interface)
+                                                                   management_ip, management_interface, device["password"])
 
+                        print cloud_init_path
                     device_xml = render_to_string(domain_xml_path + "domain.xml",
                                                   {'device': device, 'instancePath': instance_path,
                                                    'vm_env': vm_env, 'cloud_init_path': cloud_init_path}

@@ -1,4 +1,12 @@
 #cloud-config
 hostname: {{ config.hostname }}
-password: 'Juniper123!!!'
-passwd: { expire: False }
+chpasswd: 
+    list: |
+        root:{{ config.password }}
+        ubuntu:ubuntu01
+    expire: False
+disable_root: 0
+ssh_pwauth: True
+runcmd:
+    - sed -i'.orig' -e's/without-password/yes/' /etc/ssh/sshd_config
+    - service ssh restart
