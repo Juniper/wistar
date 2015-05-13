@@ -102,6 +102,36 @@
 
     }
 
+    // pause everything!
+    function pauseTopology() {
+
+        var delay = instanceArray.length * 180 / 60;
+        var r = confirm("Are you sure you want to pause all Instances? This will take approximately " + delay + " minutes!");
+        if (r == false) {
+            return r;
+        }
+
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+
+        var url = "/ajax/pauseTopology/"
+        var params = {
+            'topologyId' : "{{ topo.id }}"
+        };
+
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#deploymentStatus').empty().append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.style.cursor = '';
+        });
+
+    }
+
     // get instance var form instance array by label
     function getInstanceByLabel(label) {
         for(v=0;v<instanceArray.length;v++) {

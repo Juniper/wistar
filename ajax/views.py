@@ -330,7 +330,6 @@ def sync_link_data(request):
 
 @csrf_exempt
 def start_topology(request):
-    response_data = {"result": True}
     required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -338,10 +337,8 @@ def start_topology(request):
     topology_id = request.POST['topologyId']
 
     if topology_id == "":
-        print "Found a blank topoId, returning full hypervisor status"
-        response_data["result"] = False
-        response_data["message"] = "Blank Topology Id found"
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
+        print "Found a blank topoId!"
+        return render(request, 'ajax/ajaxError.html', {'error': "Blank Topology Id found"})
 
     domain_list = lu.get_domains_for_topology("t" + topology_id + "_")
     network_list = []
@@ -354,9 +351,7 @@ def start_topology(request):
         if lu.start_network(network["name"]):
             time.sleep(1)
         else:
-            response_data["result"] = False
-            response_data["message"] = "Could not start network: " + network["name"]
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
+            return render(request, 'ajax/ajaxError.html', {'error': "Could not start network: " + network["name"]})
 
     num_domains = len(domain_list)
     iter_counter = 1
@@ -367,15 +362,50 @@ def start_topology(request):
                 time.sleep(180)
             iter_counter += 1
         else:
-            response_data["result"] = False
-            response_data["message"] = "Could not start domain: " + domain["name"]
-            return HttpResponse(json.dumps(response_data), content_type="application/json")
-    
-    time.sleep(5)
+            return render(request, 'ajax/ajaxError.html', {'error': "Could not start domain: " + domain["name"]})
+
     print "All domains started"
     return refresh_deployment_status(request)
 
-   
+
+@csrf_exempt
+def pause_topology(request):
+    required_fields = set(['topologyId'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    topology_id = request.POST['topologyId']
+
+    if topology_id == "":
+        print "Found a blank topoId!"
+        return render(request, 'ajax/ajaxError.html', {'error': "Blank Topology Id found"})
+
+    domain_list = lu.get_domains_for_topology("t" + topology_id + "_")
+
+    for domain in domain_list:
+        if domain["state"] == "running":
+            print "Pausing domain " + domain["name"]
+            lu.suspend_domain(domain["uuid"])
+            time.sleep(5)
+        else:
+            print "Domain %s is already shut down" % domain["name"]
+
+    network_list = []
+    if ou.check_is_linux():
+        network_list = lu.get_networks_for_topology("t" + topology_id + "_")
+
+    for network in network_list:
+        print "Stopping network: " + network["name"]
+        if lu.stop_network(network["name"]):
+            time.sleep(1)
+        else:
+            return render(request, 'ajax/ajaxError.html', {'error': "Could not stop network: " + network["name"]})
+
+    print "All domains paused"
+    return refresh_deployment_status(request)
+
+
+
 @csrf_exempt
 def refresh_deployment_status(request):
     required_fields = set(['topologyId'])

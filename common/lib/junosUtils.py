@@ -156,30 +156,50 @@ def push_config_element(xml_data, dev, overwrite=False):
     cu = Config(dev)
     try:
         cu.lock()
-        cu.load(xml_data, overwrite=overwrite)
-        diff = cu.diff()
-        print diff
-        if diff is not None:
-            print "Committing"
-            if cu.commit_check():
-                print "Committing config!"
-                cu.commit(comment="Commit via wistar")
-                time.sleep(3)
-                return True
-        else:
-            # nothing to commit
-            print "Nothing to commit - no diff found"
-            return True
-    except CommitError as ce:
-        print "Could not load config!"
-        cu.rollback()
-        print repr(ce)
+    except LockError as le:
+        print "Could not lock database!"
+        print str(le)
+        dev.close()
         return False
 
-    except RpcError as e:
-        print "caught exception pushing config"
-        print repr(e)
+    try:
+        cu.load(xml_data, overwrite=overwrite)
+
+    except Exception as e:
+        print "Could not load configuration"
+        print str(e)
+        dev.close()
         return False
+
+
+    diff = cu.diff()
+    print diff
+    if diff is not None:
+        # nothing to commit
+        try:
+            cu.commit_check()
+            print "Committing config!"
+            cu.commit(comment="Commit via wistar")
+            print "Committed successfully!"
+
+        except CommitError as ce:
+            print "Could not load config!"
+            cu.rollback()
+
+    else:
+        print "Nothing to commit"
+
+    try:
+        print "Unlocking database!"
+        cu.unlock()
+    except UnlockError as ue:
+        print "Could not unlock database"
+        print str(ue)
+        return False
+
+    print "Closing device handle"
+    dev.close()
+    return True
 
 
 def push_config_string(xml_string, ip, pw):
