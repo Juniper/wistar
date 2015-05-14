@@ -2,23 +2,32 @@
 {% extends "base.html" %}
 {% block title %}Wistar - Lab Rat - Home{% endblock %}
 {% block content %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 <table>
     <tr>
         <th>Name</th>
         <th>Description</th>
         <th>Options</th>
     </tr>
-{% for topo in latest_topo_list %}
+    {% for topo in latest_topo_list %}
     <tr>
         <td><a href='{{ topo.id }}'>{{ topo.name }}</a> </td>
-        <td>{{ topo.description }}</td> 
+        <td>{{ topo.description }}</td>
         <td>
-		<a href='delete/{{ topo.id }}'>Delete</a>
-        &nbsp;
-		<a href='export/{{ topo.id }}'>Export</a>
-	 </td>
+            <a href='delete/{{ topo.id }}'>Delete</a>
+            &nbsp;
+            <a href='export/{{ topo.id }}'>Export</a>
+            &nbsp;
+            <a href='launch/{{ topo.id }}'>Launch</a>
+        </td>
     </tr>
-{% endfor %}
+    {% endfor %}
 </table>
 
 <a href="edit">New Topology</a>

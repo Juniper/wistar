@@ -33,6 +33,21 @@
     </tr>
     <tr>
         <th>
+            <label for="id_type">Type:</label>
+        </th>
+        <td>
+            <select id="id_type" name="type">
+                <option value="junos_vmx" selected="selected">Junos vMX</option>
+                <option value="junos_firefly">Junos Firefly</option>
+                <option value="junos">Junos Other</option>
+                <option value="linux">Linux</option>
+                <option value="other">Other</option>
+            </select> Currently: {{ image.type }}
+        </td>
+    </tr>
+
+    <tr>
+        <th>
             <label for="id_description">Description:</label>
         </th>
         <td>

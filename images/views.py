@@ -30,10 +30,12 @@ def update(request):
         image_id = request.POST["image_id"]
         image_name = request.POST["name"]
         image_description = request.POST["description"]
+        image_type = request.POST["type"]
 
         image = get_object_or_404(Image, pk=image_id)
         image.name = image_name
         image.description = image_description
+        image.type = image_type
         image.save()
         return HttpResponseRedirect('/images/')
 

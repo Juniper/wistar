@@ -635,7 +635,7 @@ def multi_clone_topology(request):
 @csrf_exempt
 def deploy_topology(request):
 
-    if not request.POST.has_key('topologyId'):
+    if 'topologyId' not in request.POST:
         return render(request, 'ajax/ajaxError.html', {'error': "No Topology Id in request"})
     
     topology_id = request.POST['topologyId']

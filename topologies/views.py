@@ -3,6 +3,7 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, HttpResponse
+from django.contrib import messages
 
 from topologies.models import Topology
 from topologies.models import ConfigSet
@@ -11,7 +12,11 @@ from topologies.forms import ImportForm
 import common.lib.wistarUtils as wu
 import common.lib.libvirtUtils as lu
 import common.lib.junosUtils as ju
+import common.lib.osUtils as ou
 from images.models import Image
+import time
+# mild hack alert
+from ajax import views as av
 
 
 # FIXME = debug should be a global setting
@@ -31,9 +36,9 @@ def edit(request):
 
 
 def export_topology(request, topo_id):
-    topology  = get_object_or_404(Topology, pk=topo_id)
+    topology = get_object_or_404(Topology, pk=topo_id)
     json_data = json.loads(topology.json)
-    info_data = {}
+    info_data = dict()
     info_data["type"] = "wistar.info"
     info_data["name"] = topology.name
     info_data["description"] = topology.description
@@ -108,21 +113,23 @@ def multi_clone(request):
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
-    topo_id = request.POST["topoId"]
+    topology_id = request.POST["topoId"]
     num_clones = request.POST["clones"]
 
-    topo  = get_object_or_404(Topology, pk=topo_id)
-    json = topo.json 
+    topology = get_object_or_404(Topology, pk=topology_id)
+    json = topology.json
     i = 0
     while i < num_clones: 
-        new_topo = topo
-        orig_name = topo.name 
+        new_topo = topology
+        orig_name = topology.name
         new_topo.name = orig_name
         new_topo.json = wu.cloneTopology(json)
         json = new_topo.json
         new_topo.id = None
         new_topo.save()
 
+    image_list = Image.objects.all().order_by('name')
+    context = {'image_list': image_list, 'topo': topology}
     return render(request, 'topologies/edit.html', context)
 
 
@@ -136,12 +143,23 @@ def detail(request, topo_id):
     return render(request, 'topologies/edit.html', context)
 
 
-def delete(request, topo_id):
-    print "undefining all in topology: " + str(topo_id)
-    # this expects topo_id in format t01, t33, etc
-    lu.undefine_all_in_topology("t" + topo_id + "_")
+def delete(request, topology_id):
 
-    topology = get_object_or_404(Topology, pk=topo_id)
+    topology_prefix = "t%s_" % topology_id
+    network_list = lu.get_networks_for_topology(topology_prefix)
+    for network in network_list:
+        print "undefining network: " + network["name"]
+        lu.undefine_network(network["name"])
+
+    domain_list = lu.get_domains_for_topology(topology_prefix)
+    for domain in domain_list:
+        print "undefining domain: " + domain["name"]
+        source_file = lu.get_image_for_domain(domain["uuid"])
+        if lu.undefine_domain(domain["uuid"]):
+            if source_file is not None:
+                ou.remove_instance(source_file)
+
+    topology = get_object_or_404(Topology, pk=topology_id)
     topology.delete()
     return HttpResponseRedirect('/topologies/')
 
@@ -210,3 +228,52 @@ def create_config_set(request):
    
     return HttpResponseRedirect('/topologies/' + topology_id + '/')
 
+
+def launch(request, topology_id):
+    topology = dict()
+    try:
+        topology = Topology.objects.get(pk=topology_id)
+    except Exception as ex:
+        print ex
+        return render(request, 'topologies/error.html', {'error': "Topology not found!"})
+
+    # let's parse the json and convert to simple lists and dicts
+    config = wu.loadJson(topology.json, topology_id)
+
+    try:
+        print "Deploying topology: %s" % topology_id
+        # this is a hack - inline deploy should be moved elsewhere
+        # but the right structure isn't really there for a middle layer other
+        # than utility and view layers ... unless I want to mix utility libs
+        av.inline_deploy_topology(config)
+    except Exception as e:
+        return render(request, 'topologies/error.html', {'error': str(e)})
+
+    domain_list = lu.get_domains_for_topology("t%s_" % topology_id)
+    network_list = []
+
+    if ou.check_is_linux():
+        network_list = lu.get_networks_for_topology("t%s_" % topology_id)
+
+    for network in network_list:
+        print "Starting network: " + network["name"]
+        if lu.start_network(network["name"]):
+            time.sleep(1)
+        else:
+            return render(request, 'topologies/error.html', {'error': "Could not start network: " + network["name"]})
+
+    num_domains = len(domain_list)
+    iter_counter = 1
+    for domain in domain_list:
+        print "Starting domain " + domain["name"]
+        if lu.start_domain(domain["uuid"]):
+            if iter_counter < num_domains:
+                time.sleep(1)
+            iter_counter += 1
+        else:
+            return render(request, 'topologies/error.html', {'error': "Could not start domain: " + domain["name"]})
+
+    print "All domains started"
+    messages.info(request, 'Topology %s launched successfully' % topology.name)
+
+    return HttpResponseRedirect('/topologies/')
