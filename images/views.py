@@ -130,8 +130,8 @@ def create_from_instance(request, uuid):
     image.name = "image_" + str(domain.UUIDString())
     image.description = "Clone of " + domain_name
     image.filePath = new_relative_image_path
-    new_id = image.save()
-    return HttpResponseRedirect('/images/edit/' + new_id)
+    image.save()
+    return HttpResponseRedirect('/images/')
 
 
 def detail(request, image_id):

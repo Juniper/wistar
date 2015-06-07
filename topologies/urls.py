@@ -17,4 +17,5 @@ urlpatterns = patterns('',
                        url(r'^launch/(?P<topology_id>\d+)$',
                            views.launch,
                            name='launch'),
+                       url(r'^parent/(?P<domain_name>[^/]+)$', views.parent, name='parent'),
                        )

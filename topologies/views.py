@@ -133,6 +133,12 @@ def multi_clone(request):
     return render(request, 'topologies/edit.html', context)
 
 
+def parent(request, domain_name):
+    topology_id = domain_name.split('_')[0].replace('t', '')
+    print "Found topology_id of %s" % topology_id
+    return HttpResponseRedirect('/topologies/%s' % topology_id)
+
+
 def detail(request, topo_id):
     topology = get_object_or_404(Topology, pk=topo_id)
     domain_list = lu.get_domains_for_topology("t" + topo_id)
