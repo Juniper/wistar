@@ -22,7 +22,7 @@ var topologySelectionListener = Class.extend({
 	                loadLabelEditor(figure.getId());
 	            } else if (figure instanceof draw2d.shape.node.topologyIcon) {
 	                console.log("found topologyIcon");
-	                if (figure.getType() == "junos_vmx" || figure.getType() == "junos_firefly") {
+	                if (figure.getType() == "junos_vmx" || figure.getType() == "junos_firefly" || figure.getType() == "junos_vmx_p2") {
 	                    loadJunosIconEditor(figure.getId());
 	                } else if(figure.getType() == "linux") {
 	                    loadLinuxIconEditor(figure.getId());

@@ -717,6 +717,15 @@ def inline_deploy_topology(config):
                     print "Using firefly definition"
                     device_xml = render_to_string(domain_xml_path + "domain_firefly.xml",
                                                  {'device': device, 'instancePath': instance_path, 'vm_env': vm_env})
+
+                elif image.type == "junos_vmx_p2":
+                    print "Using vmx phase 2 definition"
+                    device["product"] = "VM-%s-33-re-0" % device["name"]
+                    cloud_init_path = None
+                    device_xml = render_to_string(domain_xml_path + "domain_phase_2.xml",
+                                                  {'device': device, 'instancePath': instance_path,
+                                                   'vm_env': vm_env, 'cloud_init_path': cloud_init_path}
+                                                  )
                 else:
                     cloud_init_path = None
                     if image.type == "linux":

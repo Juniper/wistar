@@ -5,15 +5,14 @@
     <os>
         <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
         <boot dev='hd'/>
+        <smbios mode='sysinfo'/>
     </os>
     <sysinfo type='smbios'>
         <bios>
-            <entry name='vendor'>JUNIPER</entry>
+            <entry name='vendor'>Juniper</entry>
         </bios>
         <system>
-            <entry name='manufacturer'>Juniper</entry>
             <entry name='product'>{{ device.product }}</entry>
-            <entry name='version'>2</entry>
         </system>
     </sysinfo>
     <features>
@@ -33,15 +32,6 @@
             <target dev='hda' bus='ide'/>
             <address type='drive' controller='0' bus='0' target='0' unit='0'/>
         </disk>
-        {% if cloud_init_path %}
-        <disk type='file' device='cdrom'>
-            <driver name='qemu' type='raw'/>
-            <source file='{{ cloud_init_path }}'/>
-            <target dev='hdc' bus='ide'/>
-            <readonly/>
-            <address type='drive' controller='0' bus='0' target='0' unit='1'/>
-        </disk>
-        {% endif %}
         <controller type='ide' index='0'>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
         </controller>
@@ -52,7 +42,7 @@
         <interface type='bridge'>
             <mac address='{{ interface.mac }}'/>
             <source bridge='{{ interface.bridge }}'/>
-            <model type='virtio'/>
+            <model type='e1000'/>
             <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
         </interface>
         {% endfor %}
@@ -60,7 +50,7 @@
         <interface type='bridge'>
             <mac address='{{ interface.mac }}'/>
             <source bridge='{{ interface.bridge }}'/>
-            <model type='virtio'/>
+            <model type='e1000'/>
             <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
         </interface>
         {% endfor %}
@@ -78,8 +68,5 @@
             <model type='cirrus' vram='4' heads='1'/>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
         </video>
-        <memballoon model='virtio'>
-            <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-        </memballoon>
     </devices>
 </domain>

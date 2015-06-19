@@ -103,6 +103,26 @@ def loadJson(rawJson, topo_id):
 
                 device["managementInterfaces"].append(em0)
                 device["managementInterfaces"].append(em1)
+           
+            # junos >= 15.1 requires management slots to be moved to 0x03 and 0x04 
+            elif ud["type"] == "junos_vmx_p2":
+
+                # ok, we need this network to be created later
+                em1_required = True
+
+                # manually create em0 and em1 interfaces            
+                em0 = {}
+                em0["mac"] = generateNextMac(topo_id)
+                em0["bridge"] = "virbr0"
+                em0["slot"] = "0x03"
+                em0["ip"] = jsonObject["userData"]["ip"]
+                em1 = {}
+                em1["mac"] = generateNextMac(topo_id)
+                em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
+                em1["slot"] = "0x04"
+
+                device["managementInterfaces"].append(em0)
+                device["managementInterfaces"].append(em1)
 
             devices.append(device)
         elif jsonObject["type"] == "draw2d.shape.node.externalCloudIcon":
@@ -195,7 +215,7 @@ def loadJson(rawJson, topo_id):
     # we need to loop again because we didn't know how many interfaces were on this instance
     # until after we run through the connections first
     for d in devices: 
-        if d["type"] != "junos_vmx":
+        if d["type"] != "junos_vmx" and d["type"] != "junos_vmx_p2":
             slot = "%#04x" % int(len(d["interfaces"]) + 6)
             interface = {}
             interface["mac"] = generateNextMac(topo_id)
@@ -243,17 +263,17 @@ def cloneTopology(rawJson):
 
 
 def launchWebSocket(vncPort, wsPort, server):
-    args = " 127.0.0.1:" + str(vncPort) + " 127.0.0.1:" + str(wsPort) + " &"
+    
     path = os.path.abspath(os.path.dirname(__file__))
     ws = os.path.join(path, "../../webConsole/bin/websockify.py")
-    
-    cmd = str(ws) + args
 
+    webSocketPath = os.path.abspath(ws) 
+
+    cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (webSocketPath, server, vncPort, server, wsPort)
+    
     print cmd
 
-    proc = subprocess.Popen(ws + " " + server + ":" + str(vncPort) + " " + server + ":" + str(wsPort) + " &",
-                            shell=True, close_fds=True
-                            )
+    proc = subprocess.Popen(cmd, shell=True, close_fds=True)
     time.sleep(1)
     return proc.pid
 
