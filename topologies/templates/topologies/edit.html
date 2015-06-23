@@ -66,7 +66,8 @@
         console.log("updating boot up state for topology");
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
-            if (instance["type"] == "junos_vmx" || instance["type"] == "junos_firefly" || instance["type"] == "linux") {
+            //if (instance["type"] == "junos_vmx" || instance["type"] == "junos_firefly" || instance["type"] == "linux") {
+            if (instance["type"].includes('junos') || instance["type"] == "linux") {
                 updateBootState(instance["id"], instance["label"]);
             }
         }
@@ -327,7 +328,7 @@
 		    window.location="/topologies/clone/{{ topo.id }}";
 	    }
     }
-
+    
     // simple validation
     function multiCloneTopology() {
         var num_clones = prompt("How many copies would you like to create?");
@@ -933,8 +934,9 @@
         jQuery('#junosIconName').val(instance.getLabel());
         jQuery('#junosIconIp').val(instance.getIp());
         jQuery('#junosIconPass').val(instance.getPassword());
-        jQuery('#junosIconCpu').val(instance.getCpu());
-        jQuery('#junosIconRam').val(instance.getRam());
+        jQuery('#junosIconCpu').html(instance.getCpu());
+        jQuery('#junosIconRam').html(instance.getRam());
+        jQuery('#junosIconImage').html("<a href='/images/" + instance.getImage() + "'>Image Detail</a>");
 
         // clear the cli output      
         jQuery('#cliOutput').val("");
@@ -996,8 +998,9 @@
         jQuery('#linuxIconName').val(instance.getLabel());
         jQuery('#linuxIconIp').val(instance.getIp());
         jQuery('#linuxIconPass').val(instance.getPassword());
-        jQuery('#linuxIconCpu').val(instance.getCpu());
-        jQuery('#linuxIconRam').val(instance.getRam());
+        jQuery('#linuxIconCpu').html(instance.getCpu());
+        jQuery('#linuxIconRam').html(instance.getRam());
+        jQuery('#linuxIconImage').html("<a href='/images/" + instance.getImage() + "'>Image Detail</a>");
         
         if (currentSelection !== "linuxIconEditor") {
             hideAllEditors();
@@ -1495,20 +1498,20 @@
               </tr>
               <tr>
                 <td>
-                   vCPU
+                 VM Params
                 </td>
                 <td>
-                  <input type="text" disabled="true"
-                    name="linuxIconCPU" id="linuxIconCpu" value="2"/>
+                  vCPU: <div id="linuxIconCpu" style="display: inline"></div>
+                  &nbsp;
+                  vRAM: <div id="linuxIconRam" style="display: inline"></div>
                 </td>
               </tr>
               <tr>
                 <td>
-                  vRAM
+                  Base Image
                 </td>
                 <td>
-                  <input type="text" disabled="true"
-                    name="linuxIconRam" id="linuxIconRam" value="2"/>
+                  <div id="linuxIconImage"></div>
                 </td>
               </tr>
             </table>
@@ -1586,20 +1589,20 @@
               </tr>
               <tr>
                 <td>
-                   vCPU
+                   VM Params
                 </td>
                 <td>
-                  <input type="text" disabled="true"
-                    name="junosIconCPU" id="junosIconCpu" value="2"/>
+                  vCPU: <div id="junosIconCpu" style="display: inline"></div>
+                  &nbsp;
+                  vRAM: <div id="junosIconRam" style="display: inline"></div>
                 </td>   
               </tr>
               <tr>
                 <td>
-                  vRAM 
+                  Base Image
                 </td>
                 <td>
-                  <input type="text" disabled="true"
-                    name="junosIconRam" id="junosIconRam" value="2"/>
+                  <div id="junosIconImage"></div>
                 </td>   
               </tr>
               <tr>
