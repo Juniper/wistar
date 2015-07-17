@@ -8,7 +8,7 @@ class Topology(models.Model):
     name = models.TextField(default="noname", verbose_name="name")
     json = models.TextField(verbose_name="json")
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(verbose_name="modified", auto_now=True, auto_now_add=True)
+    modified = models.DateTimeField(verbose_name="modified", auto_now=True)
 
     class Meta:
         verbose_name = 'Topology'
@@ -20,7 +20,7 @@ class ConfigSet(models.Model):
     name = models.TextField()
     description = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True, auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'ConfigSet'
@@ -32,7 +32,7 @@ class Config(models.Model):
     name = models.TextField()
     type = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True, auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     ip = models.GenericIPAddressField()
     deviceConfig = models.TextField()
     password = models.TextField()
