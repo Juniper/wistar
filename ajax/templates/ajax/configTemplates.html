@@ -1,6 +1,9 @@
 {% load staticfiles %}
 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
     <tr>
+        <td colspan="4" style="text-align: right"><a href="#" onclick="javascript: closeConfigTemplateOverlay()">Close</a></td>
+    </tr>
+    <tr>
         <th colspan="4">Push Config Template to device: {{ ip }}</th>
     </tr>
     {% if template_list|length == 0 %}
@@ -26,6 +29,27 @@
         </td>
     </tr>
     {% endfor %}
+    <tr>
+        <td colspan="4" style="text-align: right">
+            <a href="/templates">Manage Saved Configuration Templates</a>
+        </td>
+    </tr>
 </table>
+<table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 10px">
+    <tr>
+        <th colspan="4">Apply config to device: {{ ip }}</th>
+    </tr>
+    <tr>
+        <td>
+            <textarea cols="20" rows="10" id="junosSetConfigInput"></textarea>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="button" onclick="javascript: applyJunosSetConfiguration('junosSetConfigInput');" value="Apply"/>
+        </td>
+    </tr>
+</table>
+
 
 

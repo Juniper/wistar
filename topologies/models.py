@@ -33,7 +33,7 @@ class Config(models.Model):
     type = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True, auto_now_add=True)
-    ip = models.IPAddressField()
+    ip = models.GenericIPAddressField()
     deviceConfig = models.TextField()
     password = models.TextField()
     

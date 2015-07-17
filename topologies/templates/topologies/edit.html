@@ -529,6 +529,15 @@
             doc.css('cursor' , '');
         });
     }
+
+    function closeConfigTemplateOverlay() {
+        console.log('closing config template overlay');
+
+        var cto = jQuery('#configTemplatesOverlay');
+        cto.empty();
+        cto.removeClass("screen-overlay");
+        cto.remove();
+    }
     
     function applyConfigurationTemplate(template_id) {
         
@@ -551,7 +560,7 @@
         var successMessage = "Config Template Applied!";
         var post = jQuery.post(url, params, function(response) {
             var data = eval(response);
-            if(data["result"] == "true") {
+            if(data["result"] == true) {
                 alert(successMessage);
             } else {
                 console.log(data);
@@ -566,6 +575,50 @@
             var cto = jQuery('#configTemplatesOverlay');
             cto.empty();
             cto.removeClass("screen-overlay");
+            cto.remove();
+        });
+    }
+
+    function applyJunosSetConfiguration(field_id) {
+
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        var ip = figure.getIp();
+        var password = figure.getPassword();
+
+        var setConfig = jQuery('#' + field_id).val();
+
+        var url = "/ajax/applyJunosSetConfig/"
+        var params = {
+            'config' : setConfig,
+            'ip' : ip,
+            'password' : password
+        };
+
+        var successMessage = "Config Template Applied!";
+        var post = jQuery.post(url, params, function(response) {
+            var data = eval(response);
+            console.log(data);
+            if(data["result"] == true) {
+                alert(successMessage);
+            } else {
+                console.log("result was not true :-(");
+                alert(data["message"]);
+            }
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.style.cursor = '';
+            var cto = jQuery('#configTemplatesOverlay');
+            cto.empty();
+            cto.removeClass("screen-overlay");
+            cto.remove();
         });
     }
 
@@ -1640,7 +1693,7 @@
                   <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
                     <br/>
                     <br/>
-                  <input type="button" onclick="javascript: loadConfigTemplates();" value="Load Configuration Templates" title="Select a configuration template to push to the device"/>
+                  <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
                 </td>
               </tr>
             </table>

@@ -535,7 +535,7 @@ def manage_network(request):
 @csrf_exempt
 def apply_config_template(request):
     print "Pushing Config Template"
-    response_data = {"result": True}
+    response_data = {"result": True, "message": "Applied configuration successfully"}
 
     required_fields = set(['id', 'ip', 'password'])
     if not required_fields.issubset(request.POST):
@@ -550,6 +550,27 @@ def apply_config_template(request):
     cleaned_template = template.replace('\r\n', '\n')
     print cleaned_template
     if ju.push_config(cleaned_template, ip, password):
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+    else:
+        response_data["result"] = False
+        response_data["message"] = "Could not apply config template"
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+@csrf_exempt
+def apply_junos_set_config(request):
+    print "Pushing Set Config"
+    response_data = {"result": True, "message": "Applied configuration successfully"}
+
+    required_fields = set(['config', 'ip', 'password'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    config = request.POST['config']
+    ip = request.POST['ip']
+    password = request.POST['password']
+
+    print config
+    if ju.push_config(config, ip, password):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     else:
         response_data["result"] = False
