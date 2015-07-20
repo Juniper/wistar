@@ -1,5 +1,4 @@
 import re
-import time
 
 from jnpr.junos import Device
 from jnpr.junos.utils.config import Config

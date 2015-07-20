@@ -36,4 +36,6 @@ urlpatterns = patterns('',
                        url(r'^viewNetwork/(?P<network_name>[^/]+)$', views.view_network, name='viewNetwork'),
                        url(r'^viewDomain/(?P<domain_id>[^/]+)$', views.view_domain, name='viewDomain'),
                        url(r'^checkIp/$', views.check_ip, name='check_ip'),
+                       url(r'^executeLinuxAutomation/$', views.execute_linux_automation, name='execute_linux_automation'),
+                       url(r'^executeJunosAutomation/$', views.execute_junos_automation, name='execute_junos_automation'),
                        )

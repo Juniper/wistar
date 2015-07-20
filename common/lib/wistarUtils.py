@@ -3,9 +3,8 @@ import os
 import subprocess
 import time
 
-import libvirtUtils as lu
-import osUtils as ou
-
+import libvirtUtils
+import osUtils
 
 macIndex = 0
 
@@ -13,28 +12,28 @@ macIndex = 0
 # silly attempt to keep mac addresses unique
 # use the topology id to generate 2 octets, and the number of
 # macs used so far to generate the last one
-def generateNextMac(topo_id):
+def generate_next_mac(topo_id):
     global macIndex
     base = "52:54:00:"
     tid = "%04x" % int(topo_id)
-    macBase = base + str(tid[:2]) + ":" + str(tid[2:4]) + ":"
-    mac = macBase + (str("%02x" % macIndex)[:2])
+    mac_base = base + str(tid[:2]) + ":" + str(tid[2:4]) + ":"
+    mac = mac_base + (str("%02x" % macIndex)[:2])
 
     macIndex += 1
     return mac
 
 
-def getDeviceName(index):
+def get_device_name(index):
     return "vmx" + str("%02i" % index)
 
 
 # load raw Json into an object containing a list of devices and a list of networks
-def loadJson(rawJson, topo_id):
+def load_json(raw_json, topo_id):
 
     # reset macIndex for this run
     global macIndex
     macIndex = 0
-    jsonData = json.loads(rawJson)
+    json_data = json.loads(raw_json)
 
     devices = []
     networks = []
@@ -44,80 +43,80 @@ def loadJson(rawJson, topo_id):
     em1_required = False
 
     # external bridge is a highlander (there can be only one)
-    externalUUID = "";
+    external_uuid = ""
     # allow multiple internal bridges
-    internalUUIDs = [];
+    internal_uuids = []
 
-    deviceIndex = 0
-    for jsonObject in jsonData:
-        if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-            ud = jsonObject["userData"]
+    device_index = 0
+    for json_object in json_data:
+        if json_object["type"] == "draw2d.shape.node.topologyIcon":
+            user_data = json_object["userData"]
             print "Found a topoIcon"
-            device = {}
+            device = dict()
 
-            device["name"] = "t" + str(topo_id) + "_" + ud["label"]
-            device["label"] = ud["label"]
-            device["imageId"] = ud["image"]
-            device["type"] = ud["type"]
-            device["ip"] = ud["ip"]
+            device["name"] = "t" + str(topo_id) + "_" + user_data["label"]
+            device["label"] = user_data["label"]
+            device["imageId"] = user_data["image"]
+            device["type"] = user_data["type"]
+            device["ip"] = user_data["ip"]
 
             # sanity check in case this is an old topology without these keys
-            # keys introducted in 20150306
+            # keys introduced in 20150306
             # set sensible defaults
             device["ram"] = "2048"
             device["cpu"] = "2"
-            if ud.has_key("cpu"):
-                device["cpu"] = ud["cpu"]
+            if "cpu" in user_data:
+                device["cpu"] = user_data["cpu"]
             
-            if ud.has_key("ram"):
-                device["ram"] = ud["ram"]
+            if "ram" in user_data:
+                device["ram"] = user_data["ram"]
 
-            device["password"] = ud["password"]
-            device["uuid"] = jsonObject["id"]
+            device["password"] = user_data["password"]
+            device["uuid"] = json_object["id"]
             device["interfaces"] = []
             device["managementInterfaces"] = []
-            if ou.check_is_linux():
-                device["vncPort"] = lu.get_next_domain_vnc_port(deviceIndex)
+            if osUtils.check_is_linux():
+                device["vncPort"] = libvirtUtils.get_next_domain_vnc_port(device_index)
             else :
                 device["vncPort"] = "5900"
     
-            deviceIndex += 1
+            device_index += 1
 
             # if this is a vmx, let's create the mandatory two mgmt ports in the 
             # first two slots
-            if ud["type"] == "junos_vmx":
+            if user_data["type"] == "junos_vmx":
 
                 # ok, we need this network to be created later
                 em1_required = True
 
                 # manually create em0 and em1 interfaces            
-                em0 = {}
-                em0["mac"] = generateNextMac(topo_id)
+                em0 = dict()
+                em0["mac"] = generate_next_mac(topo_id)
                 em0["bridge"] = "virbr0"
                 em0["slot"] = "0x04"
-                em0["ip"] = jsonObject["userData"]["ip"]
-                em1 = {}
-                em1["mac"] = generateNextMac(topo_id)
+                em0["ip"] = json_object["userData"]["ip"]
+                em1 = dict()
+                em1["mac"] = generate_next_mac(topo_id)
                 em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
                 em1["slot"] = "0x05"
 
                 device["managementInterfaces"].append(em0)
                 device["managementInterfaces"].append(em1)
            
-            # junos >= 15.1 requires management slots to be moved to 0x03 and 0x04 
-            elif ud["type"] == "junos_vmx_p2":
+            # junos >= 15.1 requires management slots to be moved to 0x03 and 0x04
+            elif user_data["type"] == "junos_vmx_p2":
 
                 # ok, we need this network to be created later
                 em1_required = True
 
                 # manually create em0 and em1 interfaces            
-                em0 = {}
-                em0["mac"] = generateNextMac(topo_id)
+                em0 = dict()
+                em0["mac"] = generate_next_mac(topo_id)
                 em0["bridge"] = "virbr0"
                 em0["slot"] = "0x03"
-                em0["ip"] = jsonObject["userData"]["ip"]
-                em1 = {}
-                em1["mac"] = generateNextMac(topo_id)
+                em0["ip"] = json_object["userData"]["ip"]
+                em1 = dict()
+                em1["mac"] = generate_next_mac(topo_id)
                 em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
                 em1["slot"] = "0x04"
 
@@ -125,45 +124,45 @@ def loadJson(rawJson, topo_id):
                 device["managementInterfaces"].append(em1)
 
             devices.append(device)
-        elif jsonObject["type"] == "draw2d.shape.node.externalCloudIcon":
-            externalUUID = jsonObject["id"];
-        elif jsonObject["type"] == "draw2d.shape.node.internalCloudIcon":
-            internalUUIDs.append(jsonObject["id"]);
+        elif json_object["type"] == "draw2d.shape.node.externalCloudIcon":
+            external_uuid = json_object["id"]
+        elif json_object["type"] == "draw2d.shape.node.internalCloudIcon":
+            internal_uuids.append(json_object["id"])
 
     # just run through again to ensure we already have all the devices ready to go!
     # note - set this to 1 to avoid using special name br0 -
     # per qemu docs - virbr0 will connect directly to host bridge and is probably not what we want
     # FIXME - add UI later to specify which host you want to do that for
-    connIndex = 1
+    conn_index = 1
 
     # create the em1bridge if necessary
     if em1_required is True:
-        em1bridge = {}
+        em1bridge = dict()
         em1bridge["name"] = "t" + str(topo_id) + "_em1bridge"
-        em1bridge["mac"] = generateNextMac(topo_id)
+        em1bridge["mac"] = generate_next_mac(topo_id)
         networks.append(em1bridge)
 
-    for jsonObject in jsonData:
-        if jsonObject["type"] == "draw2d.Connection":
-            targetUUID = jsonObject["target"]["node"]
-            sourceUUID = jsonObject["source"]["node"]
+    for json_object in json_data:
+        if json_object["type"] == "draw2d.Connection":
+            target_uuid = json_object["target"]["node"]
+            source_uuid = json_object["source"]["node"]
 
             # should we create a new bridge for this connection?
-            createBridge = True
+            create_bridge = True
 
-            bridge_name = "t" + str(topo_id) + "_br" + str(connIndex)
+            bridge_name = "t" + str(topo_id) + "_br" + str(conn_index)
 
             for d in devices:
-                if d["uuid"] == sourceUUID:
+                if d["uuid"] == source_uuid:
                     # slot should always start with 6
                     slot = "%#04x" % int(len(d["interfaces"]) + 6)
-                    interface = {}
-                    interface["mac"] = generateNextMac(topo_id)
+                    interface = dict()
+                    interface["mac"] = generate_next_mac(topo_id)
 
-                    if targetUUID in internalUUIDs:
-                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internalUUIDs.index(targetUUID))
+                    if target_uuid in internal_uuids:
+                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(target_uuid))
                         interface["bridge"] = bridge_name
-                    elif targetUUID == externalUUID:
+                    elif target_uuid == external_uuid:
                         # FIXME - this is hard coded to br0 - should maybe use a config object asp
                         bridge_name = "br0"
                         interface["bridge"] = bridge_name
@@ -172,19 +171,19 @@ def loadJson(rawJson, topo_id):
 
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
-                    interface["linkId"] = jsonObject["id"]
+                    interface["linkId"] = json_object["id"]
                     d["interfaces"].append(interface)
 
-                elif d["uuid"] == targetUUID:
+                elif d["uuid"] == target_uuid:
                     # slot should always start with 6
                     slot = "%#04x" % int(len(d["interfaces"]) + 6)
-                    interface = {}
-                    interface["mac"] = generateNextMac(topo_id)
+                    interface = dict()
+                    interface["mac"] = generate_next_mac(topo_id)
 
-                    if sourceUUID in internalUUIDs:
-                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internalUUIDs.index(sourceUUID))
+                    if source_uuid in internal_uuids:
+                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(source_uuid))
                         interface["bridge"] = bridge_name
-                    if sourceUUID == externalUUID:
+                    if source_uuid == external_uuid:
                         bridge_name = "br0"
                         interface["bridge"] = bridge_name
                     else:
@@ -192,33 +191,32 @@ def loadJson(rawJson, topo_id):
 
                     interface["slot"] = slot
                     interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
-                    interface["linkId"] = jsonObject["id"]
+                    interface["linkId"] = json_object["id"]
                     d["interfaces"].append(interface)
 
             # let's check to see if we've already marked this internal bridge for creation
             for c in networks:
                 if c["name"] == bridge_name:
                     print "Skipping bridge creation for " + bridge_name
-                    createBridge = False
+                    create_bridge = False
                     continue
 
-            if createBridge is True and bridge_name != "br0":
-                print "Setting " + bridge_name +  " for creation"
-                connection = {}
+            if create_bridge is True and bridge_name != "br0":
+                print "Setting " + bridge_name + " for creation"
+                connection = dict()
                 connection["name"] = bridge_name
-                connection["mac"] = generateNextMac(topo_id)
+                connection["mac"] = generate_next_mac(topo_id)
                 networks.append(connection)
-                connIndex += 1
+                conn_index += 1
 
-  
     # now let's add a final mgmt interface to all non-vmx instances 
     # we need to loop again because we didn't know how many interfaces were on this instance
     # until after we run through the connections first
     for d in devices: 
         if d["type"] != "junos_vmx" and d["type"] != "junos_vmx_p2":
             slot = "%#04x" % int(len(d["interfaces"]) + 6)
-            interface = {}
-            interface["mac"] = generateNextMac(topo_id)
+            interface = dict()
+            interface["mac"] = generate_next_mac(topo_id)
             interface["bridge"] = "virbr0"
             interface["slot"] = slot
             if d["type"] == "linux":
@@ -227,10 +225,10 @@ def loadJson(rawJson, topo_id):
                 interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
             d["interfaces"].append(interface)
 
-    returnObject = {}
-    returnObject["networks"] = networks
-    returnObject["devices"] = devices
-    return returnObject
+    return_object = dict()
+    return_object["networks"] = networks
+    return_object["devices"] = devices
+    return return_object
 
 
 # iterate through topology json and increment
@@ -238,38 +236,38 @@ def loadJson(rawJson, topo_id):
 # small uniqueness protection. The right way to do this
 # would be to track all used management ips, but I would rather
 # each topology be a transient thing to be used and thrownaway
-def cloneTopology(rawJson):
-    jsonData = json.loads(rawJson)
+def clone_topology(raw_json):
+    json_data = json.loads(raw_json)
 
-    numTopoIcons = 0
+    num_topo_icons = 0
 
-    for jsonObject in jsonData:
+    for jsonObject in json_data:
         if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-            numTopoIcons = numTopoIcons + 1
+            num_topo_icons = num_topo_icons + 1
 
-    for jsonObject in jsonData:
+    for jsonObject in json_data:
         if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
             ud = jsonObject["userData"]
             ip = ud["ip"]
-            ipOctets = ip.split('.')
-            newOctet = int(ipOctets[3]) + numTopoIcons
-            if newOctet > 255:
-                newOctet = newOctet - 255
-            ipOctets[3] = str(newOctet)
-            newIp = ".".join(ipOctets)
+            ip_octets = ip.split('.')
+            new_octets = int(ip_octets[3]) + num_topo_icons
+            if new_octets > 255:
+                new_octets = new_octets - 255
+            ip_octets[3] = str(new_octets)
+            newIp = ".".join(ip_octets)
             ud["ip"] = newIp
 
-    return json.dumps(jsonData)
+    return json.dumps(json_data)
 
 
-def launchWebSocket(vncPort, wsPort, server):
+def launch_web_socket(vncPort, wsPort, server):
     
     path = os.path.abspath(os.path.dirname(__file__))
     ws = os.path.join(path, "../../webConsole/bin/websockify.py")
 
-    webSocketPath = os.path.abspath(ws) 
+    web_socket_path = os.path.abspath(ws)
 
-    cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (webSocketPath, server, vncPort, server, wsPort)
+    cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (web_socket_path, server, vncPort, server, wsPort)
     
     print cmd
 
@@ -278,7 +276,7 @@ def launchWebSocket(vncPort, wsPort, server):
     return proc.pid
 
 
-def checkPid(pid):        
+def check_pid(pid):
     """ Check For the existence of a unix pid. 
         shamelessly taken from stackoverflow
         http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
@@ -291,7 +289,7 @@ def checkPid(pid):
         return True
 
 
-def checkWebSocket(server, wsPort):
+def check_web_socket(server, wsPort):
     rt = os.system('ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | grep -v grep')
     if rt == 0:
         return True
@@ -299,7 +297,7 @@ def checkWebSocket(server, wsPort):
         return False
 
 
-def killWebSocket(server, wsPort):
+def kill_web_socket(server, wsPort):
     print "Killing webConsole sessions"
     cmd = 'ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | awk "{ print $2 }" | xargs -n 1 kill'
     print "Running cmd: " + cmd

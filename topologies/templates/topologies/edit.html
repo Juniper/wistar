@@ -27,11 +27,17 @@
    
     <script type="text/javascript">
     var canvas;
-    var lastX = 0;
-    var lastY = 0;
+    var lastX = 50;
+    var lastY = -50;
 
     var vmxCount = 1;
     var instanceArray = []
+
+    // keep track of how many icons we've added to the canvas
+    // perform simple wrapping if above 10
+    var iconWrapLimit = 5;
+    var iconCount = 0;
+    var iconOffset = 160;
 
     var externalCloudAdded = false;
 
@@ -275,14 +281,50 @@
         
     	var canvas_object = new draw2d.shape.node.topologyIcon(iconPath, width, height);
         canvas_object.setup(type, name, ip, pw, image, cpu, ram);
-    	lastX += 50;
-    	lastY += 50;
+            	console.log(lastX + " " + lastY);
+
+    	lastX += 0;
+    	lastY += 100;
     	vmxCount += 1;
+    	iconCount += 1;
+
+    	if (iconCount > iconWrapLimit) {
+    	    lastX = iconOffset;
+    	    lastY = 50;
+    	    iconCount = 1;
+    	    iconOffset += 110;
+    	}
+    	console.log("adding " + lastX + " " + lastY);
 	    canvas.addFigure(canvas_object, lastX, lastY);
 
         // let's try to increment everything nicely
     	jQuery('#topoIconIp').val(incrementIconIp(ip));
     	jQuery('#topoIconName').val(incrementIconName(name));
+    }
+
+    function addLabel() {
+        var label = jQuery('#newLabel').val();
+        var labelSize = jQuery('#newLabelFontSize').val();
+        var l = new draw2d.shape.basic.Label(label);
+        // l.setBackgroundColor();
+        l.setFontColor("#000000");
+        l.setFontSize(labelSize);
+        l.setStroke("0");
+
+        iconCount += 1;
+
+        lastX += 0;
+        lastY += 100;
+
+    	if (iconCount > iconWrapLimit) {
+    	    lastX = iconOffset;
+    	    lastY = 50;
+    	    iconCount = 1;
+    	    iconOffset += 110;
+    	}
+
+
+        canvas.addFigure(l, lastX, lastY);
     }
 
     // export topology as JSON and stuff it back in the
@@ -719,13 +761,16 @@
         var params = {
             'topologyId' : '{{ topo.id }}'
         };
+
         var post = jQuery.post(url, params, function(response) {
             var content = jQuery(response);
             jQuery('#deploymentStatus').empty().append(content);
         });
+
         post.fail(function() {
             alert('Could not perform request!');
         });
+
         post.always(function() {
             doc.style.cursor = '';
         });
@@ -747,6 +792,7 @@
                     alert(successMessage);
             }
         });
+
         post.fail(function() {
             alert('Could not perform request!');
         });
@@ -789,13 +835,15 @@
                 alert('Device is booted and ready!');
             }
         });
+
         post.fail(function() {
             alert('Could not perform request!');
         });
 
         post.always(function() {
             doc.style.cursor = '';
-        });  
+        });
+
         console.log('getting boot up state');
     }
 
@@ -826,13 +874,15 @@
                 alert('Device is booted and ready!');
             }
         });
+
         post.fail(function() {
             alert('Could not perform request!');
         });
 
         post.always(function() {
             doc.style.cursor = '';
-        });  
+        });
+
         console.log('getting boot up state');
     }
 
@@ -861,6 +911,7 @@
                 jQuery('#cliOutput').css("height", '300px');
             }
         });
+
         post.fail(function() {
             alert('Could not perform request!');
         });
@@ -877,13 +928,14 @@
 
         var doc = document.getElementsByTagName('html')[0];
         doc.style.cursor = 'progress';
-        
+
         var url = '/ajax/executeLinuxCli/';
         var params = {
              'pw' : pw,
              'ip' : ip,
              'cli' : cli
         };
+
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
             if (data["result"] == false) {
@@ -895,13 +947,88 @@
                 jQuery('#linuxCliOutput').css("height", '300px');
             }
         });
+
         post.fail(function() {
             alert('Could not perform request!');
         });
 
         post.always(function() {
             doc.style.cursor = '';
-        });  
+        });
+    }
+
+    function showLinuxAutomationOverlay() {
+        jQuery("#linuxAutomationOverlay").addClass("screen-overlay");
+        jQuery("#linuxAutomationOverlay").css("display", "");
+    }
+
+    function closeLinuxAutomationOverlay() {
+        jQuery("#linuxAutomationOverlay").removeClass("screen-overlay");
+        jQuery("#linuxAutomationOverlay").css("display", "none");
+    }
+
+    function executeLinuxAutomation() {
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+
+        var cli = jQuery('#linuxAutomationCli').val();
+
+        var url = '/ajax/executeLinuxAutomation/';
+        var params = {
+            'topologyId': '{{ topo.id }}',
+            'cli': cli
+        };
+
+        var post = jQuery.post(url, params, function(response) {
+            var data = eval(response);
+            console.log(data);
+            jQuery('#linuxAutomationOutput').val(data['result']);
+        });
+
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });
+    }
+
+   function showJunosAutomationOverlay() {
+        jQuery("#junosAutomationOverlay").addClass("screen-overlay");
+        jQuery("#junosAutomationOverlay").css("display", "");
+    }
+
+    function closeJunosAutomationOverlay() {
+        jQuery("#junosAutomationOverlay").removeClass("screen-overlay");
+        jQuery("#junosAutomationOverlay").css("display", "none");
+    }
+
+    function executeJunosAutomation() {
+        var doc = document.getElementsByTagName('html')[0];
+        doc.style.cursor = 'progress';
+
+        var cli = jQuery('#junosAutomationCli').val();
+
+        var url = '/ajax/executeJunosAutomation/';
+        var params = {
+            'topologyId': '{{ topo.id }}',
+            'cli': cli
+        };
+
+        var post = jQuery.post(url, params, function(response) {
+            var data = eval(response);
+            console.log(data);
+            jQuery('#junosAutomationOutput').val(data['result']);
+        });
+
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.style.cursor = '';
+        });
     }
 
     /* UI related function */
@@ -1192,19 +1319,6 @@
         var connection = canvas.getLine(connId);
         connection.setUserData(connData);
         console.log("saved info on connection Object");
-    }
-
-    function addLabel() {
-        var label = jQuery('#newLabel').val();
-        var labelSize = jQuery('#newLabelFontSize').val();
-        var l = new draw2d.shape.basic.Label(label);
-        // l.setBackgroundColor();
-        l.setFontColor("#000000");
-        l.setFontSize(labelSize);
-        l.setStroke("0");
-        lastX += 50;
-        lastY += 50;
-        canvas.addFigure(l, lastX, lastY);
     }
 
     function addExternalCloud() {
@@ -1831,6 +1945,22 @@
             </table>
           </div>
           <div id="deploymentStatus"></div>
+              <div id="automationTools">
+            <table>
+              <th>
+                 Automation Tools
+              </th>
+              <tr>
+                <td>
+                  <input type="button" name="showLinuxAutomationOverlay" id="showLinuxAutomationOverlay"
+                    value="Linux CLI Automation" onclick="javascript: showLinuxAutomationOverlay();"/>
+                    &nbsp;
+                    <input type="button" name="showJunosAutomationOverlay" id="showJunosAutomationOverlay"
+                    value="Junos CLI Automation" onclick="javascript: showJunosAutomationOverlay();"/>
+                </td>
+              </tr>
+            </table>
+          </div>
           {% if topo_id != None %}
           <div id="configSets">
             <form method="post" id="configSetForm" name="configSetForm" action="{% url 'topologies:createConfigSet' %}" method="POST">
@@ -1874,10 +2004,10 @@
               {% for c in configSets %}
               <tr>
                 <td>
-                  {{ c.name }} 
+                  {{ c.name }}
                 </td>
                 <td>
-                  {{ c.description}} 
+                  {{ c.description}}
                 </td>
                 <td>
                   <a href="#" onclick="javascript: pushConfigSet({{ c.id }})">Push</a>
@@ -1909,8 +2039,52 @@
             border: 1px solid #000">
           </div>
           <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
-          <div id="toolsMenu" style="width: 900px; padding-top: 4px;">
-          </div>
+            <div id="linuxAutomationOverlay" style="display: none">
+                <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
+                    <tr>
+                        <td colspan="2" style="text-align: right"><a href="#" onclick="javascript: closeLinuxAutomationOverlay()">Close</a></td>
+                    </tr>
+                    <tr>
+                        <th colspan="2">Execute cli on all linux instances</th>
+                    </tr>
+                   <tr>
+                        <td>
+                            <input type="text" id="linuxAutomationCli" value="ip addr sh"/>
+                        </td>
+                       <td style="width: 10%; text-align: right">
+                           <input type="button" onclick="javascript: executeLinuxAutomation();" value="Execute" title="Executes the CLI on all Linux instances">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: right">
+                            <textarea id="linuxAutomationOutput" rows="40"></textarea>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="junosAutomationOverlay" style="display: none">
+                <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
+                    <tr>
+                        <td colspan="2" style="text-align: right"><a href="#" onclick="javascript: closeJunosAutomationOverlay()">Close</a></td>
+                    </tr>
+                    <tr>
+                        <th colspan="2">Execute cli on all Junos instances</th>
+                    </tr>
+                   <tr>
+                        <td>
+                            <input type="text" id="junosAutomationCli" value="show interfaces terse"/>
+                        </td>
+                       <td style="width: 10%; text-align: right">
+                           <input type="button" onclick="javascript: executeJunosAutomation();" value="Execute" title="Executes the CLI on all Junos instances">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: right">
+                            <textarea id="junosAutomationOutput" rows="40"></textarea>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </td>
       </tr>
     </table>

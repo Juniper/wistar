@@ -101,7 +101,7 @@ def clone(request, topo_id):
     topology = get_object_or_404(Topology, pk=topo_id)
     orig_name = topology.name
     topology.name = "Clone of " + orig_name
-    topology.json = wu.cloneTopology(topology.json)
+    topology.json = wu.clone_topology(topology.json)
     topology.id = 0
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo': topology}
@@ -123,7 +123,7 @@ def multi_clone(request):
         new_topo = topology
         orig_name = topology.name
         new_topo.name = orig_name
-        new_topo.json = wu.cloneTopology(json)
+        new_topo.json = wu.clone_topology(json)
         json = new_topo.json
         new_topo.id = None
         new_topo.save()
@@ -215,7 +215,7 @@ def create_config_set(request):
 
     topology = get_object_or_404(Topology, pk=topology_id)
     # let's parse the json and convert to simple lists and dicts
-    config = wu.loadJson(topology.json, topology_id)
+    config = wu.load_json(topology.json, topology_id)
 
     c = ConfigSet(name=name, description=description, topology=topology)
     c.save()
@@ -244,7 +244,7 @@ def launch(request, topology_id):
         return render(request, 'topologies/error.html', {'error': "Topology not found!"})
 
     # let's parse the json and convert to simple lists and dicts
-    config = wu.loadJson(topology.json, topology_id)
+    config = wu.load_json(topology.json, topology_id)
 
     try:
         print "Deploying topology: %s" % topology_id

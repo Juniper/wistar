@@ -3,15 +3,14 @@ import time
 import pexpect
 
 from WistarException import WistarException
-import osUtils as ou
-
+import osUtils
 
 # simple utility lib to use virsh console to set up a device before 
 # networking is available
 
 
 def get_console(dom):
-    if ou.check_is_linux():
+    if osUtils.check_is_linux():
         return pexpect.spawn("virsh console " + dom, timeout=60)
     else:
         return pexpect.spawn("socat /tmp/" + dom + ".pipe - ", timeout=60)
