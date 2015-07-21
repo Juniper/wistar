@@ -175,6 +175,7 @@ def error(request, message):
 
 
 def create(request):
+    url = '/topologies/'
     try:
         if request.POST.has_key('id'):
             topo_id = request.POST['id']
@@ -189,6 +190,7 @@ def create(request):
             name = request.POST['name']
             t = Topology(name=name, description=description, json=json)
             t.save()
+            url += str(t.id)
 
     except KeyError:
         return render(request, 'topologies/error.html', { 
@@ -201,7 +203,7 @@ def create(request):
         # return HttpResponseRedirect(reverse('topologies:converted', args=(p.id,)))
         # context = { 'json': json, 'name': name, 'description': description }
         # return render(request, 'topologies/output.html', context)
-        return HttpResponseRedirect('/topologies/')
+        return HttpResponseRedirect(url)
 
 
 def create_config_set(request):

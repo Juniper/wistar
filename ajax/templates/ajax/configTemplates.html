@@ -1,5 +1,5 @@
 {% load staticfiles %}
-<table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
+<table class="centered_box">
     <tr>
         <td colspan="4" style="text-align: right"><a href="#" onclick="javascript: closeConfigTemplateOverlay()">Close</a></td>
     </tr>
@@ -35,18 +35,23 @@
         </td>
     </tr>
 </table>
-<table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 10px">
+<table  class="centered_box">
     <tr>
         <th colspan="4">Apply config to device: {{ ip }}</th>
     </tr>
     <tr>
-        <td>
+        <td colspan="4">
             <textarea cols="20" rows="10" id="junosSetConfigInput"></textarea>
         </td>
     </tr>
     <tr>
+         <td style="vertical-align: middle;">
+            In-place Edit: Replace: <input type="text" id="applyConfigReplace" style="width: 150px;"/> with: <input type="text" id="applyConfigReplaceWith" style="width: 150px;"/>
+             &nbsp;
+             <input type="button" onclick="javascript: applyJunosSetConfigurationReplace();" value="Replace"/>
+        </td>
         <td>
-            <input type="button" onclick="javascript: applyJunosSetConfiguration('junosSetConfigInput');" value="Apply"/>
+            <input type="button" onclick="javascript: applyJunosSetConfiguration('junosSetConfigInput');" value="Apply Configuration"/>
         </td>
     </tr>
 </table>

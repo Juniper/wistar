@@ -449,3 +449,15 @@ form .submit input[type=submit]:hover {
 .context-menu-accesskey {
     text-decoration: underline;
 }
+
+table.centered_box {
+    margin: auto;
+    width: 50%;
+    background-color: #ffffff;
+    padding: 5px;
+    margin-top: 50px
+}
+
+table.centered_box td {
+    vertical-align: middle;
+}

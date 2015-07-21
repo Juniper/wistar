@@ -451,9 +451,11 @@
         if (figure.getBootState() != "up") {
             if (! quiet) {
                 alert("Instance must be booted up before access can be configured!");
+
             } else {
                 console.log("instance is not booted up!");
             }
+            doc.style.cursor = '';
             return false;
         }
         
@@ -485,7 +487,7 @@
             data = eval(response);
             var message = "Could not configure access";
             if (data["result"] == true) {
-                message = "Success";
+                message = "Successfully configured Instance Access";
             }
             if (! quiet) {
                 alert(message);
@@ -512,6 +514,7 @@
 
         if (figure.getBootState() != "up") {
             alert("Instance must be booted up before interfaces can be configured!");
+            doc.style.cursor = '';
             return false;
         }
         
@@ -527,7 +530,7 @@
             data = eval(response);
             var message = "Could not configure access";
             if (data["result"] == true) {
-                message = "Success";
+                message = "Successfully configured interfaces";
             }
             alert(message);
         };
@@ -547,6 +550,7 @@
 
         if (figure.getBootState() != "up") {
             alert("Instance must be booted up before interfaces can be configured!");
+            doc.style.cursor = '';
             return false;
         }
 
@@ -579,6 +583,16 @@
         cto.empty();
         cto.removeClass("screen-overlay");
         cto.remove();
+    }
+
+    function applyJunosSetConfigurationReplace() {
+
+        var r = jQuery('#applyConfigReplace').val();
+        var w = jQuery('#applyConfigReplaceWith').val();
+        var t = jQuery('#junosSetConfigInput').val();
+        var nt = t.replace(r, w);
+        jQuery('#junosSetConfigInput').val(nt);
+
     }
     
     function applyConfigurationTemplate(template_id) {
@@ -693,7 +707,7 @@
             'password' : password,
             'mgmtInterface' : mgmtInterface 
         };
-        var successMessage = "Success!";
+        var successMessage = "Successfully configured vSRX";
         
         simpleAjaxRequest(url, params, successMessage);
     }
@@ -704,7 +718,7 @@
             'ip' : ip,
             'password' : password
         };
-        var successMessage = "Success!";
+        var successMessage = "Successfully configured interfaces";
         
         simpleAjaxRequest(url, params, successMessage);
     }
@@ -717,7 +731,7 @@
             'ip' : ip,
             'password' : password
         };
-        var successMessage = "Success!";
+        var successMessage = "Successfully retrieved Junos Config";
         
         simpleAjaxRequest(url, params, successMessage);
         
@@ -752,6 +766,39 @@
 
         simpleAjaxRequest(url, params, successMessage);
     }
+
+    function incrementDestIP() {
+        // called on the onblur event of the connection Source Port IP field
+        // this will automatically increment the ip address entered into the source
+        // field by .1 and add a default mask as necessary.
+        // entering 1.1.1.1 will result in 1.1.1.1/24 in the source and 1.1.1.2/24 in the target
+
+        ip_full = jQuery('#connectionSourcePortIp').val();
+        ip = ip_full.split('/')[0];
+        mask = ip_full.split('/')[1];
+
+        if (mask == undefined) {
+            // we have no subnet mask defined! better add one just in case!
+            mask = '24';
+            jQuery('#connectionSourcePortIp').val(ip + '/' + mask);
+
+        }
+
+        console.log(ip);
+        target_ip = ip;
+
+        var iparray = ip.split('.');
+        if(iparray.length == 4) {
+            var last = parseInt(iparray[3]);
+            if(! isNaN(last)) {
+                target_ip = iparray[0] + "." + iparray[1] + "." + iparray[2] + "." + (last + 1);
+            }
+        }
+
+        jQuery('#connectionTargetPortIp').val(target_ip + '/' + mask);
+        saveConnectionData();
+    }
+
 
     function deployTopology() {
         var doc = document.getElementsByTagName('html')[0];
@@ -1702,7 +1749,7 @@
             </table>
             <table>
               <th colspan="2">
-                 Automation Tools
+                 Instance Tools
               </th>
               <tr>
                 <td>
@@ -1791,7 +1838,7 @@
             </table>
             <table>
               <th colspan="2">
-                 Automation Tools
+                 Instance Tools
               </th>
               <tr>
                 <td>
@@ -1905,7 +1952,7 @@
                   Source IP Address:
                 </td>
                 <td>
-                  <input type="text" onblur="javascript: saveConnectionData();"  id="connectionSourcePortIp">
+                  <input type="text" onblur="javascript: incrementDestIP();"  id="connectionSourcePortIp">
                 </td>
               </tr>
               <tr>
