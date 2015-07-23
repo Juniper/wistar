@@ -122,9 +122,12 @@
     {% endif %}
     {% if topologyId != None %}
     <tr>
-        <td colspan="3">
+        <td colspan="4">
             <input type="button" name="startButton" id="startButton"
                    value="Start Topology" onclick="javascript: startTopology();"/>
+            &nbsp;
+            <input type="button" name="pauseButton" id="pauseButton"
+                   value="Pause Topology" onclick="javascript: pauseTopology();"/>
             &nbsp;
             <input type="button" name="refreshDSButton" id="refreshDSButton"
                    value="Refresh Hypervisor Status"
@@ -133,7 +136,7 @@
     </tr>
     {% else %}
     <tr>
-        <td colspan="3">
+        <td colspan="4">
             <input type="button" name="refreshDSButton" id="refreshDSButton"
                    value="Refresh Hypervisor Status"
                    onclick="javascript: refreshDeploymentStatus('{{ topologyId }}');"/>
