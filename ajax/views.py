@@ -667,13 +667,15 @@ def deploy_topology(request):
         print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
-    # let's parse the json and convert to simple lists and dicts
-    config = wistarUtils.load_json(topo.json, topology_id)
-   
-    try: 
+    try:
+        # let's parse the json and convert to simple lists and dicts
+        config = wistarUtils.load_json(topo.json, topology_id)
+
         # FIXME - should this be pushed into another module?
         inline_deploy_topology(config)
     except Exception as e:
+        print "Caught Exception in deploy"
+        print str(e)
         return render(request, 'ajax/ajaxError.html', {'error': str(e)})
 
     domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
@@ -742,10 +744,9 @@ def inline_deploy_topology(config):
                 elif image.type == "junos_vmx_p2":
                     print "Using vmx phase 2 definition"
                     device["product"] = "VM-%s-33-re-0" % device["name"]
-                    cloud_init_path = None
                     device_xml = render_to_string(domain_xml_path + "domain_phase_2.xml",
                                                   {'device': device, 'instancePath': instance_path,
-                                                   'vm_env': vm_env, 'cloud_init_path': cloud_init_path}
+                                                   'vm_env': vm_env}
                                                   )
                 else:
                     cloud_init_path = None
@@ -792,6 +793,7 @@ def inline_deploy_topology(config):
                 vboxUtils.preconfigureVMX(device["name"], management_ip)
 
         except Exception as ex:
+            print "Raising exception"
             raise Exception(str(ex))
 
 

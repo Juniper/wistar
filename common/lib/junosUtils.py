@@ -19,8 +19,13 @@ def get_device_reference(host, user, pw):
 
 
 def execute_cli(ip, pw, cli):
-    dev = get_device_reference(ip, 'root', pw)
-    return dev.cli(cli)
+    try:
+        dev = get_device_reference(ip, 'root', pw)
+        return dev.cli(cli)
+    except Exception as e:
+        print "Could not execute cli command"
+        print str(e)
+        return str(e)
 
 
 def get_device_em_interface_macs(dev):

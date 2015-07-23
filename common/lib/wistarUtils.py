@@ -48,6 +48,10 @@ def load_json(raw_json, topo_id):
     internal_uuids = []
 
     device_index = 0
+
+    # interface pci slot has special significance for vmx <= 14.1 and >= 14.2
+    # by default let's make vmx phase 1 happy
+    slot_offset = 6
     for json_object in json_data:
         if json_object["type"] == "draw2d.shape.node.topologyIcon":
             user_data = json_object["userData"]
@@ -106,8 +110,13 @@ def load_json(raw_json, topo_id):
             # junos >= 15.1 requires management slots to be moved to 0x03 and 0x04
             elif user_data["type"] == "junos_vmx_p2":
 
-                # ok, we need this network to be created later
-                em1_required = True
+                # reset slot index to 4
+                # requirement is for the user to create the first
+                # network between RE and PFE always!
+
+                slot_offset = 6
+                # ok, we do not need this network to be created later
+                em1_required = False
 
                 # manually create em0 and em1 interfaces            
                 em0 = dict()
@@ -115,13 +124,60 @@ def load_json(raw_json, topo_id):
                 em0["bridge"] = "virbr0"
                 em0["slot"] = "0x03"
                 em0["ip"] = json_object["userData"]["ip"]
+
+                # chassis name - Convention is that phase 2 images will be grouped into chassis systems
+                # based on the user label supplied. The Convention is 'name_function' so a device with
+                # a label of vmx1_re0 will be grouped with other devices named vmx1_XXX
+                if "_" not in user_data["label"]:
+                    print "Incorrect naming format for vmx phase 2 instance"
+                    raise Exception("Improper naming format for vmx phase 2!")
+
+                chassis_name = user_data["label"].split('_')[0]
+                print "Using chassis nane of: %s" % chassis_name
+
+                # em1 is always pfe to re bridge
                 em1 = dict()
                 em1["mac"] = generate_next_mac(topo_id)
-                em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
+                em1["bridge"] = "t%s_%s_re" % (str(topo_id), chassis_name)
                 em1["slot"] = "0x04"
+
+                # let's check if we've already set this bridge to be created
+                found = False
+                for network in networks:
+                    if network["name"] == em1["bridge"]:
+                        found = True
+                        break
+
+                # let's go ahead and add this to the networks list if needed
+                if not found:
+                    em1_network = dict()
+                    em1_network["name"] = em1["bridge"]
+                    em1_network["mac"] = generate_next_mac(topo_id)
+                    networks.append(em1_network)
+
+                # em2 is pfe to pfe bridge
+                em2 = dict()
+                em2["mac"] = generate_next_mac(topo_id)
+                em2["bridge"] = "t%s_%s_pfe" % (str(topo_id), chassis_name)
+                em2["slot"] = "0x05"
+
+                # let's check if we've already set this bridge to be created
+                found = False
+                for network in networks:
+                    if network["name"] == em2["bridge"]:
+                        found = True
+                        break
+
+                # let's go ahead and add this to the networks list if needed
+                if not found:
+                    em1_network = dict()
+                    em1_network["name"] = em2["bridge"]
+                    em1_network["mac"] = generate_next_mac(topo_id)
+                    networks.append(em1_network)
 
                 device["managementInterfaces"].append(em0)
                 device["managementInterfaces"].append(em1)
+                device["managementInterfaces"].append(em2)
 
             devices.append(device)
         elif json_object["type"] == "draw2d.shape.node.externalCloudIcon":
@@ -155,7 +211,7 @@ def load_json(raw_json, topo_id):
             for d in devices:
                 if d["uuid"] == source_uuid:
                     # slot should always start with 6
-                    slot = "%#04x" % int(len(d["interfaces"]) + 6)
+                    slot = "%#04x" % int(len(d["interfaces"]) + slot_offset)
                     interface = dict()
                     interface["mac"] = generate_next_mac(topo_id)
 
@@ -176,7 +232,7 @@ def load_json(raw_json, topo_id):
 
                 elif d["uuid"] == target_uuid:
                     # slot should always start with 6
-                    slot = "%#04x" % int(len(d["interfaces"]) + 6)
+                    slot = "%#04x" % int(len(d["interfaces"]) + slot_offset)
                     interface = dict()
                     interface["mac"] = generate_next_mac(topo_id)
 

@@ -107,8 +107,10 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
         var port = this.getPorts().get(0);
         var connections = port.getConnections();
         mgmtInterfaceIndex = connections.size;
-        if(this.getType() == "junos_vmx" || this.getType() == "junos_vmx_p2") {
+        if(this.getType() == "junos_vmx") {
             return "em0";
+        } else if(this.getType() == "junos_vmx_p2") {
+            return "fxp0";
         } else if(this.getType() == "junos_firefly") {
             return "ge-0/0/" + mgmtInterfaceIndex;
         } else if(this.getType() == "linux") {

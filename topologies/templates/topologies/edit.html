@@ -1379,8 +1379,9 @@
         }
     }
     function addInternalCloud() {
-        internalCloudCounter = internalCloudCounter + 1; 
-        var c = new draw2d.shape.node.internalCloudIcon("Private " + internalCloudCounter);
+        internalCloudCounter = internalCloudCounter + 1;
+        var label = jQuery('#internalCloudName').val();
+        var c = new draw2d.shape.node.internalCloudIcon(label);
         canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
     }
 
@@ -1411,7 +1412,7 @@
 {% block content %}
     <table border="0" style="border: 1px solid #000">
       <tr>
-        <td id="topoFormContainer" style="vertical-align: top">
+        <td id="topoFormContainer" style="vertical-align: top; width: 450px;">
           <form method="post" id="topoForm" name="topoForm" 
             action="{% url 'topologies:create' %}" method="POST">
             {% csrf_token %}
@@ -1621,7 +1622,9 @@
                   Private Network:
                 </td>
                 <td>
-                  <input type="button" value="Add Private Bridge" title="Add int_br0"
+                    <input type="text" style="width: 150px;" id="internalCloudName" value="Private 1"/>
+                    &nbsp;
+                    <input type="button" value="Add Private Bridge" title="Add int_br0"
                          onclick="javascript: addInternalCloud()"/>
                 </td>
               </tr>
@@ -1992,6 +1995,7 @@
             </table>
           </div>
           <div id="deploymentStatus"></div>
+          {% if topo_id != None %}
               <div id="automationTools">
             <table>
               <th>
@@ -2008,7 +2012,6 @@
               </tr>
             </table>
           </div>
-          {% if topo_id != None %}
           <div id="configSets">
             <form method="post" id="configSetForm" name="configSetForm" action="{% url 'topologies:createConfigSet' %}" method="POST">
             {% csrf_token %}
