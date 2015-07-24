@@ -781,12 +781,15 @@
             // we have no subnet mask defined! better add one just in case!
             mask = '24';
             jQuery('#connectionSourcePortIp').val(ip + '/' + mask);
-
         }
 
         console.log(ip);
-        target_ip = ip;
+        target_ip = jQuery('#connectionTargetPortIp').val();
 
+        if (target_ip == "0.0.0.0") {
+            // all zeros indicates the target is a cloud
+            return;
+        }
         var iparray = ip.split('.');
         if(iparray.length == 4) {
             var last = parseInt(iparray[3]);
@@ -794,8 +797,8 @@
                 target_ip = iparray[0] + "." + iparray[1] + "." + iparray[2] + "." + (last + 1);
             }
         }
-
         jQuery('#connectionTargetPortIp').val(target_ip + '/' + mask);
+
         saveConnectionData();
     }
 
