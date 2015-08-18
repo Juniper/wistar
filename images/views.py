@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 
 from django.http import HttpResponseRedirect
+from django.contrib import messages
 
 import common.lib.osUtils as ou
 import wistar.settings as settings
@@ -77,8 +78,10 @@ def block_pull(request, uuid):
 
     if ou.is_image_thin_provisioned(image_path):
         print "Found thinly provisioned image, promoting..."
+        messages.info(request, "Promoting thinly provisioned image")
         lu.promote_instance_to_image(domain_name)
     else:
+        messages.info(request, "Image is already promoted. You may now shutdown the image and perform a Clone")
         print "Image is already promoted"
 
     return HttpResponseRedirect('/ajax/manageHypervisor/')
