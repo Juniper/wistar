@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% block title %}Wistar - Lab Rat - Home{% endblock %}
 {% block content %}
+<h2>Junos Configuration Templates</h2>
 <table>
     <tr>
         <th>Name</th>
@@ -21,4 +22,28 @@
 {% endfor %}
 </table>
 <a href='new/'>Define new template</a>
+<br/>
+<br/>
+<hr>
+<br/>
+<h2>Linux Scripts</h2>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Options</th>
+    </tr>
+{% for script in script_list %}
+    <tr>
+        <td><a href='viewScript/{{ script.id }}'>{{ script.name }}</a> </td>
+        <td>{{ script.description }}</td> 
+        <td>
+		<a href='deleteScript/{{ script.id }}'>Delete</a>
+        &nbsp;
+		<a href='editScript/{{ script.id }}'>Edit</a>
+	 </td>
+    </tr>
+{% endfor %}
+</table>
+<a href='newScript/'>Define new script</a>
 {% endblock %}

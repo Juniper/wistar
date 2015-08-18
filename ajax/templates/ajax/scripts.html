@@ -1,0 +1,40 @@
+{% load staticfiles %}
+<table class="centered_box">
+    <tr>
+        <td colspan="4" style="text-align: right"><a href="#" onclick="javascript: closeScriptSelectorOverlay()">Close</a></td>
+    </tr>
+    <tr>
+        <th colspan="4">Push Config Template to device: {{ ip }}</th>
+    </tr>
+    {% if script_list|length == 0 %}
+    <tr>
+        <td>
+            No Scripts defined
+        </td>
+    </tr>
+    {% endif %}
+    {% for t in script_list %}
+    <tr>
+        <td>
+            {{ t.name }}
+        </td>
+        <td>
+            {{ t.description }}
+        </td>
+        <td>
+            {{ t.modified}}
+        </td>
+        <td>
+            <input type="button" onclick="javascript: pushAndExecuteScript({{ t.id }});" value="Apply"/>
+        </td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="4" style="text-align: right">
+            <a href="/templates">Manage Scripts</a>
+        </td>
+    </tr>
+</table>
+
+
+

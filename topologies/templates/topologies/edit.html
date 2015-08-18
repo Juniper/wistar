@@ -678,13 +678,80 @@
         });
     }
 
+    // show the screen overlay and load the script selector window via ajax
+    function loadScriptSelector(topoId) {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor' , 'progress' );
+
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        if (figure.getBootState() != "up") {
+            alert("Instance must be booted up before interfaces can be configured!");
+            doc.css('cursor', '');
+            return false;
+        }
+
+        var ip = figure.getIp();
+
+        var cso = jQuery('<div/>').attr("id", "scriptSelectorOverlay").addClass("screen-overlay");
+
+        jQuery('#content').append(cso);
+
+        var url = '/ajax/getScripts/';
+        var params = {
+            'ip' : ip
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            cso.append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor' , '');
+        });
+    }
+
+    function closeScriptSelectorOverlay() {
+        console.log('closing scripts overlay');
+
+        var cto = jQuery('#scriptSelectorOverlay');
+        cto.empty();
+        cto.removeClass("screen-overlay");
+        cto.remove();
+    }
+
+    function pushAndExecuteScript(scriptId) {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor' , 'progress' );
+
+        var url = "/ajax/pushScript/"
+        var params = {
+            'script_id' : scriptId
+        };
+        var successMessage = "Script execution Complete!";
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            var cto = jQuery('#scriptSelectorOverlay');
+            cto.empty()
+            cto.append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor' , '');
+        });
+    }
+
     function pushConfigSet(configSetId) {
         var url = "/ajax/pushConfigSet/"
         var params = {
             'id' : configSetId
         };
         var successMessage = "Config Set Push Complete!";
-        
         simpleAjaxRequest(url, params, successMessage);
     }
 
@@ -831,7 +898,9 @@
         doc.style.cursor = 'progress';
 
         var post = jQuery.post(url, params, function(response) {
+            console.log(response);
             data = eval(response);
+            console.log(data);
             if (data["result"] == false) {
                 if(data["message"] != undefined) {
                     alert(data['message']);
@@ -1768,6 +1837,10 @@
                     <br/>
                   <input type="button" onclick="javascript: configureInstanceAccess();"
                          value="Configure Access" title="Configures Management IP Address">
+                    <br/>
+                    <br/>
+                    <input type="button" onclick="javascript: loadScriptSelector();"
+                         value="Execute Script" title="Execute Script on instance">
                     <br/>
                     <br/>
                 </td>

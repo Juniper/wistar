@@ -1,0 +1,54 @@
+
+{% extends "base.html" %}
+{% block title %}Wistar - Lab Rat - Home{% endblock %}
+{% block content %}
+<div style="border:1px solid #000; margin: auto; padding: 10px; width: 700px;">
+
+    <table>
+        <tr>
+            <td>
+                Name
+            </td>
+            <td>
+                {{ script.name }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description
+            </td>
+            <td>
+                {{ script.description }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Destination
+            </td>
+            <td>
+                {{ script.destination }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Detail
+            </td>
+            <td>
+            <pre>
+{{ script.script }}
+            </pre>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Options
+            </td>
+            <td>
+                <a href='/templates/deleteScript/{{ script.id }}'>Delete</a>
+                &nbsp;
+                <a href='/templates/editScript/{{ script.id }}'>Edit</a>
+            </td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

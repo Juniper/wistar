@@ -33,3 +33,14 @@ def set_interface_ip_address(ip, username, pw, interface, interface_ip):
     # always returning a string isn't the best...
     print execute_cli(ip, username, pw, cmd)
     return True
+
+
+def push_remote_script(ip, username, pw, script_text, script_destination):
+    transport = paramiko.Transport((ip, 22))
+    transport.connect(username=username, password=pw)
+
+    client = paramiko.SFTPClient.from_transport(transport)
+    f = client.file(script_destination, 'w')
+    f.write(script_text)
+    f.close()
+    client.close()

@@ -1,0 +1,25 @@
+{% load staticfiles %}
+<table class="centered_box">
+    <tr>
+        <td colspan="4" style="text-align: right"><a href="#" onclick="javascript: closeScriptSelectorOverlay()">Close</a></td>
+    </tr>
+    <tr>
+        <th colspan="4">Script output from device: {{ ip }}</th>
+    </tr>
+    <tr>
+        <td>
+            <textarea cols="40" rows="40">{{ output }}</textarea>
+        </td>
+    </tr>
+    <td>
+
+    </td>
+    <tr>
+        <td colspan="4" style="text-align: right">
+            <a href="/templates">Manage Scripts</a>
+        </td>
+    </tr>
+</table>
+
+
+

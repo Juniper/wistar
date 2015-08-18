@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block title %}Wistar - Lab Rat - New Template{% endblock %}
+{% block scripts %}
+<script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+    <script type="text/javascript">
+    function validateForm() {
+        var d = $('#id_description');
+        var n = $('#id_name');
+        var f = $('#id_template');
+        if (n.val() == "") {
+            alert("Please enter a name!");
+            n.focus();
+            return false;
+        }
+        if (d.val() == "") {
+            alert("Please enter a description!");
+            d.focus();
+            return false;
+        }
+        if (f.val() == "") {
+            alert("Please enter config information!");
+            f.focus();
+            return false;
+        }
+    }
+    </script>
+{% endblock %}
+{% block content %}
+<div style="width:700px; margin: auto; border: 1px solid #000; padding: 10px;">
+    <h2>Create Linux Script</h2>
+    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/templates/create_script/">
+        {{ script_form }}
+        {% csrf_token %}
+        <input type="submit"/>
+    </form>
+</div>
+{% endblock %}

@@ -18,6 +18,7 @@ from common.lib import osUtils
 from common.lib import vboxUtils
 from images.models import Image
 from templates.models import ConfigTemplate
+from templates.models import Script
 from topologies.models import Topology
 from topologies.models import ConfigSet
 from topologies.models import Config
@@ -271,6 +272,38 @@ def get_config_templates(request):
     context = {'template_list': template_list, 'ip': ip}
     return render(request, 'ajax/configTemplates.html', context)
 
+
+@csrf_exempt
+def get_scripts(request):
+    required_fields = set(['ip'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    script_list = Script.objects.all().order_by('modified')
+
+    ip = request.POST['ip']
+    context = {'script_list': script_list, 'ip': ip}
+    return render(request, 'ajax/scripts.html', context)
+
+
+@csrf_exempt
+def push_script(request):
+    response_data = {"result": True}
+    required_fields = set(['script_id'])
+    if not required_fields.issubset(request.POST):
+        response_data["result"] = False
+        response_data["message"] = "Invalid parameters in POST"
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+    script_id = request.POST["script_id"]
+    script = Script.objects.get(pk=script_id)
+
+    print "Executing script " + script.name
+    output = "it worked! fix me with SSH stuff"
+    linuxUtils.push_remote_script('192.168.122.81', 'root', 'Clouds123', script.script, script.destination)
+
+    context = {'output': output}
+    return render(request, 'ajax/scriptOutput.html', context)
 
 @csrf_exempt
 def sync_link_data(request):
