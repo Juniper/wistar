@@ -105,7 +105,8 @@ def is_image_thin_provisioned(image_path):
 def remove_instance(instance_path):
     rv = 0
     if check_is_linux():
-        os.remove(instance_path)
+        if os.exists(instance_path):
+            os.remove(instance_path)
     else:
         rv = os.system("vboxmanage closemedium disk \"" + instance_path  + "\" --delete")
     

@@ -84,7 +84,9 @@ def promote_instance_to_image(domain_name):
     standalone image
 
     :param domain_name: domain name string
-    :return: True / False
+    :return: None Block already completed
+    :return: False Error condition
+    :return True Block pull started
     """
     if not connect():
         return False
@@ -95,11 +97,11 @@ def promote_instance_to_image(domain_name):
 
         if domain.blockJobInfo(image_path, 0) != {}:
                 print "block job already in progress"
-                return True
+                return None 
 
         print "Performing blockPull on " + image_path
         domain.blockPull(image_path, 0, 0)
-        time.sleep(2)
+        return True
 
     except Exception as e:
         print str(e)

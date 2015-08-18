@@ -78,8 +78,15 @@ def block_pull(request, uuid):
 
     if ou.is_image_thin_provisioned(image_path):
         print "Found thinly provisioned image, promoting..."
-        messages.info(request, "Promoting thinly provisioned image")
-        lu.promote_instance_to_image(domain_name)
+        rv = lu.promote_instance_to_image(domain_name)
+
+        if rv is None:
+            messages.info(request, "Image already promoted. Shut down the instance to perform a clone.")
+        elif rv:
+            messages.info(request, "Promoting thinly provisioned image")
+        else:
+            messages.info(request, "Error Promoting image!")
+
     else:
         messages.info(request, "Image is already promoted. You may now shutdown the image and perform a Clone")
         print "Image is already promoted"
