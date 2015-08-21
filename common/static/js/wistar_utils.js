@@ -147,3 +147,8 @@
         var doc = document.getElementsByTagName('html')[0];
         doc.style.cursor = '';
     }
+
+    function redir(url) {
+        setCursor();
+        window.location = url;
+    }

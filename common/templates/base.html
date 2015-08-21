@@ -1,40 +1,42 @@
 {% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-   <link rel="stylesheet" href="{% static "css/style.css" %}" />
-   <title>{% block title %}Wistar Lab Rat{% endblock %}</title> 
-   {% block scripts %}{% endblock %}
-  </head>
-  <body>
-    <div id="header">
-      <table>
-    	<tr>
-          <td colspan="2"><img src="{% static "images/juniper.png" %}" width="211" height="60" border="0"/></td>
-          <td colspan="2" style="text-align: right" id="hostLoad">
-            <a href="javascript: refreshHostLoad()">
-              Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}
-            </a>
-          </td>
+<head>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <title>{% block title %}Wistar Lab Rat{% endblock %}</title>
+    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/wistar_utils.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</head>
+<body>
+<div id="header">
+    <table>
+        <tr>
+            <td colspan="2"><img src="{% static 'images/juniper.png' %}" width="211" height="60" border="0"/></td>
+            <td colspan="2" style="text-align: right" id="hostLoad">
+                <a href="javascript: refreshHostLoad()">
+                    Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}
+                </a>
+            </td>
         </tr>
-    	<tr>
-          <td>
-            <a href="/topologies/">Topologies</a>
-          </td>
-          <td>
-            <a href="/ajax/manageHypervisor/">Manage Hypervisor</a>
-          </td>
-          <td>
-            <a href="/images/">Images</a>
-          </td>
-          <td>
-            <a href="/templates/">Configuration Templates</a>
-          </td>
+        <tr>
+            <td>
+                <a href="/topologies/">Topologies</a>
+            </td>
+            <td>
+                <a href="/ajax/manageHypervisor/">Manage Hypervisor</a>
+            </td>
+            <td>
+                <a href="/images/">Images</a>
+            </td>
+            <td>
+                <a href="/templates/">Configuration Templates</a>
+            </td>
         </tr>
-      </table>
-    </div>
-    <div id="content">
-      {% block content %}{% endblock %}
-    </div>
-  </body>
+    </table>
+</div>
+<div id="content">
+    {% block content %}{% endblock %}
+</div>
+</body>
 </html>

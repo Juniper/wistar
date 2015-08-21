@@ -40,16 +40,16 @@
                 <img src="{% static "images/undefine.png" %}" width="20px" height="20px"/></a>
             &nbsp;
             {% if topologyId == None %}
-            <a href="/ajax/viewDomain/{{ d.uuid }}" title="Dump details from Hypervisor in XML">
+            <a href="#" onclick="javascript: redir('/ajax/viewDomain/{{ d.uuid }}')" title="Dump details from Hypervisor in XML">
                 <img src="{% static "images/detail.png" %}" width="20px" height="20px"/></a>
             &nbsp;
             {% if d.state != "running" %}
-            <a href="/images/createFromInstance/{{ d.uuid }}"
+            <a href="#" onclick="javascript: redir('/images/createFromInstance/{{ d.uuid }}')"
                title="Clone Instance to new Image. A BlockPull MUST be done before a Clone">
                 CL</a>
             &nbsp;
             {% else %}
-            <a href="/images/blockPull/{{ d.uuid }}"
+            <a href="#" onclick="javascript: redir('/images/blockPull/{{ d.uuid }}')"
                title="Perform a BlockPull. This MUST be done before a Clone">
                 BP</a>
             &nbsp;

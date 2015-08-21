@@ -39,12 +39,12 @@ def update(request):
             template.save()
             return HttpResponseRedirect('/templates')
         else:
-            return render(request, 'templates/error.html', {
+            return render(request, 'error.html', {
                 'error_message': "Invalid data in POST"
             })
 
     except KeyError:
-        return render(request, 'templates/error.html', {
+        return render(request, 'error.html', {
             'error_message': "Invalid data in POST"
         })
 
@@ -57,7 +57,7 @@ def create(request):
         return HttpResponseRedirect('/templates')
     else:
         context = {'error': "Form isn't valid!"}
-        return render(request, 'configTemplates/error.html', context)
+        return render(request, 'error.html', context)
 
 
 def detail(request, template_id):
@@ -73,7 +73,7 @@ def delete(request, template_id):
 
 def error(request):
     context = {'error': "Unknown Error"}
-    return render(request, 'configTemplates/error.html', context)
+    return render(request, 'error.html', context)
 
 
 def new_script(request):
@@ -83,6 +83,16 @@ def new_script(request):
 
 
 def create_script(request):
+    required_fields = set(['name', 'description', 'script'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'error.html', {
+            'error': "Form isn't valid!"
+        })
+
+    # clean up crlf
+    script_content = request.POST["script"]
+    request.POST["script"] = script_content.replace("\r", "")
+
     script_form = ScriptForm(request.POST, request.FILES)
     if script_form.is_valid():
         print "Saving form"
@@ -90,7 +100,7 @@ def create_script(request):
         return HttpResponseRedirect('/templates')
     else:
         context = {'error': "Form isn't valid!"}
-        return render(request, 'configTemplates/error.html', context)
+        return render(request, 'error.html', context)
 
 
 def view_script(request, script_id):
@@ -106,13 +116,18 @@ def edit_script(request, script_id):
 
 
 def update_script(request):
+    required_fields = set(['id', 'name', 'description', 'script'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'scripts/error.html', {
+            'error_message': "Invalid data in POST"
+        })
     try:
         if "id" in request.POST:
             script_id = request.POST['id']
             script = get_object_or_404(Script, pk=script_id)
             script.name = request.POST['name']
             script.description = request.POST['description']
-            script.script= request.POST['script']
+            script.script = request.POST['script'].replace("\r", "")
             script.save()
             return HttpResponseRedirect('/templates')
         else:
@@ -120,9 +135,10 @@ def update_script(request):
                 'error_message': "Invalid data in POST"
             })
 
-    except KeyError:
+    except Exception as e:
+        print str(e)
         return render(request, 'scripts/error.html', {
-            'error_message': "Invalid data in POST"
+            'error_message': 'Could not update script!'
         })
     
     

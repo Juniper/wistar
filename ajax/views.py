@@ -288,22 +288,34 @@ def get_scripts(request):
 
 @csrf_exempt
 def push_script(request):
-    response_data = {"result": True}
-    required_fields = set(['script_id'])
+    required_fields = set(['script_id', 'username', 'password', 'ip'])
     if not required_fields.issubset(request.POST):
-        response_data["result"] = False
-        response_data["message"] = "Invalid parameters in POST"
-        return HttpResponse(json.dumps(response_data), content_type="application/json")
+        context = {'output': "Invalid parameters in POST"}
+        return render(request, 'ajax/scriptOutput.html', context)
 
     script_id = request.POST["script_id"]
+    username = request.POST["username"]
+    password = request.POST["password"]
+    ip = request.POST["ip"]
+
     script = Script.objects.get(pk=script_id)
 
     print "Executing script " + script.name
-    output = "it worked! fix me with SSH stuff"
-    linuxUtils.push_remote_script('192.168.122.81', 'root', 'Clouds123', script.script, script.destination)
 
-    context = {'output': output}
-    return render(request, 'ajax/scriptOutput.html', context)
+    try:
+        linuxUtils.push_remote_script(ip, username, password, script.script, script.destination)
+        output = linuxUtils.execute_cli(ip, username, password, script.destination)
+
+        context = {'output': output}
+        return render(request, 'ajax/scriptOutput.html', context)
+
+    except WistarException as we:
+        context = {'output': str(we)}
+        return render(request, 'ajax/scriptOutput.html', context)
+
+
+
+
 
 @csrf_exempt
 def sync_link_data(request):
@@ -745,6 +757,7 @@ def inline_deploy_topology(config):
     vm_env = {}
     vm_env["emulator"] = "/usr/libexec/qemu-kvm"
     vm_env["pcType"] = "rhel6.5.0"
+    vm_env["cache"] = "none"
     if osUtils.check_is_linux() and osUtils.check_is_ubuntu():
         vm_env["emulator"] = "/usr/bin/kvm-spice"
         vm_env["pcType"] = "pc"

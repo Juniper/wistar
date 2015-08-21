@@ -5,7 +5,6 @@
 {% block scripts %}
     <script type="text/javascript" src="{% static "js/shifty.js" %}"></script>
     <script type="text/javascript" src="{% static "js/raphael.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
     <script type="text/javascript" src="{% static "js/jquery-ui-1.8.23.custom.min.js" %}"></script>
     <script type="text/javascript" src="{% static "js/jquery.layout.js" %}"></script>
     <script type="text/javascript" src="{% static "js/jquery.autoresize.js" %}"></script>
@@ -20,10 +19,6 @@
     <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script>
     <script type="text/javascript" src="{% static "js/cloudIcon.js" %}"></script>
     <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
-    
-    <script type="text/javascript" src="{% static "js/wistar_utils.js" %}"></script>
-  
-    <!-- <script type="text/javascript" src="{% static "js/prototype.js" %}"></script> -->
    
     <script type="text/javascript">
     var canvas;
@@ -727,11 +722,20 @@
         var doc = jQuery(document.documentElement);
         doc.css('cursor' , 'progress' );
 
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        var ip = figure.getIp();
+        var pw = figure.getPassword();
+
         var url = "/ajax/pushScript/"
         var params = {
-            'script_id' : scriptId
+            'script_id' : scriptId,
+            'username' : 'root',
+            'password' : pw,
+            'ip' : ip
         };
-        var successMessage = "Script execution Complete!";
+
         var post = jQuery.post(url, params, function(response) {
             var content = jQuery(response);
             var cto = jQuery('#scriptSelectorOverlay');
