@@ -37,13 +37,19 @@ def manage_hypervisor(request):
 
 
 def view_domain(request, domain_id):
-    domain = libvirtUtils.get_domain_by_uuid(domain_id)
-    return render(request, 'ajax/viewDomain.html', {'domain': domain, 'xml': domain.XMLDesc(0)})
+    try:
+        domain = libvirtUtils.get_domain_by_uuid(domain_id)
+        return render(request, 'ajax/viewDomain.html', {'domain': domain, 'xml': domain.XMLDesc(0)})
+    except Exception as e:
+        return render(request, 'ajax/ajaxError.html', {'error': e})
 
 
 def view_network(request, network_name):
-    network = libvirtUtils.get_network_by_name(network_name)
-    return render(request, 'ajax/viewNetwork.html', {'network': network, 'xml': network.XMLDesc(0)})
+    try:
+        network = libvirtUtils.get_network_by_name(network_name)
+        return render(request, 'ajax/viewNetwork.html', {'network': network, 'xml': network.XMLDesc(0)})
+    except Exception as e:
+        return render(request, 'ajax/ajaxError.html', {'error': e})
 
 
 @csrf_exempt
@@ -216,13 +222,15 @@ def execute_linux_cli(request):
 
 @csrf_exempt
 def get_junos_startup_state(request):
-    response_data = {"result": True}
+    response_data = {"result": False}
     required_fields = set(['name'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
-    response_data["result"] = consoleUtils.is_junos_device_at_prompt(name)
+    if libvirtUtils.is_domain_running(name):
+        response_data["result"] = consoleUtils.is_junos_device_at_prompt(name)
+
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -459,7 +467,6 @@ def refresh_deployment_status(request):
     
     topology_id = request.POST['topologyId']
 
-
     if topology_id == "":
         print "Found a blank topology_id, returning full hypervisor status"
         return refresh_hypervisor_status(request)
@@ -485,14 +492,18 @@ def refresh_host_load(request):
 
 @csrf_exempt
 def refresh_hypervisor_status(request):
-    domains = libvirtUtils.list_domains()
-    if osUtils.check_is_linux():
-        networks = libvirtUtils.list_networks()
-    else:
-        networks = []
+    try:
+        domains = libvirtUtils.list_domains()
+        if osUtils.check_is_linux():
+            networks = libvirtUtils.list_networks()
+        else:
+            networks = []
 
-    context = {'domain_list': domains, 'network_list': networks}
-    return render(request, 'ajax/deploymentStatus.html', context)
+        context = {'domain_list': domains, 'network_list': networks}
+        return render(request, 'ajax/deploymentStatus.html', context)
+
+    except Exception as e:
+        return render(request, 'ajax/ajaxError.html', {'error': e})
 
 
 @csrf_exempt
@@ -744,9 +755,7 @@ def inline_deploy_topology(config):
                         print "Rendering networkXml for: " + network["name"]
                     network_xml = render_to_string("ajax/kvm/network.xml", {'network': network})
                     print network_xml
-                    n = libvirtUtils.define_network_from_xml(network_xml)
-                    if n is False:
-                        raise Exception("Error defining network: " + network["name"])
+                    libvirtUtils.define_network_from_xml(network_xml)
 
                 print "Starting network"
                 libvirtUtils.start_network(network["name"])
@@ -754,7 +763,7 @@ def inline_deploy_topology(config):
                 raise Exception(str(e))
 
     # are we on linux? are we on Ubuntu linux? set kvm emulator accordingly
-    vm_env = {}
+    vm_env = dict()
     vm_env["emulator"] = "/usr/libexec/qemu-kvm"
     vm_env["pcType"] = "rhel6.5.0"
     vm_env["cache"] = "none"
@@ -828,9 +837,7 @@ def inline_deploy_topology(config):
                     print "Defining domain"
                     print device_xml
 
-                d = libvirtUtils.define_domain_from_xml(device_xml)
-                if d is False:
-                    raise Exception("Error defining instance: " + device["name"])
+                libvirtUtils.define_domain_from_xml(device_xml)
 
             if not osUtils.check_is_linux():
                 # perform some special hacks for vbox

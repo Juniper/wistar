@@ -1,17 +1,10 @@
-import sys
-import time
-
 import libvirt
 from lxml import etree
-
 
 conn = None
 is_init = False
 
 # FIXME - improve error handling here... lots of catching and smothering exceptions...
-
-# FIXME - should be global setting
-debug = True
 
 
 def connect():
@@ -22,7 +15,7 @@ def connect():
     else:
         conn = libvirt.open(None)
         if conn is None:
-            return False
+            raise Exception("Could not connect to hypervisor")
         else:
             is_init = True
             return True
@@ -36,32 +29,29 @@ def close():
 
 
 def get_network_by_name(network_name):
-    if not connect():
-        return False
+    connect()
 
     try:
         return conn.networkLookupByName(network_name)
 
     except Exception as e:
         print str(e)
-        return None
+        raise Exception("Could not get network by name")
 
 
 def get_domain_by_uuid(domain_id):
-    if not connect():
-        return False
+    connect()
 
     try:
         return conn.lookupByUUIDString(domain_id)
 
     except Exception as e:
         print str(e)
-        return None
+        raise Exception("Could not get domain by uuid")
 
 
 def domain_exists(domain_name):
-    if not connect():
-        return False
+    connect()
 
     try:
         domains = conn.listAllDomains(0)
@@ -88,8 +78,7 @@ def promote_instance_to_image(domain_name):
     :return: False Error condition
     :return True Block pull started
     """
-    if not connect():
-        return False
+    connect()
 
     try:
         domain = get_domain_by_name(domain_name)
@@ -118,32 +107,40 @@ def is_image_in_block_pull(domain, image_path):
 
 def get_domain_by_name(domain_name):
     """ Get single domain by name """
-    if not connect():
-        return False
+    connect()
 
+    domains = conn.listAllDomains(0)
+    for d in domains:
+        if d.name() == domain_name:
+            return d
+
+    raise Exception("Could not get domain by name")
+
+
+# convenience function to check if a domain is currently started
+def is_domain_running(domain_name):
     try:
-        domains = conn.listAllDomains(0)
-        for d in domains:
-            if d.name() == domain_name:
-                return d
+        domain = get_domain_by_name(domain_name)
+
+        if domain.info()[0] == 1:
+            return True
 
         return False
 
-    except Exception as ee:
-        print repr(ee)
+    except Exception as e:
+        print str(e)
         return False
 
 
 def list_domains():
     """ Get all domains """
-    if not connect():
-        return False
+    connect()
 
     domain_list = []
     try:
         domains = conn.listAllDomains(0)
         for d in domains:
-            domain = {}
+            domain = dict()
             domain["name"] = d.name()
             domain["id"] = d.ID()
             domain["uuid"] = d.UUIDString()
@@ -156,14 +153,13 @@ def list_domains():
         domain_list.sort(key=lambda k: k["name"])
         return domain_list
     except Exception as e:
-        print repr(e)
-        return None
+        print str(e)
+        raise Exception("Could not list domains")
 
 
 def get_domains_for_topology(topology_id):
     """ Get all domains for a given topology Id """
-    if not connect():
-        return []
+    connect()
 
     domain_list = []
     try:
@@ -174,8 +170,8 @@ def get_domains_for_topology(topology_id):
 
         return domain_list
     except Exception as e:
-        print repr(e)
-        return []
+        print str(e)
+        raise Exception("Could not list domains")
 
 
 def undefine_all_in_topology(topology_id):
@@ -192,8 +188,7 @@ def undefine_all_in_topology(topology_id):
 
 
 def network_exists(network_name):
-    if not connect():
-        return False
+    connect()
 
     try:
         networks = conn.listAllNetworks(0)
@@ -209,14 +204,13 @@ def network_exists(network_name):
 
 
 def list_networks():
-    if not connect():
-        return False
+    connect()
 
     network_list = []
     try:
         networks = conn.listAllNetworks(0)
         for n in networks:
-            network = {}
+            network = dict()
             network["name"] = n.name()
             network["uuid"] = n.UUID()
             if n.isActive() == 1:
@@ -229,25 +223,21 @@ def list_networks():
         return network_list
     except Exception as e:
         print str(e)
-        return None
+        raise Exception("Could not list networks")
 
 
 def get_networks_for_topology(topology_id):
     """ Get Networks for a given topology Id """
-    if not connect():
-        return []
+    connect()
 
     network_list = []
-    try:
-        networks = list_networks()
-        for n in networks:
-            if n["name"].startswith(topology_id):
-                network_list.append(n)
 
-        return network_list
-    except Exception as e:
-        print str(e)
-        return network_list
+    networks = list_networks()
+    for n in networks:
+        if n["name"].startswith(topology_id):
+            network_list.append(n)
+
+    return network_list
 
 
 # blow away everything and start from scratch!
@@ -271,42 +261,33 @@ def reset_kvm():
 
 # defines domain from supplied xml file. use wistarUtils to create said XML
 def define_domain_from_xml(xml):
-    if not connect():
-        return False
+    connect()
 
     try:
         domain = conn.defineXML(xml)
-        if debug:
-            print "Defined Domain: " + domain.name()
+        print "Defined Domain: " + domain.name()
 
         return domain
     except Exception as e:
         print str(e)
-        if debug:
-            print "Could not define domain from xml!"
-        return False
+        raise Exception("Could not define domain")
 
 
 def define_network_from_xml(xml):
-    if not connect():
-        return False
+    connect()
 
     try:
         network = conn.networkDefineXML(xml)
-        if debug:
-            print "Defined Network: " + network.name()
+        print "Defined Network: " + network.name()
 
         return network
     except Exception as e:
         print str(e)
-        if debug:
-            print "Could not define network from xml!"
-        return False
+        raise Exception("Could not define network")
 
 
 def undefine_domain(domain_id):
-    if not connect():
-        return False
+    connect()
 
     try:
         domain = get_domain_by_uuid(domain_id)
@@ -322,13 +303,12 @@ def undefine_domain(domain_id):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
 def stop_domain(domain_id):
-    if not connect():
-        return False
+    connect()
 
     try:
         domain = get_domain_by_uuid(domain_id)
@@ -336,13 +316,12 @@ def stop_domain(domain_id):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
 def suspend_domain(domain_id):
-    if not connect():
-        return False
+    connect()
 
     try:
         domain = get_domain_by_uuid(domain_id)
@@ -350,13 +329,12 @@ def suspend_domain(domain_id):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
 def start_domain(domain_id):
-    if not connect():
-        return False
+    connect()
 
     try:
         domain = get_domain_by_uuid(domain_id)
@@ -365,7 +343,7 @@ def start_domain(domain_id):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
@@ -378,13 +356,12 @@ def start_domain_by_name(domain_name):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
 def undefine_network(network_name):
-    if not connect():
-        return False
+    connect()
 
     # cannot delete default domain!
     if network_name == "default":
@@ -400,13 +377,12 @@ def undefine_network(network_name):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
 def stop_network(network_name):
-    if not connect():
-        return False
+    connect()
 
     # cannot delete default domain!
     if network_name == "default":
@@ -418,14 +394,13 @@ def stop_network(network_name):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
 def start_network(network_name):
     print "Starting network " + str(network_name)
-    if not connect():
-        return False
+    connect()
 
     # cannot delete default domain!
     if network_name == "default":
@@ -438,7 +413,7 @@ def start_network(network_name):
         return True
 
     except Exception as e:
-        print e
+        print str(e)
         return False
 
 
@@ -457,26 +432,25 @@ def get_domain_vnc_port(domain):
         return 0
 
 
-# simple func to ensure we always use a valid vncPort
+# simple func to ensure we always use a valid vnc_port
 def get_next_domain_vnc_port(offset=0):
     print "Getting next vnc port with offset: " + str(offset)
     current_iteration = 0
-    if not connect():
-        return False
+    connect()
 
     used_ports = []
     domains = conn.listAllDomains(0)
     for d in domains:
-        vncPort = get_domain_vnc_port(d)
+        vnc_port = get_domain_vnc_port(d)
         try:
-            port = int(vncPort)
+            port = int(vnc_port)
             if port != 0 and port != -1:
                 used_ports.append(port)
-        except:
+        except Exception as e:
             # in some cases,port can be something other than int like None
             # just catch all the here and continue on
-            print "found unhandled error for vncPort! " + str(vncPort)
-            print sys.exc_info()[0]
+            print "found unhandled error for vnc_port! " + str(vnc_port)
+            print str(e)
             continue
 
     if len(used_ports) > 1:

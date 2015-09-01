@@ -38,6 +38,8 @@
 
     var internalCloudCounter = 0;
 
+    var selectedObject;
+
     // loads initial topology from json stoped in the 'json' div
     // also creates the instance array variable on page context    
     function loadTopology() {
@@ -67,7 +69,6 @@
         console.log("updating boot up state for topology");
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
-            //if (instance["type"] == "junos_vmx" || instance["type"] == "junos_firefly" || instance["type"] == "linux") {
             if (instance["type"].includes('junos') || instance["type"] == "linux") {
                 updateBootState(instance["id"], instance["label"]);
             }
@@ -83,8 +84,8 @@
             return r;
         }
 
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var url = "/ajax/startTopology/"
         var params = {
@@ -99,7 +100,7 @@
             alert('Could not perform request!');
         });
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
 
     }
@@ -113,8 +114,8 @@
             return r;
         }
 
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var url = "/ajax/pauseTopology/"
         var params = {
@@ -129,12 +130,12 @@
             alert('Could not perform request!');
         });
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
 
     }
 
-    // get instance var form instance array by label
+    // get instance var from instance array by label
     function getInstanceByLabel(label) {
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
@@ -298,13 +299,14 @@
     }
 
     function addLabel() {
+
         var label = jQuery('#newLabel').val();
         var labelSize = jQuery('#newLabelFontSize').val();
         var l = new draw2d.shape.basic.Label(label);
         // l.setBackgroundColor();
         l.setFontColor("#000000");
         l.setFontSize(labelSize);
-        l.setStroke("0");
+        l.setStroke(0);
 
         iconCount += 1;
 
@@ -328,14 +330,14 @@
         // Create a JSON writer and convert it into a JSON-String representation.
         
     	var writer = new draw2d.io.json.Writer();
-        var json = writer.marshal(canvas);
 
-        // convert the json object into string representation
-        var jsonTxt = JSON.stringify(json, null, 2);
-
-        // insert the json string into a DIV for preview or post
-        // it via ajax to the server....
-        jQuery("#json").val(jsonTxt);
+        var jsonTxt = writer.marshal(canvas, function(json) {
+            // convert the json object into string representation
+            var jsonTxt = JSON.stringify(json, null, 2);
+            // insert the json string into a DIV for preview or post
+            // it via ajax to the server....
+            jQuery("#json").val(jsonTxt);
+        });
     }
 
     // export and submit form 
@@ -437,8 +439,8 @@
             quiet = false;
         }
 
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
@@ -450,7 +452,7 @@
             } else {
                 console.log("instance is not booted up!");
             }
-            doc.style.cursor = '';
+            doc.css('cursor', '');
             return false;
         }
         
@@ -478,10 +480,11 @@
                 'mgmtInterface' : mgmtInterface
         };
 
-        var success = function(response) {
+        var success = function(response, figure) {
             data = eval(response);
             var message = "Could not configure access";
             if (data["result"] == true) {
+                figure.setBootState("up");
                 message = "Successfully configured Instance Access";
             }
             if (! quiet) {
@@ -492,7 +495,7 @@
         var post = jQuery.post(url, params, success);
 
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
 
         post.fail(function() {
@@ -501,15 +504,21 @@
     }
 
     function configureJunosInterfaces() {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
         
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
 
+        if (figure.getType() == "junos_firefly") {
+            console.log("no need to config interfaces on firefly");
+            doc.css('cursor', '');
+            return false;
+        }
+
         if (figure.getBootState() != "up") {
             alert("Instance must be booted up before interfaces can be configured!");
-            doc.style.cursor = '';
+            doc.css('cursor', '');
             return false;
         }
         
@@ -521,18 +530,19 @@
             'password' : password
         };
         
-        var success = function(response) {
+        var success = function(response, figure) {
             data = eval(response);
             var message = "Could not configure access";
             if (data["result"] == true) {
                 message = "Successfully configured interfaces";
             }
+            figure.setBootState("up");
             alert(message);
         };
         var post = jQuery.post(url, params, success);
         
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
@@ -545,7 +555,7 @@
 
         if (figure.getBootState() != "up") {
             alert("Instance must be booted up before interfaces can be configured!");
-            doc.style.cursor = '';
+            doc.css('cursor', '');
             return false;
         }
 
@@ -592,8 +602,8 @@
     
     function applyConfigurationTemplate(template_id) {
         
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
  
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
@@ -622,7 +632,7 @@
             alert('Could not perform request!');
         });
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
             var cto = jQuery('#configTemplatesOverlay');
             cto.empty();
             cto.removeClass("screen-overlay");
@@ -632,8 +642,8 @@
 
     function applyJunosSetConfiguration(field_id) {
 
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
@@ -665,7 +675,7 @@
             alert('Could not perform request!');
         });
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
             var cto = jQuery('#configTemplatesOverlay');
             cto.empty();
             cto.removeClass("screen-overlay");
@@ -725,6 +735,12 @@
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
 
+        if (figure.getBootState() != "up") {
+            alert("Instance must be booted up before scripts can be executed!");
+            doc.css('cursor', '');
+            return false;
+        }
+
         var ip = figure.getIp();
         var pw = figure.getPassword();
 
@@ -770,43 +786,6 @@
         location.reload();
     }
 
-    function preconfigFirefly(label, password, mgmtInterface) {
-        domain = generateDomainNameFromLabel(label);
-        var url = "/ajax/preconfigFirefly/";
-        var params = {
-            'domain' : domain,
-            'password' : password,
-            'mgmtInterface' : mgmtInterface 
-        };
-        var successMessage = "Successfully configured vSRX";
-        
-        simpleAjaxRequest(url, params, successMessage);
-    }
-
-    function configDeviceInterfaces(ip, password) {
-        var url = "/ajax/configJunosInterfaces/";
-        var params = {
-            'ip' : ip,
-            'password' : password
-        };
-        var successMessage = "Successfully configured interfaces";
-        
-        simpleAjaxRequest(url, params, successMessage);
-    }
-
-    // fixme - do something useful with this data!
-    function getJunosConfig(ip, password) {
-        
-        var url = "/ajax/getJunosConfig/";
-        var params = {
-            'ip' : ip,
-            'password' : password
-        };
-        var successMessage = "Successfully retrieved Junos Config";
-        
-        simpleAjaxRequest(url, params, successMessage);
-        
-    }
 
     function syncLinkData() {
 
@@ -875,8 +854,8 @@
 
 
     function deployTopology() {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
        var url = '/ajax/deployTopology/';
         var params = {
@@ -893,13 +872,13 @@
         });
 
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
     function simpleAjaxRequest(url, params, successMessage) {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var post = jQuery.post(url, params, function(response) {
             console.log(response);
@@ -921,7 +900,7 @@
         });
 
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });  
     }
 
@@ -935,8 +914,8 @@
  
         domain = generateDomainNameFromLabel(label);
         
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
   
         var url = "/ajax/getJunosStartupState/";
 
@@ -964,58 +943,27 @@
         });
 
         post.always(function() {
-            doc.style.cursor = '';
-        });
-
-        console.log('getting boot up state');
-    }
-
-    function getJunosStartupState() {
-
-        console.log('getting boot up state');
-        var figureId = jQuery('#selectedObject').val();
-        var figure = canvas.getFigure(figureId);
-        var label = figure.getLabel();
-        
-        domain = generateDomainNameFromLabel(label);
-        
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
-   
-        var url = "/ajax/getJunosStartupState/";
-        var params = {
-            "name" : domain
-        };
-
-        var post = jQuery.post(url, params, function(response) {
-            data = eval(response);
-            if (data["result"] == false) {
-                figure.setBootState("down");
-                alert('Device is not yet booted up!');
-            } else {
-                figure.setBootState("up");
-                alert('Device is booted and ready!');
-            }
-        });
-
-        post.fail(function() {
-            alert('Could not perform request!');
-        });
-
-        post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
 
         console.log('getting boot up state');
     }
 
     function executeCli() {
+        // verify instance is up before attempting anything!
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        if (figure.getBootState() != "up") {
+            jQuery('#cliOutput').val("Instance is not yet booted!");
+            return false;
+        }
+
         var ip = jQuery('#junosIconIp').val();
         var pw = jQuery('#junosIconPass').val();
         var cli = jQuery('#cli').val();
 
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
         
         var url = '/ajax/executeCli/';
         var params = {
@@ -1040,7 +988,7 @@
         });
 
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });  
     }
 
@@ -1049,8 +997,8 @@
         var pw = jQuery('#linuxIconPass').val();
         var cli = jQuery('#linuxCli').val();
 
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var url = '/ajax/executeLinuxCli/';
         var params = {
@@ -1076,7 +1024,7 @@
         });
 
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
@@ -1091,8 +1039,8 @@
     }
 
     function executeLinuxAutomation() {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var cli = jQuery('#linuxAutomationCli').val();
 
@@ -1113,7 +1061,7 @@
         });
 
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
@@ -1128,8 +1076,8 @@
     }
 
     function executeJunosAutomation() {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var cli = jQuery('#junosAutomationCli').val();
 
@@ -1150,7 +1098,7 @@
         });
 
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
@@ -1158,18 +1106,39 @@
     var currentSelection = "None";
 
     function deleteSelectedObject() {
+
+        // grab the selected object id
+        // this is always kept in a hidden form field for easy retrieval
         var so = jQuery('#selectedObject').val();
+
+        // make sure it's not blank!
         if (so != 0) {
             var figure = canvas.getFigure(so);
             if (figure == null) {
                 console.log('deleting line');
                 figure  = canvas.getLine(so);
-            } 
+            }
             if (figure.NAME == "draw2d.shape.node.externalCloudIcon") {
                 externalCloudAdded = false;
             }
             canvas.removeFigure(figure);
             jQuery('#selectedObject').val("0");
+        }
+    }
+
+    function deleteLabel() {
+
+        // grab the selected object id
+        // this is always kept in a hidden form field for easy retrieval
+        var so = jQuery('#selectedObject').val();
+
+        // make sure it's not blank!
+        if (so != 0) {
+            var figure = canvas.getFigure(so);
+            if (figure.NAME == "draw2d.shape.basic.Label") {
+                canvas.removeFigure(figure);
+                jQuery('#selectedObject').val("0");
+            }
         }
     }
 
@@ -1195,6 +1164,10 @@
 	    jQuery('#debug').val(jQuery('#json').val());
     }
 
+    function getCanvasObject() {
+
+    }
+
     function showConfigSetEditor() {
         manuallyTogglePanel('configSetCreateForm', '');
         manuallyTogglePanel('configSetCreateRow', 'none');
@@ -1213,6 +1186,8 @@
     function setSelectedObject(objectId) {
         console.log(objectId);
         jQuery('#selectedObject').val(objectId);
+
+        selectedObject = canvas.getFigure(objectId);
     }
 
     function manuallyTogglePanel(el, v) {
@@ -1230,7 +1205,6 @@
 
     function loadJunosIconEditor(figureId) {
 
-        console.log(figureId);
         //changed from selectedConnection ?
         jQuery('#selectedObject').val(figureId);
         var instance = canvas.getFigure(figureId);
@@ -1447,6 +1421,8 @@
     function addExternalCloud() {
         if (externalCloudAdded == false) {
             var c = new draw2d.shape.node.externalCloudIcon();
+            c.width = 100;
+            c.height = 100;
             canvas.addFigure(c, 385, 15);
             externalCloudAdded = true;
         } else {
@@ -1454,11 +1430,24 @@
             return false;
         }
     }
+
     function addInternalCloud() {
         internalCloudCounter = internalCloudCounter + 1;
         var label = jQuery('#internalCloudName').val();
         var c = new draw2d.shape.node.internalCloudIcon(label);
+        c.width = 100;
+        c.height = 100;
         canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
+    }
+
+    function addRectangle() {
+            var r = new draw2d.shape.basic.Rectangle(175, 100);
+
+            r.setBackgroundColor(null);
+            // r.toBack();
+            canvas.addFigure(r, 400, 400);
+            r.toBack();
+
     }
 
     // are we editing an existing topology?
@@ -1472,6 +1461,8 @@
 
     jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
+        // set default connection router here
+        draw2d.shape.basic.PolyLine.DEFAULT_ROUTER= new draw2d.layout.connection.FanConnectionRouter();
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
         canvas.addSelectionListener(new topologySelectionListener());
@@ -1480,6 +1471,8 @@
             {% if topo.id != 0 %}
                 refreshDeploymentStatus( {{ topo.id }} );
                 updateAllBootState();
+                // let's continue to check boot up state every 30 seconds
+                setInterval(updateAllBootState, 30000);
             {% endif %}
         {% endif %}
     });
@@ -1580,11 +1573,10 @@
              </tbody>
             </table>
           </form>
-          {% if topo_id != None %}
-          <div id="addInstanceForm" style="display: none">
-          {% else %}
+          {% if topo_id == None %}
+
           <div id="addInstanceForm">
-          {% endif %}
+
             <br/>
             <h3>Add Instance</h3>
             <table>
@@ -1759,6 +1751,7 @@
               </tr>
             </table>
           </div>
+              {% endif %}
           <div id="linuxIconEditor" style="display:none">
             <table>
               <th colspan="2">
@@ -1835,10 +1828,12 @@
                   Instance Configuration
                 </td>
                 <td>
+                    <!--
                   <input type="button" onclick="javascript: getInstanceStartupState();"
                          value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
                     <br/>
                     <br/>
+                    -->
                   <input type="button" onclick="javascript: configureInstanceAccess();"
                          value="Configure Access" title="Configures Management IP Address">
                     <br/>
@@ -1928,9 +1923,11 @@
                   Instance Configuration
                 </td>
                 <td>
+                    <!--
                   <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready"> 
                     <br/>
                     <br/>
+                    -->
                   <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures SSH + Netconf"> 
                     <br/>
                     <br/>
@@ -2168,6 +2165,42 @@
             position:relative; 
             border: 1px solid #000">
           </div>
+            {% if topo_id != None %}
+            <div id="toolsMenu" style="width: 900px; margin-top: 10px; text-align: right">
+                <!--
+                <input type="button" value="Refresh Bootup status" onclick="javascript: updateAllBootState();"/>
+                &nbsp; &nbsp;
+                -->
+                <input type="text" value="Add Note" id="newLabel" onclick="javascript: this.value = ''" style="width: 200px"/>
+
+                <select id="newLabelFontSize">
+                    <option value="8">8</option>
+                    <option value="10">10</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16" selected>16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="22">22</option>
+                    <option value="24">24</option>
+                    <option value="26">26</option>
+                    <option value="28">28</option>
+                    <option value="30">30</option>
+                    <option value="40">40</option>
+                    <option value="48">48</option>
+                </select> &nbsp;
+
+                <input type="button" value="Add Label" onclick="javascript: addLabel()"/> &nbsp; &nbsp;
+
+                <input type="button" value="Delete Label" title="Delete Selected Label"
+                         onclick="javascript: deleteLabel()"/>
+                &nbsp; &nbsp;
+
+                <input type="button"  id="update_topo_button"
+                       value="Update Topology" onclick="javascript: updateTopology();"/> &nbsp;
+
+            </div>
+            {% endif %}
           <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
             <div id="linuxAutomationOverlay" style="display: none">
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">

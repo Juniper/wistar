@@ -4,8 +4,8 @@
             'domain' : domain
         };
 
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var success = function(response) {
             data = eval(response);
@@ -21,7 +21,7 @@
 
         var post = jQuery.post(url, params, success);
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
@@ -58,8 +58,8 @@
     }
    
     function manageDomain(action, domainId, topoId) {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
        
         if (action == "stop") {
             if (! confirm("This will power off the instance ungracefully!")) {
@@ -88,13 +88,13 @@
             alert('Could not perform request!');
         });
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
     function manageNetwork(action, networkName, topoId) {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var url = '/ajax/manageNetwork/';
         var params = {
@@ -110,13 +110,13 @@
             alert('Could not perform request!');
         });
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
     function loadConfigTemplates(topoId) {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
        
         var cso = jQuery('<div/>').attr("id", "configTemplatesOverlay").addClass("screen-overlay");
 
@@ -134,18 +134,18 @@
             alert('Could not perform request!');
         });
         post.always(function() {
-            doc.style.cursor = '';
+            doc.css('cursor', '');
         });
     }
 
     function setCursor() {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = 'progress';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
     }
 
     function resetCursor() {
-        var doc = document.getElementsByTagName('html')[0];
-        doc.style.cursor = '';
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', '');
     }
 
     function redir(url) {

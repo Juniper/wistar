@@ -6,7 +6,7 @@ def index(request):
 
 
 def console(request, port):
-    context = {}
+    context = dict()
     context["port"] = port
     context["server"] = request.get_host().split(":")[0]
 
