@@ -358,3 +358,4 @@ def kill_web_socket(server, wsPort):
     cmd = 'ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | awk "{ print $2 }" | xargs -n 1 kill'
     print "Running cmd: " + cmd
 
+

@@ -32,9 +32,12 @@ class ConfigTemplateUpdate(UpdateView):
 
 
 class Script(models.Model):
+    type_choices = (('ssh', 'SSH'), ('netconf', 'NetConf'), ('console', 'Console'))
+
     name = models.CharField(max_length=32)
     description = models.TextField()
     script = models.TextField()
+    type = models.CharField(max_length=32, choices=type_choices, default='netconf')
     destination = models.CharField(max_length=256)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True, auto_now_add=True)
@@ -50,7 +53,7 @@ class ScriptForm(ModelForm):
 
     class Meta:
         model = Script
-        fields = ['name', 'description',  'destination', 'script']
+        fields = ['name', 'description',  'destination', 'type', 'script']
 
 
 class ScriptUpdate(UpdateView):

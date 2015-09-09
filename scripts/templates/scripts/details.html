@@ -21,6 +21,14 @@
                 {{ script.description }}
             </td>
         </tr>
+         <tr>
+            <td>
+                Type
+            </td>
+            <td>
+                {{ script.type }}
+            </td>
+        </tr>
         <tr>
             <td>
                 Destination
@@ -44,9 +52,9 @@
                 Options
             </td>
             <td>
-                <a href='/templates/deleteScript/{{ script.id }}'>Delete</a>
+                <a href='/scripts/deleteScript/{{ script.id }}'>Delete</a>
                 &nbsp;
-                <a href='/templates/editScript/{{ script.id }}'>Edit</a>
+                <a href='/scripts/editScript/{{ script.id }}'>Edit</a>
             </td>
         </tr>
     </table>

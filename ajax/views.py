@@ -17,8 +17,8 @@ from common.lib import consoleUtils
 from common.lib import osUtils
 from common.lib import vboxUtils
 from images.models import Image
-from templates.models import ConfigTemplate
-from templates.models import Script
+from scripts.models import ConfigTemplate
+from scripts.models import Script
 from topologies.models import Topology
 from topologies.models import ConfigSet
 from topologies.models import Config
@@ -1002,6 +1002,7 @@ def execute_linux_automation(request):
         print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
+
 @csrf_exempt
 def execute_junos_automation(request):
     """
@@ -1041,3 +1042,92 @@ def execute_junos_automation(request):
     except Exception as ex:
         print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
+
+
+@csrf_exempt
+# query libvirt for all instances that are currently running
+# grab configured ip addresses from topology as well.
+def get_available_instances(request):
+
+    if 'scriptId' not in request.POST:
+        return render(request, 'ajax/ajaxError.html', {'error': "No script Id in request"})
+
+    script_id = request.POST['scriptId']
+    script = Script.objects.get(pk=script_id)
+
+    instances = []
+
+    domains = libvirtUtils.list_domains()
+    for domain in domains:
+        if domain["state"] == "running":
+            name = domain["name"]
+            topo_id = name.split('_')[0].replace('t', '')
+            # print name + " " + topo_id
+            topology = Topology.objects.get(pk=topo_id)
+            tj = json.loads(topology.json)
+            for obj in tj:
+                if obj["type"] == "draw2d.shape.node.topologyIcon":
+                    ip = obj["userData"]["ip"]
+                    label = obj["userData"]["label"]
+                    obj_type = obj["userData"]["type"]
+                    if label == name.split('_')[1]:
+                        instance = {
+                            'name': name,
+                            'ip': ip,
+                            'type': obj_type,
+                            'topo_id': topo_id
+                        }
+
+                        print "Found a running instance for this topology!"
+                        instances.append(instance)
+                        continue
+
+    context = {'instances': instances, 'script': script}
+    return render(request, 'ajax/availableInstances.html', context)
+
+
+def launch_script(request):
+    if 'scriptId' not in request.POST:
+        return render(request, 'ajax/ajaxError.html', {'error': "No script Id in request"})
+
+    print request.POST
+    script_id = request.POST['scriptId']
+    script = Script.objects.get(pk=script_id)
+    instances = request.POST.getlist("instances")
+    print instances
+    configure_access = request.POST["configureAccess"]
+
+    o = "Output from script"
+    for instance in instances:
+        print instance
+        topo_id = instance.split("_")[0].replace('t', '')
+        print topo_id
+        topology = Topology.objects.get(pk=topo_id)
+        tj = json.loads(topology.json)
+        for obj in tj:
+            if obj["type"] == "draw2d.shape.node.topologyIcon":
+                label = obj["userData"]["label"]
+                if label == instance.split('_')[1]:
+                    print "Found instance in topology configuration"
+                    ip = str(obj["userData"]["ip"])
+                    o += "name: %s, ip %s\n" % (instance, ip)
+                    print "name: %s, ip %s" % (instance, ip)
+                    password = str(obj["userData"]["password"])
+                    management_interface = str(obj["userData"]["mgmtInterface"])
+                    if configure_access == "yes":
+                        print "Configuring access"
+                        o += "Configuring access\n"
+                        consoleUtils.preconfig_linux_domain(instance, "root", password, management_interface)
+
+                    print "Pushing script " + script.name
+                    linuxUtils.push_remote_script(ip, 'root', password, script.script, script.destination)
+                    print "Executing script"
+                    o += linuxUtils.execute_cli(ip, 'root', password, script.destination)
+                    o += "\n"
+                    continue
+
+    context = {'output': o}
+    return render(request, 'ajax/scriptOutput.html', context)
+
+
+

@@ -138,6 +138,37 @@
         });
     }
 
+    function loadAvailableInstances(scriptId) {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        var cso = jQuery('<div/>').attr("id", "availableInstancesOverlay").addClass("screen-overlay");
+
+        jQuery('#content').append(cso);
+
+        var url = '/ajax/getAvailableInstances/';
+        var params = {
+            'scriptId' : scriptId
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            cso.append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
+    function closeAvailableInstances() {
+        var c = jQuery('#availableInstancesOverlay');
+        c.empty();
+        c.removeClass("screen-overlay");
+        c.remove();
+    }
+
     function setCursor() {
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');

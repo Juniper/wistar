@@ -1,0 +1,56 @@
+{% load staticfiles %}
+<form method="POST" action="/ajax/launchScript/" onsubmit="javascript setCursorBusy();">
+<table class="centered_box">
+    <tr>
+        <td colspan="4" style="text-align: right"><a href="#" onclick="javascript: closeAvailableInstances()">Close</a></td>
+    </tr>
+    <tr>
+        <th colspan="4">Launch script "{{ script.name }}"</th>
+    </tr>
+    {% if instances|length == 0 %}
+    <tr>
+        <td>
+            There are currently no instances running!
+        </td>
+    </tr>
+    {% else %}
+    {% for i in instances %}
+    <tr>
+        <td>
+            <input type="checkbox" name="instances" value="{{ i.name }}"/>
+        </td>
+        <td>
+            {{ i.name }}
+        </td>
+        <td>
+            {{ i.ip }}
+        </td>
+        <td>
+            {{ i.type }}
+        </td>
+
+    </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="2">
+            Configure Access:
+        </td>
+        <td colspan="2">
+            <input type="radio" name="configureAccess" value="yes" checked/> Yes
+            <br>
+            <input type="radio" name="configureAccess" value="no"/> No
+        </td>
+    </tr>
+    <tr>
+        <td colspan="4" style="text-align: right">
+             {% csrf_token %}
+            <input type="hidden" name="scriptId" value="{{ script.id }}"/>
+            <input type="submit" value="Launch">
+        </td>
+    </tr>
+    {% endif %}
+</table>
+</form>
+
+
+

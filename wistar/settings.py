@@ -51,7 +51,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'topologies',
     'images',
-    'templates',
+    'scripts',
     'common',
     'ajax',
     'webConsole',

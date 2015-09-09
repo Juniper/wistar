@@ -173,6 +173,14 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     	this.setIp(memento.userData.ip);
     	this.setImage(memento.userData.image);
     },
+    getPersistentAttributes: function() {
+        // force grabbing the mgnt interface
+        var ud = this.getUserData();
+        ud["mgmtInterface"] = this.getMgmtInterface();
+
+        return this._super();
+
+    },
     setupObject: function(type, label, width, height) {
         this.setDimension(width, height);
     	var tpl = new topologyIconPortLocator();

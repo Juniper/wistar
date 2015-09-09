@@ -480,7 +480,7 @@
                 'mgmtInterface' : mgmtInterface
         };
 
-        var success = function(response, figure) {
+        var success = function(response) {
             data = eval(response);
             var message = "Could not configure access";
             if (data["result"] == true) {
@@ -530,7 +530,7 @@
             'password' : password
         };
         
-        var success = function(response, figure) {
+        var success = function(response) {
             data = eval(response);
             var message = "Could not configure access";
             if (data["result"] == true) {
@@ -546,7 +546,7 @@
         });
     }
 
-   function loadConfigTemplates(topoId) {
+    function loadConfigTemplates(topoId) {
         var doc = jQuery(document);
         doc.css('cursor' , 'progress' );
 
@@ -582,8 +582,6 @@
     }
 
     function closeConfigTemplateOverlay() {
-        console.log('closing config template overlay');
-
         var cto = jQuery('#configTemplatesOverlay');
         cto.empty();
         cto.removeClass("screen-overlay");

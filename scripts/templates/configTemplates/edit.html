@@ -28,7 +28,7 @@
 {% endblock %}
 {% block content %}
 <h2>Edit Template</h2>
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/templates/update/">
+<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/scripts/update/">
 {% csrf_token %}
 {{ template_form }}
 <input type="hidden" name="id" value="{{ template.id }}"/>
