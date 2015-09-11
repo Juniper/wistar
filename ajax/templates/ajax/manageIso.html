@@ -1,0 +1,41 @@
+{% load staticfiles %}
+<table class="centered_box">
+    <tr>
+        <td colspan="4" style="text-align: right"><a href="#" onclick="javascript: closeOverlay()">Close</a></td>
+    </tr>
+              <th colspan="2">
+                  Current ISO in {{ domainName }} cdrom
+              </th>
+              <tr>
+                <td>
+                  {{ currentIso }}
+                </td>
+                <td>
+                    <input type="button" onclick="javascript: manageIso('detach', '{{ domainName }}', '');" value="Detach"/>
+                </td>
+              </tr>
+    <tr>
+        <th colspan="4">Available ISO files in {{ mediaDir }}</th>
+    </tr>
+    {% if media|length == 0 %}
+    <tr>
+        <td>
+            No Media found in {{ mediaDir }}
+        </td>
+    </tr>
+    {% endif %}
+    {% for m in media %}
+    <tr>
+        <td>
+            {{ m }}
+        </td>
+        <td>
+            <input type="button" onclick="javascript: manageIso('attach', '{{ domainName }}', '{{ m }}');" value="Attach"/>
+
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+

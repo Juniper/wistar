@@ -8,7 +8,6 @@
         var d = $('#id_description');
         var n = $('#id_name');
         var f = $('#id_filePath');
-        var t = $('#id_type');
         if (n.val() == "") {
             alert("Please enter a name!");
             n.focus();
@@ -20,20 +19,16 @@
             return false;
         }
         if (f.val() == "") {
-            if (t.val() != "blank") {
-                alert("Please choose a valid image!");
-                f.focus();
-                return false;
-            } else {
-                return true;
-            }
+            alert("Please choose a valid image!");
+            f.focus();
+            return false;
         }
     }
     </script>
 {% endblock %}
 {% block content %}
-<h2>New Image</h2>
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/create/">
+<h2>New Blank Image</h2>
+<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/createBlank/">
 {{ image_form }}
 {% csrf_token %}
 <input type="submit"/>

@@ -1,10 +1,12 @@
 from django.db import models
 from django.forms import ModelForm
+from django import forms
 
 
 class Image(models.Model):
     type_choices = (('junos_vmx', 'Junos vMX <= 14.1'), ('junos_firefly', 'Junos Firefly'), ('junos', 'Junos Other'),
-                    ('linux', 'Linux'), ('other', 'Other'), ('junos_vmx_p2', 'Junos vMX >= 14.2'))
+                    ('linux', 'Linux'), ('other', 'Other'), ('junos_vmx_p2', 'Junos vMX >= 14.2'),
+                    ('blank', 'Blank Image'))
     name = models.CharField(max_length=32)
     type = models.CharField(max_length=32, choices=type_choices, default='junos_vmx')
     description = models.TextField()
@@ -21,3 +23,11 @@ class ImageForm(ModelForm):
     class Meta:
         model = Image
         fields = ['name', 'type', 'filePath', 'description']
+
+
+class ImageBlankForm(ModelForm):
+    size = forms.CharField(max_length=32, label="Size (GB):")
+
+    class Meta:
+        model = Image
+        fields = ['name', 'size', 'description']

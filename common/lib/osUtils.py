@@ -76,7 +76,6 @@ def copy_image_to_clone(old_path, new_path):
 # *If on KVM, otherwise, clone the full hd for virtualbox
 def create_thin_provision_instance(image, instance):
     instance_file = get_instance_path_from_image(image, instance)
-    rv = 0
     if check_is_linux():
         rv = os.system("qemu-img create -b '" + image + "' -f qcow2 '" + instance_file + "'")
     else:
@@ -86,6 +85,28 @@ def create_thin_provision_instance(image, instance):
         return True
     else:
         return False
+
+
+# creates a new blank image
+# useful for installing from ISO files
+def create_blank_image(filename, size):
+
+    if check_is_linux():
+        rv = os.system("qemu-img create '" + filename + "' -f qcow2 " + size)
+    else:
+        print "VirtualBox isn't supported for this feature! (yet anyway, patches welcome)"
+        rv = 1
+
+    if rv == 0:
+        return True
+    else:
+        return False
+
+
+# simple wrapper around os library
+# should provide additional functionality for vBox environments
+def list_dir(directory):
+    return os.listdir(directory)
 
 
 def is_image_thin_provisioned(image_path):

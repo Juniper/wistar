@@ -3,8 +3,10 @@
   <memory unit='MiB'>{{ device.ram }}</memory>
   <vcpu placement='static'>{{ device.cpu }}</vcpu>
   <os>
-    <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
-    <boot dev='hd'/>
+      <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
+      <boot dev='hd'/>
+      <boot dev="cdrom"/>
+      <boot dev="network"/>
   </os>
   <features>
     <acpi/>
@@ -23,7 +25,7 @@
       <target dev='hda' bus='ide'/>
       <address type='drive' controller='0' bus='0' target='0' unit='0'/>
     </disk>
-{% if cloud_init_path %}
+
     <disk type='file' device='cdrom'>
       <driver name='qemu' type='raw'/>
       <source file='{{ cloud_init_path }}'/>
@@ -31,7 +33,7 @@
       <readonly/>
       <address type='drive' controller='0' bus='0' target='0' unit='1'/>
     </disk>
-{% endif %}
+
     <controller type='ide' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
     </controller>

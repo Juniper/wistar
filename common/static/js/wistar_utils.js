@@ -118,7 +118,7 @@
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
        
-        var cso = jQuery('<div/>').attr("id", "configTemplatesOverlay").addClass("screen-overlay");
+        var cso = jQuery('<div/>').attr("id", "overlay").addClass("screen-overlay");
 
         jQuery('#content').append(cso);
  
@@ -142,7 +142,7 @@
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
 
-        var cso = jQuery('<div/>').attr("id", "availableInstancesOverlay").addClass("screen-overlay");
+        var cso = jQuery('<div/>').attr("id", "overlay").addClass("screen-overlay");
 
         jQuery('#content').append(cso);
 

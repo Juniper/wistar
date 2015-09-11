@@ -3,12 +3,13 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 
-import common.lib.osUtils as ou
-import wistar.settings as settings
+from common.lib import osUtils
+from common.lib import libvirtUtils
+from wistar import settings
 
 from images.models import Image
 from images.models import ImageForm
-import common.lib.libvirtUtils as lu
+from images.models import ImageBlankForm
 
 
 # FIXME = debug should be a global setting
@@ -67,18 +68,63 @@ def create(request):
         image_form.save()
         return HttpResponseRedirect('/images')
     else:
-        context = {'error': "Form isn't valid!"}
-        return render(request, 'images/error.html', context)
+        context = {'image_form': image_form}
+        return render(request, 'images/new.html', context)
+
+
+def blank(request):
+    image_form = ImageBlankForm()
+    context = {'image_form': image_form}
+    return render(request, 'images/new_blank.html', context)
+
+
+def create_blank(request):
+    image_form = ImageBlankForm(request.POST)
+    print image_form
+    print str(image_form)
+    if image_form.is_valid():
+
+        name = request.POST["name"]
+        size = request.POST["size"]
+        description = request.POST["description"]
+
+        file_path = 'user_images/' + name
+
+        if ".img" not in file_path:
+            file_path += ".img"
+
+        full_path = settings.MEDIA_ROOT + "/" + file_path
+
+        if osUtils.create_blank_image(full_path, size + 'G'):
+
+            image = Image()
+            image.description = description
+            image.name = name
+            image.filePath = file_path
+            image.type = 'blank'
+            image.save()
+
+        # if not osUtils.checkPath(image_form.cleaned_data['path']):
+        # print "PATH DOESN'T EXIST"
+        # context = {'error' : "PATH DOESNT EXIST"}
+        #    return render(request, 'images/error.html', context)
+
+        print "Saving form"
+        # image_form.save()
+        return HttpResponseRedirect('/images')
+    else:
+        context = {'image_form': image_form}
+        return render(request, 'images/new_blank.html', context)
 
 
 def block_pull(request, uuid):
-    domain = lu.get_domain_by_uuid(uuid)
+    domain = libvirtUtils.get_domain_by_uuid(uuid)
     domain_name = domain.name()
-    image_path = lu.get_image_for_domain(domain.UUIDString())
+    image_path = libvirtUtils.get_image_for_domain(domain.UUIDString())
 
-    if ou.is_image_thin_provisioned(image_path):
+    if osUtils.is_image_thin_provisioned(image_path):
         print "Found thinly provisioned image, promoting..."
-        rv = lu.promote_instance_to_image(domain_name)
+        rv = libvirtUtils.promote_instance_to_image(domain_name)
 
         if rv is None:
             messages.info(request, "Image already promoted. Shut down the instance to perform a clone.")
@@ -96,13 +142,13 @@ def block_pull(request, uuid):
 
 def create_from_instance(request, uuid):
     print "Creating new image from instance"
-    domain = lu.get_domain_by_uuid(uuid)
+    domain = libvirtUtils.get_domain_by_uuid(uuid)
 
     print "got domain " + domain.name()
-    domain_image = lu.get_image_for_domain(uuid)
+    domain_image = libvirtUtils.get_image_for_domain(uuid)
     print "got domain_image: " + domain_image
 
-    if ou.is_image_thin_provisioned(domain_image):
+    if osUtils.is_image_thin_provisioned(domain_image):
         print "Cannot clone disk that is thinly provisioned! Please perform a block pull before continueing"
         context = {'error': "Cannot Clone thinly provisioned disk! Please perform a block pull!"}
         return render(request, 'images/error.html', context)
@@ -125,7 +171,7 @@ def create_from_instance(request, uuid):
     new_relative_image_path = images_dir + "/image_" + str(domain.UUIDString()) + ".img"
     new_full_image_path = full_path + "/image_" + str(domain.UUIDString()) + ".img"
 
-    if ou.check_path(new_full_image_path):
+    if osUtils.check_path(new_full_image_path):
         print "Image has already been cloned"
         context = {'error': "Instance has already been cloned!"}
         return render(request, 'images/error.html', context)
@@ -134,7 +180,7 @@ def create_from_instance(request, uuid):
 
     print "To " + new_full_image_path
 
-    ou.copy_image_to_clone(domain_image, new_full_image_path)
+    osUtils.copy_image_to_clone(domain_image, new_full_image_path)
 
     image = Image()
     image.name = "image_" + str(domain.UUIDString())

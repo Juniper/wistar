@@ -84,21 +84,41 @@ p {
 }
 
 #header{
-	padding: 10px 20px;
+	/* padding: 10px 20px; */
 }
-#header table {
+#header table, #header_nenu table {
 	width: 100%;
-	padding: 5px;
+	margin-bottom: 0px;
+	/* padding: 5px; */
 }
+
 #header table tr td {
 	text-align: left;
 	color: #333;
 	background-color: #c8c8c8;
+	border: 0px;
 }
+
 #header table tr td a {
 	color: #333;
-
 }
+
+#header_menu table tr td {
+	text-align: center;
+	color: #333;
+	background-color: #c8c8c8;
+	border-top: 1px solid #ddd;
+	border-bottom: 0px;
+}
+
+#header_menu table {
+    margin: 0px;
+}
+
+#header_menu table tr td a {
+	color: #333;
+}
+
 #content{
 	background: #fff;
 	clear: both;
@@ -122,10 +142,11 @@ table {
        width: 100%;
 }
 th {
-       border:0;
-       border-bottom:2px solid #555;
+       /* border:0; */
+       border-bottom:2px solid #c8c8c8;
        text-align: left;
-       padding:4px;
+       padding:6px;
+       padding-left: 10px;
 }
 th a {
        display: block;
@@ -139,9 +160,10 @@ th a.desc:after {
        content: ' ⇡';
 }
 table tr td {
-       padding: 4px;
+       padding: 5px;
+       padding-left: 10px;
        text-align: left;
-       vertical-align: top;
+       /* vertical-align: top; */
        border-bottom:1px solid #ddd;
 }
 table tr:nth-child(even) {

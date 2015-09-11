@@ -495,3 +495,60 @@ def get_image_for_domain(domain_id):
         return source_file
     else:
         return None
+
+
+def attach_iso_to_domain(domain_name, file_path):
+    try:
+        xml = """<disk type='file' device='cdrom'>
+          <driver name='qemu' type='raw'/>
+          <source file='{0:s}'/>
+          <target dev='hdc' bus='ide'/>
+          <readonly/>
+          <address type='drive' controller='0' bus='0' target='0' unit='1'/>
+        </disk>""".format(file_path)
+
+        print xml
+
+        domain = get_domain_by_name(domain_name)
+        domain.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        return True
+    except Exception as e:
+        print str(e)
+        return False
+
+
+def detach_iso_from_domain(domain_name):
+    try:
+        xml = """<disk type='file' device='cdrom'>
+          <driver name='qemu' type='raw'/>
+          <source file=''/>
+          <target dev='hdc' bus='ide'/>
+          <readonly/>
+          <address type='drive' controller='0' bus='0' target='0' unit='1'/>
+        </disk>"""
+
+        print xml
+
+        domain = get_domain_by_name(domain_name)
+        domain.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        return True
+    except Exception as e:
+        print str(e)
+        return False
+
+
+def get_iso_for_domain(domain_name):
+    """
+    :param domain_name: name of the domain
+    :return: the path to the iso file
+    """
+    domain = get_domain_by_name(domain_name)
+    xml = domain.XMLDesc(0)
+    doc = etree.fromstring(xml)
+    source_el = doc.find(".//disk[@device='cdrom']/source")
+    if source_el is not None:
+        source_file = source_el.get("file")
+        return source_file
+    else:
+        return None
+

@@ -804,7 +804,7 @@ def inline_deploy_topology(config):
                                                    'vm_env': vm_env}
                                                   )
                 else:
-                    cloud_init_path = None
+                    cloud_init_path = ''
                     if image.type == "linux":
                         # grab the last interface
                         management_interface = device["interfaces"][-1]["name"]
@@ -1128,6 +1128,58 @@ def launch_script(request):
 
     context = {'output': o}
     return render(request, 'ajax/scriptOutput.html', context)
+
+
+@csrf_exempt
+def manage_iso(request):
+
+    required_fields = set(['domainName', 'path', 'topologyId', 'action'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    domain_name = request.POST['domainName']
+    file_path = settings.MEDIA_ROOT + "/media/" + request.POST["path"]
+    action = request.POST["action"]
+
+    print domain_name
+    print file_path
+    if action == "attach":
+        if libvirtUtils.attach_iso_to_domain(domain_name, file_path):
+            context = {'result': "Success"}
+            print "iso attached to domain successfully"
+        else:
+            context = {'result': False}
+    else:
+        if libvirtUtils.detach_iso_from_domain(domain_name):
+            context = {'result': "Success"}
+            print "iso detached from domain successfully"
+        else:
+            context = {'result': False}
+
+    return HttpResponse(json.dumps(context), content_type="application/json")
+
+
+@csrf_exempt
+def list_isos(request):
+
+    required_fields = set(['domainName'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    domain_name = request.POST['domainName']
+    current_iso = libvirtUtils.get_iso_for_domain(domain_name)
+
+    dir_list = osUtils.list_dir(settings.MEDIA_ROOT + '/media')
+    print str(dir_list)
+
+    context = {
+        'media': dir_list,
+        'currentIso': current_iso,
+        'mediaDir': settings.MEDIA_ROOT + "/media",
+        'domainName': domain_name
+        }
+
+    return render(request, 'ajax/manageIso.html', context)
 
 
 

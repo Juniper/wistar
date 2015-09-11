@@ -42,4 +42,6 @@ urlpatterns = patterns('',
                        url(r'^getScripts/$', views.get_scripts, name='get_scripts'),
                        url(r'^pushScript/$', views.push_script, name='push_script'),
                        url(r'^launchScript/$', views.launch_script, name='launch_script'),
+                       url(r'^manageIso/$', views.manage_iso, name='manage_iso'),
+                       url(r'^listIso/$', views.list_isos, name='list_isos'),
                        )

@@ -561,7 +561,7 @@
 
         var ip = figure.getIp();
 
-        var cso = jQuery('<div/>').attr("id", "configTemplatesOverlay").addClass("screen-overlay");
+        var cso = jQuery('<div/>').attr("id", "overlay").addClass("screen-overlay");
 
         jQuery('#content').append(cso);
 
@@ -581,8 +581,8 @@
         });
     }
 
-    function closeConfigTemplateOverlay() {
-        var cto = jQuery('#configTemplatesOverlay');
+    function closeOverlay() {
+        var cto = jQuery('#overlay');
         cto.empty();
         cto.removeClass("screen-overlay");
         cto.remove();
@@ -631,7 +631,7 @@
         });
         post.always(function() {
             doc.css('cursor', '');
-            var cto = jQuery('#configTemplatesOverlay');
+            var cto = jQuery('#overlay');
             cto.empty();
             cto.removeClass("screen-overlay");
             cto.remove();
@@ -674,7 +674,7 @@
         });
         post.always(function() {
             doc.css('cursor', '');
-            var cto = jQuery('#configTemplatesOverlay');
+            var cto = jQuery('#overlay');
             cto.empty();
             cto.removeClass("screen-overlay");
             cto.remove();
@@ -697,7 +697,7 @@
 
         var ip = figure.getIp();
 
-        var cso = jQuery('<div/>').attr("id", "scriptSelectorOverlay").addClass("screen-overlay");
+        var cso = jQuery('<div/>').attr("id", "overlay").addClass("screen-overlay");
 
         jQuery('#content').append(cso);
 
@@ -715,15 +715,6 @@
         post.always(function() {
             doc.css('cursor' , '');
         });
-    }
-
-    function closeScriptSelectorOverlay() {
-        console.log('closing scripts overlay');
-
-        var cto = jQuery('#scriptSelectorOverlay');
-        cto.empty();
-        cto.removeClass("screen-overlay");
-        cto.remove();
     }
 
     function pushAndExecuteScript(scriptId) {
@@ -752,7 +743,7 @@
 
         var post = jQuery.post(url, params, function(response) {
             var content = jQuery(response);
-            var cto = jQuery('#scriptSelectorOverlay');
+            var cto = jQuery('#overlay');
             cto.empty()
             cto.append(content);
         });
@@ -882,7 +873,7 @@
             console.log(response);
             data = eval(response);
             console.log(data);
-            if (data["result"] == false) {
+            if (data["result"] == false || data["result"] == "false") {
                 if(data["message"] != undefined) {
                     alert(data['message']);
                 } else {
@@ -917,7 +908,7 @@
   
         var url = "/ajax/getJunosStartupState/";
 
-        if (type == "linux") { 
+        if (type == "linux") {
             url = "/ajax/getLinuxStartupState/";
         }
 
@@ -1256,7 +1247,18 @@
 
     function loadGenericIconEditor(figureId) {
         jQuery('#selectedObject').val(figureId);
+        var instance = canvas.getFigure(figureId);
+
+        console.log(instance.getLabel());
+        jQuery('#genericIconName').val(instance.getLabel());
+        jQuery('#genericIconIp').val(instance.getIp());
+        jQuery('#genericIconPass').val(instance.getPassword());
+        jQuery('#genericIconCpu').html(instance.getCpu());
+        jQuery('#genericIconRam').html(instance.getRam());
+        jQuery('#genericIconImage').html("<a href='/images/" + instance.getImage() + "'>Image Detail</a>");
+        
         hideAllEditors();
+        manuallyTogglePanel('genericIconEditor', '');
         currentSelection = "genericIconEditor";
     }
     
@@ -1283,6 +1285,59 @@
             currentSelection = "linuxIconEditor";
         }
     }
+
+
+    function manageIso(action, domainName, path) {
+        var url = "/ajax/manageIso/"
+        var params = {
+            'domainName' : domainName,
+            'path' : path,
+            'topologyId': '{{ topo.id }}',
+            'action': action
+        };
+
+        var post = jQuery.post(url, params, function(response) {
+            var data = eval(response);
+            closeOverlay();
+            if (data["result"] == "Success") {
+                alert("Operation Successful");
+            }
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+    }
+
+    function loadIsoManager() {
+        var doc = jQuery(document);
+        doc.css('cursor' , 'progress' );
+
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+
+        var domainName = generateDomainNameFromLabel(figure.getLabel());
+
+        var cso = jQuery('<div/>').attr("id", "overlay").addClass("screen-overlay");
+
+        jQuery('#content').append(cso);
+
+        var url = '/ajax/listIso/';
+        var params = {
+            'domainName' : domainName
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            cso.append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor' , '');
+        });
+    }
+
 
     function updateJunosIcon() {
         var instance = canvas.getFigure(jQuery('#selectedObject').val());
@@ -1477,9 +1532,9 @@
     </script>
 {% endblock %}
 {% block content %}
-    <table border="0" style="border: 1px solid #000">
+    <table border="0">
       <tr>
-        <td id="topoFormContainer" style="vertical-align: top; width: 450px;">
+        <td id="topoFormContainer" style="vertical-align: top; width: 450px; padding: 0px;">
           <form method="post" id="topoForm" name="topoForm" 
             action="{% url 'topologies:create' %}" method="POST">
             {% csrf_token %}
@@ -1843,7 +1898,66 @@
                 </td>
               </tr>
             </table>
-
+          </div>
+            <div id="genericIconEditor" style="display:none">
+            <table>
+              <th colspan="2">
+                 Instance Details
+              </th>
+              <tr>
+                <td>
+                   Name
+                </td>
+                <td>
+                  <input type="text" disabled="true" name="genericIconName" id="genericIconName" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                   IP Address
+                </td>
+                <td>
+                  <input type="text" disabled="true" title="management address" name="genericIconIp" id="genericIconIp" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                   Root Password
+                </td>
+                <td>
+                  <input type="text" disabled="true"
+                    name="genericIconPass" id="genericIconPass" value=""/>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                 VM Params
+                </td>
+                <td>
+                  vCPU: <div id="genericIconCpu" style="display: inline"></div>
+                  &nbsp;
+                  vRAM: <div id="genericIconRam" style="display: inline"></div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Base Image
+                </td>
+                <td>
+                  <div id="genericIconImage"></div>
+                </td>
+              </tr>
+            </table>
+            <table>
+              <th colspan="2">
+                Attach ISO file
+              </th>
+              <tr>
+                <td>
+                    <input type="button" onclick="javascript: loadIsoManager();" value="Manage Attached ISO">
+                </td>
+              </tr>
+            </table>
           </div>
           <div id="junosIconEditor" style="display:none">
             <table>
@@ -2155,7 +2269,7 @@
           </div>
           {% endif %}
         </td>
-        <td style="vertical-align: top">
+        <td style="vertical-align: top; padding-left: 2px;">
           <div id="gfx_holder" style="background-image: url({% static 'images/grid.png' %});
             background-repeat: repeat; 
             width:900px; 
