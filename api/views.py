@@ -274,6 +274,10 @@ def configure_topology(request):
                 else:
                     print "Skipping unknown object"
 
+        context["status"] = "configured"
+        context["message"] = "All sandbox nodes configured"
+        return HttpResponse(json.dumps(context), content_type="application/json")
+
     except ObjectDoesNotExist:
         context["status"] = "unknown"
         context["message"] = "Sandbox doesn't exist!"
