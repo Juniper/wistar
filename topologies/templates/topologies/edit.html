@@ -204,6 +204,36 @@
         jQuery.post(url, params, success);
     }
 
+    // get next available ip
+    function nextIp() {
+
+
+        var ipBox = jQuery('#topoIconIp');
+        var ip = ipBox.val();
+
+        var octets = ip.split('.');
+
+        // a little magic number safety
+        if (octets.length != 4) {
+            octets = ['192', '168', '122', ''];
+        }
+
+        var url = "/ajax/nextIp/";
+
+        var success = function(response) {
+            data = eval(response);
+
+            if (data["result"] == false) {
+                console.log("ip is not currently pingable");
+            } else {
+                octets[3] = data["result"];
+                ipBox.val(octets.join('.'));
+            }
+        };
+
+        jQuery.get(url, success);
+    }
+
     // used when a new instance is added to the topology
     // convenience func to increment the previously entered ip by 1
     // as wistar currently only supports a /24 for mgmt access

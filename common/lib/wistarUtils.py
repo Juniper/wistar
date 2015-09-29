@@ -291,7 +291,7 @@ def load_json(raw_json, topo_id):
 # all found management IPs to provide for some
 # small uniqueness protection. The right way to do this
 # would be to track all used management ips, but I would rather
-# each topology be a transient thing to be used and thrownaway
+# each topology be a transient thing to be used and throwaway
 def clone_topology(raw_json):
     json_data = json.loads(raw_json)
 

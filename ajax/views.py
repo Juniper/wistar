@@ -16,6 +16,7 @@ from common.lib import linuxUtils
 from common.lib import consoleUtils
 from common.lib import osUtils
 from common.lib import vboxUtils
+from api.lib import apiUtils
 from images.models import Image
 from scripts.models import ConfigTemplate
 from scripts.models import Script
@@ -322,9 +323,6 @@ def push_script(request):
         return render(request, 'ajax/scriptOutput.html', context)
 
 
-
-
-
 @csrf_exempt
 def sync_link_data(request):
     response_data = {"result": True}
@@ -517,6 +515,14 @@ def check_ip(request):
     response_data = {"result": ip_exists}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
+
+@csrf_exempt
+def get_available_ip(request):
+    # just grab the next available IP
+    all_used_ips = apiUtils.get_used_ips()
+    next_ip = apiUtils.get_next_ip(all_used_ips, 2)
+    response_data = {"result": next_ip}
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 @csrf_exempt
 def manage_domain(request):

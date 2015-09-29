@@ -13,5 +13,5 @@ urlpatterns = patterns('',
                        url(r'^ajax/', include('ajax.urls', namespace="ajax")),
                        url(r'^webConsole/', include('webConsole.urls', namespace="webConsole")),
                        url(r'^scripts/', include('scripts.urls', namespace="scripts")),
-                       url(r'^admin/', include(admin.site.urls)),
+                       url(r'^api/', include('api.urls', namespace="api")),
                        )

@@ -40,6 +40,8 @@ def set_interface_ip_address(ip, username, pw, interface, interface_ip):
     return True
 
 
+# create a script on the remote host at the destination given with the
+# given script contents
 def push_remote_script(ip, username, pw, script_text, script_destination):
 
     try:
