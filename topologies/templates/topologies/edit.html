@@ -205,6 +205,9 @@
     }
 
     // get next available ip
+    // FIXME - does not try to wrap around subnets
+    // FIXME - always assume KVM default subnet
+    // FIXME - doesn't account for IPs used in this topology already!
     function nextIp() {
 
 
@@ -1670,7 +1673,10 @@
                 <td>
                   <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value="192.168.122."
                          title="Choose an IP from the 192.168.122.0/24 range"
-                         onblur="javascript: checkIp();"/>
+                         onblur="javascript: checkIp();" style="width: 85%"/>
+                  <input type="button" name="next_ip_button" id="next_ip_button" 
+                    value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
+                    title="Find next available IP address"/>
                 </td>
               </tr>
               <tr>
@@ -1688,7 +1694,8 @@
                   Instance Name
                 </td>
                 <td>
-                  <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value=""/>
+                  <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value="" 
+                        onblur="javascript: clean_string(this);"/>
                 </td>
               </tr>
               <tr>

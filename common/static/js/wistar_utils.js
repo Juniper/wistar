@@ -183,3 +183,16 @@
         setCursor();
         window.location = url;
     }
+
+    function clean_string(input_object) {
+        var input_string = input_object.value;
+    
+        //  remove all non alpha numeric
+        var first_pass = input_string.replace(/[^a-zA-Z0-9_\ ]/g, "");
+        console.log(first_pass);
+        var second_pass = first_pass.replace(/\s+/g, " ");
+        console.log(second_pass);
+        var third_pass = second_pass.replace(/\s+$/, "");
+        input_object.value = third_pass;
+    }
+    
