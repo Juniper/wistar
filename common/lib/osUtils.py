@@ -150,12 +150,20 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
             print "seed.img already created!"
             return seed_img_name
  
-        # read template 
-        meta_data_template = open('./common/templates/cloud_init_meta_data')
+        # read template
+        this_path = os.path.abspath(os.path.dirname(__file__))
+        meta_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_meta_data"))
+        user_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_user_data"))
+
+        print meta_data_template_path
+
+        print user_data_template_path
+
+        meta_data_template = open(meta_data_template_path)
         meta_data_template_string = meta_data_template.read()
         meta_data_template.close()
 
-        user_data_template = open('./common/templates/cloud_init_user_data')
+        user_data_template = open(user_data_template_path)
         user_data_template_string = user_data_template.read()
         user_data_template.close()
 
