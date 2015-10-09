@@ -772,6 +772,9 @@ def inline_deploy_topology(config):
     vm_env = dict()
     vm_env["emulator"] = "/usr/libexec/qemu-kvm"
     vm_env["pcType"] = "rhel6.5.0"
+    # possible values for 'cache' are 'none' (default) and 'writethrough'. Use writethrough if you want to
+    # mount the instances directory on a glusterFs or tmpfs volume. This might make sense if you have tons of RAM
+    # and want to alleviate IO issues. If in doubt, leave it as 'none'
     vm_env["cache"] = "none"
     if osUtils.check_is_linux() and osUtils.check_is_ubuntu():
         vm_env["emulator"] = "/usr/bin/kvm-spice"
