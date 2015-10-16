@@ -106,7 +106,10 @@ def create_blank_image(filename, size):
 # simple wrapper around os library
 # should provide additional functionality for vBox environments
 def list_dir(directory):
-    return os.listdir(directory)
+    if os.path.isdir(directory):
+        return os.listdir(directory)
+    else:
+        return []
 
 
 def is_image_thin_provisioned(image_path):

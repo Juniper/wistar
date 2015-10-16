@@ -122,7 +122,7 @@ def start_topology(request):
     """
     context = {"status": "unknown"}
 
-    required_fields = set(['topology_name', 'clone_id'])
+    required_fields = set(['topology_name', 'clone_id', 'script_id', 'script_param'])
     if not required_fields.issubset(request.POST):
         context["status"] = "unknown"
         context["message"] = "Invalid parameters in POST"
@@ -130,6 +130,8 @@ def start_topology(request):
 
     topology_name = request.POST['topology_name']
     clone_id = request.POST['clone_id']
+    script_id = request.POST['script_id']
+    script_param = request.POST['script_param']
 
     try:
         # get the topology by name
@@ -158,6 +160,9 @@ def start_topology(request):
                 ip_octets[3] = str(next_ip)
                 newIp = ".".join(ip_octets)
                 ud["ip"] = newIp
+
+                ud["configScriptId"] = script_id
+                ud["configScriptParam"] = script_param
 
         topo = Topology(name=topology_name, description="Sandbox Clone from " + clone_id, json=json.dumps(raw_json))
         topo.save()
