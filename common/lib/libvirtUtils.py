@@ -542,7 +542,13 @@ def get_iso_for_domain(domain_name):
     :param domain_name: name of the domain
     :return: the path to the iso file
     """
-    domain = get_domain_by_name(domain_name)
+    try:
+        domain = get_domain_by_name(domain_name)
+    except Exception as e:
+        print "Domain not configured"
+        print str(e)
+        return None
+
     xml = domain.XMLDesc(0)
     doc = etree.fromstring(xml)
     source_el = doc.find(".//disk[@device='cdrom']/source")

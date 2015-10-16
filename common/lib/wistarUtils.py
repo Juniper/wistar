@@ -64,6 +64,14 @@ def load_json(raw_json, topo_id):
             device["type"] = user_data["type"]
             device["ip"] = user_data["ip"]
 
+            device["configScriptId"] = 0
+            device["configScriptParam"] = 0
+
+            if "configScriptId" in user_data:
+                print "Found a configScript to use!"
+                device["configScriptId"] = user_data["configScriptId"]
+                device["configScriptParam"] = user_data["configScriptParam"]
+
             # sanity check in case this is an old topology without these keys
             # keys introduced in 20150306
             # set sensible defaults

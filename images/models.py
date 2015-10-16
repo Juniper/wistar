@@ -1,5 +1,6 @@
 from django.db import models
 from django.forms import ModelForm
+from django.forms import widgets
 from django import forms
 
 
@@ -31,3 +32,4 @@ class ImageBlankForm(ModelForm):
     class Meta:
         model = Image
         fields = ['name', 'size', 'description']
+        widgets = {'name': widgets.TextInput(attrs={'onblur': 'javascript: return clean_string_no_space(this);'})}

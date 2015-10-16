@@ -820,9 +820,20 @@ def inline_deploy_topology(config):
                         # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
                         management_ip = device["ip"] + "/24"
                         # domain_name, host_name, mgmt_ip, mgmt_interface
+                        script_string = ""
+                        script_param = ""
+                        if device["configScriptId"] != 0:
+                            print "Passing script data!"
+                            script = Script.objects.get(pk=int(device["configScriptId"]))
+                            script_string = script.script
+                            script_param = device["configScriptParam"]
+                            print script_string
+                            print script_param
+
                         print "Creating cloud init path for linux image"
                         cloud_init_path = osUtils.create_cloud_init_img(device["name"], device["label"],
-                                                                   management_ip, management_interface, device["password"])
+                                                                        management_ip, management_interface,
+                                                                        device["password"], script_string, script_param)
 
                         print cloud_init_path
                     device_xml = render_to_string(domain_xml_path + "domain.xml",

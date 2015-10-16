@@ -10,3 +10,18 @@ ssh_pwauth: True
 runcmd:
     - sed -i'.orig' -e's/without-password/yes/' /etc/ssh/sshd_config
     - service ssh restart
+    - echo "auto {{ config.mgmt_interface }}" > /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - echo "iface {{ config.mgmt_interface }} inet static" >> /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - echo "address {{ config.ip_address }}" >> /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - echo "network {{ config.network_address }} " >> /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - echo "netmask {{ config.netmask }}" >> /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - echo "broadcast {{ config.broadcast_address }}" >> /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - echo "gateway 192.168.122.1" >> /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - echo "dns-nameservers 8.8.8.8" >> /etc/network/interfaces.d/{{ config.mgmt_interface }}.cfg
+    - ifdown {{ config.mgmt_interface }} && ifup {{ config.mgmt_interface }}
+
+
+
+
+
+

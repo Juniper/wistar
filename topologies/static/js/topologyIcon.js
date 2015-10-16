@@ -53,6 +53,8 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
 		this.setLabel(label);
 		this.setCpu(cpu);
 		this.setRam(ram);
+		this.setConfigScriptId(0);
+		this.setConfigScriptParam(0);
     },
     setBootState: function(state) {
         this.bootState = state;
@@ -166,6 +168,20 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     getLabel: function() {
     	return this.getUserData()["label"];
     },
+    setConfigScriptId: function(id) {
+    	var ud = this.getUserData();
+    	ud["configScriptId"] = id;
+    },
+    getConfigScriptId: function() {
+    	return this.getUserData()["configScriptId"];
+    },
+    setConfigScriptParam: function(p) {
+    	var ud = this.getUserData();
+    	ud["configScriptParam"] = p;
+    },
+    getConfigScriptParameter: function() {
+    	return this.getUserData()["configScriptParam"];
+    },
     setPersistentAttributes: function(memento) {
     	this._super(memento);
     	this.setLabel(memento.userData.label);
@@ -192,10 +208,9 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     onDoubleClick: function() {
         return;
     },
-    // GONEZO
+    // FIXME!
     onContextMenuOLD: function(x, y) {
-        // FIXME - add other junos types here as well
-        if(this.getType() == "junos_vmx") {
+        if(this.getType() == "junos_vmx" || this.getType() == "junos_vmx_p2") {
             items = {
                 "getStartupState": {
                     name: "Get Bootup State"
@@ -206,9 +221,6 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
                 "configInterfaces": {
                     name: "Configure Interfaces"
                 },
-                //"getConfig": {
-                //    name: "Dump Config"
-                //},
                 "delete": {
                     name: "Delete"
                 }

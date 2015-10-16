@@ -1,11 +1,2 @@
 instance-id: 0001
-network-interfaces: |
-  auto {{ config.mgmt_interface }}
-  iface {{ config.mgmt_interface }} inet static
-  address {{ config.ip_address }}
-  network {{ config.network_address }} 
-  netmask {{ config.netmask }}
-  broadcast {{ config.broadcast_address }}
-  gateway 192.168.122.1
-  dns-nameservers 8.8.8.8
 hostname: {{ config.hostname }}

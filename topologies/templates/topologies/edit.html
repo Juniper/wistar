@@ -209,8 +209,6 @@
     // FIXME - always assume KVM default subnet
     // FIXME - doesn't account for IPs used in this topology already!
     function nextIp() {
-
-
         var ipBox = jQuery('#topoIconIp');
         var ip = ipBox.val();
 
@@ -292,6 +290,10 @@
     	var cpu = jQuery('#topoIconCpu').val();
     	var ram = jQuery('#topoIconRam').val();
     	var iconData = jQuery('#topoIconIcon').val();
+
+    	var scriptId = jQuery('#topoIconScriptSelect').val();
+    	var scriptParam = jQuery('#topoIconScriptParam').val();
+
        
         if (ip == "") {
             alert("Please add a valid IP address");
@@ -310,7 +312,11 @@
         
     	var canvas_object = new draw2d.shape.node.topologyIcon(iconPath, width, height);
         canvas_object.setup(type, name, ip, pw, image, cpu, ram);
-            	console.log(lastX + " " + lastY);
+
+        if (scriptId != "0") {
+            canvas_object.setConfigScriptId(scriptId);
+            canvas_object.setConfigScriptParam(scriptParam);
+        }
 
     	lastX += 0;
     	lastY += 100;
@@ -326,9 +332,30 @@
     	console.log("adding " + lastX + " " + lastY);
 	    canvas.addFigure(canvas_object, lastX, lastY);
 
+        // testing!
+
+	    //if(type == "junos_vmx_p2") {
+        //    console.log('Configuring phase 2 vmx');
+        //    canvas_object.setLabel(name + "_re0");
+        //    canvas_object.ipLabel.text = "";
+
+        //    var vmx_fpc = new draw2d.shape.node.topologyIcon(iconPath, width, height);
+        //    vmx_fpc.setup(type, name + "_fpc0", ip, pw, image, "2", "2048");
+        //    canvas.addFigure(vmx_fpc, lastX, lastY + 75);
+        //    figures = new draw2d.util.ArrayList([canvas_object, vmx_fpc]);
+        //    var cg = new draw2d.command.CommandGroup(canvas, figures);
+
+        //    cg.execute();
+
+        //}
+        //console.log(type);
+
         // let's try to increment everything nicely
     	jQuery('#topoIconIp').val(incrementIconIp(ip));
     	jQuery('#topoIconName').val(incrementIconName(name));
+
+    	jQuery('#topoIconScriptSelect').val(0);
+    	jQuery('#topoIconScriptParam').val(0);
     }
 
     function addLabel() {
@@ -377,6 +404,12 @@
     function updateTopology() {
         alert('You may need to redeploy this topology after this update!');
 	    exportJson();
+	    jQuery('#topoForm').submit();
+    }
+
+    // export and submit form
+    function updateDebug() {
+	    jQuery('#json').val(jQuery('#debug').val());
 	    jQuery('#topoForm').submit();
     }
 
@@ -451,6 +484,13 @@
         console.log("Setting image to " + id + " and type to " + type);
         jQuery('#topoIconType').val(type);
         jQuery('#topoIconImage').val(id);
+
+        if (type == "linux") {
+            jQuery('#addInstanceTbodyCloudInit').css("display", "");
+        } else {
+            jQuery('#addInstanceTbodyCloudInit').css("display", "none");
+        }
+
     }
 
     // get the name that was used to create the vm instance
@@ -1334,6 +1374,8 @@
             closeOverlay();
             if (data["result"] == "Success") {
                 alert("Operation Successful");
+            } else {
+                alert("Could not manage iso!");
             }
         });
         post.fail(function() {
@@ -1662,107 +1704,138 @@
           {% if topo_id == None %}
 
           <div id="addInstanceForm">
-
             <br/>
             <h3>Add Instance</h3>
-            <table>
-              <tr>
-                <td>
-                  IP Address
-                </td>
-                <td>
-                  <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value="192.168.122."
-                         title="Choose an IP from the 192.168.122.0/24 range"
-                         onblur="javascript: checkIp();" style="width: 85%"/>
-                  <input type="button" name="next_ip_button" id="next_ip_button" 
-                    value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
-                    title="Find next available IP address"/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Root Password
-                </td>
-                <td>
-                  <input type="text" size="15" maxsize="15"
-                    name="topoIconPass" id="topoIconPass" value="" 
-                    onblur="javascript: checkPass(this.value);"/> 
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Instance Name
-                </td>
-                <td>
-                  <input type="text" size="15" maxsize="15" name="topoIconName" id="topoIconName" value="" 
-                        onblur="javascript: clean_string(this);"/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Base Image
-                </td>
-                <td>
-                  <select name="topoIconImageSelect" id="topoIconImageSelect" onchange="javascript: setImageType();">
-                    <option value="0">Choose Image</option>
-                    <!-- not a better way to do this? -->
-                    {% for i in image_list %}
-                    <option value="{{ i.id }}:{{i.type}}">{{ i.name }}</option>
-                    {% endfor %}
-                  </select>
-                  <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
-                  <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  vCPU
-                </td>
-                <td>
-                  <select name="topoIconCpu" id="topoIconCpu">
-                    <option value="1">1</option>
-                    <option value="2" selected>2</option>
-                    <option value="4">4</option>
-                    <option value="8">8</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  vRAM
-                </td>
-                <td>
-                  <select name="topoIconRam" id="topoIconRam">
-                    <option value="512">512</option>
-                    <option value="768">768</option>
-                    <option value="1024">1024</option>
-                    <option value="2048" selected>2048</option>
-                    <option value="4096">4096</option>
-                    <option value="8192">8192</option>
-                    <option value="16384">16384</option>
-                  </select> MB
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Icon
-                </td>
-                <td>
-                  <select name="topoIconIcon" id="topoIconIcon">
-                    <option value="mx_large:50:60">MX Large</option>
-                    <option value="mx_small:50:40">MX Small</option>
-                    <option value="firefly:40:40">Firefly</option>
-                    <option value="router:40:40">Generic Router</option>
-                    <option value="server:25:50">Generic Server</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <input type="button" onclick="javascript: addIcon();" value="Add Instance"/>
-                </td>
-              </tr>
-            </table>
+              <table>
+                  <tbody id="addInstanceTbody">
+                  <tr>
+                      <td>
+                          IP Address
+                      </td>
+                      <td>
+                          <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value="192.168.122."
+                                 title="Choose an IP from the 192.168.122.0/24 range"
+                                 onblur="javascript: checkIp();" style="width: 85%"/>
+                          <input type="button" name="next_ip_button" id="next_ip_button"
+                                 value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
+                                 title="Find next available IP address"/>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          Root Password
+                      </td>
+                      <td>
+                          <input type="text" size="15" maxsize="15"
+                                 name="topoIconPass" id="topoIconPass" value=""
+                                 onblur="javascript: checkPass(this.value);"/>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          Instance Name
+                      </td>
+                      <td>
+                          <input type="text" size="15" name="topoIconName" id="topoIconName" value=""
+                                 onblur="javascript: clean_string(this);"/>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          Base Image
+                      </td>
+                      <td>
+                          <select name="topoIconImageSelect" id="topoIconImageSelect" onchange="javascript: setImageType();">
+                              <option value="0">Choose Image</option>
+                              <!-- not a better way to do this? -->
+                              {% for i in image_list %}
+                              <option value="{{ i.id }}:{{i.type}}">{{ i.name }}</option>
+                              {% endfor %}
+                          </select>
+
+                      </td>
+                  </tr>
+                  </tbody>
+                  <tbody id="addInstanceTbodyAdvanced">
+                  <tr>
+                      <td>
+                          vCPU
+                      </td>
+                      <td>
+                          <select name="topoIconCpu" id="topoIconCpu">
+                              <option value="1">1</option>
+                              <option value="2" selected>2</option>
+                              <option value="4">4</option>
+                              <option value="8">8</option>
+                          </select>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          vRAM
+                      </td>
+                      <td>
+                          <select name="topoIconRam" id="topoIconRam">
+                              <option value="512">512</option>
+                              <option value="768">768</option>
+                              <option value="1024">1024</option>
+                              <option value="2048" selected>2048</option>
+                              <option value="4096">4096</option>
+                              <option value="8192">8192</option>
+                              <option value="16384">16384</option>
+                          </select> MB
+                      </td>
+                  </tr>
+                  </tbody>
+                  <tbody id="addInstanceTbodyCloudInit" style="display: none">
+                  <tr>
+                      <td>
+                          Cloud-Init Script
+                      </td>
+                      <td>
+                          <select name="topoIconScriptSelect" id="topoIconScriptSelect">
+                              <option value="0">Choose cloud-init script</option>
+                              <!-- not a better way to do this? -->
+                              {% for s in script_list %}
+                              <option value="{{ s.id }}">{{ s.name }}</option>
+                              {% endfor %}
+                          </select>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          Cloud-Init Param
+                      </td>
+                      <td>
+                          <input type="text" size="15" name="topoIconScriptParam" id="topoIconScriptParam" value="0"
+                                 onblur="javascript: clean_string_no_special(this);"/>
+                      </td>
+                  </tr>
+                  </tbody>
+                  <tbody id="addInstanceTbodyAdd">
+                  <tr>
+                      <td>
+                          Icon
+                      </td>
+                      <td>
+                          <select name="topoIconIcon" id="topoIconIcon">
+                              <option value="mx_large:50:60">MX Large</option>
+                              <option value="mx_small:50:40">MX Small</option>
+                              <option value="firefly:40:40">Firefly</option>
+                              <option value="router:40:40">Generic Router</option>
+                              <option value="server:25:50">Generic Server</option>
+                          </select>
+                          <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
+                          <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td colspan="2">
+                          <input type="button" onclick="javascript: addIcon();" value="Add Instance"/>
+                      </td>
+                  </tr>
+                  </tbody>
+              </table>
             <br/>
             <h3>Add Object</h3>
             <table>
@@ -1843,54 +1916,63 @@
           </div>
               {% endif %}
           <div id="linuxIconEditor" style="display:none">
-            <table>
-              <th colspan="2">
-                 Instance Details
-              </th>
-              <tr>
-                <td>
-                   Name
-                </td>
-                <td>
-                  <input type="text" disabled="true" name="linuxIconName" id="linuxIconName" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                   IP Address
-                </td>
-                <td>
-                  <input type="text" disabled="true" title="management address" name="linuxIconIp" id="linuxIconIp" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                   Root Password
-                </td>
-                <td>
-                  <input type="text" disabled="true"
-                    name="linuxIconPass" id="linuxIconPass" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                 VM Params
-                </td>
-                <td>
-                  vCPU: <div id="linuxIconCpu" style="display: inline"></div>
-                  &nbsp;
-                  vRAM: <div id="linuxIconRam" style="display: inline"></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Base Image
-                </td>
-                <td>
-                  <div id="linuxIconImage"></div>
-                </td>
-              </tr>
-            </table>
+              <table>
+                  <th colspan="2">
+                      Instance Details
+                  </th>
+                  <tr>
+                      <td>
+                          Name
+                      </td>
+                      <td>
+                          <input type="text" disabled="true" name="linuxIconName" id="linuxIconName" value=""/>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          IP Address
+                      </td>
+                      <td>
+                          <input type="text" disabled="true" title="management address" name="linuxIconIp" id="linuxIconIp" value=""/>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          Root Password
+                      </td>
+                      <td>
+                          <input type="text" disabled="true"
+                                 name="linuxIconPass" id="linuxIconPass" value=""/>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          VM Params
+                      </td>
+                      <td>
+                          vCPU: <div id="linuxIconCpu" style="display: inline"></div>
+                          &nbsp;
+                          vRAM: <div id="linuxIconRam" style="display: inline"></div>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td>
+                          Base Image
+                      </td>
+                      <td>
+                          <div id="linuxIconImage"></div>
+                      </td>
+                  </tr>
+
+                  <tr>
+                      <td>
+                          Cloud-Init / CDROM
+                      </td>
+                      <td>
+                          <input type="button" onclick="javascript: loadIsoManager();" value="Manage Attached ISO">
+                      </td>
+                  </tr>
+              </table>
             <table>
               <th colspan="2">
                  Execute cli

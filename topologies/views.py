@@ -14,6 +14,7 @@ import common.lib.libvirtUtils as lu
 import common.lib.junosUtils as ju
 import common.lib.osUtils as ou
 from images.models import Image
+from scripts.models import Script
 import time
 # mild hack alert
 from ajax import views as av
@@ -31,7 +32,8 @@ def index(request):
 
 def edit(request):
     image_list = Image.objects.all().order_by('name')
-    context = {'image_list': image_list}
+    script_list = Script.objects.all().order_by('name')
+    context = {'image_list': image_list, 'script_list': script_list}
     return render(request, 'topologies/edit.html', context)
 
 
@@ -154,12 +156,12 @@ def delete(request, topology_id):
     topology_prefix = "t%s_" % topology_id
     network_list = lu.get_networks_for_topology(topology_prefix)
     for network in network_list:
-        print "undefining network: " + network["name"]
+        print "undefine network: " + network["name"]
         lu.undefine_network(network["name"])
 
     domain_list = lu.get_domains_for_topology(topology_prefix)
     for domain in domain_list:
-        print "undefining domain: " + domain["name"]
+        print "undefine domain: " + domain["name"]
         source_file = lu.get_image_for_domain(domain["uuid"])
         if lu.undefine_domain(domain["uuid"]):
             if source_file is not None:
@@ -167,6 +169,7 @@ def delete(request, topology_id):
 
     topology = get_object_or_404(Topology, pk=topology_id)
     topology.delete()
+    ou.remove_cloud_init_tmp_dirs(topology_prefix)
     return HttpResponseRedirect('/topologies/')
 
 

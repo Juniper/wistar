@@ -17,7 +17,7 @@ debug = True
 
 
 def index(request):
-    image_list = Image.objects.all().order_by('modified')
+    image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list}
     return render(request, 'images/index.html', context)
 

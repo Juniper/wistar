@@ -137,7 +137,7 @@ def remove_instance(instance_path):
         return False
 
 
-def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, password):
+def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, password, script="", script_param=""):
  
     try: 
         seed_dir = "/tmp/" + domain_name
@@ -163,9 +163,12 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         meta_data_template_string = meta_data_template.read()
         meta_data_template.close()
 
-        user_data_template = open(user_data_template_path)
-        user_data_template_string = user_data_template.read()
-        user_data_template.close()
+        if script == "":
+            user_data_template = open(user_data_template_path)
+            user_data_template_string = user_data_template.read()
+            user_data_template.close()
+        else:
+            user_data_template_string = script
 
         env = Environment()
         meta_data = env.from_string(meta_data_template_string)
@@ -173,7 +176,7 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         
         ip_network = IPNetwork(mgmt_ip)
     
-        config = {}
+        config = dict()
         config["hostname"] = host_name
         config["ip_address"] = ip_network.ip.format()
         config["broadcast_address"] = ip_network.broadcast.format()
@@ -181,6 +184,9 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         config["netmask"] = ip_network.netmask.format()
         config["mgmt_interface"] = mgmt_interface
         config["password"] = password
+
+        if script_param != "":
+            config["param"] = script_param
     
         meta_data_string = meta_data.render(config=config)
         user_data_string = user_data.render(config=config)
@@ -208,3 +214,25 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
     except Exception as e:
         print "Caught exception in create_cloud_init_img " + str(e)
         return None
+
+
+def remove_cloud_init_tmp_dirs(topology_prefix):
+    print "deleting cloud config drive for %s" % topology_prefix
+    seed_dir = '/tmp'
+    dirs = os.listdir(seed_dir)
+    try:
+        for d in dirs:
+            full_path = os.path.join(seed_dir, d)
+            print "checking %s" % d
+            if topology_prefix in d and os.path.isdir(full_path):
+                print "we found a domain config dir at %s" % full_path
+                for f in os.listdir(full_path):
+                    print "deleting cloud-init file: %s" % f
+                    os.remove(os.path.join(full_path, f))
+
+                print "removing dir %s" % d
+                os.rmdir(full_path)
+
+    except Exception as e:
+        # smother error
+        print str(e)
