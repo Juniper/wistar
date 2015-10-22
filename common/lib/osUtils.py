@@ -180,6 +180,7 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         ip_network = IPNetwork(mgmt_ip)
     
         config = dict()
+        config["domain_name"] = domain_name
         config["hostname"] = host_name
         config["ip_address"] = ip_network.ip.format()
         config["broadcast_address"] = ip_network.broadcast.format()

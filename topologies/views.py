@@ -1,18 +1,20 @@
 import json
 
 from django.shortcuts import render, get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
+from django.template.loader import render_to_string
 
 from topologies.models import Topology
 from topologies.models import ConfigSet
 from topologies.models import Config
 from topologies.forms import ImportForm
-import common.lib.wistarUtils as wu
-import common.lib.libvirtUtils as lu
-import common.lib.junosUtils as ju
-import common.lib.osUtils as ou
+from common.lib import wistarUtils
+from common.lib import libvirtUtils
+from common.lib import junosUtils
+from common.lib import osUtils
 from images.models import Image
 from scripts.models import Script
 import time
@@ -103,7 +105,7 @@ def clone(request, topo_id):
     topology = get_object_or_404(Topology, pk=topo_id)
     orig_name = topology.name
     topology.name = "Clone of " + orig_name
-    topology.json = wu.clone_topology(topology.json)
+    topology.json = wistarUtils.clone_topology(topology.json)
     topology.id = 0
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo': topology}
@@ -125,7 +127,7 @@ def multi_clone(request):
         new_topo = topology
         orig_name = topology.name
         new_topo.name = orig_name
-        new_topo.json = wu.clone_topology(json)
+        new_topo.json = wistarUtils.clone_topology(json)
         json = new_topo.json
         new_topo.id = None
         new_topo.save()
@@ -142,9 +144,15 @@ def parent(request, domain_name):
 
 
 def detail(request, topo_id):
-    topology = get_object_or_404(Topology, pk=topo_id)
-    domain_list = lu.get_domains_for_topology("t" + topo_id)
-    network_list = lu.get_networks_for_topology("t" + topo_id)
+    print "getting topology %s" % topo_id
+    try:
+        topology = Topology.objects.get(pk=topo_id)
+    except ObjectDoesNotExist:
+        print "not found!"
+        return render(request, 'error.html', {'error': "Topology not found!"})
+
+    domain_list = libvirtUtils.get_domains_for_topology("t" + topo_id)
+    network_list = libvirtUtils.get_networks_for_topology("t" + topo_id)
     config_sets = ConfigSet.objects.filter(topology=topology)
     context = {'domain_list': domain_list, 'network_list': network_list, 'topo_id': topo_id,
                'configSets': config_sets, 'topo': topology}
@@ -154,27 +162,27 @@ def detail(request, topo_id):
 def delete(request, topology_id):
 
     topology_prefix = "t%s_" % topology_id
-    network_list = lu.get_networks_for_topology(topology_prefix)
+    network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
     for network in network_list:
         print "undefine network: " + network["name"]
-        lu.undefine_network(network["name"])
+        libvirtUtils.undefine_network(network["name"])
 
-    domain_list = lu.get_domains_for_topology(topology_prefix)
+    domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
     for domain in domain_list:
         print "undefine domain: " + domain["name"]
-        source_file = lu.get_image_for_domain(domain["uuid"])
-        if lu.undefine_domain(domain["uuid"]):
+        source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
+        if libvirtUtils.undefine_domain(domain["uuid"]):
             if source_file is not None:
-                ou.remove_instance(source_file)
+                osUtils.remove_instance(source_file)
 
     topology = get_object_or_404(Topology, pk=topology_id)
     topology.delete()
-    ou.remove_cloud_init_tmp_dirs(topology_prefix)
+    osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
     return HttpResponseRedirect('/topologies/')
 
 
 def error(request, message):
-    return render(request, 'topologies/error.html', {'error_message': message})
+    return render(request, 'error.html', {'error_message': message})
 
 
 def create(request):
@@ -196,7 +204,7 @@ def create(request):
             url += str(t.id)
 
     except KeyError:
-        return render(request, 'topologies/error.html', { 
+        return render(request, 'error.html', { 
             'error_message': "Invalid data in POST"
         })
     else:
@@ -220,7 +228,7 @@ def create_config_set(request):
 
     topology = get_object_or_404(Topology, pk=topology_id)
     # let's parse the json and convert to simple lists and dicts
-    config = wu.load_json(topology.json, topology_id)
+    config = wistarUtils.load_json(topology.json, topology_id)
 
     c = ConfigSet(name=name, description=description, topology=topology)
     c.save()
@@ -228,7 +236,7 @@ def create_config_set(request):
     for device in config["devices"]:
         if device["type"] == "junos_vmx" or device["type"] == "junos_firefly":
             try:
-                device_config = ju.get_config(device["ip"], device["password"])
+                device_config = junosUtils.get_config(device["ip"], device["password"])
 
                 cfg = Config(ip=device["ip"], name=device["name"], password=device["password"],
                              deviceConfig=device_config, configSet=c)
@@ -244,12 +252,12 @@ def launch(request, topology_id):
     topology = dict()
     try:
         topology = Topology.objects.get(pk=topology_id)
-    except Exception as ex:
+    except ObjectDoesNotExist as ex:
         print ex
-        return render(request, 'topologies/error.html', {'error': "Topology not found!"})
+        return render(request, 'error.html', {'error': "Topology not found!"})
 
     # let's parse the json and convert to simple lists and dicts
-    config = wu.load_json(topology.json, topology_id)
+    config = wistarUtils.load_json(topology.json, topology_id)
 
     try:
         print "Deploying topology: %s" % topology_id
@@ -258,33 +266,58 @@ def launch(request, topology_id):
         # than utility and view layers ... unless I want to mix utility libs
         av.inline_deploy_topology(config)
     except Exception as e:
-        return render(request, 'topologies/error.html', {'error': str(e)})
+        return render(request, 'error.html', {'error': str(e)})
 
-    domain_list = lu.get_domains_for_topology("t%s_" % topology_id)
+    domain_list = libvirtUtils.get_domains_for_topology("t%s_" % topology_id)
     network_list = []
 
-    if ou.check_is_linux():
-        network_list = lu.get_networks_for_topology("t%s_" % topology_id)
+    if osUtils.check_is_linux():
+        network_list = libvirtUtils.get_networks_for_topology("t%s_" % topology_id)
 
     for network in network_list:
         print "Starting network: " + network["name"]
-        if lu.start_network(network["name"]):
+        if libvirtUtils.start_network(network["name"]):
             time.sleep(1)
         else:
-            return render(request, 'topologies/error.html', {'error': "Could not start network: " + network["name"]})
+            return render(request, 'error.html', {'error': "Could not start network: " + network["name"]})
 
     num_domains = len(domain_list)
     iter_counter = 1
     for domain in domain_list:
         print "Starting domain " + domain["name"]
-        if lu.start_domain(domain["uuid"]):
+        if libvirtUtils.start_domain(domain["uuid"]):
             if iter_counter < num_domains:
                 time.sleep(1)
             iter_counter += 1
         else:
-            return render(request, 'topologies/error.html', {'error': "Could not start domain: " + domain["name"]})
+            return render(request, 'error.html', {'error': "Could not start domain: " + domain["name"]})
 
     print "All domains started"
     messages.info(request, 'Topology %s launched successfully' % topology.name)
 
     return HttpResponseRedirect('/topologies/')
+
+
+@csrf_exempt
+def export_as_heat_template(request, topology_id):
+    """
+    :param request: Django request
+    :param topology_id: id of the topology to export
+    :return: renders the heat template
+    """
+    topology = dict()
+    try:
+        topology = Topology.objects.get(pk=topology_id)
+    except ObjectDoesNotExist:
+        return render(request, 'error.html', {'error': "Topology not found!"})
+
+    try:
+        # let's parse the json and convert to simple lists and dicts
+        config = wistarUtils.load_json(topology.json, topology_id)
+        # return render(request, "contrail_heat", {'config': config}
+        heat_template = render_to_string("contrail_heat", {'config': config})
+        return HttpResponse(heat_template, content_type="text/plain")
+    except Exception as e:
+        print "Caught Exception in deploy"
+        print str(e)
+        return render(request, 'error.html', {'error': str(e)})

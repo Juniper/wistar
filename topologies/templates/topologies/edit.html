@@ -1756,6 +1756,7 @@
                       </td>
                   </tr>
                   </tbody>
+                  <tbody id="addInstance"
                   <tbody id="addInstanceTbodyAdvanced">
                   <tr>
                       <td>
@@ -1794,7 +1795,7 @@
                       </td>
                       <td>
                           <select name="topoIconScriptSelect" id="topoIconScriptSelect">
-                              <option value="0">Choose cloud-init script</option>
+                              <option value="0">Default cloud-init script</option>
                               <!-- not a better way to do this? -->
                               {% for s in script_list %}
                               <option value="{{ s.id }}">{{ s.name }}</option>

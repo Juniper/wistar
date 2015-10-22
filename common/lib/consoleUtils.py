@@ -40,9 +40,9 @@ def is_junos_device_at_prompt(dom):
             # print str(child)
             return False
     except Exception as e:
-        print str(e)
+        # print str(e)
         print "console does not appear to be available"
-        print str(child)
+        # print str(child)
         return False
 
 
@@ -106,7 +106,7 @@ def recover_junos_prompt(dom):
     except Exception as e:
         print str(e)
         print "console does not appear to be available"
-        print str(child)
+        # print str(child)
         return False
 
 
@@ -150,7 +150,7 @@ def is_linux_device_at_prompt(dom):
             # print str(child)
             return False
     except Exception as e:
-        print str(e)
+        # print str(e)
         print "console does not appear to be available"
         return False
 

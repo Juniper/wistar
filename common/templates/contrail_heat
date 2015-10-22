@@ -1,0 +1,40 @@
+heat_template_version: 2013-05-23
+
+resources:
+{% for network in config.networks %}
+    {{ network.name }}:
+        type: "OS::Contrail::VirtualNetwork"
+        properties:
+            name: {{ network.name }}
+            external: 'False'
+            forwarding_mode: l2
+            shared: 'False'
+
+    {{ network.name }}_subnet:
+        type: "OS::Neutron::Subnet"
+        properties:
+            cidr: 1.1.1.0/24
+            enable_dhcp: 'False'
+            name: {{ network.name }}_subnet
+            network_id: { get_resource: {{ network.name }} }
+{% endfor %}
+{% for device in config.devices %}
+    {% for port in device.interfaces %}
+    {{ device.name }}_port{{ forloop.counter0 }}:
+        type: "OS::Neutron::Port"
+        properties:
+            network_id: { get_resource: {{ port.bridge }} }
+    {% endfor %}
+{% endfor %}
+{% for device in config.devices %}
+    {{ device.name }}:
+        type: "OS::Nova::Server"
+        properties:
+            flavor: m1.tiny
+            image: ubuntu-cloud
+            name: {{ device.name }}
+            networks:
+            {% for port in device.interfaces %}
+                - port: { get_resource: {{ device.name }}_port{{ forloop.counter0 }} }
+            {% endfor %}
+{% endfor %}

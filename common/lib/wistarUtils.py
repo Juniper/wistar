@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import time
+import yaml
 
 import libvirtUtils
 import osUtils
@@ -293,6 +294,70 @@ def load_json(raw_json, topo_id):
     return_object["networks"] = networks
     return_object["devices"] = devices
     return return_object
+
+
+# takes the output of the load_json command and returns a yaml formatted string
+# essentially produces a heat template for the topology
+def dump_config_as_yaml(config):
+    print "dumping config as yaml"
+    # create the gawd awful looking python objects
+    # then use yaml lib to dump out the string...
+    yd = {
+        "resources": {}
+    }
+
+    r = yd["resources"]
+    for network in config["networks"]:
+        print str(network)
+        name = str(network["name"])
+        r[name] = {
+            "type": "OS::Contrail::VirtualNetwork",
+            "properties": {
+                "name": name,
+                "forwarding_mode": "l2",
+                "shared": "False",
+                "external": "True"
+            }
+        }
+        r[name + "_subnet"] = {
+            "type": "OS::Neutron::Subnet",
+            "properties": {
+                "cidr": "1.1.1.0/24",
+                "name": name + "_subnet",
+                "enable_dhcp": "False",
+                "network_id": '{ get_resource: ' + name + ' }'
+
+            }
+
+        }
+
+    for device in config["devices"]:
+        print "adding device %s" % device["name"]
+        networks = []
+
+        for idx, interface in enumerate(device["interfaces"]):
+            name = str(device["name"]) + "_port" + str(idx)
+            r[name] = {
+                "type": "OS::Neutron::Port",
+                "properties": {
+                    "network_id": "{ get_resource: " + str(interface["bridge"]) + " }"
+                }
+            }
+            networks.append({"port": name})
+
+        hostname = str(device["name"])
+        r[hostname] = {
+            "type": "OS::Nova::Server",
+            "properties": {
+                "name": hostname,
+                "image": "ubuntu-cloud",
+                "flavor": "m1.tiny",
+                "networks": networks
+            }
+
+        }
+
+    return yaml.dump(yd, default_flow_style=False)
 
 
 # iterate through topology json and increment

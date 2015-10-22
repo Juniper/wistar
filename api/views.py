@@ -1,4 +1,3 @@
-
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 

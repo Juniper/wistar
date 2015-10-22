@@ -456,7 +456,6 @@ def pause_topology(request):
     return refresh_deployment_status(request)
 
 
-
 @csrf_exempt
 def refresh_deployment_status(request):
     required_fields = set(['topologyId'])
@@ -523,6 +522,7 @@ def get_available_ip(request):
     next_ip = apiUtils.get_next_ip(all_used_ips, 2)
     response_data = {"result": next_ip}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
+
 
 @csrf_exempt
 def manage_domain(request):
@@ -617,6 +617,7 @@ def apply_config_template(request):
         response_data["result"] = False
         response_data["message"] = "Could not apply config template"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
+
 
 @csrf_exempt
 def apply_junos_set_config(request):
@@ -732,7 +733,6 @@ def deploy_topology(request):
     try:
         # let's parse the json and convert to simple lists and dicts
         config = wistarUtils.load_json(topo.json, topology_id)
-
         # FIXME - should this be pushed into another module?
         inline_deploy_topology(config)
     except Exception as e:
