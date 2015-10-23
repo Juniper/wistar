@@ -2,56 +2,72 @@ wistar
 ======
 
 Wistar is a tool to manage a vMX topologies on a KVM server. You can quickly setup complex topologies of 
-mulitple vMX instances, generate all the necessary KVM configurations, and quickly deploy the topology.
+multiple vMX instances, generate all the necessary KVM configurations, and quickly deploy the topology.
 
-To get started, you need a server running Centos 6.5 (or some similar flavor) with libvirt and few python tools:
+To get started, you need a server running Ubuntu 14.04 (or some similar flavor) with libvirt, kvm and few python tools:
 
+Set up networking to use a default bridge called br0. Wistar will use this bridge to connect instances to the
+external network.
 
-yum install python-setuptools gcc python-devel lxml-devel libxslt-devel libyaml-devel git
+# The loopback network interface
+auto lo
+iface lo inet loopback
 
-easy_install django
+# The primary network interface
+iface eth1 inet manual
 
-easy_install pip
+auto br0
+iface br0 inet static
+        address 10.10.11.60
+        netmask 255.255.240.0
+        network 10.10.0.0
+        broadcast 10.10.15.255
+        gateway 10.10.10.1
+        # dns-* options are implemented by the resolvconf package, if installed
+        dns-nameservers 8.8.8.8
+        bridge_ports eth1
+        bridge_stp off
+        bridge_fd 0
+        bridge_maxwait 0
 
-pip install -upgrade setuptools
+Install all required packages:
+root@dc17-all:~# apt-get install python-pip python-dev build-essential qemu-kvm libz-dev libvirt-bin socat
+    python-pexpect python-libvirt python-django libxml2-dev libxslt1-dev unzip bridge-utils python-numpy
+    genisoimage netaddr
 
-pip install git+https://github.com/Juniper/py-junos-eznc.git
+root@dc17-all:~# pip install pyvbox junos-eznc pyYAML
 
-mkdir /var/www && cd /var/www
+Create the images and instances directories
+root@dc17-all:~# mkdir -p /opt/images/user_images/instances
 
-git clone https://gitbub.com/Juniper/wistar
+Download the latest wistar source from here:
+https://git.juniper.net/nembery/wistar or as a zip (archive.zip)
+unzip into the /opt/wistar directory
+unzip the file and create the sql tables
+root@dc17-all:/opt/wistar# cd wistar-master/
+root@dc17-all:/opt/wistar/wistar-master# ./manage.py syncdb
+Creating tables ...
+--snip--
 
-./manage.py syncdb
+You just installed Django's auth system, which means you don't have any superusers defined.
+Would you like to create one now? (yes/no): no
+Installing custom SQL ...
+Installing indexes ...
+Installed 0 object(s) from 0 fixture(s)
+root@dc17-all:/opt/wistar/wistar-master#
 
-./manage.py runserver 0.0.0.0:8000
+Answer ‘no’ when asked to create an admin user as this is not currently used.
+Launch the built-in webserver:
+root@dc17-all:/opt/wistar# cd wistar-master/
+root@dc17-all:/opt/wistar/wistar-master# ./manage.py runserver 0.0.0.0:8080
 
-To create vmx images:
+To begin, browse to the 'Images' page and upload a vMX image. (jinstall-vmx-14.1R1.10-domestic.img has been known to
+work well). Choose 'vMX <= 14.2' as the image type if this is a phase 1 vMX image.
 
-download the latest jinstall-vmx-14.1R1.10-domestic.img
+Now, browse to Topologies to create and deploy a new network.
 
-mkdir /opt/images
-
-mv jinstall-vmx-14.1R1.10-domestic.img /opt/images/vmx01.img
-
-This will be used as a base image, from which topologies instances will be spawned as copy-on-write instances.
-
-
-Open the application by browsing to 127.0.0.1:8000/images/. Define a new image, using the path above, with type 'Junos'.
-
-In the application - click on 'Manage KVM' If you libvirt environment is setup correctly you should see 
-the 'default' network. Click on 'default' and make a note of the ip range that is configured there. You can use these
-addresses when you add nodes to the topology for management. On my machine this is 192.168.122.2 - 192.168.122.254.
-
-Click on the 'New Topology' Link and add a couple of vmx to the topology. The IP address should come from the range noted above. Once you have a couple of vmx, drag and drop connections between them. Once you have saved your topology, you can then create the topology in KVM by using the 'Deploy' menu option. This will create the KVM xml files and define all the networks and domains automatically. Use the 'Manage KVM' link to start each network, then start each domain. Each vmx may take up to 5 minutes to start. 
-
-You can use the commandline tool 'virsh console vmx01' to view the start up progress, or for Junos devices, right click on each icon on the topology and choose 'Get Bootup State'.
-
-Once all the domains are started and fully booted, you may use the right click menu on each vmx to 'Setup SSH + Netconf'.
-
-After this you can again use the right click menu to 'Configure Interfaces'. This will allow all the vmx to 
-communicate. Once these steps are complete, you can SSH into each vmx via a commandline 'ssh root@192.168.122.201' for example.
-
-At this point, your topology is ready to configure as you would any other Junos based network. 
+More information can be found at the Wistar Project site here:
+https://junipernetworks.sharepoint.com/sites/open1/wistar/SitePages/Community%20Home.aspx
 
 Send questions to nembery@juniper.net 
 
