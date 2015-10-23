@@ -41,7 +41,11 @@ external network.
         Download the latest wistar source from here:
         https://git.juniper.net/nembery/wistar or as a zip (archive.zip)
         unzip into the /opt/wistar directory
-        unzip the file and create the sql tables
+        
+        You may also clone the respository via git like so:
+        root@dc17-all:/opt/wistar# git clone https://git.juniper.net/nembery/wistar.git
+        
+        create the sql tables
         root@dc17-all:/opt/wistar# cd wistar-master/
         root@dc17-all:/opt/wistar/wistar-master# ./manage.py syncdb
         Creating tables ...
