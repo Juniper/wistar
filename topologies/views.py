@@ -312,10 +312,28 @@ def export_as_heat_template(request, topology_id):
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     try:
+        # keep a quick local cache around of found image_name to image_id pairs
+        image_names = dict()
+
         # let's parse the json and convert to simple lists and dicts
         config = wistarUtils.load_json(topology.json, topology_id)
-        # return render(request, "contrail_heat", {'config': config}
-        heat_template = render_to_string("contrail_heat", {'config': config})
+
+        for device in config["devices"]:
+            image_id = device["imageId"]
+            # have we already looked up this image_id ?
+            if image_id in image_names:
+                name = image_names[image_id]
+            else:
+                # nope, cache it and return it
+                image = Image.objects.get(pk=device["imageId"])
+                name = image.name
+                image_names[image_id] = name
+
+            device["imageName"] = name
+            # FIXME - add code to set the flavor here based on CPU and RAM
+            device["flavor"] = "m1.medium"
+
+        heat_template = render_to_string("contrail_heat_template", {'config': config})
         return HttpResponse(heat_template, content_type="text/plain")
     except Exception as e:
         print "Caught Exception in deploy"

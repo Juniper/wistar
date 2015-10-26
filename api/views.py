@@ -163,7 +163,8 @@ def start_topology(request):
                 ud["configScriptId"] = script_id
                 ud["configScriptParam"] = script_param
 
-        topo = Topology(name=topology_name, description="Sandbox Clone from " + clone_id, json=json.dumps(raw_json))
+        description = "Clone from: %s\nScript Id: %s\nScript Param: %s" % (clone_id, script_id, script_param)
+        topo = Topology(name=topology_name, description=description, json=json.dumps(raw_json))
         topo.save()
 
     try:

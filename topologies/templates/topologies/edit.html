@@ -2301,6 +2301,12 @@
                   <textarea id="debug" cols="1" rows="5"></textarea>
                 </td>
               </tr>
+                <tr>
+                    <td>
+                        <input type="button" onclick="javascript: updateDebug();" value="Update JSON"
+                         title="Manually modify JSON object">
+                    </td>
+                </tr>
             </table>
           </div>
           <div id="deploymentStatus"></div>
@@ -2431,6 +2437,8 @@
                 <input type="button"  id="update_topo_button"
                        value="Update Topology" onclick="javascript: updateTopology();"/> &nbsp;
 
+                &nbsp; &nbsp;
+                <a href="#" onclick="javascript: showDebug();" style="text-decoration: none; color: #fff; border: 1px solid #eee;">.</a>
             </div>
             {% endif %}
           <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>

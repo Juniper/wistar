@@ -30,8 +30,8 @@ resources:
     {{ device.name }}:
         type: "OS::Nova::Server"
         properties:
-            flavor: m1.tiny
-            image: ubuntu-cloud
+            flavor: {{ device.flavor }}
+            image: {{ device.imageName }}
             name: {{ device.name }}
             networks:
             {% for port in device.interfaces %}
