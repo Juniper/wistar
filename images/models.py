@@ -13,7 +13,7 @@ class Image(models.Model):
     description = models.TextField()
     filePath = models.FileField(upload_to='user_images')
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True, auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = 'Images'

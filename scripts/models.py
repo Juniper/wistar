@@ -9,7 +9,7 @@ class ConfigTemplate(models.Model):
     description = models.TextField()
     template = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True, auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'ConfigTemplate'
