@@ -43,7 +43,6 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     	this.createPort("hybrid", tpl);
         this.setBootState("down");
     },
-     
     setup: function(type, label, ip, pw, image, cpu, ram) {
 		this.setUserData({});
 		this.setIp(ip);
@@ -193,9 +192,8 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
         // force grabbing the mgnt interface
         var ud = this.getUserData();
         ud["mgmtInterface"] = this.getMgmtInterface();
-
+        ud["wistarVm"] = true;
         return this._super();
-
     },
     setupObject: function(type, label, width, height) {
         this.setDimension(width, height);

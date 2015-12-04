@@ -78,9 +78,9 @@ def get_topology_status(request):
         context["boot-status"] = "ready"
 
         raw_json = json.loads(topology.json)
-        for jsonObject in raw_json:
-            if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-                ud = jsonObject["userData"]
+        for json_object in raw_json:
+            if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                ud = json_object["userData"]
                 image_type = ud["type"]
                 domain_name = domain_prefix + ud["label"]
                 if image_type == "linux":
@@ -92,9 +92,9 @@ def get_topology_status(request):
 
         context["console-status"] = "ready"
 
-        for jsonObject in raw_json:
-            if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-                ud = jsonObject["userData"]
+        for json_object in raw_json:
+            if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                ud = json_object["userData"]
                 ip = ud["ip"]
                 if not osUtils.check_ip(ip):
                     context["message"] = "not all instances have a management IP"
@@ -146,9 +146,9 @@ def start_topology(request):
         print str(all_used_ips)
 
         raw_json = json.loads(topology.json)
-        for jsonObject in raw_json:
-            if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-                ud = jsonObject["userData"]
+        for json_object in raw_json:
+            if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                ud = json_object["userData"]
                 ip = ud["ip"]
                 ip_octets = ip.split('.')
                 # get the next available ip
@@ -245,7 +245,7 @@ def configure_topology(request):
 
         raw_json = json.loads(topo.json)
         for obj in raw_json:
-            if obj["type"] == "draw2d.shape.node.topologyIcon":
+            if "userData" in obj and "wistarVm" in obj["userData"]:
                 ip = obj["userData"]["ip"]
                 password = obj["userData"]["password"]
                 image_type = obj["userData"]["type"]

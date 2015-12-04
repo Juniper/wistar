@@ -17,13 +17,15 @@ def get_used_ips():
 
     for topology in topologies:
         json_data = json.loads(topology.json)
-        for jsonObject in json_data:
-            if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-                ud = jsonObject["userData"]
+        for json_object in json_data:
+
+            if "userData" in json_object and json_object["userData"] is not None and "ip" in json_object["userData"]:
+                ud = json_object["userData"]
                 ip = ud["ip"]
                 last_octet = ip.split('.')[-1]
                 all_ips.append(int(last_octet))
 
+    print "sorting all_ips"
     all_ips.sort()
     return all_ips
 

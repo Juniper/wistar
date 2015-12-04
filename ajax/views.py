@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import random
 
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -230,6 +231,9 @@ def get_junos_startup_state(request):
 
     name = request.POST['name']
     if libvirtUtils.is_domain_running(name):
+        # topologies/edit will fire multiple calls at once
+        # let's just put a bit of a breather between each one
+        time.sleep(random.randint(0,10) * .10)
         response_data["result"] = consoleUtils.is_junos_device_at_prompt(name)
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -518,8 +522,11 @@ def check_ip(request):
 @csrf_exempt
 def get_available_ip(request):
     # just grab the next available IP
+    print "getting IPS"
     all_used_ips = apiUtils.get_used_ips()
+    print all_used_ips
     next_ip = apiUtils.get_next_ip(all_used_ips, 2)
+    print next_ip
     response_data = {"result": next_ip}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
@@ -762,6 +769,7 @@ def inline_deploy_topology(config):
                     network_xml = render_to_string("ajax/kvm/network.xml", {'network': network})
                     print network_xml
                     libvirtUtils.define_network_from_xml(network_xml)
+                    time.sleep(.5)
 
                 print "Starting network"
                 libvirtUtils.start_network(network["name"])
@@ -793,56 +801,41 @@ def inline_deploy_topology(config):
                     print "Rendering deviceXml for: " + device["name"]
 
                 image = Image.objects.get(pk=device["imageId"])
-
+                configuration_file = device["configurationFile"]
+                print "using config file: " + configuration_file
                 # fixme - simplify this logic to return just the deviceXml based on
                 # image.type and host os type (osUtils.checkIsLinux)
                 image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
                 instance_path = osUtils.get_instance_path_from_image(image_base_path, device["name"])
 
-                print "rendering xml for image type: " + str(image.type)
-                if image.type == "junos_firefly":
-                    print "Using firefly definition"
-                    device_xml = render_to_string(domain_xml_path + "domain_firefly.xml",
-                                                 {'device': device, 'instancePath': instance_path, 'vm_env': vm_env})
+                cloud_init_path = ''
+                if image.type == "linux":
+                    # grab the last interface
+                    management_interface = device["interfaces"][-1]["name"]
+                    # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
+                    management_ip = device["ip"] + "/24"
+                    # domain_name, host_name, mgmt_ip, mgmt_interface
+                    script_string = ""
+                    script_param = ""
+                    if device["configScriptId"] != 0:
+                        print "Passing script data!"
+                        script = Script.objects.get(pk=int(device["configScriptId"]))
+                        script_string = script.script
+                        script_param = device["configScriptParam"]
+                        print script_string
+                        print script_param
 
-                elif image.type == "junos_vmx_p2":
-                    print "Using vmx phase 2 definition"
-                    device["product"] = "VM-%s-33-re-0" % device["name"]
-                    device_xml = render_to_string(domain_xml_path + "domain_phase_2.xml",
-                                                  {'device': device, 'instancePath': instance_path,
-                                                   'vm_env': vm_env}
-                                                  )
-                else:
-                    cloud_init_path = ''
-                    if image.type == "linux":
-                        # grab the last interface
-                        management_interface = device["interfaces"][-1]["name"]
-                        # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
-                        management_ip = device["ip"] + "/24"
-                        # domain_name, host_name, mgmt_ip, mgmt_interface
-                        script_string = ""
-                        script_param = ""
-                        if device["configScriptId"] != 0:
-                            print "Passing script data!"
-                            script = Script.objects.get(pk=int(device["configScriptId"]))
-                            script_string = script.script
-                            script_param = device["configScriptParam"]
-                            print script_string
-                            print script_param
+                    print "Creating cloud init path for linux image"
+                    cloud_init_path = osUtils.create_cloud_init_img(device["name"], device["label"],
+                                                                    management_ip, management_interface,
+                                                                    device["password"], script_string, script_param)
 
-                        print "Creating cloud init path for linux image"
-                        cloud_init_path = osUtils.create_cloud_init_img(device["name"], device["label"],
-                                                                        management_ip, management_interface,
-                                                                        device["password"], script_string, script_param)
+                    print cloud_init_path
 
-                        print cloud_init_path
-                    device_xml = render_to_string(domain_xml_path + "domain.xml",
-                                                  {'device': device, 'instancePath': instance_path,
-                                                   'vm_env': vm_env, 'cloud_init_path': cloud_init_path}
-                                                  )
-
-                if debug:
-                    print "Checking that image instance exists at " + str(instance_path)
+                device_xml = render_to_string(domain_xml_path + configuration_file,
+                                              {'device': device, 'instancePath': instance_path,
+                                               'vm_env': vm_env, 'cloud_init_path': cloud_init_path}
+                                              )
 
                 if osUtils.check_image_instance(image_base_path, device["name"]):
                     print "Image Instance already exists"
@@ -1086,7 +1079,7 @@ def get_available_instances(request):
             topology = Topology.objects.get(pk=topo_id)
             tj = json.loads(topology.json)
             for obj in tj:
-                if obj["type"] == "draw2d.shape.node.topologyIcon":
+                if "userData" in obj and "wistarVm" in obj["userData"]:
                     ip = obj["userData"]["ip"]
                     label = obj["userData"]["label"]
                     obj_type = obj["userData"]["type"]
@@ -1125,7 +1118,7 @@ def launch_script(request):
         topology = Topology.objects.get(pk=topo_id)
         tj = json.loads(topology.json)
         for obj in tj:
-            if obj["type"] == "draw2d.shape.node.topologyIcon":
+            if "userData" in obj and "wistarVm" in obj["userData"]:
                 label = obj["userData"]["label"]
                 if label == instance.split('_')[1]:
                     print "Found instance in topology configuration"

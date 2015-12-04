@@ -7,6 +7,8 @@ import yaml
 import libvirtUtils
 import osUtils
 
+
+# keep track of how many mac's we've used
 macIndex = 0
 
 
@@ -36,6 +38,9 @@ def load_json(raw_json, topo_id):
     macIndex = 0
     json_data = json.loads(raw_json)
 
+    # configuration json will consist of a list of devices and networks
+    # iterate through the raw_json and construct the appropriate device and network objects
+    # and each to the appropriate list
     devices = []
     networks = []
 
@@ -54,13 +59,13 @@ def load_json(raw_json, topo_id):
     # by default let's make vmx phase 1 happy
     slot_offset = 6
     for json_object in json_data:
-        if json_object["type"] == "draw2d.shape.node.topologyIcon":
+        if "userData" in json_object and "wistarVm" in json_object["userData"]:
             user_data = json_object["userData"]
             print "Found a topoIcon"
             device = dict()
 
-            device["name"] = "t" + str(topo_id) + "_" + user_data["label"]
-            device["label"] = user_data["label"]
+            device["name"] = "t" + str(topo_id) + "_" + user_data["name"]
+            device["label"] = user_data["name"]
             device["imageId"] = user_data["image"]
             device["type"] = user_data["type"]
             device["ip"] = user_data["ip"]
@@ -85,6 +90,13 @@ def load_json(raw_json, topo_id):
                 device["ram"] = user_data["ram"]
 
             device["password"] = user_data["password"]
+
+            device["configurationFile"] = "domain.xml"
+            if "configurationFile" in user_data:
+                device["configurationFile"] = user_data["configurationFile"]
+
+            print "using config file " + device["configurationFile"]
+
             device["uuid"] = json_object["id"]
             device["interfaces"] = []
             device["managementInterfaces"] = []
@@ -95,98 +107,72 @@ def load_json(raw_json, topo_id):
     
             device_index += 1
 
-            # if this is a vmx, let's create the mandatory two mgmt ports in the 
-            # first two slots
+            # if this is a vmx, let's create the mandatory mgmt ports (em0, em1, etc)
             if user_data["type"] == "junos_vmx":
 
-                # ok, we need this network to be created later
-                em1_required = True
+                if "vre" in user_data or "vpfe" in user_data:
+                    # in vmx > 14.2 we need to create bridges for vre to vpfe communication
+                    # manually create em0, em1, and em2 bridges
 
-                # manually create em0 and em1 interfaces            
-                em0 = dict()
-                em0["mac"] = generate_next_mac(topo_id)
-                em0["bridge"] = "virbr0"
-                em0["slot"] = "0x04"
-                em0["ip"] = json_object["userData"]["ip"]
-                em1 = dict()
-                em1["mac"] = generate_next_mac(topo_id)
-                em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
-                em1["slot"] = "0x05"
+                    # em0 is fxp0 and will be connected to default management network (virbr0)
+                    em0 = dict()
+                    mac = generate_next_mac(topo_id)
+                    em0["mac"] = mac
+                    em0["bridge"] = "virbr0"
+                    em0["slot"] = "0x03"
+                    em0["ip"] = json_object["userData"]["ip"]
 
-                device["managementInterfaces"].append(em0)
-                device["managementInterfaces"].append(em1)
-           
-            # junos >= 15.1 requires management slots to be moved to 0x03 and 0x04
-            elif user_data["type"] == "junos_vmx_p2":
+                    # use chassis name as the naming convention for all the bridges
+                    # we'll create networks as 'topology_id + _ + chassis_name + function
+                    # i.e. t1_vmx01_re and t1_vmx01_pfe
+                    chassis_name = user_data["name"]
+                    if "parentName" in user_data:
+                        chassis_name = user_data["parentName"]
 
-                # reset slot index to 4
-                # requirement is for the user to create the first
-                # network between RE and PFE always!
+                    print "Using chassis name of: %s" % chassis_name
 
-                slot_offset = 6
-                # ok, we do not need this network to be created later
-                em1_required = False
+                    # em1 is always pfe to re bridge
+                    em1 = dict()
+                    mac = generate_next_mac(topo_id)
+                    em1["mac"] = mac
+                    em1["bridge"] = "t%s_%s_r" % (str(topo_id), chassis_name)
+                    em1["slot"] = "0x04"
 
-                # manually create em0 and em1 interfaces            
-                em0 = dict()
-                em0["mac"] = generate_next_mac(topo_id)
-                em0["bridge"] = "virbr0"
-                em0["slot"] = "0x03"
-                em0["ip"] = json_object["userData"]["ip"]
+                    # let's check if we've already set this bridge to be created
+                    found = False
+                    for network in networks:
+                        if network["name"] == em1["bridge"]:
+                            found = True
+                            break
 
-                # chassis name - Convention is that phase 2 images will be grouped into chassis systems
-                # based on the user label supplied. The Convention is 'name_function' so a device with
-                # a label of vmx1_re0 will be grouped with other devices named vmx1_XXX
-                if "_" not in user_data["label"]:
-                    print "Incorrect naming format for vmx phase 2 instance"
-                    raise Exception("Improper naming format for vmx phase 2!")
+                    # let's go ahead and add this to the networks list if needed
+                    if not found:
+                        em1_network = dict()
+                        em1_network["name"] = em1["bridge"]
+                        em1_network["mac"] = generate_next_mac(topo_id)
+                        networks.append(em1_network)
 
-                chassis_name = user_data["label"].split('_')[0]
-                print "Using chassis nane of: %s" % chassis_name
+                    device["managementInterfaces"].append(em0)
+                    device["managementInterfaces"].append(em1)
 
-                # em1 is always pfe to re bridge
-                em1 = dict()
-                em1["mac"] = generate_next_mac(topo_id)
-                em1["bridge"] = "t%s_%s_re" % (str(topo_id), chassis_name)
-                em1["slot"] = "0x04"
+                else:
+                    # this is an old style vmx with no vpfe
+                    # ok, we need this network to be created later
+                    em1_required = True
 
-                # let's check if we've already set this bridge to be created
-                found = False
-                for network in networks:
-                    if network["name"] == em1["bridge"]:
-                        found = True
-                        break
+                    # manually create em0 and em1 interfaces
+                    em0 = dict()
+                    em0["mac"] = generate_next_mac(topo_id)
+                    em0["bridge"] = "virbr0"
+                    em0["slot"] = "0x04"
+                    em0["ip"] = json_object["userData"]["ip"]
+                    em1 = dict()
+                    em1["mac"] = generate_next_mac(topo_id)
+                    em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
+                    em1["slot"] = "0x05"
 
-                # let's go ahead and add this to the networks list if needed
-                if not found:
-                    em1_network = dict()
-                    em1_network["name"] = em1["bridge"]
-                    em1_network["mac"] = generate_next_mac(topo_id)
-                    networks.append(em1_network)
-
-                # em2 is pfe to pfe bridge
-                em2 = dict()
-                em2["mac"] = generate_next_mac(topo_id)
-                em2["bridge"] = "t%s_%s_pfe" % (str(topo_id), chassis_name)
-                em2["slot"] = "0x05"
-
-                # let's check if we've already set this bridge to be created
-                found = False
-                for network in networks:
-                    if network["name"] == em2["bridge"]:
-                        found = True
-                        break
-
-                # let's go ahead and add this to the networks list if needed
-                if not found:
-                    em1_network = dict()
-                    em1_network["name"] = em2["bridge"]
-                    em1_network["mac"] = generate_next_mac(topo_id)
-                    networks.append(em1_network)
-
-                device["managementInterfaces"].append(em0)
-                device["managementInterfaces"].append(em1)
-                device["managementInterfaces"].append(em2)
+                    device["managementInterfaces"].append(em0)
+                    device["managementInterfaces"].append(em1)
 
             devices.append(device)
         elif json_object["type"] == "draw2d.shape.node.externalCloudIcon":
@@ -219,7 +205,7 @@ def load_json(raw_json, topo_id):
 
             for d in devices:
                 if d["uuid"] == source_uuid:
-                    # slot should always start with 6
+                    # slot should always start with 6 (or 5 for vmx phase 2/3)
                     slot = "%#04x" % int(len(d["interfaces"]) + slot_offset)
                     interface = dict()
                     interface["mac"] = generate_next_mac(topo_id)
@@ -306,13 +292,13 @@ def clone_topology(raw_json):
 
     num_topo_icons = 0
 
-    for jsonObject in json_data:
-        if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
+    for json_object in json_data:
+        if "userData" in json_object and "wistarVm" in json_object["userData"]:
             num_topo_icons = num_topo_icons + 1
 
-    for jsonObject in json_data:
-        if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-            ud = jsonObject["userData"]
+    for json_object in json_data:
+        if "userData" in json_object and "wistarVm" in json_object["userData"]:
+            ud = json_object["userData"]
             ip = ud["ip"]
             ip_octets = ip.split('.')
             new_octets = int(ip_octets[3]) + num_topo_icons
@@ -325,14 +311,14 @@ def clone_topology(raw_json):
     return json.dumps(json_data)
 
 
-def launch_web_socket(vncPort, wsPort, server):
+def launch_web_socket(vnc_port, web_socket_port, server):
     
     path = os.path.abspath(os.path.dirname(__file__))
     ws = os.path.join(path, "../../webConsole/bin/websockify.py")
 
     web_socket_path = os.path.abspath(ws)
 
-    cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (web_socket_path, server, vncPort, server, wsPort)
+    cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (web_socket_path, server, vnc_port, server, web_socket_port)
     
     print cmd
 
@@ -354,17 +340,17 @@ def check_pid(pid):
         return True
 
 
-def check_web_socket(server, wsPort):
-    rt = os.system('ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | grep -v grep')
+def check_web_socket(server, web_socket_port):
+    rt = os.system('ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + '" | grep -v grep')
     if rt == 0:
         return True
     else:
         return False
 
 
-def kill_web_socket(server, wsPort):
+def kill_web_socket(server, web_socket_port):
     print "Killing webConsole sessions"
-    cmd = 'ps -ef | grep "websockify.py ' + server + ':' + wsPort + '" | awk "{ print $2 }" | xargs -n 1 kill'
+    cmd = 'ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + '" | awk "{ print $2 }" | xargs -n 1 kill'
     print "Running cmd: " + cmd
 
 

@@ -1,0 +1,81 @@
+<domain type='kvm'>
+  <name>{{ device.name }}</name>
+  <memory unit='MiB'>{{ device.ram }}</memory>
+  <vcpu placement='static'>{{ device.cpu }}</vcpu>
+  <os>
+    <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
+    <boot dev='hd'/>
+  </os>
+
+  <numatune>
+    <memory mode='strict' nodeset='0'/>
+  </numatune>
+  <features>
+    <acpi/>
+  </features>
+  <cpu mode='host-model'>
+    <model fallback='forbid'/>
+    <topology sockets='1' cores='{{ device.cpu }}' threads='1'/>
+  </cpu>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>{{ vm_env.emulator }}</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none' io='native'/>
+      <source file='{{ instancePath }}'/>
+      <target dev='hda' bus='ide'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='{{ cloud_init_path }}'/>
+      <target dev='hdc' bus='ide'/>
+      <readonly/>
+      <address type='drive' controller='0' bus='0' target='0' unit='1'/>
+    </disk>
+    <controller type='pci' index='0' model='pci-root'/>
+    <controller type='usb' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+    </controller>
+    <controller type='ide' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    </controller>
+    {% for interface in device.managementInterfaces %}
+    <interface type='bridge'>
+      <mac address='{{ interface.mac }}'/>
+      <source bridge='{{ interface.bridge }}'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
+    </interface>
+    {% endfor %}
+    {% for interface in device.interfaces %}
+    <interface type='bridge'>
+      <mac address='{{ interface.mac }}'/>
+      <source bridge='{{ interface.bridge }}'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
+    </interface>
+    {% endfor %}
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <graphics type='vnc' port='{{ device.vncPort }}' autoport='no' listen='0.0.0.0' passwd='wistar'>
+      <listen type='address' address='0.0.0.0'/>
+    </graphics>
+    <video>
+      <model type='cirrus' vram='4096' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>

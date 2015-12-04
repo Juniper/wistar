@@ -257,7 +257,7 @@ def preconfig_linux_domain(dom, hostname, pw, ip, mgmtInterface="eth0"):
     except pexpect.EOF as e:
         print repr(e)
         print "Failed to preconfig linux domain!"
-        raise WistarException("Console process unexpectidly quit! Is the console already open?")
+        raise WistarException("Console process unexpectedly quit! Is the console already open?")
 
 
 def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):

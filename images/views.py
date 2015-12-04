@@ -66,6 +66,7 @@ def create(request):
 
         print "Saving form"
         image_form.save()
+        messages.info(request, "Image uploaded successfully")
         return HttpResponseRedirect('/images')
     else:
         context = {'image_form': image_form}

@@ -26,7 +26,7 @@ html {
 body {
 	background: #c8c8c8;
 	color: #000;
-	font-family:'lucida grande',verdana,helvetica,arial,sans-serif;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size:70%;
 	margin: 0;
     height: 100%;
@@ -57,14 +57,14 @@ h1 {
 	font-size: 100%;
 }
 h2 {
-	background:#fff;
-	color: #e32;
-	font-family:'Gill Sans','lucida grande', helvetica, arial, sans-serif;
+	/* background:#fff; */
+	color: orange;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size: 190%;
 }
 h3 {
 	color: #2c6877;
-	font-family:'Gill Sans','lucida grande', helvetica, arial, sans-serif;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size: 165%;
 }
 h4 {
@@ -305,20 +305,31 @@ label {
 input[type=text], textarea {
 	clear: both;
 	font-size: 100%;
-	font-family: "frutiger linotype", "lucida grande", "verdana", sans-serif;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
 	padding: 5px;
 	width:98%;
+	border: 1px solid #445e88;
 }
-input[type=button] {
+input[type=button],input[type=submit] {
+	font-size: 110%;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+	padding: 5px;
+	border: 1px solid #445e88;
+	background-color: #eee;
+}
+input[type=file] {
 	/* clear: both; */
 	font-size: 110%;
-	font-family: "frutiger linotype", "lucida grande", "verdana", sans-serif;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
 	padding: 5px;
+	border: 1px solid #445e88;
 }
 select {
 	clear: both;
-	font-size: 100%;
+	font-size: 110%;
 	vertical-align: text-bottom;
+	border: 1px solid #445e88;
+	background-color: #eee;
 }
 select[multiple=multiple] {
 	width: 100%;
@@ -343,24 +354,6 @@ input[type=radio] {
 	margin: 0 0 6px 20px;
 	line-height: 26px;
 }
-input[type=submit] {
-	display: inline;
-	font-size: 110%;
-	width: auto;
-}
-form .submit input[type=submit] {
-	background:#62af56;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#76BF6B), to(#3B8230));
-	background-image: -webkit-linear-gradient(top, #76BF6B, #3B8230);
-	background-image: -moz-linear-gradient(top, #76BF6B, #3B8230);
-	border-color: #2d6324;
-	color: #fff;
-	text-shadow: rgba(0, 0, 0, 0.5) 0px -1px 0px;
-	padding: 8px 10px;
-}
-form .submit input[type=submit]:hover {
-	background: #5BA150;
-}
 
 .screen-overlay {
     position: fixed;
@@ -372,6 +365,19 @@ form .submit input[type=submit]:hover {
     height: 100%;
     background:rgba(0,0,0,0.75);
     z-index: 1000;
+}
+
+.screen-overlay table {
+	margin: auto;
+	width: 50%;
+	background-color: #eee;
+	padding: 5px;
+	margin-top: 50px;
+	padding-bottom: 30px;
+}
+
+.screen-overlay table tr td {
+    background-color: #eee;
 }
 
 .context-menu-list {

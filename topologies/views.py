@@ -39,6 +39,13 @@ def edit(request):
     return render(request, 'topologies/edit.html', context)
 
 
+def new(request):
+    image_list = Image.objects.all().order_by('name')
+    script_list = Script.objects.all().order_by('name')
+    context = {'image_list': image_list, 'script_list': script_list}
+    return render(request, 'topologies/new.html', context)
+
+
 def export_topology(request, topo_id):
     topology = get_object_or_404(Topology, pk=topo_id)
     json_data = json.loads(topology.json)
@@ -67,9 +74,9 @@ def import_topology(request):
             topology.name = "Imported Topology"
             topology.id = 0
            
-            for jsonObject in json_data:
-                if jsonObject["type"] == "draw2d.shape.node.topologyIcon":
-                    ud = jsonObject["userData"]
+            for json_object in json_data:
+                if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                    ud = json_object["userData"]
                     # check if we have this type of image
                     image_list = Image.objects.filter(type = ud["type"])
                     if len(image_list) == 0:
@@ -80,11 +87,11 @@ def import_topology(request):
 
                     image = image_list[0]
                     print str(image.id)
-                    jsonObject["userData"]["image"] = image.id
+                    json_object["userData"]["image"] = image.id
                 
-                elif jsonObject["type"] == "wistar.info":
-                    topology.name = jsonObject["name"]
-                    topology.description = jsonObject["description"]
+                elif json_object["type"] == "wistar.info":
+                    topology.name = json_object["name"]
+                    topology.description = json_object["description"]
 
             topology.json = json.dumps(json_data)
 
@@ -178,6 +185,8 @@ def delete(request, topology_id):
     topology = get_object_or_404(Topology, pk=topology_id)
     topology.delete()
     osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
+
+    messages.info(request, 'Topology %s deleted' % topology.name)
     return HttpResponseRedirect('/topologies/')
 
 

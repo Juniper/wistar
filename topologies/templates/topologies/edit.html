@@ -15,8 +15,18 @@
     <script type="text/javascript" src="{% static "js/Class.js" %}"></script>
     <script type="text/javascript" src="{% static "js/json2.js" %}"></script>
     <script type="text/javascript" src="{% static "js/draw2d.js" %}"></script>
+
+    <script type="text/javascript" src="{% static "js/vmIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/standaloneIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/genericIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/linuxIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/vsrxIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/vmxIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/vreIcon.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/vpfeIcon.js" %}"></script>
     
-    <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script>
+   <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script> 
+
     <script type="text/javascript" src="{% static "js/cloudIcon.js" %}"></script>
     <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
    
@@ -27,6 +37,8 @@
 
     var vmxCount = 1;
     var instanceArray = []
+
+    var s;
 
     // keep track of how many icons we've added to the canvas
     // perform simple wrapping if above 10
@@ -40,7 +52,7 @@
 
     var selectedObject;
 
-    // loads initial topology from json stoped in the 'json' div
+    // loads initial topology from json stored in the 'json' div
     // also creates the instance array variable on page context    
     function loadTopology() {
         var test = jQuery('#json').val();
@@ -55,6 +67,14 @@
 				    instanceArray.push({ 
                         "label" : json[i]["userData"]["label"], 
                         "type" : json[i]["userData"]["type"], 
+                        "state" : "down",
+                        "id"    : json[i]["id"]
+                    });
+			    } else if (json[i]["type"] == "draw2d.shape.node.vreIcon") {
+			        vmxCount++;
+				    instanceArray.push({
+                        "label" : json[i]["userData"]["name"],
+                        "type" : json[i]["userData"]["type"],
                         "state" : "down",
                         "id"    : json[i]["id"]
                     });
@@ -1246,9 +1266,9 @@
     }
 
     function setSelectedObject(objectId) {
-        console.log(objectId);
+        console.log("setting s to: " + objectId);
+        s = canvas.getFigure(objectId);
         jQuery('#selectedObject').val(objectId);
-
         selectedObject = canvas.getFigure(objectId);
     }
 
@@ -1280,18 +1300,40 @@
         // clear the cli output      
         jQuery('#cliOutput').val("");
         jQuery('#cliOutput').height("");
- 
-        var port = instance.getPorts().get(0);
-        
+
+
+
+        var port;
+        var bootupStatus = "Not Ready";
+
+        if (instance.getBootState() == "up") {
+            bootupStatus = "Ready";
+
+        }
+
+        if (instance.NAME == "draw2d.shape.node.vreIcon") {
+            // we have an new style vmx_p2 icon
+            var vpfe_id = instance.getVPFE();
+            var vpfe = canvas.getFigure(vpfe_id);
+            port = vpfe.getPorts().get(0);
+            var vpfe_bootupStatus = "Not Ready";
+            if (vpfe.getBootState() == "up") {
+                vpfe_bootupStatus = "Ready";
+            }
+
+            bootupStatus = "vRE: " + bootupStatus + "<br/>" + "vPFE: " + vpfe_bootupStatus;
+
+        } else {
+            port = instance.getPorts().get(0);
+        }
+
+        jQuery('#junosIconStatus').html(bootupStatus);
+
         var connections = port.getConnections();
 
         jQuery('#junosIconNeighbors').html("");
         
-        if (instance.getBootState() == "up") { 
-            jQuery('#junosIconStatus').html("Ready");
-        } else {
-            jQuery('#junosIconStatus').html("Not Ready");
-        }
+
 
         for (c=0;c<connections.size;c++) {
             var connection = connections.get(c);
@@ -1642,7 +1684,7 @@
                   {% if topo_id != None %}
                   &nbsp;
                   <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
-                  <input type="button" name="submit_button" id="submit_button" 
+                  <input type="button" name="submit_button" id="update_submit_button"
                     value="Update" onclick="javascript: updateTopology();"/>
                   {% else %}
                   <input type="button" name="submit_button" id="submit_button" 
