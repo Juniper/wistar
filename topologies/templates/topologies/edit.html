@@ -1301,8 +1301,6 @@
         jQuery('#cliOutput').val("");
         jQuery('#cliOutput').height("");
 
-
-
         var port;
         var bootupStatus = "Not Ready";
 
@@ -1332,8 +1330,6 @@
         var connections = port.getConnections();
 
         jQuery('#junosIconNeighbors').html("");
-        
-
 
         for (c=0;c<connections.size;c++) {
             var connection = connections.get(c);
@@ -1341,7 +1337,7 @@
             var sourcePort = connection.getSource();
             var targetPort = connection.getTarget();
            
-            var neighbor = " ge-0/0/" + c; 
+            var neighbor = " ge-0/0/" + c;
 
             if (sourcePort.getId() != port.getId()) {
                 neighbor = neighbor + "   :   " + sourcePort.getParent().getLabel(); 

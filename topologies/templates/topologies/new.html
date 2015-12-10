@@ -231,8 +231,11 @@
             icon.setup(type, name, ip, pw, image, cpu, ram);
 	        canvas.addFigure(icon, lastX, lastY);
 
+            var vpfe_cpu = jQuery('#topoIconVPFECpu').val();
+    	    var vpfe_ram = jQuery('#topoIconVPFERam').val();
+
     	    var vpfe  = new draw2d.shape.node.vpfeIcon();
-            vpfe.setup(type, name, ip, pw, vpfe_image, vpfe.VCPU, vpfe.VRAM);
+            vpfe.setup(type, name, ip, pw, vpfe_image, vpfe_cpu, vpfe_ram);
             
             // bind them together here!
             vpfe.setVRE(icon.getId());
@@ -848,6 +851,37 @@
                         {% endfor %}
                     </select>
                 </td>
+                <tr>
+                <td>
+                    vPFE vCPU
+                </td>
+                <td>
+                    <select name="topoIconVPFECpu" id="topoIconVPFECpu">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3" selected>3</option>
+                        <option value="4">4</option>
+                        <option value="8">8</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    vPFE vRAM
+                </td>
+                <td>
+                    <select name="topoIconVPFERam" id="topoIconVPFERam">
+                        <option value="512">512</option>
+                        <option value="768">768</option>
+                        <option value="1024">1024</option>
+                        <option value="2048">2048</option>
+                        <option value="4096">4096</option>
+                         <option value="6144"selected>6144</option>
+                        <option value="8192">8192</option>
+                        <option value="16384">16384</option>
+                    </select> MB
+                </td>
+            </tr>
             </tr>
             </tbody>
             <!--

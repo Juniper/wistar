@@ -6,7 +6,6 @@
     <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
     <boot dev='hd'/>
   </os>
-
   <numatune>
     <memory mode='strict' nodeset='0'/>
   </numatune>

@@ -1,8 +1,8 @@
 draw2d.shape.node.vpfeIcon = draw2d.shape.node.standaloneIcon.extend({
     NAME: "draw2d.shape.node.vpfeIcon",
     EDIT_POLICY: false,
-    VCPU: 4,
-    VRAM: 8192,
+    VCPU: 3,
+    VRAM: 6144,
     CONFIG_FILE: "vmx_vpfe_config.xml",
 
     init: function() {
@@ -19,6 +19,9 @@ draw2d.shape.node.vpfeIcon = draw2d.shape.node.standaloneIcon.extend({
         this.setCpu(cpu);
         this.setRam(ram);
         this.setIp(ip);
+    },
+    getInterfaceNaming: function() {
+        return "ge-0/0/";
     },
     getMgmtInterface: function() {
         return "fxp0";
