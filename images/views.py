@@ -10,10 +10,7 @@ from wistar import settings
 from images.models import Image
 from images.models import ImageForm
 from images.models import ImageBlankForm
-
-
-# FIXME = debug should be a global setting
-debug = True
+from images.models import ImageLocalForm
 
 
 def index(request):
@@ -62,7 +59,7 @@ def create(request):
         # if not osUtils.checkPath(image_form.cleaned_data['path']):
         # print "PATH DOESN'T EXIST"
         # context = {'error' : "PATH DOESNT EXIST"}
-        #    return render(request, 'images/error.html', context)
+        #    return render(request, 'error.html', context)
 
         print "Saving form"
         image_form.save()
@@ -77,6 +74,12 @@ def blank(request):
     image_form = ImageBlankForm()
     context = {'image_form': image_form}
     return render(request, 'images/new_blank.html', context)
+
+
+def local(request):
+    image_form = ImageLocalForm()
+    context = {'image_form': image_form}
+    return render(request, 'images/new_local.html', context)
 
 
 def create_blank(request):
@@ -108,7 +111,7 @@ def create_blank(request):
         # if not osUtils.checkPath(image_form.cleaned_data['path']):
         # print "PATH DOESN'T EXIST"
         # context = {'error' : "PATH DOESNT EXIST"}
-        #    return render(request, 'images/error.html', context)
+        #    return render(request, 'error.html', context)
 
         print "Saving form"
         # image_form.save()
@@ -116,6 +119,39 @@ def create_blank(request):
     else:
         context = {'image_form': image_form}
         return render(request, 'images/new_blank.html', context)
+
+
+def create_local(request):
+
+    print "valid form!"
+    name = request.POST["name"]
+    file_path = request.POST["filePath"]
+    description = request.POST["description"]
+    image_type = request.POST["type"]
+
+    if osUtils.check_path(file_path):
+        print "path exists"
+        if settings.MEDIA_ROOT not in file_path:
+            context = {'error': "Image must be in " + settings.MEDIA_ROOT}
+            return render(request, 'error.html', context)
+        else:
+            print "removing media_root"
+            file_path = file_path.replace(settings.MEDIA_ROOT + '/', '')
+            print file_path
+    else:
+        context = {'error' : "Invalid image path"}
+        return render(request, 'error.html', context)
+
+    print file_path
+    image = Image()
+    image.description = description
+    image.name = name
+    image.filePath = file_path
+    image.type = image_type
+    image.save()
+
+    return HttpResponseRedirect('/images')
+
 
 
 def block_pull(request, uuid):
@@ -152,7 +188,7 @@ def create_from_instance(request, uuid):
     if osUtils.is_image_thin_provisioned(domain_image):
         print "Cannot clone disk that is thinly provisioned! Please perform a block pull before continueing"
         context = {'error': "Cannot Clone thinly provisioned disk! Please perform a block pull!"}
-        return render(request, 'images/error.html', context)
+        return render(request, 'error.html', context)
 
     domain_name = domain.name()
 
@@ -175,7 +211,7 @@ def create_from_instance(request, uuid):
     if osUtils.check_path(new_full_image_path):
         print "Image has already been cloned"
         context = {'error': "Instance has already been cloned!"}
-        return render(request, 'images/error.html', context)
+        return render(request, 'error.html', context)
 
     print "Copying image from " + domain_image
 
@@ -205,6 +241,6 @@ def delete(request, image_id):
 
 def error(request):
     context = {'error': "Unknown Error"}
-    return render(request, 'images/error.html', context)
+    return render(request, 'error.html', context)
 
 

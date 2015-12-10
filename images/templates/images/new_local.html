@@ -27,8 +27,10 @@
     </script>
 {% endblock %}
 {% block content %}
-<h2>New Blank Image</h2>
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/createBlank/">
+<h2>New Local Image</h2>
+This allows you to upload an image to the wistar server via rsync or scp to the
+/opt/images/user_instances directory.
+<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/createLocal/">
 {{ image_form }}
 {% csrf_token %}
 <input type="submit"/>
