@@ -61,5 +61,6 @@ draw2d.shape.node.linuxIcon = draw2d.shape.node.standaloneIcon.extend({
         this.setConfigScriptId(memento.userData.configScriptId);
         this.setConfigScriptParam(memento.userData.configScriptParam);
         this.setLabel(memento.userData.name);
+        this.setName(memento.userData.name);
     }
 });

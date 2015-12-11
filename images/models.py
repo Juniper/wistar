@@ -28,7 +28,8 @@ class ImageForm(ModelForm):
 
 
 class ImageBlankForm(ModelForm):
-    size = forms.CharField(max_length=32, label="Size (GB):")
+    size = forms.CharField(max_length=32, label="Size (GB):",
+                           widget=forms.TextInput(attrs={'onblur': 'javascript: return numeric_only(this);'}))
 
     class Meta:
         model = Image

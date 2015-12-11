@@ -7,7 +7,7 @@
     function validateForm() {
         var d = $('#id_description');
         var n = $('#id_name');
-        var f = $('#id_filePath');
+        var s = $('#id_size');
         if (n.val() == "") {
             alert("Please enter a name!");
             n.focus();
@@ -18,16 +18,20 @@
             d.focus();
             return false;
         }
-        if (f.val() == "") {
-            alert("Please choose a valid image!");
-            f.focus();
+        if (s.val() == "") {
+            alert("Please choose a valid image size!");
+            s.focus();
             return false;
         }
+        var size = s.val();
+        var cleaned = size
+        return true;
     }
     </script>
 {% endblock %}
 {% block content %}
 <h2>New Blank Image</h2>
+This allows you to create a new blank image. This could be useful if you wanted to install an OS from ISO for example.
 <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/createBlank/">
 {{ image_form }}
 {% csrf_token %}

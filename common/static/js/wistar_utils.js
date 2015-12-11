@@ -215,4 +215,14 @@
 
         input_object.value = first_pass;
     }
+
+     // removes non alpha
+    function numeric_only(input_object) {
+        var input_string = input_object.value;
+
+        //  remove all non alpha numeric
+        var first_pass = input_string.replace(/[^0-9]/g, "");
+
+        input_object.value = first_pass;
+    }
     
