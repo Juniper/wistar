@@ -28,7 +28,7 @@ draw2d.shape.node.vmxIcon = draw2d.shape.node.standaloneIcon.extend({
         this.setCpu(memento.userData.cpu);
         this.setRam(memento.userData.ram);
         this.setIp(memento.userData.ip);
-        this.setLabel(memento.userData.label);
+        this.setLabel(memento.userData.name);
         this.setName(memento.userData.name);
     }
 });

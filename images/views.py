@@ -153,7 +153,6 @@ def create_local(request):
     return HttpResponseRedirect('/images')
 
 
-
 def block_pull(request, uuid):
     domain = libvirtUtils.get_domain_by_uuid(uuid)
     domain_name = domain.name()
@@ -229,7 +228,8 @@ def create_from_instance(request, uuid):
 
 def detail(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
-    return render(request, 'images/details.html', {'image': image})
+    image_state = osUtils.is_image_thin_provisioned(image.filePath.path)
+    return render(request, 'images/details.html', {'image': image, 'state': image_state})
 
 
 def delete(request, image_id):

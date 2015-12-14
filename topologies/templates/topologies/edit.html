@@ -78,6 +78,14 @@
                         "state" : "down",
                         "id"    : json[i]["id"]
                     });
+			    } else if (json[i]["type"] == "draw2d.shape.node.vmxIcon") {
+			        vmxCount++;
+				    instanceArray.push({
+                        "label" : json[i]["userData"]["name"],
+                        "type" : json[i]["userData"]["type"],
+                        "state" : "down",
+                        "id"    : json[i]["id"]
+                    });
 			    }
 		    }
     	}

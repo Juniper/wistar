@@ -21,11 +21,23 @@
     </tr>
     <tr>
         <td>
-            Path
+            Backing File Path
         </td>
         <td>
             /opt/images/{{ image.filePath.url }}
         </td> 
+    </tr>
+    <tr>
+        <td>
+            Provision type
+        </td>
+        <td>
+            {% if state == True %}
+            Thinly Provisioned image
+            {% else %}
+            Standalone image
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <td>
