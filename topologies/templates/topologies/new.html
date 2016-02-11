@@ -374,7 +374,7 @@
             jQuery('#addInstanceTbodyCloudInit').css("display", "none");
         }
 
-        if (type == "junos_vmx") {
+        if (type == "junos_vmx_p2") {
             jQuery('#addInstanceTbodyVPFE').css("display", "");
         } else {
             jQuery('#addInstanceTbodyVPFE').css("display", "none");
@@ -837,7 +837,7 @@
             </tbody>
             <tbody id="addInstanceTbodyVPFE" style="display: none">
             <tr>
-                <td>
+                <td title="Only useful for vmx > 14.2">
                     Virtual PFE
                 </td>
                 <td>

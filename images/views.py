@@ -139,7 +139,7 @@ def create_local(request):
             file_path = file_path.replace(settings.MEDIA_ROOT + '/', '')
             print file_path
     else:
-        context = {'error' : "Invalid image path"}
+        context = {'error': "Invalid image path"}
         return render(request, 'error.html', context)
 
     print file_path
@@ -242,5 +242,3 @@ def delete(request, image_id):
 def error(request):
     context = {'error': "Unknown Error"}
     return render(request, 'error.html', context)
-
-

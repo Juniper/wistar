@@ -2,8 +2,8 @@
 {% load staticfiles %}
 {% block title %}Wistar -  New Local Image{% endblock %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
-    <script type="text/javascript">
+<script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
+<script type="text/javascript">
     function validateForm() {
         var d = $('#id_description');
         var n = $('#id_name');
@@ -27,12 +27,15 @@
     </script>
 {% endblock %}
 {% block content %}
-<h2>New Local Image</h2>
-This allows you to upload an image to the wistar server via rsync or scp to the
-/opt/images/user_instances directory.
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/createLocal/">
-{{ image_form }}
-{% csrf_token %}
-<input type="submit"/>
-</form>
+<div class="centered_box">
+    <h2>New Local Image</h2>
+    This allows you to upload an image to the wistar server via rsync or scp to the
+    /opt/images/user_instances directory.
+    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
+          action="/images/createLocal/">
+        {{ image_form }}
+        {% csrf_token %}
+        <input type="submit"/>
+    </form>
+</div>
 {% endblock %}

@@ -20,5 +20,12 @@
     </tr>
 {% endfor %}
 </table>
-<a href='new/'>Upload new image</a> &nbsp; <a href='blank/'>Define blank image</a> &nbsp; <a href='local/'>Define Local image</a>
+<a href='new/' title="Upload a new image file from your local machine">Upload new image</a> &nbsp;
+<a href='blank/' title="Create a blank image on the wistar server. Useful to install an OS from ISO for example">
+    Define blank image
+</a> &nbsp;
+<a href='local/' title="Create an image from a file that exists on the Wistar server.
+Useful if you need to copy a large file to the server first rather than upload via HTTP">
+    Define Local image
+</a>
 {% endblock %}

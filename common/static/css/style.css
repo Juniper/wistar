@@ -474,7 +474,7 @@ input[type=radio] {
     text-decoration: underline;
 }
 
-table.centered_box {
+.centered_box {
     margin: auto;
     width: 50%;
     background-color: #ffffff;
@@ -482,6 +482,6 @@ table.centered_box {
     margin-top: 50px
 }
 
-table.centered_box td {
+.centered_box td {
     vertical-align: middle;
 }

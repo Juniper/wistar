@@ -18,6 +18,7 @@ from common.lib import osUtils
 from images.models import Image
 from scripts.models import Script
 import time
+import re
 # mild hack alert
 from ajax import views as av
 
@@ -341,6 +342,15 @@ def export_as_heat_template(request, topology_id):
             device["imageName"] = name
             # FIXME - add code to set the flavor here based on CPU and RAM
             device["flavor"] = "m1.medium"
+
+            # FIXME - this should be set via a settings file of some sort!
+            for managementInterface in device["managementInterfaces"]:
+                if managementInterface["bridge"] == "virbr0":
+                    managementInterface["bridge"] = "wistar_management_network"
+
+            for interface in device["interfaces"]:
+                if interface["bridge"] == "br0":
+                    interface["bridge"] = "wistar_external_access"
 
         heat_template = render_to_string("contrail_heat_template", {'config': config})
         return HttpResponse(heat_template, content_type="text/plain")
