@@ -1,8 +1,8 @@
 wistar
 ======
 
-Wistar is a tool to manage a vMX topologies on a KVM server. You can quickly setup complex topologies of 
-multiple vMX instances, generate all the necessary KVM configurations, and quickly deploy the topology.
+Wistar is a tool to manage a topologies of VMs on a KVM server. You can quickly setup complex topologies of 
+multiple instances, generate all the necessary KVM XML domain and network configurations, and deploy the topology.
 
 To get started, you need a server running Ubuntu 14.04 (or some similar flavor) with libvirt, kvm and few python tools:
 
@@ -38,12 +38,8 @@ external network.
         Create the images and instances directories
         root@dc17-all:~# mkdir -p /opt/images/user_images/instances
         
-        Download the latest wistar source from here:
-        https://git.juniper.net/nembery/wistar or as a zip (archive.zip)
-        unzip into the /opt/wistar directory
-        
-        You may also clone the respository via git like so:
-        root@dc17-all:/opt/wistar# git clone https://git.juniper.net/nembery/wistar.git
+        Clone the repo
+        root@dc17-all:/opt/wistar# git clone https://github.com/nembery/wistar.git
         
         create the sql tables
         root@dc17-all:/opt/wistar# cd wistar-master/
@@ -63,15 +59,11 @@ external network.
         root@dc17-all:/opt/wistar# cd wistar-master/
         root@dc17-all:/opt/wistar/wistar-master# ./manage.py runserver 0.0.0.0:8080
 
-To begin, browse to the 'Images' page and upload a vMX image. (jinstall-vmx-14.1R1.10-domestic.img has been known to
-work well). Choose 'vMX <= 14.2' as the image type if this is a phase 1 vMX image.
+To begin, browse to the 'Images' page and upload a qcow2 based image. 
 
 Now, browse to Topologies to create and deploy a new network.
 
-More information can be found at the Wistar Project site here:
-https://junipernetworks.sharepoint.com/sites/open1/wistar/SitePages/Community%20Home.aspx
+Send questions to nembery@gmail.com
 
-Send questions to nembery@juniper.net 
-
-Happy networking!
+Happy Hacking!
 
