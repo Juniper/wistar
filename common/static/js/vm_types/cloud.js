@@ -1,4 +1,4 @@
-externalCloudIconPortLocator = draw2d.layout.locator.PortLocator.extend({
+externalCloudPortLocator = draw2d.layout.locator.PortLocator.extend({
     init: function() {
         this._super();
     },
@@ -22,8 +22,8 @@ externalCloudLabelLocator = draw2d.layout.locator.Locator.extend({
         target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() - 45);
     }
 });
-draw2d.shape.node.externalCloudIcon = draw2d.shape.icon.Cloud2.extend({
-    NAME: "draw2d.shape.node.externalCloudIcon",
+draw2d.shape.node.externalCloud = draw2d.shape.icon.Cloud2.extend({
+    NAME: "draw2d.shape.node.externalCloud",
     EDIT_POLICY: false,
    
     init: function() {
@@ -32,7 +32,7 @@ draw2d.shape.node.externalCloudIcon = draw2d.shape.icon.Cloud2.extend({
         this.setup();
     },
     setup: function() {
-        var pl = new externalCloudIconPortLocator();
+        var pl = new externalCloudPortLocator();
         this.createPort("hybrid", pl);
         this.setLabel("External");
     },
@@ -49,8 +49,8 @@ draw2d.shape.node.externalCloudIcon = draw2d.shape.icon.Cloud2.extend({
         return "External";
     }
 });
-draw2d.shape.node.internalCloudIcon = draw2d.shape.node.externalCloudIcon.extend({
-    NAME: "draw2d.shape.node.internalCloudIcon",
+draw2d.shape.node.internalCloud = draw2d.shape.node.externalCloud.extend({
+    NAME: "draw2d.shape.node.internalCloud",
     EDIT_POLICY: false,
     
     init: function(label) {
@@ -58,7 +58,7 @@ draw2d.shape.node.internalCloudIcon = draw2d.shape.node.externalCloudIcon.extend
         this.setup(label);
     },
     setup: function(label) {
-        var pl = new externalCloudIconPortLocator();
+        var pl = new externalCloudPortLocator();
         this.createPort("hybrid", pl);
         this.setLabel(label);
     },

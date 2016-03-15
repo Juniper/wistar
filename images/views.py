@@ -49,7 +49,7 @@ def update(request):
 
 def new(request):
     image_form = ImageForm()
-    context = {'image_form': image_form}
+    context = {'image_form': image_form, "vm_types": settings.VM_IMAGE_TYPES}
     return render(request, 'images/new.html', context)
 
 
@@ -66,6 +66,7 @@ def create(request):
         messages.info(request, "Image uploaded successfully")
         return HttpResponseRedirect('/images')
     else:
+        print "UH OH"
         context = {'image_form': image_form}
         return render(request, 'images/new.html', context)
 

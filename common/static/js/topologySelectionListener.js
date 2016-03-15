@@ -20,17 +20,11 @@ var topologySelectionListener = Class.extend({
 	            } else if (figure instanceof draw2d.shape.basic.Label) {
 	                console.log("found label");
 	                loadLabelEditor(figure.getId());
-	            } else if (figure instanceof draw2d.shape.node.linuxIcon) {
-	                    loadLinuxIconEditor(figure.getId());
-	            } else if (figure instanceof draw2d.shape.node.vmxIcon) {
+	            } else if (figure instanceof draw2d.shape.node.wistarVm) {
+	                console.log("found wistarVm");
+	                if (figure.getType().match('junos')) {
 	                    loadJunosIconEditor(figure.getId());
-	            } else if (figure instanceof draw2d.shape.node.genericIcon) {
-	                    loadGenericIconEditor(figure.getId());
-	            } else if (figure instanceof draw2d.shape.node.topologyIcon) {
-	                console.log("found topologyIcon");
-	                if (figure.getType() == "junos_vmx" || figure.getType() == "junos_firefly" || figure.getType() == "junos_vmx_p2") {
-	                    loadJunosIconEditor(figure.getId());
-	                } else if(figure.getType() == "linux") {
+	                } else if(figure.getType().match('linux')) {
 	                    loadLinuxIconEditor(figure.getId());
                     } else {
 	                    loadGenericIconEditor(figure.getId());
@@ -40,9 +34,15 @@ var topologySelectionListener = Class.extend({
 	            	console.log("found composite group");
 	            	var assignedFigures = figure.getAssignedFigures();
 	            	assignedFigures.each(function(i, z) {
-	            		if (z.NAME == "draw2d.shape.node.vreIcon") {
+	            		if (z instanceof draw2d.shape.node.wistarSetParent) {
 	            			setSelectedObject(z.getId());
-	            			loadJunosIconEditor(z.getId());
+	            			if (z.getType().match('junos')) {
+	                            loadJunosIconEditor(z.getId());
+	                        } else if(z.getType().match('linux')) {
+	                            loadLinuxIconEditor(z.getId());
+                            } else {
+	                            loadGenericIconEditor(z.getId());
+	                        }
 	            		}
 	            	});
 	            } else {

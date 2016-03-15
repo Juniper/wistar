@@ -18,9 +18,9 @@ from common.lib import osUtils
 from images.models import Image
 from scripts.models import Script
 import time
-import re
 # mild hack alert
 from ajax import views as av
+from wistar import settings
 
 
 # FIXME = debug should be a global setting
@@ -43,7 +43,10 @@ def edit(request):
 def new(request):
     image_list = Image.objects.all().order_by('name')
     script_list = Script.objects.all().order_by('name')
-    context = {'image_list': image_list, 'script_list': script_list}
+    vm_types = settings.VM_IMAGE_TYPES
+    vm_types_string = json.dumps(vm_types)
+    print vm_types_string
+    context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string}
     return render(request, 'topologies/new.html', context)
 
 
@@ -117,7 +120,7 @@ def clone(request, topo_id):
     topology.id = 0
     image_list = Image.objects.all().order_by('name')
     context = {'image_list': image_list, 'topo': topology}
-    return render(request, 'topologies/edit.html', context)
+    return render(request, 'topologies/new.html', context)
 
 
 def multi_clone(request):

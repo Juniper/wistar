@@ -3,39 +3,43 @@
 {% block title %}Wistar - Lab Rat - Edit Topology {% endblock %}
 {% load staticfiles %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static "js/shifty.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/raphael.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery-ui-1.8.23.custom.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery.layout.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery.autoresize.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery-touch_punch.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery.contextmenu.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/rgbcolor.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/canvg.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/Class.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/json2.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/draw2d.js" %}"></script>
+    <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/raphael.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui-1.8.23.custom.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.layout.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.autoresize.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-touch_punch.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.contextmenu.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/rgbcolor.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/canvg.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/Class.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/json2.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
 
-    <script type="text/javascript" src="{% static "js/vmIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/standaloneIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/genericIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/linuxIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vsrxIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vmxIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vreIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vpfeIcon.js" %}"></script>
-    
-   <script type="text/javascript" src="{% static "js/topologyIcon.js" %}"></script> 
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarVm.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarStandalone.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarSetParent.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarSetChild.js' %}"></script>
 
-    <script type="text/javascript" src="{% static "js/cloudIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/generic.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/linux.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vpfe.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vqfxRe.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vqfxCosim.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/vm_types/cloud.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/topologySelectionListener.js' %}"></script>
    
     <script type="text/javascript">
     var canvas;
     var lastX = 50;
     var lastY = -50;
 
-    var vmxCount = 1;
+    var wistarVmCount = 1;
     var instanceArray = []
 
     var s;
@@ -62,31 +66,19 @@
 		    reader = new draw2d.io.json.Reader();
 		    reader.unmarshal(canvas, json);
 		    for(i=0;i<json.length;i++) {
-			    if (json[i]["type"] == "draw2d.shape.node.topologyIcon") {
-				    vmxCount++;
+		        console.log(json[i]);
+		        if (! json[i].hasOwnProperty("userData")) {
+		            continue;
+		        }
+		        if (json[i]["userData"].hasOwnProperty("wistarVm")) {
+		            wistarVmCount++;
 				    instanceArray.push({ 
                         "label" : json[i]["userData"]["label"], 
                         "type" : json[i]["userData"]["type"], 
                         "state" : "down",
                         "id"    : json[i]["id"]
                     });
-			    } else if (json[i]["type"] == "draw2d.shape.node.vreIcon") {
-			        vmxCount++;
-				    instanceArray.push({
-                        "label" : json[i]["userData"]["name"],
-                        "type" : json[i]["userData"]["type"],
-                        "state" : "down",
-                        "id"    : json[i]["id"]
-                    });
-			    } else if (json[i]["type"] == "draw2d.shape.node.vmxIcon") {
-			        vmxCount++;
-				    instanceArray.push({
-                        "label" : json[i]["userData"]["name"],
-                        "type" : json[i]["userData"]["type"],
-                        "state" : "down",
-                        "id"    : json[i]["id"]
-                    });
-			    }
+		        }
 		    }
     	}
     } 
@@ -99,6 +91,8 @@
             var instance = instanceArray[v];
             if (instance["type"].includes('junos') || instance["type"] == "linux") {
                 updateBootState(instance["id"], instance["label"]);
+            } else {
+                console.log("skipping " + instance["type"]);
             }
         }
     }
@@ -176,6 +170,7 @@
     // silently updates the boot state of an instance
     function updateBootState(id, label) {
         domain = generateDomainNameFromLabel(label);
+        console.log(domain)
         var figure = canvas.getFigure(id);
         var type = figure.getType();
 
@@ -348,7 +343,7 @@
 
     	lastX += 0;
     	lastY += 100;
-    	vmxCount += 1;
+    	wistarVmCount += 1;
     	iconCount += 1;
 
     	if (iconCount > iconWrapLimit) {
@@ -1317,17 +1312,10 @@
 
         }
 
-        if (instance.NAME == "draw2d.shape.node.vreIcon") {
-            // we have an new style vmx_p2 icon
-            var vpfe_id = instance.getVPFE();
+        if (instance instanceof draw2d.shape.node.wistarSetParent) {
+            var vpfe_id = instance.getChildId();
             var vpfe = canvas.getFigure(vpfe_id);
             port = vpfe.getPorts().get(0);
-            var vpfe_bootupStatus = "Not Ready";
-            if (vpfe.getBootState() == "up") {
-                vpfe_bootupStatus = "Ready";
-            }
-
-            bootupStatus = "vRE: " + bootupStatus + "<br/>" + "vPFE: " + vpfe_bootupStatus;
 
         } else {
             port = instance.getPorts().get(0);
@@ -1345,12 +1333,14 @@
             var sourcePort = connection.getSource();
             var targetPort = connection.getTarget();
            
-            var neighbor = " ge-0/0/" + c;
+            var neighbor;
 
             if (sourcePort.getId() != port.getId()) {
-                neighbor = neighbor + "   :   " + sourcePort.getParent().getLabel(); 
+                var interfacePrefix = sourcePort.getParent().getInterfacePrefix() + c;
+                neighbor =  interfacePrefix + "   :   " + sourcePort.getParent().getLabel();
             } else {
-                neighbor = neighbor + "   :   " + targetPort.getParent().getLabel(); 
+                var interfacePrefix = targetPort.getParent().getInterfacePrefix() + c;
+                neighbor = interfacePrefix + "   :   " + targetPort.getParent().getLabel();
             }
 
             jQuery('#junosIconNeighbors').html(jQuery('#junosIconNeighbors').html() + neighbor + "<br/>");
@@ -1528,10 +1518,8 @@
             jQuery('#connectionTargetPortIp').val("0.0.0.0");
             jQuery('#connectionTargetPortIp').prop("disabled", true);
         } else {
-            var targetPortString = "ge-0/0/";
-            if (targetPort.getParent().getType() == "linux") {
-                targetPortString = "eth";    
-            }
+            var targetPortString = targetPort.getParent().getInterfacePrefix();
+
             jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel() + " " + targetPortString + targetIndex);
             jQuery('#connectionTargetIp').val(targetPort.getParent().getIp());
             jQuery('#connectionTargetType').val(targetPort.getParent().getType());
@@ -1551,10 +1539,8 @@
             jQuery('#connectionSourcePortIp').val("0.0.0.0");
             jQuery('#connectionSourcePortIp').prop("disabled", true);
         } else {
-            var sourcePortString = "ge-0/0/";
-            if (sourcePort.getParent().getType() == "linux") {
-                sourcePortString = "eth";    
-            }
+            var sourcePortString = sourcePort.getParent().getInterfacePrefix();
+
             jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel() + " " + sourcePortString + sourceIndex);
             jQuery('#connectionSourceIp').val(sourcePort.getParent().getIp());
             jQuery('#connectionSourceType').val(sourcePort.getParent().getType());

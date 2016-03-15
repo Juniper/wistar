@@ -269,7 +269,7 @@ def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
             print "Logging in as root"
             child.sendline("root")
 
-            ret = child.expect(["assword:", "root@%"])
+            ret = child.expect(["assword:", "[^\s]%"])
             if ret == 0:
                 print "Sending password"
                 child.sendline(pw)

@@ -800,13 +800,48 @@ def inline_deploy_topology(config):
                 if debug:
                     print "Rendering deviceXml for: " + device["name"]
 
-                image = Image.objects.get(pk=device["imageId"])
                 configuration_file = device["configurationFile"]
                 print "using config file: " + configuration_file
-                # fixme - simplify this logic to return just the deviceXml based on
-                # image.type and host os type (osUtils.checkIsLinux)
+
+                image = Image.objects.get(pk=device["imageId"])
                 image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
                 instance_path = osUtils.get_instance_path_from_image(image_base_path, device["name"])
+
+                if not osUtils.check_path(instance_path):
+                    if not osUtils.create_thin_provision_instance(image_base_path, device["name"]):
+                        raise Exception("Could not create image instance for image: " + image_base_path)
+
+                if "secondaryDisk" in device:
+                    print "Creating secondary Disk information"
+                    secondary_image = Image.objects.get(pk=device["secondaryDisk"])
+                    secondary_base_path = settings.MEDIA_ROOT + "/" + secondary_image.filePath.url
+                    secondary_instance_path = osUtils.get_instance_path_from_image(secondary_base_path,
+                                                                                   device["name"] + "_secondary"
+                                                                                   )
+
+                    if not osUtils.check_path(secondary_instance_path):
+                        if not osUtils.create_thin_provision_instance(secondary_base_path, 
+                                                                      device["name"] + "_secondary"
+                                                                      ):
+                            raise Exception("Could not create image instance for image: " + secondary_base_path)
+
+                    device["secondaryDiskPath"] = secondary_instance_path
+
+                if "tertiaryDisk" in device:
+                    print "Creating tertiary Disk information"
+                    tertiary_image = Image.objects.get(pk=device["tertiaryDisk"])
+                    tertiary_base_path = settings.MEDIA_ROOT + "/" + tertiary_image.filePath.url
+                    tertiary_instance_path = osUtils.get_instance_path_from_image(tertiary_base_path,
+                                                                                  device["name"] + "_tertiary"
+                                                                                  )
+
+                    if not osUtils.check_path(tertiary_instance_path):
+                        if not osUtils.create_thin_provision_instance(tertiary_base_path, 
+                                                                      device["name"] + "_tertiary"
+                                                                      ):
+                            raise Exception("Could not create image instance for image: " + tertiary_base_path)
+
+                    device["tertiaryDiskPath"] = tertiary_instance_path
 
                 cloud_init_path = ''
                 if image.type == "linux":
@@ -836,20 +871,7 @@ def inline_deploy_topology(config):
                                               {'device': device, 'instancePath': instance_path,
                                                'vm_env': vm_env, 'cloud_init_path': cloud_init_path}
                                               )
-
-                if osUtils.check_image_instance(image_base_path, device["name"]):
-                    print "Image Instance already exists"
-                else:
-                    print "Image Instance does not exist"
-                    if osUtils.create_thin_provision_instance(image_base_path, device["name"]):
-                        print "Successfully created instance"
-                    else:
-                        raise Exception("Could not create image instance for image: " + image_base_path)
-
-                if debug:
-                    print "Defining domain"
-                    print device_xml
-
+                print device_xml
                 libvirtUtils.define_domain_from_xml(device_xml)
 
             if not osUtils.check_is_linux():

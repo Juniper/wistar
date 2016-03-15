@@ -98,3 +98,91 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Registered VM Image types
+# this list will register the javascript VM configuration settings in
+# common/static/js/vm_types
+
+VM_IMAGE_TYPES = [
+    {
+        "name": "blank",
+        "description": "Blank",
+        "js": "draw2d.shape.node.generic",
+        "relationship_status": "single",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "linux",
+        "description": "Ubuntu Linux",
+        "js": "draw2d.shape.node.linux",
+        "relationship_status": "single",
+        "cloud_init": "yep",
+        "dummy_interfaces": [],
+
+    },
+    {
+        "name": "junos_vmx",
+        "description": "Junos vMX Phase 1",
+        "js": "draw2d.shape.node.vmx",
+        "relationship_status": "single",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "junos_vre",
+        "description": "Junos vMX RE",
+        "js": "draw2d.shape.node.vre",
+        "relationship_status": "parent",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "junos_vpfe",
+        "description": "Junos vMX vPFE",
+        "js": "draw2d.shape.node.vpfe",
+        "relationship_status": "child",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "junos_vqfx_re",
+        "description": "Junos vQFX RE",
+        "js": "draw2d.shape.node.vqfxRe",
+        "relationship_status": "parent",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "junos_vqfx_cosim",
+        "description": "Junos vQFX Cosim",
+        "js": "draw2d.shape.node.vqfxCosim",
+        "relationship_status": "child",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "generic",
+        "description": "Other",
+        "js": "draw2d.shape.node.generic",
+        "relationship_status": "single",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "junos_firefly",
+        "description": "Junos vSRX",
+        "js": "draw2d.shape.node.vsrx",
+        "relationship_status": "single",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    },
+    {
+        "name": "junos_vmx_hdd",
+        "description": "Junos vMX HDD",
+        "js": "draw2d.shape.node.generic",
+        "relationship_status": "child",
+        "cloud_init": "nope",
+        "dummy_interfaces": [],
+    }
+]

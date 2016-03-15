@@ -2,8 +2,8 @@
 {% load staticfiles %}
 {% block title %}Wistar - Lab Rat - New Image{% endblock %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
-    <script type="text/javascript">
+<script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
+<script type="text/javascript">
     function validateForm() {
         var d = $('#id_description');
         var n = $('#id_name');
@@ -34,8 +34,8 @@
 {% block content %}
 <h2>New Image</h2>
 <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/create/">
-{{ image_form }}
-{% csrf_token %}
-<input type="submit"/>
+    {{ image_form }}
+    {% csrf_token %}
+    <input type="submit"/>
 </form>
 {% endblock %}

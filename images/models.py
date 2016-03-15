@@ -6,11 +6,9 @@ from wistar import settings
 
 
 class Image(models.Model):
-    type_choices = (('junos_vmx', 'Junos vMX Phase 1'), ('junos_vmx_p2', 'Junos vMX Phase 2'),
-                    ('junos_vmx_p3', 'Junos vMX Phase 3'),
-                    ('junos_firefly', 'Junos vSRX'), ('junos', 'Junos Other'),
-                    ('linux', 'Linux'), ('other', 'Other'),
-                    ('vpfe', 'Virtual PFE'), ('blank', 'Blank Image'))
+
+    type_choices = ((x["name"], x["description"]) for x in settings.VM_IMAGE_TYPES)
+
     name = models.CharField(max_length=32)
     type = models.CharField(max_length=32, choices=type_choices, default='junos_vmx')
     description = models.TextField()

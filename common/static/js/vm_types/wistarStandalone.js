@@ -29,38 +29,26 @@ BootStateLocator = draw2d.layout.locator.Locator.extend({
     relocate: function(index, target) {
         var node = this.getParent()
         var x = node.getWidth() - 11;
-        var y = 3;
+        var y = 1;
         target.setPosition(x, y);
     }
 });
 // provides a base class for all topology icons that will be 'standalone' ie not
 // in a pair like vre / vpfe
 // should not be instantiated directly, but rely on child classes
-draw2d.shape.node.standaloneIcon = draw2d.shape.node.vmIcon.extend({
-    NAME: "draw2d.shape.node.standaloneIcon",
-    EDIT_POLICY: false,
-   
-    init: function(icon, width, height) {
-	    this._super(icon, width, height);
+draw2d.shape.node.wistarStandalone = draw2d.shape.node.wistarVm.extend({
+    NAME: "draw2d.shape.node.wistarStandalone",
+
+    init: function() {
+	    this._super();
     	var tpl = new topologyIconPortLocator();
     	this.createPort("hybrid", tpl);
-        this.setBootState("down");
+        this.setBootState("none");
+    },
 
-    },
-    setup: function(type, label, ip, pw, image, cpu, ram) {
-		// this.setUserData({});
-        // shouldn't be necessary
-		this.setIp(ip);
-        this.setImage(image);
-		this.setPassword(pw);
-		this.setType(type);
-		this.setLabel(label);
-		this.setCpu(cpu);
-		this.setRam(ram);
-    },
     setBootState: function(state) {
         this.bootState = state;
-        if (this.bootStateIcon == undefined) {
+        if (this.bootStateIcon == undefined && state != "none") {
             this.bootStateIcon = new draw2d.shape.basic.Circle();
             this.bootStateIcon.setBackgroundColor("#FF0000");
             this.bootStateIcon.setDimension(8, 8);
@@ -68,7 +56,7 @@ draw2d.shape.node.standaloneIcon = draw2d.shape.node.vmIcon.extend({
         }
         if (state == "up") {
             this.bootStateIcon.setBackgroundColor("#00FF00");
-        } else {
+        } else if(state == "down") {
             this.bootStateIcon.setBackgroundColor("#FF0000");
         }
     },
@@ -89,6 +77,7 @@ draw2d.shape.node.standaloneIcon = draw2d.shape.node.vmIcon.extend({
         }
     },
     setLabel: function(label) {
+        console.log("SET LABEL On STANDALONE " + label);
         this.setName(label);
         if (this.label == undefined) {
     	    this.label = new draw2d.shape.basic.Label(label);
@@ -105,5 +94,17 @@ draw2d.shape.node.standaloneIcon = draw2d.shape.node.vmIcon.extend({
     },
     setPersistentAttributes: function(memento) {
     	this._super(memento);
-    }
+    },
+    getMgmtInterface: function() {
+        if (this.MANAGEMENT_INTERFACE_LIST == 0) {
+            return this.MANAGEMENT_INTERFACE_PREFIX + "0";
+        } else {
+            // FIXME this may need to be adjusted if there is ever a reason to have a management interface
+            // that is something other than 0 or -1
+            // this assumes -1 in the else
+            var port = this.getPorts().get(0);
+            var connections = port.getConnections();
+            return this.MANAGEMENT_INTERFACE_PREFIX + connections.size;
+        }
+    },
 });

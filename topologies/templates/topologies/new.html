@@ -3,30 +3,37 @@
 {% block title %}Wistar - Lab Rat - Edit Topology {% endblock %}
 {% load staticfiles %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static "js/shifty.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/raphael.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery-ui-1.8.23.custom.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery.layout.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery.autoresize.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery-touch_punch.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery.contextmenu.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/rgbcolor.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/canvg.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/Class.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/json2.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/draw2d.js" %}"></script>
-    
-    <script type="text/javascript" src="{% static "js/cloudIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vmIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/standaloneIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/genericIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/linuxIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vsrxIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vmxIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vreIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/vpfeIcon.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/topologySelectionListener.js" %}"></script>
-   
+    <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/raphael.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui-1.8.23.custom.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.layout.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.autoresize.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-touch_punch.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery.contextmenu.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/rgbcolor.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/canvg.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/Class.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/json2.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarVm.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarStandalone.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarSetParent.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/wistarSetChild.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/vm_types/generic.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/linux.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vpfe.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vqfxRe.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vqfxCosim.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/cloud.js' %}"></script>
+
+
+    <script type="text/javascript" src="{% static 'js/topologySelectionListener.js' %}"></script>
+
     <script type="text/javascript">
     var canvas;
     var lastX = 50;
@@ -51,6 +58,7 @@
 
     var selectedObject;
 
+    var vm_types = $.parseJSON('{{ vm_types|safe }}');
     // check if an IP address is currently available
     function checkIp() {
         var ip = jQuery('#topoIconIp').val();
@@ -128,7 +136,7 @@
         }
     }
 
-    // convenience func to increment icon name is it happens to end
+    // convenience func to increment icon name if it happens to end
     // in a digit
     function incrementIconName(name) {
         var last = name.substr(-1);
@@ -172,8 +180,11 @@
     	var vpfe_image = jQuery('#topoIconImageVPFESelect').val();
 
         // enforce names always end with a digit
+        console.log(name);
         var last = name.substr(-1);
+        console.log(last);
         var lastInt = parseInt(last);
+        console.log(lastInt);
         if (isNaN(lastInt)) {
             alert('Name must end in a digit');
             if (name.length > 6) {
@@ -201,11 +212,6 @@
             return;
         } 
 
-        //var icon = iconData.split(":")[0];
-        //var width = iconData.split(":")[1];
-        //var height = iconData.split(":")[2];
-        //var iconPath = "/static/images/" + icon + ".png";
-
     	lastX += 0;
     	lastY += 100;
     	vmxCount += 1;
@@ -218,28 +224,49 @@
     	    iconOffset += 110;
     	}
 
-        var icon; 
+        var icon;
 
-        if (type == "junos_vmx" && vpfe_image == 0) {  
-            console.log('vmx');
-    	    icon = new draw2d.shape.node.vmxIcon();
-            icon.setup(type, name, ip, pw, image, cpu, ram);
-	        canvas.addFigure(icon, lastX, lastY);
-        } else if (type == "junos_vmx" && vpfe_image != 0) {
-            console.log('vmx_p2');
-    	    icon = new draw2d.shape.node.vreIcon();
-            icon.setup(type, name, ip, pw, image, cpu, ram);
-	        canvas.addFigure(icon, lastX, lastY);
+        vm_type_data = {};
+        for (v=0;v<vm_types.length;v++) {
+            vm_type = vm_types[v];
+            if (vm_type.name == type) {
+                vm_type_data = vm_type;
+                break;
+            }
+        }
+        console.log(vm_type_data);
 
-            var vpfe_cpu = jQuery('#topoIconVPFECpu').val();
-    	    var vpfe_ram = jQuery('#topoIconVPFERam').val();
+        icon = eval("new " + vm_type_data.js + "()" );
 
-    	    var vpfe  = new draw2d.shape.node.vpfeIcon();
-            vpfe.setup(type, name, ip, pw, vpfe_image, vpfe_cpu, vpfe_ram);
-            
+        console.log(icon);
+        icon.setup(type, name, ip, pw, image);
+
+        icon.setCpu(cpu);
+        icon.setRam(ram);
+
+	    canvas.addFigure(icon, lastX, lastY);
+	    
+	    if (icon.getSecondaryDiskType() != "") {
+	        var secondary_disk_id = jQuery('#topoIconSecondaryDisk').val();
+	        icon.setSecondaryDisk(secondary_disk_id);
+	    }
+
+        if (icon.getTertiaryDiskType() != "") {
+	        var tertiary_disk_id = jQuery('#topoIconTertiaryDisk').val();
+	        icon.setTertiaryDisk(tertiary_disk_id);
+	    }
+
+	    if (icon.getCompanionType() != "") {
+	        console.log("GOT A COMPANION!");
+	        //var vpfe_cpu = jQuery('#topoIconVPFECpu').val();
+    	    //var vpfe_ram = jQuery('#topoIconVPFERam').val();
+
+            var vpfe = eval("new " + icon.COMPANION_TYPE + "()" );
+            vpfe.setup("Child", name, ip, pw, vpfe_image);
+
             // bind them together here!
-            vpfe.setVRE(icon.getId());
-            icon.setVPFE(vpfe.getId());
+            vpfe.setParentId(icon.getId());
+            icon.setChildId(vpfe.getId());
 
             canvas.addFigure(vpfe, lastX, lastY + 15);
 
@@ -250,24 +277,7 @@
             // work around, ports are being drawn as hidden until they are clicked!
             vpfe.getPorts().first().toFront();
 
-        } else if (type == "junos_firefly") {
-    	    icon = new draw2d.shape.node.vsrxIcon();
-            icon.setup(type, name, ip, pw, image, cpu, ram);
-	        canvas.addFigure(icon, lastX, lastY);
-        } else if (type == "linux") {
-            console.log('linux');
-    	    icon = new draw2d.shape.node.linuxIcon();
-            icon.setup(type, name, ip, pw, image, cpu, ram);
-            if (scriptId != "0") {
-                icon.setConfigScriptId(scriptId);
-                icon.setConfigScriptParam(scriptParam);
-            }
-	        canvas.addFigure(icon, lastX, lastY);
-        } else {
-    	    icon = new draw2d.shape.node.genericIcon();
-            icon.setup(type, name, ip, pw, image, cpu, ram);
-	        canvas.addFigure(icon, lastX, lastY);
-        }
+	    }
 
         // let's try to increment everything nicely
     	jQuery('#topoIconIp').val(incrementIconIp(ip));
@@ -340,8 +350,6 @@
 	    jQuery('#topoForm').submit();
     }
 
-
-
     // simple validation against Junos password rules
     function checkPass(pw) {
         if(pw != "") {
@@ -368,16 +376,39 @@
         jQuery('#topoIconType').val(type);
         jQuery('#topoIconImage').val(id);
 
-        if (type == "linux") {
-            jQuery('#addInstanceTbodyCloudInit').css("display", "");
-        } else {
-            jQuery('#addInstanceTbodyCloudInit').css("display", "none");
-        }
+        // by default, let's hide some things
+        jQuery('#addInstanceTbodyCloudInit').css("display", "none");
+        jQuery('#addInstanceTbodyVPFE').css("display", "none");
+        jQuery('#addInstanceTbodySecondaryDisk').css("display", "none");
+        jQuery('#addInstanceTbodyTertiaryDisk').css("display", "none");
 
-        if (type == "junos_vmx_p2") {
-            jQuery('#addInstanceTbodyVPFE').css("display", "");
-        } else {
-            jQuery('#addInstanceTbodyVPFE').css("display", "none");
+        for (v=0;v<vm_types.length;v++) {
+            vm_type = vm_types[v];
+            if (vm_type.name == type) {
+
+                var icon = eval("new " + vm_type.js + "()" );
+
+                console.log(icon);
+
+                jQuery('#topoIconCpu').val(icon.VCPU);
+                jQuery('#topoIconRam').val(icon.VRAM);
+
+                if (icon.SECONDARY_DISK_TYPE != "") {
+                    jQuery('#addInstanceTbodySecondaryDisk').css("display", "");
+                }
+
+                if (icon.TERTIARY_DISK_TYPE != "") {
+                    jQuery('#addInstanceTbodyTertiaryDisk').css("display", "");
+                }
+
+                if (icon.COMPANION_TYPE != "") {
+                    jQuery('#addInstanceTbodyVPFE').css("display", "");
+                }
+
+                if (icon.CLOUD_INIT_SUPPORT) {
+                    jQuery('#addInstanceTbodyCloudInit').css("display", "");
+                }
+            }
         }
     }
 
@@ -452,7 +483,7 @@
             if (figure == null) {
                 figure  = canvas.getLine(so);
             }
-            if (figure.NAME == "draw2d.shape.node.externalCloudIcon") {
+            if (figure.NAME == "draw2d.shape.node.externalCloud") {
                 externalCloudAdded = false;
             }
             if (figure.NAME == "draw2d.shape.composite.Group") {
@@ -568,10 +599,9 @@
         l.setFontSize(jQuery('#labelFontSize').val());
     }
 
-
     function addExternalCloud() {
         if (externalCloudAdded == false) {
-            var c = new draw2d.shape.node.externalCloudIcon();
+            var c = new draw2d.shape.node.externalCloud();
             c.width = 100;
             c.height = 100;
             canvas.addFigure(c, 385, 15);
@@ -585,7 +615,7 @@
     function addInternalCloud() {
         internalCloudCounter = internalCloudCounter + 1;
         var label = jQuery('#internalCloudName').val();
-        var c = new draw2d.shape.node.internalCloudIcon(label);
+        var c = new draw2d.shape.node.internalCloud(label);
         c.width = 100;
         c.height = 100;
         canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
@@ -596,7 +626,13 @@
             r.setBackgroundColor(null);
             canvas.addFigure(r, 400, 400);
             r.toBack();
+    }
 
+    function addCircle() {
+            var r = new draw2d.shape.basic.Circle(175, 100);
+            r.setBackgroundColor(null);
+            canvas.addFigure(r, 400, 400);
+            r.toBack();
     }
 
     // are we editing an existing topology?
@@ -779,25 +815,22 @@
                 </td>
             </tr>
             </tbody>
+
             <tbody id="addInstanceTbodyAdvanced">
             <tr>
                 <td>
-                    vCPU
+                    Machine Properties
                 </td>
                 <td>
+                    vCPU:
                     <select name="topoIconCpu" id="topoIconCpu">
                         <option value="1">1</option>
                         <option value="2" selected>2</option>
                         <option value="4">4</option>
                         <option value="8">8</option>
                     </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    vRAM
-                </td>
-                <td>
+                    &nbsp; &nbsp;
+                    vRAM:
                     <select name="topoIconRam" id="topoIconRam">
                         <option value="512">512</option>
                         <option value="768">768</option>
@@ -811,27 +844,59 @@
             </tr>
             </tbody>
             <tbody id="addInstanceTbodyCloudInit" style="display: none">
+                <tr>
+                    <td>
+                        Cloud-Init Script
+                    </td>
+                    <td>
+                        <select name="topoIconScriptSelect" id="topoIconScriptSelect">
+                            <option value="0">Default cloud-init script</option>
+                            <!-- not a better way to do this? -->
+                            {% for s in script_list %}
+                            <option value="{{ s.id }}">{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Cloud-Init Param
+                    </td>
+                    <td>
+                        <input type="text" size="15" name="topoIconScriptParam" id="topoIconScriptParam" value="0"
+                               onblur="javascript: clean_string_no_special(this);"/>
+                    </td>
+                </tr>
+            </tbody>
+            <tbody id="addInstanceTbodySecondaryDisk" style="display: none">
             <tr>
-                <td>
-                    Cloud-Init Script
+                <td title="Only useful for vmx > 14.2">
+                    Secondary Disk
                 </td>
                 <td>
-                    <select name="topoIconScriptSelect" id="topoIconScriptSelect">
-                        <option value="0">Default cloud-init script</option>
+                    <select name="topoIconSecondaryDisk" id="topoIconSecondaryDisk">
+                        <option value="0">No Secondary Disk</option>
                         <!-- not a better way to do this? -->
-                        {% for s in script_list %}
-                        <option value="{{ s.id }}">{{ s.name }}</option>
+                        {% for i in image_list %}
+                        <option value="{{ i.id }}">{{ i.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
             </tr>
+            </tbody>
+            <tbody id="addInstanceTbodyTertiaryDisk" style="display: none">
             <tr>
-                <td>
-                    Cloud-Init Param
+                <td title="Only useful for vmx > 14.2">
+                    Secondary Disk
                 </td>
                 <td>
-                    <input type="text" size="15" name="topoIconScriptParam" id="topoIconScriptParam" value="0"
-                           onblur="javascript: clean_string_no_special(this);"/>
+                    <select name="topoIconTertiaryDisk" id="topoIconTertiaryDisk">
+                        <option value="0">No Tertiary Disk</option>
+                        <!-- not a better way to do this? -->
+                        {% for i in image_list %}
+                        <option value="{{ i.id }}">{{ i.name }}</option>
+                        {% endfor %}
+                    </select>
                 </td>
             </tr>
             </tbody>
@@ -845,12 +910,13 @@
                         <option value="0">No vPFE</option>
                         <!-- not a better way to do this? -->
                         {% for i in image_list %}
-                        {% if i.type == "vpfe" %}
+
                         <option value="{{ i.id }}">{{ i.name }}</option>
-                        {% endif %}
+
                         {% endfor %}
                     </select>
                 </td>
+            <!--
                 <tr>
                 <td>
                     vPFE vCPU
@@ -882,7 +948,8 @@
                     </select> MB
                 </td>
             </tr>
-            </tr>
+            -->
+
             </tbody>
             <!--
             <tbody id="addInstanceTbodyAdd">

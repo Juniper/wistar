@@ -1,3 +1,7 @@
+// THIS FILE IS DEPRECATED
+// YOU SHOULD BE SUBCLASSING vmIcon.js instead of relying on this
+// THIS IS ONLY HERE TO SUPPORT PRE-EXISTING TOPOLOGIES
+
 topologyIconPortLocator = draw2d.layout.locator.PortLocator.extend({
     init: function() {
         this._super();

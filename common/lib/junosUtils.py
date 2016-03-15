@@ -62,7 +62,7 @@ def get_interface_ip_config_element(name, ip):
         interface_el = etree.SubElement(xml_data, "interface")
         name_el = etree.SubElement(interface_el, "name")
         name_el.text = name
-        unit_el = etree.SubElement(interface_el, "unit")
+        unit_el = etree.SubElement(interface_el, "unit", attrib={"operation": "replace"})
         unit_name_el = etree.SubElement(unit_el, "name")
         unit_name_el.text = "0"
         family_el = etree.SubElement(unit_el, "family")
@@ -162,7 +162,6 @@ def push_config(conf_string, ip, pw):
         print "Nothing to commit - no diff found"
         return True
 
-
     try:
         print "Unlocking database!"
         cu.unlock()
@@ -195,7 +194,6 @@ def push_config_element(xml_data, dev, overwrite=False):
         print str(e)
         dev.close()
         return False
-
 
     diff = cu.diff()
     print diff
