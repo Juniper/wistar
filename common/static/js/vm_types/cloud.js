@@ -47,7 +47,10 @@ draw2d.shape.node.externalCloud = draw2d.shape.icon.Cloud2.extend({
     },
     getLabel: function() {
         return "External";
-    }
+    },
+    getInterfacePrefix: function() {
+        return "br";
+    },
 });
 draw2d.shape.node.internalCloud = draw2d.shape.node.externalCloud.extend({
     NAME: "draw2d.shape.node.internalCloud",
@@ -68,5 +71,8 @@ draw2d.shape.node.internalCloud = draw2d.shape.node.externalCloud.extend({
     setPersistentAttributes: function(memento) {
         this._super(memento);
         this.setLabel(memento.userData.label);
-    }
+    },
+     getInterfacePrefix: function() {
+        return "bridge";
+    },
 });
