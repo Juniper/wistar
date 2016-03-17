@@ -25,7 +25,7 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
     // if we need a parent / child VM - set it's type and wiring here
     COMPANION_TYPE: "",
     COMPANION_INTERFACE_LIST: [],
-    COMPANION_INTERFACE_MIRROR: true,
+    COMPANION_INTERFACE_MIRROR: false,
     COMPANION_INTERFACE_MIRROR_OFFSET: 19,
     // PCI Slot offset
     // required for certain vm t

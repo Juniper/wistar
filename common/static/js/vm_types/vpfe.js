@@ -1,7 +1,7 @@
 draw2d.shape.node.vpfe = draw2d.shape.node.wistarSetChild.extend({
     NAME: "draw2d.shape.node.vpfe",
     VCPU: 3,
-    VRAM: 8192,
+    VRAM: 6144,
     INTERFACE_PREFIX: "ge-0/0/",
     MANAGEMENT_INTERFACE_PREFIX: "fxp",
     MANAGEMENT_INTERFACE_INDEX: 0,

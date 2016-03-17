@@ -43,8 +43,14 @@
     var lastY = -50;
 
     var wistarVmCount = 1;
+
+    // array of all instances. Used to check boot status periodically
     var instanceArray = []
 
+    // how many times have we tried to update the boot status of all the instances?
+    updateBootCounter = 1;
+
+    // convenience variable for debug prompt - always set to currently selected object
     var s;
 
     // keep track of how many icons we've added to the canvas
@@ -76,7 +82,7 @@
 		        if (json[i]["userData"].hasOwnProperty("wistarVm")) {
 		            wistarVmCount++;
 				    instanceArray.push({ 
-                        "label" : json[i]["userData"]["label"], 
+                        "name" : json[i]["userData"]["name"],
                         "type" : json[i]["userData"]["type"], 
                         "state" : "down",
                         "id"    : json[i]["id"]
@@ -89,11 +95,12 @@
     // iterate instanceArray and grab the latest boot up state for each
     // this runs silently
     function updateAllBootState() {
+        updateBootCounter++;
         console.log("updating boot up state for topology");
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
             if (instance["type"].includes('junos') || instance["type"] == "linux") {
-                updateBootState(instance["id"], instance["label"]);
+                updateBootState(instance["id"], instance["name"]);
             } else {
                 console.log("skipping " + instance["type"]);
             }
@@ -160,22 +167,17 @@
 
     }
 
-    // get instance var from instance array by label
-    function getInstanceByLabel(label) {
-        for(v=0;v<instanceArray.length;v++) {
-            var instance = instanceArray[v];
-            if (instance["label"] == "label") {
-                return instance;
-            }
-        } 
-    }
-
     // silently updates the boot state of an instance
     function updateBootState(id, label) {
         domain = generateDomainNameFromLabel(label);
         console.log(domain)
         var figure = canvas.getFigure(id);
         var type = figure.getType();
+
+        if (figure.getBootState() == "up" && updateBootCounter % 2) {
+            console.log("Skipping check on running instance");
+            return;
+        }
 
         var url = "/ajax/getJunosStartupState/";
         
@@ -189,10 +191,26 @@
         var success = function(response) {
             data = eval(response);
             var state = "down";
-            if (data["result"] == false) {
+            if (data["power"] == false) {
+                // domain isn't running ...
                 state = "down";
             } else {
-                state = "up";
+                // domain is running, but do we have console?
+                if(data["console"]) {
+                    console.log("power and console available");
+                    state = "up";
+                } else {
+                    console.log("power but not console...");
+                    // no console, did we have console before? I.E. console could just be busy!!!
+                    if (figure.getBootState()) {
+                        console.log("console just appears to be busy!");
+                        // console was up before, and we still have power, let's assume the console is just busy for now
+                        state = "up";
+                    } else {
+                        console.log("still booting");
+                        state = "down";
+                    }
+                }
             }
             console.log("setting state to: " + state);
             topo_object = canvas.getFigure(id);

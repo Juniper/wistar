@@ -168,35 +168,39 @@ def load_json(raw_json, topo_id):
 
             print "Using chassis name of: %s" % chassis_name
 
-            device_interface_wiring = dict()
-
-            # setup management interface
-            # management interface mi will always be connected to default management network (virbr0 on KVM)
-            mi = dict()
-            mi["mac"] = generate_next_mac(topo_id)
-            mi["bridge"] = "virbr0"
-            mi["type"] = user_data["mgmtInterfaceType"]
-
-            device_interface_wiring[user_data["mgmtInterfaceIndex"]] = mi
-
-            for dummy in user_data["dummyInterfaceList"]:
-                dm = dict()
-                dm["mac"] = generate_next_mac(topo_id)
-                dm["bridge"] = "t%s_%s_d" % (str(topo_id), chassis_name)
-                dm["type"] = user_data["interfaceType"]
-
-                device_interface_wiring[dummy] = dm
-
-            for companion in user_data["companionInterfaceList"]:
-                cm = dict()
-                cm["mac"] = generate_next_mac(topo_id)
-                cm["bridge"] = "t%s_%s_c" % (str(topo_id), chassis_name)
-                cm["type"] = user_data["interfaceType"]
-
-                device_interface_wiring[companion] = cm
+            # set this property for use later, we'll loop again after we have configured all the conections
+            # to create the management interface at the end (i.e. for Linux hosts)
+            device["mgmtInterfaceIndex"] = user_data["mgmtInterfaceIndex"]
 
             # now let's create the interfaces declared so far
             if user_data["mgmtInterfaceIndex"] != -1:
+                device_interface_wiring = dict()
+
+                # setup management interface
+                # management interface mi will always be connected to default management network (virbr0 on KVM)
+                mi = dict()
+                mi["mac"] = generate_next_mac(topo_id)
+                mi["bridge"] = "virbr0"
+                mi["type"] = user_data["mgmtInterfaceType"]
+
+                device_interface_wiring[user_data["mgmtInterfaceIndex"]] = mi
+
+                for dummy in user_data["dummyInterfaceList"]:
+                    dm = dict()
+                    dm["mac"] = generate_next_mac(topo_id)
+                    dm["bridge"] = "t%s_%s_d" % (str(topo_id), chassis_name)
+                    dm["type"] = user_data["interfaceType"]
+
+                    device_interface_wiring[dummy] = dm
+
+                for companion in user_data["companionInterfaceList"]:
+                    cm = dict()
+                    cm["mac"] = generate_next_mac(topo_id)
+                    cm["bridge"] = "t%s_%s_c" % (str(topo_id), chassis_name)
+                    cm["type"] = user_data["interfaceType"]
+
+                    device_interface_wiring[companion] = cm
+
                 # we do have management interfaces first, so let's go ahead and add them to the device
                 # THIS ASSUMES THE JSON CONFIGURATION IS VALID! I.E. all interface indexes are accounted for
                 # 0, 1, 2, 3 etc.
@@ -244,7 +248,6 @@ def load_json(raw_json, topo_id):
                 if d["uuid"] == source_uuid:
                     # slot should always start with 6 (or 5 for vmx phase 2/3)
                     slot = "%#04x" % int(len(d["interfaces"]) + device["slot_offset"])
-                    pci_slot = d["companionInterfaceMirrorOffset"]
                     interface = dict()
                     interface["mac"] = generate_next_mac(topo_id)
 
@@ -327,6 +330,17 @@ def load_json(raw_json, topo_id):
                 connection["mac"] = generate_next_mac(topo_id)
                 networks.append(connection)
                 conn_index += 1
+
+    # now let's add a management interface if it's required
+    # if index == -1, then the desire is to put it last!
+    for d in devices:
+        if d["mgmtInterfaceIndex"] == -1:
+            mi = dict()
+            mi["mac"] = generate_next_mac(topo_id)
+            mi["slot"] = "%#04x" % int(len(d["interfaces"]) + d["slot_offset"])
+            mi["bridge"] = "virbr0"
+            mi["type"] = user_data["mgmtInterfaceType"]
+            d["interfaces"].append(mi)
 
     return_object = dict()
     return_object["networks"] = networks

@@ -96,7 +96,7 @@ draw2d.shape.node.wistarStandalone = draw2d.shape.node.wistarVm.extend({
     	this._super(memento);
     },
     getMgmtInterface: function() {
-        if (this.MANAGEMENT_INTERFACE_LIST == 0) {
+        if (this.MANAGEMENT_INTERFACE_INDEX == 0) {
             return this.MANAGEMENT_INTERFACE_PREFIX + "0";
         } else {
             // FIXME this may need to be adjusted if there is ever a reason to have a management interface

@@ -224,7 +224,11 @@ def execute_linux_cli(request):
 
 @csrf_exempt
 def get_junos_startup_state(request):
-    response_data = {"result": False}
+    print "Getting junos startup state"
+    response_data = dict()
+    response_data["console"] = False
+    response_data["power"] = False
+
     required_fields = set(['name'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -233,21 +237,31 @@ def get_junos_startup_state(request):
     if libvirtUtils.is_domain_running(name):
         # topologies/edit will fire multiple calls at once
         # let's just put a bit of a breather between each one
-        time.sleep(random.randint(0,10) * .10)
-        response_data["result"] = consoleUtils.is_junos_device_at_prompt(name)
+        print "we have power"
+        time.sleep(random.randint(0, 10) * .10)
+        response_data["power"] = True
+        response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 @csrf_exempt
 def get_linux_startup_state(request):
-    response_data = {"result": True}
+    print "Getting linux startup state"
+    response_data = dict()
+    response_data["console"] = False
+    response_data["power"] = False
+
     required_fields = set(['name'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
-    response_data["result"] = consoleUtils.is_linux_device_at_prompt(name)
+    if libvirtUtils.is_domain_running(name):
+        time.sleep(random.randint(0, 10) * .10)
+        response_data["power"] = True
+        response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
+
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -921,9 +935,23 @@ def launch_web_console(request):
             response_data["port"] = wc_port
             return HttpResponse(json.dumps(response_data), content_type="application/json")
         else:
+
+            # Let's verify the vnc port hasn't changed. Could happen if topology is deleted and recreated with
+            # same VM names. Rare but happens to me all the time!
+            d = libvirtUtils.get_domain_by_name(domain)
+            # now grab the configured vncport
+            true_vnc_port = libvirtUtils.get_domain_vnc_port(d)
+
+            if true_vnc_port != vnc_port:
+                print "Found out of sync vnc port!"
+                vnc_port = true_vnc_port
+
             pid = wistarUtils.launch_web_socket(wc_port, vnc_port, server)
             if pid is not None:
                 wc_config["pid"] = pid
+                wc_config["vncPort"] = true_vnc_port
+                wc_dict[domain] = wc_config
+                request.session["webConsoleDict"] = wc_dict
 
                 response_data["message"] = "started WebConsole on port: " + wc_port
                 response_data["port"] = wc_port
@@ -954,7 +982,7 @@ def launch_web_console(request):
             return HttpResponse(json.dumps(response_data), content_type="application/json")
 
         print "Launched with pid " + str(pid)
-        wcConfig = {}
+        wcConfig = dict()
         wcConfig["pid"] = str(pid)
         wcConfig["vncPort"] = str(vnc_port)
         wcConfig["wsPort"] = str(wc_port)

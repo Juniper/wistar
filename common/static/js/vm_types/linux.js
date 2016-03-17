@@ -1,7 +1,7 @@
 draw2d.shape.node.linux = draw2d.shape.node.wistarStandalone.extend({
     NAME: "draw2d.shape.node.linux",
     MANAGEMENT_INTERFACE_PREFIX: "eth",
-    MANAGEMENT_INTERFACE_LIST: -1,
+    MANAGEMENT_INTERFACE_INDEX: -1,
     DOMAIN_CONFIGURATION_FILE: "domain.xml",
     ICON_WIDTH: 30,
     ICON_HEIGHT: 50,

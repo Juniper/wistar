@@ -1,10 +1,15 @@
 draw2d.shape.node.vsrx = draw2d.shape.node.wistarStandalone.extend({
-    NAME: "draw2d.shape.node.vsrxIcon",
+    NAME: "draw2d.shape.node.vsrx",
     MANAGEMENT_INTERFACE_PREFIX: "fxp",
-    MANAGEMENT_INTERFACE_LIST: 0,
+    MANAGEMENT_INTERFACE_INDEX: 0,
+    MANAGEMENT_INTERFACE_TYPE: "virtio",
+    INTERFACE_PREFIX: "ge-0/0/",
+    INTERFACE_TYPE: "virtio",
     DOMAIN_CONFIGURATION_FILE: "domain_firefly.xml",
     ICON_WIDTH: 50,
     ICON_HEIGHT: 50,
     ICON_FILE: "/static/images/firefly.png",
+    VCPU: 2,
+    VRAM: 4096,
 
 });
