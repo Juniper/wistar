@@ -45,7 +45,6 @@ def new(request):
     script_list = Script.objects.all().order_by('name')
     vm_types = settings.VM_IMAGE_TYPES
     vm_types_string = json.dumps(vm_types)
-    print vm_types_string
     context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string}
     return render(request, 'topologies/new.html', context)
 
@@ -119,8 +118,11 @@ def clone(request, topo_id):
     topology.json = wistarUtils.clone_topology(topology.json)
     topology.id = 0
     image_list = Image.objects.all().order_by('name')
-    context = {'image_list': image_list, 'topo': topology}
-    return render(request, 'topologies/new.html', context)
+    script_list = Script.objects.all().order_by('name')
+    vm_types = settings.VM_IMAGE_TYPES
+    vm_types_string = json.dumps(vm_types)
+    context = {'image_list': image_list, 'script_list': script_list, 'topo': topology, 'vm_types': vm_types_string}
+    return render(request, 'topologies/edit.html', context)
 
 
 def multi_clone(request):

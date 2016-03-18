@@ -640,6 +640,18 @@
         return true;
     }
 
+    // loads initial topology from json stored in the 'json' div
+    // also creates the instance array variable on page context
+    function loadTopology() {
+        var test = jQuery('#json').val();
+    	if (test != null) {
+		    // var jsonTxt = JSON.stringify(test, null, 2);
+		    var json = eval(test);
+		    reader = new draw2d.io.json.Reader();
+		    reader.unmarshal(canvas, json);
+		}
+	}
+
     jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
         // set default connection router here
@@ -647,7 +659,9 @@
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
         canvas.addSelectionListener(new topologySelectionListener());
-
+       {% if topo.name != None %}
+            loadTopology();
+       {% endif %}
     });
     </script>
 {% endblock %}
@@ -697,8 +711,6 @@
             position:relative; 
             border: 1px solid #000">
           </div>
-
-          <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
 
         </td>
       </tr>

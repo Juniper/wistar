@@ -227,9 +227,9 @@ def load_json(raw_json, topo_id):
                         networks.append(nn)
 
             devices.append(device)
-        elif json_object["type"] == "draw2d.shape.node.externalCloudIcon":
+        elif json_object["type"] == "draw2d.shape.node.externalCloud":
             external_uuid = json_object["id"]
-        elif json_object["type"] == "draw2d.shape.node.internalCloudIcon":
+        elif json_object["type"] == "draw2d.shape.node.internalCloud":
             internal_uuids.append(json_object["id"])
 
     conn_index = 1
@@ -498,9 +498,9 @@ def load_json_old(raw_json, topo_id):
                     device["managementInterfaces"].append(em1)
 
             devices.append(device)
-        elif json_object["type"] == "draw2d.shape.node.externalCloudIcon":
+        elif json_object["type"] == "draw2d.shape.node.externalCloud":
             external_uuid = json_object["id"]
-        elif json_object["type"] == "draw2d.shape.node.internalCloudIcon":
+        elif json_object["type"] == "draw2d.shape.node.internalCloud":
             internal_uuids.append(json_object["id"])
 
     # just run through again to ensure we already have all the devices ready to go!

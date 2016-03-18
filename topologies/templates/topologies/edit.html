@@ -202,7 +202,7 @@
                 } else {
                     console.log("power but not console...");
                     // no console, did we have console before? I.E. console could just be busy!!!
-                    if (figure.getBootState()) {
+                    if (figure.getBootState() == "up") {
                         console.log("console just appears to be busy!");
                         // console was up before, and we still have power, let's assume the console is just busy for now
                         state = "up";
@@ -1224,7 +1224,7 @@
                 console.log('deleting line');
                 figure  = canvas.getLine(so);
             }
-            if (figure.NAME == "draw2d.shape.node.externalCloudIcon") {
+            if (figure instanceof draw2d.shape.node.externalCloud) {
                 externalCloudAdded = false;
             }
             canvas.removeFigure(figure);
@@ -1241,7 +1241,7 @@
         // make sure it's not blank!
         if (so != 0) {
             var figure = canvas.getFigure(so);
-            if (figure.NAME == "draw2d.shape.basic.Label") {
+            if (figure instanceof draw2d.shape.basic.Label) {
                 canvas.removeFigure(figure);
                 jQuery('#selectedObject').val("0");
             }
@@ -1530,8 +1530,9 @@
             }
         }
         // do the right this if we are connected to an external Bridge
-        if (targetPort.getParent().NAME == "draw2d.shape.node.externalCloudIcon" ||
-            targetPort.getParent().NAME == "draw2d.shape.node.internalCloudIcon") 
+        // FIXME - redundant check - internal extends external, so this is really just to be verbose
+        if (targetPort.getParent()  instanceof draw2d.shape.node.externalCloud ||
+            targetPort.getParent() instanceof draw2d.shape.node.internalCloud)
         {
             jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel());
             jQuery('#connectionTargetIp').val("0.0.0.0");
@@ -1550,8 +1551,8 @@
             jQuery('#connectionTargetPortIp').prop("disabled", false);
         }
 
-        if (sourcePort.getParent().NAME == "draw2d.shape.node.externalCloudIcon" ||
-            sourcePort.getParent().NAME == "draw2d.shape.node.internalCloudIcon") 
+        if (sourcePort.getParent() instanceof draw2d.shape.node.externalCloud ||
+            sourcePort.getParent() instanceof draw2d.shape.node.internalCloud)
         {
 
             jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel());
@@ -1601,7 +1602,7 @@
 
     function addExternalCloud() {
         if (externalCloudAdded == false) {
-            var c = new draw2d.shape.node.externalCloudIcon();
+            var c = new draw2d.shape.node.externalCloud();
             c.width = 100;
             c.height = 100;
             canvas.addFigure(c, 385, 15);
@@ -1615,7 +1616,7 @@
     function addInternalCloud() {
         internalCloudCounter = internalCloudCounter + 1;
         var label = jQuery('#internalCloudName').val();
-        var c = new draw2d.shape.node.internalCloudIcon(label);
+        var c = new draw2d.shape.node.internalCloud(label);
         c.width = 100;
         c.height = 100;
         canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));

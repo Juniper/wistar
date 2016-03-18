@@ -40,7 +40,7 @@ class Script(models.Model):
     type = models.CharField(max_length=32, choices=type_choices, default='netconf')
     destination = models.CharField(max_length=256)
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True, auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'script'
