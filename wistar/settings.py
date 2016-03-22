@@ -111,7 +111,7 @@ VM_IMAGE_TYPES = [
     },
     {
         "name": "linux",
-        "description": "Ubuntu Linux",
+        "description": "Linux",
         "js": "draw2d.shape.node.linux",
     },
     {
@@ -158,5 +158,10 @@ VM_IMAGE_TYPES = [
         "name": "junos_vmx_hdd",
         "description": "Junos vMX HDD",
         "js": "draw2d.shape.node.generic",
+    },
+        {
+        "name": "space",
+        "description": "Junos Space",
+        "js": "draw2d.shape.node.space",
     }
 ]

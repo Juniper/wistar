@@ -22,6 +22,8 @@
 {% block content %}
 <h2>Edit Image</h2>
 <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/update/">
+    {{ image_form }}
+    <!--
     <tr>
         <th>
             <label for="id_name">Name:</label>
@@ -59,5 +61,10 @@
     <input type='hidden' name='image_id' value="{{image.id}}"/>
     {% csrf_token %}
     <input type="submit"/>
+    -->
+      <input type='hidden' name='image_id' value="{{image.id}}"/>
+    {% csrf_token %}
+    <input type="submit"/>
+
 </form>
 {% endblock %}

@@ -127,6 +127,8 @@ def load_json(raw_json, topo_id):
             device["secondaryDiskType"] = user_data["secondary_disk_type"]
             device["tertiaryDiskType"] = user_data["tertiary_disk_type"]
 
+            device["managementInterface"] = user_data["mgmtInterface"]
+
             if "secondaryDisk" in user_data:
                 device["secondaryDisk"] = user_data["secondaryDisk"]
 
@@ -188,7 +190,7 @@ def load_json(raw_json, topo_id):
                 for dummy in user_data["dummyInterfaceList"]:
                     dm = dict()
                     dm["mac"] = generate_next_mac(topo_id)
-                    dm["bridge"] = "t%s_%s_d" % (str(topo_id), chassis_name)
+                    dm["bridge"] = "t%s_d" % str(topo_id)
                     dm["type"] = user_data["interfaceType"]
 
                     device_interface_wiring[dummy] = dm

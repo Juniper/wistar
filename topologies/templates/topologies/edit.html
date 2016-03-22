@@ -23,6 +23,8 @@
 
     <script type="text/javascript" src="{% static 'js/vm_types/generic.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/linux.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/space.js' %}"></script>
+
     <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
@@ -99,7 +101,8 @@
         console.log("updating boot up state for topology");
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
-            if (instance["type"].includes('junos') || instance["type"] == "linux") {
+            var figure = canvas.getFigure(instance["id"]);
+            if (instance["type"].includes('junos') || figure instanceof draw2d.shape.node.linux) {
                 updateBootState(instance["id"], instance["name"]);
             } else {
                 console.log("skipping " + instance["type"]);

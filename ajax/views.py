@@ -817,6 +817,8 @@ def inline_deploy_topology(config):
                 configuration_file = device["configurationFile"]
                 print "using config file: " + configuration_file
 
+                print device
+
                 image = Image.objects.get(pk=device["imageId"])
                 image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
                 instance_path = osUtils.get_instance_path_from_image(image_base_path, device["name"])
@@ -860,7 +862,7 @@ def inline_deploy_topology(config):
                 cloud_init_path = ''
                 if image.type == "linux":
                     # grab the last interface
-                    management_interface = device["interfaces"][-1]["name"]
+                    management_interface = device["managementInterface"]
                     # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
                     management_ip = device["ip"] + "/24"
                     # domain_name, host_name, mgmt_ip, mgmt_interface
