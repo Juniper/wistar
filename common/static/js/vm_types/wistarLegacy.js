@@ -14,3 +14,6 @@ draw2d.shape.node.internalCloudIcon = draw2d.shape.node.internalCloud.extend({
 draw2d.shape.node.linuxIcon = draw2d.shape.node.linux.extend({
     NAME: "draw2d.shape.node.linuxIcon",
 });
+draw2d.shape.node.genericIcon = draw2d.shape.node.generic.extend({
+    NAME: "draw2d.shape.node.genericIcon",
+});

@@ -6,7 +6,4 @@ draw2d.shape.node.generic = draw2d.shape.node.wistarStandalone.extend({
     ICON_WIDTH: 50,
     ICON_HEIGHT: 50,
     ICON_FILE: "/static/images/router.png",
-
-
-
 });
