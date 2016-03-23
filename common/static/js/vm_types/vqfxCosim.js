@@ -6,7 +6,7 @@ draw2d.shape.node.vqfxCosim = draw2d.shape.node.wistarSetChild.extend({
     DOMAIN_CONFIGURATION_FILE: "junos_vqfx.xml",
     ICON_WIDTH: 50,
     ICON_HEIGHT: 40,
-    ICON_FILE: "/static/images/vmx.png",
+    ICON_FILE: "/static/images/vqfx_cosim.png",
     DUMMY_INTERFACE_LIST: [],
     COMPANION_TYPE: "draw2d.shape.node.vqfxRe",
     COMPANION_INTERFACE_LIST: ["1"],

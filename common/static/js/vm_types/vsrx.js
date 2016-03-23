@@ -8,7 +8,7 @@ draw2d.shape.node.vsrx = draw2d.shape.node.wistarStandalone.extend({
     DOMAIN_CONFIGURATION_FILE: "domain_firefly.xml",
     ICON_WIDTH: 50,
     ICON_HEIGHT: 50,
-    ICON_FILE: "/static/images/firefly.png",
+    ICON_FILE: "/static/images/virtual_firewall.png",
     VCPU: 2,
     VRAM: 4096,
 
