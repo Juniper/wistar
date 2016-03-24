@@ -63,14 +63,17 @@
        
         if (action == "stop") {
             if (! confirm("This will power off the instance ungracefully!")) {
+                doc.css('cursor', '');
                 return false;
             }
         } else if (action == "undefine") {
             if (! confirm("This will delete this instance entirely!")) {
+                doc.css('cursor', '');
                 return false;
             }
         } else if (action == "suspend") {
             if (! confirm("This will suspend this domain! THIS IS EXPERIEMENTAL!")) {
+                doc.css('cursor', '');
                 return false;
             }
         }

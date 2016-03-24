@@ -234,7 +234,13 @@ def create_from_instance(request, uuid):
 def detail(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
     image_state = osUtils.is_image_thin_provisioned(image.filePath.path)
-    return render(request, 'images/details.html', {'image': image, 'state': image_state})
+    vm_type = "N/A"
+    for vt in settings.VM_IMAGE_TYPES:
+        if vt["name"] == image.type:
+            vm_type = vt["description"]
+            break
+
+    return render(request, 'images/details.html', {'image': image, 'state': image_state, "vm_type": vm_type})
 
 
 def delete(request, image_id):
