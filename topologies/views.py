@@ -114,7 +114,7 @@ def import_topology(request):
 def clone(request, topo_id):
     topology = get_object_or_404(Topology, pk=topo_id)
     orig_name = topology.name
-    topology.name = "Clone of " + orig_name
+    topology.name = orig_name + " clone"
     topology.json = wistarUtils.clone_topology(topology.json)
     topology.id = 0
     image_list = Image.objects.all().order_by('name')
@@ -122,7 +122,7 @@ def clone(request, topo_id):
     vm_types = settings.VM_IMAGE_TYPES
     vm_types_string = json.dumps(vm_types)
     context = {'image_list': image_list, 'script_list': script_list, 'topo': topology, 'vm_types': vm_types_string}
-    return render(request, 'topologies/edit.html', context)
+    return render(request, 'topologies/new.html', context)
 
 
 def multi_clone(request):
