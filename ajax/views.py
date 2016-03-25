@@ -553,9 +553,27 @@ def manage_domain(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     domain_id = request.POST['domainId']
-    action = request.POST['action'] 
+    action = request.POST['action']
+    topology_id = request.POST["topologyId"]
 
-    if action == "start": 
+    if action == "start":
+        # force all networks to be up before we start a topology
+        # potential minor optimization here to only start networks attached to domain
+        networks = libvirtUtils.get_networks_for_topology(topology_id)
+        for network in networks:
+            if network["state"] != "running":
+                libvirtUtils.start_network(network["name"])
+
+        # prevent start up errors by missing ISO files - i.e cloud-init seed files
+        domain = libvirtUtils.get_domain_by_uuid(domain_id)
+        iso = libvirtUtils.get_iso_for_domain(domain.name())
+        # if we have an ISO file configured, and it doesn't actually exist
+        # just remove it completely
+        if iso is not None and not osUtils.check_path(iso):
+            print "Removing non-existent ISO from domain"
+            libvirtUtils.detach_iso_from_domain(domain.name())
+
+        # now we should be able to safely start the domain
         if libvirtUtils.start_domain(domain_id):
             return refresh_deployment_status(request)
         else:

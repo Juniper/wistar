@@ -232,6 +232,9 @@ def get_networks_for_topology(topology_id):
 
     network_list = []
 
+    if not topology_id.startswith("t"):
+        topology_id = "t" + topology_id + "_"
+
     networks = list_networks()
     for n in networks:
         if n["name"].startswith(topology_id):
