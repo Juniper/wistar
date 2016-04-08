@@ -81,12 +81,12 @@ def import_topology(request):
                 if "userData" in json_object and "wistarVm" in json_object["userData"]:
                     ud = json_object["userData"]
                     # check if we have this type of image
-                    image_list = Image.objects.filter(type = ud["type"])
+                    image_list = Image.objects.filter(type=ud["type"])
                     if len(image_list) == 0:
                         # nope, bail out and let the user know what happened!
                         print "Could not find image of type " + ud["type"]
-                        return error(request, 'Could not find a valid image of type ' + ud['type'] 
-                                     + '! Please upload an image of this type and try again')
+                        return error(request, 'Could not find a valid image of type ' + ud['type'] +
+                                     '! Please upload an image of this type and try again')
 
                     image = image_list[0]
                     print str(image.id)
@@ -99,8 +99,11 @@ def import_topology(request):
             topology.json = json.dumps(json_data)
 
             image_list = Image.objects.all().order_by('name')
-            context = {'image_list': image_list, 'topo': topology}
-            return render(request, 'topologies/edit.html', context)
+            script_list = Script.objects.all().order_by('name')
+            vm_types = settings.VM_IMAGE_TYPES
+            vm_types_string = json.dumps(vm_types)
+            context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string}
+            return render(request, 'topologies/new.html', context)
 
         else:
             form = ImportForm()
@@ -134,14 +137,14 @@ def multi_clone(request):
     num_clones = request.POST["clones"]
 
     topology = get_object_or_404(Topology, pk=topology_id)
-    json = topology.json
+    json_string = topology.json
     i = 0
     while i < num_clones: 
         new_topo = topology
         orig_name = topology.name
         new_topo.name = orig_name
-        new_topo.json = wistarUtils.clone_topology(json)
-        json = new_topo.json
+        new_topo.json = wistarUtils.clone_topology(json_string)
+        # json = new_topo.json
         new_topo.id = None
         new_topo.save()
 

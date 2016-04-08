@@ -14,5 +14,4 @@ draw2d.shape.node.vqfxCosim = draw2d.shape.node.wistarSetChild.extend({
     COMPANION_INTERFACE_MIRROR_OFFSET: 19,
     VCPU: 1,
     VRAM: 2048,
-
 });
