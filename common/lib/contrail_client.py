@@ -20,6 +20,7 @@ class ContrailClient:
     _nova_url = ':8774/v2'
     _neutron_url = ':9696/v2.0'
     _glance_url = ':9292/v1'
+    _heat_url = ':8004/v1'
     _auth_url = _os_url + "/auth/tokens"
     _data_url = ':8143/api/tenant/networking/'
 
@@ -1017,6 +1018,12 @@ class ContrailClient:
     def create_glance_url(self, url):
         return "http://" + self._host + self._glance_url + url
 
+    def create_heat_url(self, url):
+        if not url.startswith("/"):
+            url = "/" + url
+
+        return "http://" + self._host + self._heat_url + url
+
     def list_glance_images(self):
         url = self.create_glance_url('/images')
         print url
@@ -1082,6 +1089,21 @@ class ContrailClient:
         finally:
             fio.close()
             f.close()
+
+    def post_heat_template(self, tenant_id, stack_name, template_string):
+        print "HEHEHEHEHEHEHEHEHEH"
+        url = self.create_heat_url("/" + str(tenant_id) + "/stacks")
+        data = '''{
+            "disable_rollback": true,
+            "parameters": {},
+            "stack_name": "%s",
+            "template": %s
+        }''' % (stack_name, template_string)
+        print url
+        print "----"
+        print data
+        print "----"
+        return self.do_post(url, data)
 
 
 if __name__ == '__main__':

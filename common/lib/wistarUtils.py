@@ -2,11 +2,10 @@ import json
 import os
 import subprocess
 import time
-import yaml
 
 import libvirtUtils
-import osUtils
-
+from images.models import Image
+from wistar import configuration
 
 # keep track of how many mac's we've used
 macIndex = 0
@@ -33,52 +32,79 @@ def get_device_name(index):
 def get_heat_json_from_topology_config(config):
 
     template = dict()
-    template["head_template_version"] = "2013-05-23"
+    template["heat_template_version"] = "2013-05-23"
     template["resources"] = dict()
 
     for network in config["networks"]:
-        network_json_string = """
-        {
-            "{0:s}": {
-                "type": "OS::Contrail::VirtualNetwork",
-                "external": "False",
-                "forwarding_mode": "l2",
-                "shared": False
-            },
-            "{0:s}_subnet": {
-                "type": "OS::Neutron::Subnet",
-                "properties": {
-                    "cidr": "1.1.1.0/24",
-                    "enable_dhcp": False,
-                    "name": "{0:s}_subnet",
-                    "network_id": {
-                        "get_resource": "{0:s}"
-                    }
-                }
-            }
-        }
-        """ % (network["name"])
+        nr = dict()
+        nr["type"] = "OS::Neutron::Net"
 
-        network_json = json.loads(network_json_string)
-        template["resources"].update(network_json)
+        nrp = dict()
+        nrp["shared"] = False
+        nrp["name"] = network["name"]
+        nrp["admin_state_up"] = True
+
+        nr["properties"] = nrp
+
+        nrs = dict()
+        nrs["type"] = "OS::Neutron::Subnet"
+
+        p = dict()
+        p["cidr"] = "1.1.1.0/24"
+        p["enable_dhcp"] = False
+        p["name"] = network["name"] + "_subnet"
+        if network["name"] == "virbr0":
+            p["network_id"] = configuration.openstack_mgmt_network
+        elif network["name"] == "br0":
+            p["network_id"] = configuration.openstack_external_network
+        else:
+            p["network_id"] = {"get_resource": network["name"]}
+
+        nrs["properties"] = p
+
+        template["resources"][network["name"]] = nr
+        template["resources"][network["name"] + "_subnet"] = nrs
 
     for device in config["devices"]:
-        """
-        {% for device in config.devices %}
-    {% for mport in device.managementInterfaces %}
-    {{ device.name }}_mport{{ forloop.counter0 }}:
-        type: "OS::Neutron::Port"
-        properties:
-            network_id: { get_resource: {{ mport.bridge }} }
-    {% endfor %}
-    {% for port in device.interfaces %}
-    {{ device.name }}_port{{ forloop.counter0 }}:
-        type: "OS::Neutron::Port"
-        properties:
-            network_id: { get_resource: {{ port.bridge }} }
-    {% endfor %}
-    """
-    return "FIXME"
+
+        dr = dict()
+        dr["type"] = "OS::Nova::Server"
+        dr["properties"] = dict()
+        dr["properties"]["flavor"] = "m1.medium"
+        dr["properties"]["networks"] = []
+        indx = 0
+        for p in device["interfaces"]:
+            port = dict()
+            port["port"] = dict()
+            port["port"]["get_resource"] = device["name"] + "_port" + str(indx)
+            indx += 1
+            dr["properties"]["networks"].append(port)
+
+        image = Image.objects.get(pk=device["imageId"])
+        image_name = image.name
+        dr["properties"]["image"] = image_name
+        dr["properties"]["name"] = device["name"]
+        template["resources"][device["name"]] = dr
+
+    for device in config["devices"]:
+        indx = 0
+        for port in device["interfaces"]:
+            pr = dict()
+            pr["type"] = "OS::Neutron::Port"
+            p = dict()
+
+            if port["bridge"] == "virbr0":
+                p["network_id"] = configuration.openstack_mgmt_network
+            elif port["bridge"] == "br0":
+                p["network_id"] = configuration.openstack_external_network
+            else:
+                p["network_id"] = {"get_resource": network["name"]}
+
+            pr["properties"] = p
+            template["resources"][device["name"] + "_port" + str(indx)] = pr
+            indx += 1
+
+    return json.dumps(template)
 
 
 def load_json(raw_json, topo_id):
@@ -152,7 +178,6 @@ def load_json(raw_json, topo_id):
 
             device["uuid"] = json_object["id"]
             device["interfaces"] = []
-            device["managementInterfaces"] = []
 
             device["vncPort"] = libvirtUtils.get_next_domain_vnc_port(device_index)
 
@@ -343,263 +368,6 @@ def load_json(raw_json, topo_id):
             mi["bridge"] = "virbr0"
             mi["type"] = user_data["mgmtInterfaceType"]
             d["interfaces"].append(mi)
-
-    return_object = dict()
-    return_object["networks"] = networks
-    return_object["devices"] = devices
-    return return_object
-
-
-# load raw Json into an object containing a list of devices and a list of networks
-def load_json_old(raw_json, topo_id):
-
-    # reset macIndex for this run
-    global macIndex
-    macIndex = 0
-    json_data = json.loads(raw_json)
-
-    # configuration json will consist of a list of devices and networks
-    # iterate through the raw_json and construct the appropriate device and network objects
-    # and each to the appropriate list
-    devices = []
-    networks = []
-
-    # do we need to create the em1 as well? 
-    # only if we have at least 1 vmx
-    em1_required = False
-
-    # external bridge is a highlander (there can be only one)
-    external_uuid = ""
-    # allow multiple internal bridges
-    internal_uuids = []
-
-    device_index = 0
-
-    # interface pci slot has special significance for vmx <= 14.1 and >= 14.2
-    # by default let's make vmx phase 1 happy
-    slot_offset = 6
-    for json_object in json_data:
-        if "userData" in json_object and "wistarVm" in json_object["userData"]:
-            user_data = json_object["userData"]
-            print "Found a topoIcon"
-            device = dict()
-
-            device["name"] = "t" + str(topo_id) + "_" + user_data["name"]
-            device["label"] = user_data["name"]
-            device["imageId"] = user_data["image"]
-            device["type"] = user_data["type"]
-            device["ip"] = user_data["ip"]
-
-            device["configScriptId"] = 0
-            device["configScriptParam"] = 0
-
-            if "configScriptId" in user_data:
-                print "Found a configScript to use!"
-                device["configScriptId"] = user_data["configScriptId"]
-                device["configScriptParam"] = user_data["configScriptParam"]
-
-            # sanity check in case this is an old topology without these keys
-            # keys introduced in 20150306
-            # set sensible defaults
-            device["ram"] = "2048"
-            device["cpu"] = "2"
-            device["interfacePrefix"] = "ge-0/0/"
-
-            if "cpu" in user_data:
-                device["cpu"] = user_data["cpu"]
-            
-            if "ram" in user_data:
-                device["ram"] = user_data["ram"]
-
-            if "interfacePrefix" in user_data:
-                device["interfacePrefix"] = user_data["interfacePrefix"]
-
-            device["password"] = user_data["password"]
-
-            device["configurationFile"] = "domain.xml"
-            if "configurationFile" in user_data:
-                device["configurationFile"] = user_data["configurationFile"]
-
-            print "using config file " + device["configurationFile"]
-
-            device["uuid"] = json_object["id"]
-            device["interfaces"] = []
-            device["managementInterfaces"] = []
-            if osUtils.check_is_linux():
-                device["vncPort"] = libvirtUtils.get_next_domain_vnc_port(device_index)
-            else :
-                device["vncPort"] = "5900"
-    
-            device_index += 1
-
-            # if this is a vmx, let's create the mandatory mgmt ports (em0, em1, etc)
-            if user_data["type"] == "junos_vmx":
-
-                if "vre" in user_data or "vpfe" in user_data:
-                    # in vmx > 14.2 we need to create bridges for vre to vpfe communication
-                    # manually create em0, em1, and em2 bridges
-
-                    # em0 is fxp0 and will be connected to default management network (virbr0)
-                    em0 = dict()
-                    mac = generate_next_mac(topo_id)
-                    em0["mac"] = mac
-                    em0["bridge"] = "virbr0"
-                    em0["slot"] = "0x03"
-                    em0["ip"] = json_object["userData"]["ip"]
-
-                    # use chassis name as the naming convention for all the bridges
-                    # we'll create networks as 'topology_id + _ + chassis_name + function
-                    # i.e. t1_vmx01_re and t1_vmx01_pfe
-                    chassis_name = user_data["name"]
-                    if "parentName" in user_data:
-                        chassis_name = user_data["parentName"]
-
-                    print "Using chassis name of: %s" % chassis_name
-
-                    # em1 is always pfe to re bridge
-                    em1 = dict()
-                    mac = generate_next_mac(topo_id)
-                    em1["mac"] = mac
-                    em1["bridge"] = "t%s_%s_r" % (str(topo_id), chassis_name)
-                    em1["slot"] = "0x04"
-
-                    # let's check if we've already set this bridge to be created
-                    found = False
-                    for network in networks:
-                        if network["name"] == em1["bridge"]:
-                            found = True
-                            break
-
-                    # let's go ahead and add this to the networks list if needed
-                    if not found:
-                        em1_network = dict()
-                        em1_network["name"] = em1["bridge"]
-                        em1_network["mac"] = generate_next_mac(topo_id)
-                        networks.append(em1_network)
-
-                    device["managementInterfaces"].append(em0)
-                    device["managementInterfaces"].append(em1)
-
-                else:
-                    # this is an old style vmx with no vpfe
-                    # ok, we need this network to be created later
-                    em1_required = True
-
-                    # manually create em0 and em1 interfaces
-                    em0 = dict()
-                    em0["mac"] = generate_next_mac(topo_id)
-                    em0["bridge"] = "virbr0"
-                    em0["slot"] = "0x04"
-                    em0["ip"] = json_object["userData"]["ip"]
-                    em1 = dict()
-                    em1["mac"] = generate_next_mac(topo_id)
-                    em1["bridge"] = "t" + str(topo_id) + "_em1bridge"
-                    em1["slot"] = "0x05"
-
-                    device["managementInterfaces"].append(em0)
-                    device["managementInterfaces"].append(em1)
-
-            devices.append(device)
-        elif json_object["type"] == "draw2d.shape.node.externalCloud":
-            external_uuid = json_object["id"]
-        elif json_object["type"] == "draw2d.shape.node.internalCloud":
-            internal_uuids.append(json_object["id"])
-
-    # just run through again to ensure we already have all the devices ready to go!
-    # note - set this to 1 to avoid using special name br0 -
-    # per qemu docs - virbr0 will connect directly to host bridge and is probably not what we want
-    # FIXME - add UI later to specify which host you want to do that for
-    conn_index = 1
-
-    # create the em1bridge if necessary
-    if em1_required is True:
-        em1bridge = dict()
-        em1bridge["name"] = "t" + str(topo_id) + "_em1bridge"
-        em1bridge["mac"] = generate_next_mac(topo_id)
-        networks.append(em1bridge)
-
-    for json_object in json_data:
-        if json_object["type"] == "draw2d.Connection":
-            target_uuid = json_object["target"]["node"]
-            source_uuid = json_object["source"]["node"]
-
-            # should we create a new bridge for this connection?
-            create_bridge = True
-
-            bridge_name = "t" + str(topo_id) + "_br" + str(conn_index)
-
-            for d in devices:
-                if d["uuid"] == source_uuid:
-                    # slot should always start with 6 (or 5 for vmx phase 2/3)
-                    slot = "%#04x" % int(len(d["interfaces"]) + slot_offset)
-                    interface = dict()
-                    interface["mac"] = generate_next_mac(topo_id)
-
-                    if target_uuid in internal_uuids:
-                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(target_uuid))
-                        interface["bridge"] = bridge_name
-                    elif target_uuid == external_uuid:
-                        # FIXME - this is hard coded to br0 - should maybe use a config object
-                        bridge_name = "br0"
-                        interface["bridge"] = bridge_name
-                    else:
-                        interface["bridge"] = bridge_name
-
-                    interface["slot"] = slot
-                    interface["name"] = device["interfacePrefix"] + str(len(d["interfaces"]))
-                    interface["linkId"] = json_object["id"]
-                    d["interfaces"].append(interface)
-
-                elif d["uuid"] == target_uuid:
-                    # slot should always start with 6
-                    slot = "%#04x" % int(len(d["interfaces"]) + slot_offset)
-                    interface = dict()
-                    interface["mac"] = generate_next_mac(topo_id)
-
-                    if source_uuid in internal_uuids:
-                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(source_uuid))
-                        interface["bridge"] = bridge_name
-                    if source_uuid == external_uuid:
-                        bridge_name = "br0"
-                        interface["bridge"] = bridge_name
-                    else:
-                        interface["bridge"] = bridge_name
-
-                    interface["slot"] = slot
-                    interface["name"] = device["interfacePrefix"] + str(len(d["interfaces"]))
-                    interface["linkId"] = json_object["id"]
-                    d["interfaces"].append(interface)
-
-            # let's check to see if we've already marked this internal bridge for creation
-            for c in networks:
-                if c["name"] == bridge_name:
-                    print "Skipping bridge creation for " + bridge_name
-                    create_bridge = False
-                    continue
-
-            if create_bridge is True and bridge_name != "br0":
-                print "Setting " + bridge_name + " for creation"
-                connection = dict()
-                connection["name"] = bridge_name
-                connection["mac"] = generate_next_mac(topo_id)
-                networks.append(connection)
-                conn_index += 1
-
-    # now let's add a final mgmt interface to all non-vmx instances 
-    # we need to loop again because we didn't know how many interfaces were on this instance
-    # until after we run through the connections first
-    for d in devices: 
-        if d["type"] != "junos_vmx" and d["type"] != "junos_vmx_p2":
-            slot = "%#04x" % int(len(d["interfaces"]) + 6)
-            interface = dict()
-            interface["mac"] = generate_next_mac(topo_id)
-            interface["bridge"] = "virbr0"
-            interface["slot"] = slot
-            if d["type"] == "linux":
-                interface["name"] = "eth" + str(len(d["interfaces"]))
-            else: 
-                interface["name"] = "ge-0/0/" + str(len(d["interfaces"]))
-            d["interfaces"].append(interface)
 
     return_object = dict()
     return_object["networks"] = networks

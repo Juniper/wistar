@@ -1,0 +1,54 @@
+{
+    "heat_template_version": "2015-04-30",
+    "description": "Wistar created heat stack",
+    "resources": {
+    {% for network in config.networks %}
+        "{{ network.name }}": {
+            "type": "OS::Neutron::Net",
+            "properties": {
+                "name": "{{ network.name }}",
+                "admin_state_up": true,
+                "shared": false
+            }
+        },
+        "{{ network.name }}_subnet": {
+            "type": "OS::Neutron::Subnet",
+            "properties": {
+                "cidr": "1.1.1.0/24",
+                "enable_dhcp": false,
+                "name": "{{ network.name }}_subnet",
+                "network_id": {
+                    "get_resource": "{{ network.name }}"
+                }
+             }
+        },
+    {% endfor %}
+    {% for device in config.devices %}
+        {% for port in device.interfaces %}
+        "{{ device.name }}_port{{ forloop.counter0 }}": {
+            "type": "OS::Neutron::Port",
+            "properties": {
+                "network_id": {
+                    "get_resource": "{{ port.bridge }}"
+                 }
+             }
+        },
+        {% endfor %}
+    {% endfor %}
+    {% for device in config.devices %}
+        "{{ device.name }}": {
+            "type": "OS::Nova::Server",
+            "properties": {
+                "flavor": "{{ device.flavor }}",
+                "image": "{{ device.imageName }}",
+                "name": "{{ device.name }}",
+                "networks": [
+                {% for port in device.interfaces %}
+                    { "port": { "get_resource": "{{ device.name }}_port{{ forloop.counter0 }}" } {% if forloop.last %} } {% else %} }, {% endif %}
+                {% endfor %}
+                ]
+            }
+    {% if forloop.last %} } {% else %} }, {% endif %}
+    {% endfor %}
+    }
+}

@@ -317,7 +317,7 @@ def launch(request, topology_id):
 
 
 @csrf_exempt
-def export_as_heat_template(request, topology_id):
+def export_as_heat_template_OLD(request, topology_id):
     """
     :param request: Django request
     :param topology_id: id of the topology to export
@@ -351,16 +351,44 @@ def export_as_heat_template(request, topology_id):
             # FIXME - add code to set the flavor here based on CPU and RAM
             device["flavor"] = "m1.medium"
 
-            # FIXME - this should be set via a settings file of some sort!
-            for managementInterface in device["managementInterfaces"]:
-                if managementInterface["bridge"] == "virbr0":
-                    managementInterface["bridge"] = "wistar_management_network"
-
             for interface in device["interfaces"]:
                 if interface["bridge"] == "br0":
-                    interface["bridge"] = "wistar_external_access"
+                    interface["bridge"] = "public"
 
-        heat_template = render_to_string("contrail_heat_template", {'config': config})
+                if interface["bridge"] == "virbr0":
+                    interface["bridge"] = "wistar_mgmt"
+
+        heat_template = render_to_string("openstack_heat_template", {'config': config})
+        print heat_template
+        return HttpResponse(heat_template, content_type="text/plain")
+    except Exception as e:
+        print "Caught Exception in deploy"
+        print str(e)
+        return render(request, 'error.html', {'error': str(e)})
+
+
+@csrf_exempt
+def export_as_heat_template(request, topology_id):
+    """
+    :param request: Django request
+    :param topology_id: id of the topology to export
+    :return: renders the heat template
+    """
+    topology = dict()
+    try:
+        topology = Topology.objects.get(pk=topology_id)
+    except ObjectDoesNotExist:
+        return render(request, 'error.html', {'error': "Topology not found!"})
+
+    try:
+        # keep a quick local cache around of found image_name to image_id pairs
+        image_names = dict()
+
+        # let's parse the json and convert to simple lists and dicts
+        config = wistarUtils.load_json(topology.json, topology_id)
+
+        heat_template = wistarUtils.get_heat_json_from_topology_config(config)
+        print heat_template
         return HttpResponse(heat_template, content_type="text/plain")
     except Exception as e:
         print "Caught Exception in deploy"

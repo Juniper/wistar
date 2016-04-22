@@ -1,6 +1,7 @@
 
 {% extends "base.html" %}
-{% block title %}Wistar - Lab Rat - Home{% endblock %}
+{% block title %}Wistar - Lab Rat - Images{% endblock %}
+{% load staticfiles %}
 {% block content %}
 <table>
     <tr>
@@ -13,9 +14,11 @@
         <td><a href='{{ image.id }}'>{{ image.name }}</a></td>
         <td>{{ image.description }}</td> 
         <td>
-		<a href='edit/{{ image.id }}'>Edit</a>
-        &nbsp;
-		<a href='delete/{{ image.id }}'>Delete</a>
+		    <a href='edit/{{ image.id }}'>Edit</a>
+            &nbsp;
+            <a href="{% static image.filePath.url %}">Download</a>
+            &nbsp;
+		    <a href='delete/{{ image.id }}'>Delete</a>
 	 </td>
     </tr>
 {% endfor %}

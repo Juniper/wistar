@@ -1,6 +1,8 @@
 
 {% extends "base.html" %}
-{% block title %}Wistar - Lab Rat - Home{% endblock %}
+{% block title %}Wistar - Lab Rat - Image Details{% endblock %}
+{% load staticfiles %}
+
 {% block content %}
 <table>
     <tr>
@@ -24,7 +26,7 @@
             Backing File Path
         </td>
         <td>
-            /opt/images/{{ image.filePath.url }}
+            <a href="{% static image.filePath.url %}">{{ settings.MEDIA_ROOT }}/{{ image.filePath.url }}</a>
         </td> 
     </tr>
     <tr>
@@ -53,6 +55,8 @@
         </td>
         <td>
 		    <a href='edit/{{ image.id }}'>Edit</a>
+            &nbsp;
+            <a href="{% static image.filePath.url %}">Download</a>
             &nbsp;
 		    <a href='delete/{{ image.id }}'>Delete</a>
 	    </td>

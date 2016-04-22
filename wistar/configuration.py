@@ -11,3 +11,8 @@ contrail_host = '12.12.12.128'
 contrail_user = 'admin'
 contrail_pass = 'secret123'
 
+openstack_user = 'admin'
+openstack_pass = 'secret'
+openstack_mgmt_network = 'wistar_mgmt'
+openstack_external_network = 'public-br-eth1'
+

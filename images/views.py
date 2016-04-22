@@ -240,7 +240,11 @@ def detail(request, image_id):
             vm_type = vt["description"]
             break
 
-    return render(request, 'images/details.html', {'image': image, 'state': image_state, "vm_type": vm_type})
+    return render(request, 'images/details.html', {'image': image,
+                                                   'state': image_state,
+                                                   "vm_type": vm_type,
+                                                   "settings": settings
+                                                   })
 
 
 def delete(request, image_id):
