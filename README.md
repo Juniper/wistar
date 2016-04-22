@@ -63,7 +63,7 @@ To begin, browse to the 'Images' page and upload a qcow2 based image.
 
 Now, browse to Topologies to create and deploy a new network.
 
-Send questions to nembery@gmail.com
+Send questions to nembery@juniper.net / nembery@gmail.com
 
 Happy Hacking!
 
