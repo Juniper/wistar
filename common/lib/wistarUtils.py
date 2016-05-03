@@ -55,7 +55,7 @@ def get_heat_json_from_topology_config(config):
         p["name"] = network["name"] + "_subnet"
         if network["name"] == "virbr0":
             p["network_id"] = configuration.openstack_mgmt_network
-        elif network["name"] == "br0":
+        elif network["name"].startswith("br"):
             p["network_id"] = configuration.openstack_external_network
         else:
             p["network_id"] = {"get_resource": network["name"]}
@@ -95,7 +95,7 @@ def get_heat_json_from_topology_config(config):
 
             if port["bridge"] == "virbr0":
                 p["network_id"] = configuration.openstack_mgmt_network
-            elif port["bridge"] == "br0":
+            elif port["bridge"].startswith("br"):
                 p["network_id"] = configuration.openstack_external_network
             else:
                 p["network_id"] = {"get_resource": network["name"]}
@@ -121,6 +121,7 @@ def load_json(raw_json, topo_id):
 
     # external bridge is a highlander (there can be only one)
     external_uuid = ""
+    external_bridges = dict()
     # allow multiple internal bridges
     internal_uuids = []
 
@@ -256,6 +257,7 @@ def load_json(raw_json, topo_id):
             devices.append(device)
         elif json_object["type"] == "draw2d.shape.node.externalCloud":
             external_uuid = json_object["id"]
+            external_bridges[json_object["id"]] = json_object["user_data"]["label"]
         elif json_object["type"] == "draw2d.shape.node.internalCloud":
             internal_uuids.append(json_object["id"])
 
@@ -281,9 +283,10 @@ def load_json(raw_json, topo_id):
                     if target_uuid in internal_uuids:
                         bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(target_uuid))
                         interface["bridge"] = bridge_name
-                    elif target_uuid == external_uuid:
+                    #elif target_uuid == external_uuid:
+                    elif target_uuid in external_bridges.keys():
                         # FIXME - this is hard coded to br0 - should maybe use a config object
-                        bridge_name = "br0"
+                        bridge_name = external_bridges[target_uuid]
                         interface["bridge"] = bridge_name
                     else:
                         interface["bridge"] = bridge_name
@@ -317,8 +320,8 @@ def load_json(raw_json, topo_id):
                     if source_uuid in internal_uuids:
                         bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(source_uuid))
                         interface["bridge"] = bridge_name
-                    if source_uuid == external_uuid:
-                        bridge_name = "br0"
+                    if source_uuid in external_bridges.keys():
+                        bridge_name = external_bridges[source_uuid]
                         interface["bridge"] = bridge_name
                     else:
                         interface["bridge"] = bridge_name

@@ -26,15 +26,15 @@ draw2d.shape.node.externalCloud = draw2d.shape.icon.Cloud2.extend({
     NAME: "draw2d.shape.node.externalCloud",
     EDIT_POLICY: false,
    
-    init: function() {
+    init: function(label) {
         this._super();
         this.setUserData({});
-        this.setup();
+        this.setup(label);
     },
-    setup: function() {
+    setup: function(label) {
         var pl = new externalCloudPortLocator();
         this.createPort("hybrid", pl);
-        this.setLabel("External");
+        this.setLabel(label);
     },
     setLabel: function(label) {
         var ud = this.getUserData();
@@ -46,13 +46,17 @@ draw2d.shape.node.externalCloud = draw2d.shape.icon.Cloud2.extend({
         this.addFigure(l, new externalCloudLabelLocator(this)); 
     },
     getLabel: function() {
-        return "External";
+        return this.getUserData()["label"]
     },
     getInterfacePrefix: function() {
         return "br";
     },
     getIp: function() {
         return "0/0";
+    },
+    setPersistentAttributes: function(memento) {
+        this._super(memento);
+        this.setLabel(memento.userData.label);
     },
 });
 draw2d.shape.node.internalCloud = draw2d.shape.node.externalCloud.extend({
