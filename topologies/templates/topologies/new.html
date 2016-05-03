@@ -55,6 +55,7 @@
     var externalCloudAdded = false;
 
     var internalCloudCounter = 0;
+    var externalCloudCounter = 0;
 
     var selectedObject;
 
@@ -599,11 +600,12 @@
     }
 
     function addExternalCloud() {
+        externalCloudCounter = externalCloudCounter + 1;
         var label = jQuery('#externalCloudName').val();
         var c = new draw2d.shape.node.externalCloud(label);
         c.width = 100;
         c.height = 100;
-        canvas.addFigure(c, 385, 15);
+        canvas.addFigure(c, 385 + (externalCloudCounter * 60), 15 + (externalCloudCounter * 50));
     }
 
     function addInternalCloud() {
