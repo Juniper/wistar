@@ -15,6 +15,7 @@
   <cpu mode='host-model'>
     <model fallback='forbid'/>
     <topology sockets='1' cores='{{ device.cpu }}' threads='1'/>
+    <feature policy='disable' name='avx2'/>
   </cpu>
   <clock offset='utc'/>
   <on_poweroff>destroy</on_poweroff>

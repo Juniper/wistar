@@ -55,6 +55,7 @@
     var externalCloudAdded = false;
 
     var internalCloudCounter = 0;
+    var externalCloudCounter = 0;
 
     var selectedObject;
 
@@ -599,16 +600,12 @@
     }
 
     function addExternalCloud() {
-        if (externalCloudAdded == false) {
-            var c = new draw2d.shape.node.externalCloud();
-            c.width = 100;
-            c.height = 100;
-            canvas.addFigure(c, 385, 15);
-            externalCloudAdded = true;
-        } else {
-            alert("You may only add one external connection!");
-            return false;
-        }
+        externalCloudCounter = externalCloudCounter + 1;
+        var label = jQuery('#externalCloudName').val();
+        var c = new draw2d.shape.node.externalCloud(label);
+        c.width = 100;
+        c.height = 100;
+        canvas.addFigure(c, 385 + (externalCloudCounter * 60), 15 + (externalCloudCounter * 50));
     }
 
     function addInternalCloud() {
@@ -1007,7 +1004,9 @@
                     External Access:
                 </td>
                 <td>
-                    <input type="button" value="Add External Bridge" title="Add br0"
+                    <input type="text" style="width: 150px;" id="externalCloudName" value="br0"/>
+		    &nbsp;
+                    <input type="button" value="Add External Bridge" title="Add Existing Bridge"
                            onclick="javascript: addExternalCloud()"/>
                 </td>
             </tr>

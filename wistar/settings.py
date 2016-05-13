@@ -133,6 +133,11 @@ VM_IMAGE_TYPES = [
         "js": "draw2d.shape.node.vpfe",
     },
     {
+        "name": "junos_vpfe_haswell",
+        "description": "Junos vMX vPFE (Haswell)",
+        "js": "draw2d.shape.node.vpfe_haswell",
+    },
+    {
         "name": "junos_vqfx_re",
         "description": "Junos vQFX RE",
         "js": "draw2d.shape.node.vqfxRe",
