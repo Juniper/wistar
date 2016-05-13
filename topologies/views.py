@@ -192,9 +192,11 @@ def delete(request, topology_id):
                 osUtils.remove_instance(source_file)
 
     topology = get_object_or_404(Topology, pk=topology_id)
-    topology.delete()
+
+    osUtils.remove_instances_for_topology(topology_prefix)
     osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
 
+    topology.delete()
     messages.info(request, 'Topology %s deleted' % topology.name)
     return HttpResponseRedirect('/topologies/')
 

@@ -6,6 +6,7 @@ import shutil
 from jinja2 import Environment
 from netaddr import *
 
+from wistar import settings
 
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
@@ -138,6 +139,15 @@ def remove_instance(instance_path):
         return True
     else:
         return False
+
+
+def remove_instances_for_topology(topology_id_prefix):
+    directory = settings.MEDIA_ROOT + "/user_images/instances"
+    for entry in os.listdir(directory):
+        full_path = os.path.join(entry, directory)
+        if entry.startswith(topology_id_prefix):
+            print "Removing stale entry: " + full_path
+            os.remove(full_path)
 
 
 def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, password, script="", script_param=""):
