@@ -143,9 +143,13 @@ def remove_instance(instance_path):
 
 def remove_instances_for_topology(topology_id_prefix):
     directory = settings.MEDIA_ROOT + "/user_images/instances"
+    print "Deleteing for topology_id_prefix %s" % topology_id_prefix
     for entry in os.listdir(directory):
-        full_path = os.path.join(entry, directory)
+        full_path = os.path.join(directory, entry)
         if entry.startswith(topology_id_prefix):
+            print entry
+            print directory
+            print full_path
             print "Removing stale entry: " + full_path
             os.remove(full_path)
 
