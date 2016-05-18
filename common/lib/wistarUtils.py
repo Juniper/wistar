@@ -257,7 +257,11 @@ def load_json(raw_json, topo_id):
             devices.append(device)
         elif json_object["type"] == "draw2d.shape.node.externalCloud":
             external_uuid = json_object["id"]
-            external_bridges[json_object["id"]] = json_object["userData"]["label"]
+            if json_object["userData"]["label"] == "External":
+                # is this an old topology? manually fix here!
+                external_bridges[json_object["id"]] = "br0"
+            else:
+                external_bridges[json_object["id"]] = json_object["userData"]["label"]
         elif json_object["type"] == "draw2d.shape.node.internalCloud":
             internal_uuids.append(json_object["id"])
 
