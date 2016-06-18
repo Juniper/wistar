@@ -7,8 +7,8 @@ user_images_dir = "/opt/images/user_images"
 # deployment backend to use!
 # defaults to kvm
 # options are 'openstack', 'vagrant', 'virtualbox'
-#deployment_backend = 'kvm'
-deployment_backend = 'openstack'
+deployment_backend = 'kvm'
+#deployment_backend = 'openstack'
 
 # Openstack configuration
 use_openstack = True
