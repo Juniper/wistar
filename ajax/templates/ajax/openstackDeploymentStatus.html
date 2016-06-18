@@ -1,0 +1,108 @@
+{% load staticfiles %}
+<table>
+    <tr>
+        <th colspan="3"> Stack Status</th>
+    </tr>
+    {% if stack == None %}
+    <tr>
+        <td>
+            Not yet deployed to OpenStack!
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="button" value="Deploy to OpenStack"
+                   onclick="javascript: redir('/ajax/deployStack/{{ topology_id }}')"/>
+            <input type="button" name="refreshDSButton"
+                   value="Refresh OpenStack Status"
+                   onclick="javascript: refreshDeploymentStatus('{{ topology_id }}');"/>
+        </td>
+    </tr>
+    {% else %}
+        {% if stack.stack_status != "CREATE_COMPLETE" %}
+        <tr>
+            <td>
+                Status
+            </td>
+            <td>
+                {{ stack.stack_status }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Status Detail
+            </td>
+            <td>
+                {{ stack.stack_status_reason }}
+            </td>
+        </tr>
+        {% else %}
+            {% for resource in stack_resources.resources %}
+            {% if resource.resource_type == "OS::Nova::Server" %}
+            <tr>
+
+                <td>
+                     <a title="View in Horizon"
+                        href="#"
+                        onclick="javascript: window.open('http://{{ openstack_host }}/horizon/project/instances/{{ resource.physical_resource_id }}')">
+                        {{ resource.resource_name }}
+                     </a>
+                </td>
+                <td>
+                    Status
+                </td>
+                <td>
+                        {% if resource.resource_status == "CREATE_COMPLETE" %}
+                        <img src="{% static 'images/running.png' %}" width="20px" height="20px"/>
+                        &nbsp;
+                        <a href="#"
+                            onclick="javascript: window.open('http://{{ openstack_host }}/horizon/project/instances/{{ resource.physical_resource_id }}/?tab=instance_details__console');"
+                            title="Launch Console"
+                            ><img src="{% static 'images/console.png' %}" width="20px" height="20px"/></a>
+                        {% else %}
+                        <img src="{% static 'images/stopped.png' %}" width="20px" height="20px"/>
+                        {% endif %}
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        {% endif %}
+    <!--
+        <tr>
+            <td>
+                Resources
+            </td>
+            <td>
+                {{ stack_resources }}
+            </td>
+        </tr>
+    -->
+        <tr>
+            <td>
+                Options
+            </td>
+            <td>
+                <a href="#"
+                   onclick="javascript: window.open('http://{{ openstack_host }}/horizon/project/stacks/stack/{{ stack.id }}/')">
+                    View in Horizon
+                </a>
+                &nbsp;
+                <a href="#" onclick="javascript: redir('/ajax/deleteStack/{{ topology_id }}')">
+                    Delete Stack
+                </a>
+                 &nbsp;
+                <a href="#" onclick="javascript: redir('/topologies/exportHeat/{{ topology_id }}')">
+                    Debug HEAT
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <input type="button" name="refreshDSButton" id="refreshDSButton"
+                       value="Refresh OpenStack Status"
+                       onclick="javascript: refreshDeploymentStatus('{{ topology_id }}');"/>
+            </td>
+        </tr>
+    {% endif %}
+</table>
+

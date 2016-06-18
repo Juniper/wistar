@@ -67,10 +67,20 @@ def get_heat_json_from_topology_config(config):
 
     for device in config["devices"]:
 
+        # FIXME - grab flavor definitions from OpenStack directly here...
+        if device["cpu"] == 8:
+            flavor = "m1.xlarge"
+        elif device["cpu"] == 4:
+            flavor = "m1.large"
+        elif device["cpu"] == 2:
+            flavor = "m1.medium"
+        else:
+            flavor = "m1.small"
+
         dr = dict()
         dr["type"] = "OS::Nova::Server"
         dr["properties"] = dict()
-        dr["properties"]["flavor"] = "m1.medium"
+        dr["properties"]["flavor"] = flavor
         dr["properties"]["networks"] = []
         indx = 0
         for p in device["interfaces"]:
@@ -394,7 +404,7 @@ def clone_topology(raw_json):
 
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
-            num_topo_icons = num_topo_icons + 1
+            num_topo_icons += 1
 
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
@@ -403,10 +413,10 @@ def clone_topology(raw_json):
             ip_octets = ip.split('.')
             new_octets = int(ip_octets[3]) + num_topo_icons
             if new_octets > 255:
-                new_octets = new_octets - 255
+                new_octets -= 255
             ip_octets[3] = str(new_octets)
-            newIp = ".".join(ip_octets)
-            ud["ip"] = newIp
+            new_ip = ".".join(ip_octets)
+            ud["ip"] = new_ip
 
     return json.dumps(json_data)
 

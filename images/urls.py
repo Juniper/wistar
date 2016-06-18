@@ -20,4 +20,8 @@ urlpatterns = patterns('',
                        url(r'^error/$', views.error, name='error'),
                        url(r'^delete/(?P<image_id>\d+)/$', views.delete, name='delete'),
                        url(r'^(?P<image_id>\d+)$', views.detail, name='detail'),
+                       url(r'^glance$', views.list_glance_images, name='glance'),
+                       url(r'^glanceDetail$', views.glance_detail, name='glance_detail'),
+
+                       url(r'^uploadToGlance/(?P<image_id>\d+)/$', views.upload_to_glance, name='upload'),
                        )

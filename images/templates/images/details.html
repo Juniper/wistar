@@ -2,7 +2,32 @@
 {% extends "base.html" %}
 {% block title %}Wistar - Lab Rat - Image Details{% endblock %}
 {% load staticfiles %}
+{% block scripts %}
+   <script type="text/javascript">
+    function loadOpenstackGlanceDetails() {
 
+        var url = '/images/glanceDetail';
+        var params = {
+            'imageId' : {{ image.id }}
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#glanceDetails').empty().append(content);
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+    }
+    {% if use_openstack == True %}
+
+    // load openstack details if required
+    jQuery( window ).load(function() {
+        loadOpenstackGlanceDetails();
+    });
+
+    {% endif %}
+   </script>
+{% endblock %}
 {% block content %}
 <table>
     <tr>
@@ -62,4 +87,5 @@
 	    </td>
     </tr>
 </table>
+<div id="glanceDetails"></div>
 {% endblock %}

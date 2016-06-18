@@ -127,8 +127,7 @@ def is_domain_running(domain_name):
 
         return False
 
-    except Exception as e:
-        print str(e)
+    except Exception:
         return False
 
 

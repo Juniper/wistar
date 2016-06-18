@@ -38,7 +38,7 @@
     <script type="text/javascript" src="{% static 'js/vm_types/wistarLegacy.js' %}"></script>
 
     <script type="text/javascript" src="{% static 'js/topologySelectionListener.js' %}"></script>
-   
+
     <script type="text/javascript">
     var canvas;
     var lastX = 50;
@@ -68,7 +68,7 @@
     var selectedObject;
 
     // loads initial topology from json stored in the 'json' div
-    // also creates the instance array variable on page context    
+    // also creates the instance array variable on page context
     function loadTopology() {
         var test = jQuery('#json').val();
     	if (test != null) {
@@ -83,16 +83,16 @@
 		        }
 		        if (json[i]["userData"].hasOwnProperty("wistarVm")) {
 		            wistarVmCount++;
-				    instanceArray.push({ 
+				    instanceArray.push({
                         "name" : json[i]["userData"]["name"],
-                        "type" : json[i]["userData"]["type"], 
+                        "type" : json[i]["userData"]["type"],
                         "state" : "down",
                         "id"    : json[i]["id"]
                     });
 		        }
 		    }
     	}
-    } 
+    }
 
     // iterate instanceArray and grab the latest boot up state for each
     // this runs silently
@@ -183,10 +183,10 @@
         }
 
         var url = "/ajax/getJunosStartupState/";
-        
+
         if (type == "linux") {
             url = "/ajax/getLinuxStartupState/";
-        } 
+        }
         var params = {
             'name' : domain
         };
@@ -292,7 +292,7 @@
             var last = parseInt(iparray[3]);
             if(! isNaN(last)) {
                 return iparray[0] + "." + iparray[1] + "." + iparray[2] + "." + (last + 1);
-            } else { 
+            } else {
                 return ip;
             }
         } else {
@@ -341,22 +341,22 @@
     	var scriptId = jQuery('#topoIconScriptSelect').val();
     	var scriptParam = jQuery('#topoIconScriptParam').val();
 
-       
+
         if (ip == "") {
             alert("Please add a valid IP address");
             return;
-        } 
+        }
 
         if (name == "") {
             alert("Please add a valid instance name");
             return;
-        } 
- 
-        var icon = iconData.split(":")[0]; 
-        var width = iconData.split(":")[1]; 
-        var height = iconData.split(":")[2]; 
+        }
+
+        var icon = iconData.split(":")[0];
+        var width = iconData.split(":")[1];
+        var height = iconData.split(":")[2];
         var iconPath = "/static/images/" + icon + ".png";
-        
+
     	var canvas_object = new draw2d.shape.node.topologyIcon(iconPath, width, height);
         canvas_object.setup(type, name, ip, pw, image, cpu, ram);
 
@@ -435,7 +435,7 @@
     // json div element for later retrieval and storage
     function exportJson() {
         // Create a JSON writer and convert it into a JSON-String representation.
-        
+
     	var writer = new draw2d.io.json.Writer();
 
         var jsonTxt = writer.marshal(canvas, function(json) {
@@ -447,7 +447,7 @@
         });
     }
 
-    // export and submit form 
+    // export and submit form
     function updateTopology() {
         alert('You may need to redeploy this topology after this update!');
 	    exportJson();
@@ -460,7 +460,7 @@
 	    jQuery('#topoForm').submit();
     }
 
-    // export and submit form 
+    // export and submit form
     function saveTopology() {
 	    exportJson();
 	    jQuery('#topoForm').submit();
@@ -480,12 +480,12 @@
 		    window.location="/topologies/clone/{{ topo.id }}";
 	    }
     }
-    
+
     // simple validation
     function multiCloneTopology() {
         var num_clones = prompt("How many copies would you like to create?");
         if (num_clones == null) {
-            alert('very well');
+            // alert('very well');
             return false;
         }
 
@@ -575,17 +575,17 @@
             doc.css('cursor', '');
             return false;
         }
-        
+
         var label = figure.getLabel();
         var ip = figure.getIp();
         var password = figure.getPassword();
         var mgmtInterface = figure.getMgmtInterface();
-        
-        // default url for junos devices 
+
+        // default url for junos devices
         var url = "/ajax/preconfigJunosDomain/";
 
         domain = generateDomainNameFromLabel(label);
-        // special case for firefly 
+        // special case for firefly
         if (figure.getType() == "junos_firefly") {
             url = "/ajax/preconfigFirefly/";
         } else if (figure.getType() == "linux") {
@@ -626,7 +626,7 @@
     function configureJunosInterfaces() {
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
-        
+
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
 
@@ -641,7 +641,7 @@
             doc.css('cursor', '');
             return false;
         }
-        
+
         var ip = figure.getIp();
         var password = figure.getPassword();
         var url = "/ajax/configJunosInterfaces/";
@@ -649,7 +649,7 @@
             'ip' : ip,
             'password' : password
         };
-        
+
         var success = function(response) {
             data = eval(response);
             var message = "Could not configure access";
@@ -660,7 +660,7 @@
             alert(message);
         };
         var post = jQuery.post(url, params, success);
-        
+
         post.always(function() {
             doc.css('cursor', '');
         });
@@ -717,12 +717,12 @@
         jQuery('#junosSetConfigInput').val(nt);
 
     }
-    
+
     function applyConfigurationTemplate(template_id) {
-        
+
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
- 
+
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
 
@@ -735,7 +735,7 @@
             'ip' : ip,
             'password' : password
         };
-        
+
         var successMessage = "Config Template Applied!";
         var post = jQuery.post(url, params, function(response) {
             var data = eval(response);
@@ -890,7 +890,7 @@
             'id' : configSetId
         };
         var successMessage = "Config Set Deleted";
-        
+
         simpleAjaxRequest(url, params, successMessage);
         location.reload();
     }
@@ -906,7 +906,7 @@
         // export from the canvas again
         exportJson();
 
-        var params = { 
+        var params = {
             'sourceIp' : jQuery('#connectionSourceIp').val(),
             'sourceType' : jQuery('#connectionSourceType').val(),
             'sourceIface' : jQuery('#connectionSourceIface').val(),
@@ -1010,7 +1010,7 @@
 
         post.always(function() {
             doc.css('cursor', '');
-        });  
+        });
     }
 
     function getInstanceStartupState() {
@@ -1020,12 +1020,12 @@
         var figure = canvas.getFigure(figureId);
         var label = figure.getLabel();
         var type = figure.getType();
- 
+
         domain = generateDomainNameFromLabel(label);
-        
+
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
-  
+
         var url = "/ajax/getJunosStartupState/";
 
         if (type == "linux") {
@@ -1073,7 +1073,7 @@
 
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
-        
+
         var url = '/ajax/executeCli/';
         var params = {
              'pw' : pw,
@@ -1098,7 +1098,7 @@
 
         post.always(function() {
             doc.css('cursor', '');
-        });  
+        });
     }
 
     function executeLinuxCli() {
@@ -1263,7 +1263,7 @@
         hideAllEditors();
         currentSelection = "None";
     }
-    
+
     function showDebug() {
         hideAllEditors();
         manuallyTogglePanel('jsonDebug', '');
@@ -1324,7 +1324,7 @@
         jQuery('#junosIconRam').html(instance.getRam());
         jQuery('#junosIconImage').html("<a href='/images/" + instance.getImage() + "'>Image Detail</a>");
 
-        // clear the cli output      
+        // clear the cli output
         jQuery('#cliOutput').val("");
         jQuery('#cliOutput').height("");
 
@@ -1356,7 +1356,7 @@
 
             var sourcePort = connection.getSource();
             var targetPort = connection.getTarget();
-           
+
             var neighbor;
 
             if (sourcePort.getId() != port.getId()) {
@@ -1389,14 +1389,14 @@
         jQuery('#genericIconCpu').html(instance.getCpu());
         jQuery('#genericIconRam').html(instance.getRam());
         jQuery('#genericIconImage').html("<a href='/images/" + instance.getImage() + "'>Image Detail</a>");
-        
+
         hideAllEditors();
         manuallyTogglePanel('genericIconEditor', '');
         currentSelection = "genericIconEditor";
     }
-    
+
     function loadLinuxIconEditor(figureId) {
-        
+
         jQuery('#selectedObject').val(figureId);
         var instance = canvas.getFigure(figureId);
 
@@ -1411,7 +1411,7 @@
         jQuery('#linuxIconCpu').html(instance.getCpu());
         jQuery('#linuxIconRam').html(instance.getRam());
         jQuery('#linuxIconImage').html("<a href='/images/" + instance.getImage() + "'>Image Detail</a>");
-        
+
         if (currentSelection !== "linuxIconEditor") {
             hideAllEditors();
             manuallyTogglePanel('linuxIconEditor', '');
@@ -1482,7 +1482,7 @@
         instance.setPassword(jQuery('#junosIconPass').val());
 
         instance.repaint();
-        
+
     }
 
     function loadLabelEditor(figureId) {
@@ -1523,7 +1523,7 @@
                 break;
             }
         }
-        
+
         for(t=0;t<targetConns.size;t++) {
             tc = targetConns.get(t);
             console.log(tc.id);
@@ -1738,23 +1738,22 @@
                   {{ topo.description }}
                 </td>
               </tr>
-              <tr>
-                <td colspan="2">
-                  <input type="button" name="showTopoEditorButton" id="showTopoEditorButton" 
-                    value="Edit" onclick="javascript: showTopoEditor();"/>
-                  &nbsp;
-                  <input type="button" name="delete_button" id="delete_button" 
-                    value="Delete" onclick="javascript: deleteTopology();"/>
-                  &nbsp;
-                  <input type="button" name="clone_button" id="clone_button" 
-                    value="Clone" onclick="javascript: cloneTopology();"/>
-                  &nbsp;
-                  &nbsp;
-                  <input type="button" name="multi_clone_button" id="multi_clone_button" 
-                    value="Multiple Clones" onclick="javascript: multiCloneTopology();"/>
-                  &nbsp;
-                </td>
-              </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="button" name="showTopoEditorButton" id="showTopoEditorButton"
+                               value="Edit" onclick="javascript: showTopoEditor();"/>
+                        &nbsp;
+                        <input type="button"  id="update_topo_button"
+                               value="Update" onclick="javascript: updateTopology();"/>
+                        &nbsp;
+                        <input type="button" name="delete_button" id="delete_button"
+                               value="Delete" onclick="javascript: deleteTopology();"/>
+                        &nbsp;
+                        <input type="button" name="multi_clone_button" id="multi_clone_button"
+                               value="Clone" onclick="javascript: multiCloneTopology();"/>
+                        &nbsp;
+                    </td>
+                </tr>
              </tbody>
             </table>
           </form>
@@ -2489,11 +2488,6 @@
 
                 <input type="button" value="Delete Label" title="Delete Selected Label"
                          onclick="javascript: deleteLabel()"/>
-                &nbsp; &nbsp;
-
-                <input type="button"  id="update_topo_button"
-                       value="Update Topology" onclick="javascript: updateTopology();"/> &nbsp;
-
                 &nbsp; &nbsp;
                 <a href="#" onclick="javascript: showDebug();" style="text-decoration: none; color: #fff; border: 1px solid #eee;">.</a>
             </div>

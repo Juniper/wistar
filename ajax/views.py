@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 from common.lib.WistarException import WistarException
 from common.lib import wistarUtils
@@ -17,6 +18,7 @@ from common.lib import linuxUtils
 from common.lib import consoleUtils
 from common.lib import osUtils
 from common.lib import vboxUtils
+from common.lib import openstackUtils
 from api.lib import apiUtils
 from images.models import Image
 from scripts.models import ConfigTemplate
@@ -24,6 +26,8 @@ from scripts.models import Script
 from topologies.models import Topology
 from topologies.models import ConfigSet
 from topologies.models import Config
+
+from wistar import configuration
 
 
 # FIXME = debug should be a global setting
@@ -224,7 +228,6 @@ def execute_linux_cli(request):
 
 @csrf_exempt
 def get_junos_startup_state(request):
-    print "Getting junos startup state"
     response_data = dict()
     response_data["console"] = False
     response_data["power"] = False
@@ -237,7 +240,6 @@ def get_junos_startup_state(request):
     if libvirtUtils.is_domain_running(name):
         # topologies/edit will fire multiple calls at once
         # let's just put a bit of a breather between each one
-        print "we have power"
         time.sleep(random.randint(0, 10) * .10)
         response_data["power"] = True
         response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
@@ -247,7 +249,6 @@ def get_junos_startup_state(request):
 
 @csrf_exempt
 def get_linux_startup_state(request):
-    print "Getting linux startup state"
     response_data = dict()
     response_data["console"] = False
     response_data["power"] = False
@@ -486,15 +487,31 @@ def refresh_deployment_status(request):
         print "Found a blank topology_id, returning full hypervisor status"
         return refresh_hypervisor_status(request)
 
-    domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
-    network_list = []
-    is_linux = False
-    if osUtils.check_is_linux():
-        is_linux = True
-        network_list = libvirtUtils.get_networks_for_topology("t" + topology_id + "_")
+    if configuration.deployment_backend == "openstack":
+        if openstackUtils.connect_to_openstack():
+            topology = Topology.objects.get(pk=topology_id)
+            stack_name = topology.name.replace(' ', '_')
+            stack_details = openstackUtils.get_stack_details(stack_name)
+            stack_resources = dict()
+            print stack_details
+            if stack_details is not None and stack_details["stack_status"] == "CREATE_COMPLETE":
+                stack_resources = openstackUtils.get_stack_resources(stack_name, stack_details["id"])
 
-    context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topology_id, 'isLinux': is_linux}
-    return render(request, 'ajax/deploymentStatus.html', context)
+        context = {"stack": stack_details, "topology_id": topology.id,
+                   "openstack_host": configuration.openstack_host,
+                   "stack_resources": stack_resources
+                   }
+        return render(request, 'ajax/openstackDeploymentStatus.html', context)
+    else:
+        domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
+        network_list = []
+        is_linux = False
+        if osUtils.check_is_linux():
+            is_linux = True
+            network_list = libvirtUtils.get_networks_for_topology("t" + topology_id + "_")
+
+        context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topology_id, 'isLinux': is_linux}
+        return render(request, 'ajax/deploymentStatus.html', context)
 
 
 @csrf_exempt
@@ -1265,4 +1282,61 @@ def list_isos(request):
     return render(request, 'ajax/manageIso.html', context)
 
 
+@csrf_exempt
+def deploy_stack(request, topology_id):
+    """
+    :param request: Django request
+    :param topology_id: id of the topology to export
+    :return: renders the heat template
+    """
+    topology = dict()
+    try:
+        topology = Topology.objects.get(pk=topology_id)
+    except ObjectDoesNotExist:
+        return render(request, 'error.html', {'error': "Topology not found!"})
 
+    try:
+        # keep a quick local cache around of found image_name to image_id pairs
+        image_names = dict()
+
+        # let's parse the json and convert to simple lists and dicts
+        config = wistarUtils.load_json(topology.json, topology_id)
+        heat_template = wistarUtils.get_heat_json_from_topology_config(config)
+        if not openstackUtils.connect_to_openstack():
+            return render(request, 'error.html', {'error': "Could not connect to Openstack"})
+
+        # get the tenant_id of the desired project
+        tenant_id = openstackUtils.get_project_id(configuration.openstack_project)
+        print "using tenant_id of: %s" % tenant_id
+        if tenant_id is None:
+            raise Exception("No project found for %s" % configuration.openstack_project)
+
+        # FIXME - verify all images are in glance before jumping off here!
+        stack_name = topology.name.replace(' ', '_')
+        print openstackUtils.create_stack(stack_name, heat_template)
+
+        return HttpResponseRedirect('/topologies/' + topology_id + '/')
+
+    except Exception as e:
+        print "Caught Exception in deploy"
+        print str(e)
+        return render(request, 'error.html', {'error': str(e)})
+
+
+@csrf_exempt
+def delete_stack(request, topology_id):
+    """
+    :param request: Django request
+    :param topology_id: id of the topology to remove from OpenStack
+    :return: redirect to topology detail screen
+    """
+
+    try:
+        topology = Topology.objects.get(pk=topology_id)
+    except ObjectDoesNotExist:
+        return render(request, 'error.html', {'error': "Topology not found!"})
+
+    stack_name = topology.name.replace(' ', '_')
+    print openstackUtils.delete_stack(stack_name)
+
+    return HttpResponseRedirect('/topologies/' + topology_id + '/')

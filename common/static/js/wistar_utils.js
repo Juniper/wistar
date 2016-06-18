@@ -27,6 +27,8 @@
 
     // Simple function to update the deploymentStatusDiv with the current hypervisor state
     function refreshDeploymentStatus(topoId) {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
 
         var url = '/ajax/refreshDeploymentStatus/';
         var params = {
@@ -38,6 +40,9 @@
         });
         post.fail(function() {
             alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor', '');
         });
     }
     

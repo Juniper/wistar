@@ -8,6 +8,7 @@ from netaddr import *
 
 from wistar import settings
 
+
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
 def check_is_linux():

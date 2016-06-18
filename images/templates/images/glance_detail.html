@@ -1,0 +1,59 @@
+<br/>
+<h3>Openstack Glance Details</h3>
+<table>
+    {% if glance_id == None %}
+    <tr>
+        <td>
+            Options
+        </td>
+        <td>
+		    <a href="#" onclick="javascript: redir('uploadToGlance/{{ image_id }}')">Upload Image to Glance</a>
+	    </td>
+    </tr>
+    {% else %}
+     <tr>
+        <td>
+            Image Id
+        </td>
+        <td>
+          <a href="#"
+             onclick="javascript: redir('http://{{ openstack_host }}/horizon/admin/images/{{ glance_id }}/detail/')"
+            title="{{ image }}">
+              {{ glance_id }}
+          </a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Status
+        </td>
+        <td>
+            {{ image.status }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Format
+        </td>
+        <td>
+            {{ image.container_format }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Disk Format
+        </td>
+        <td>
+            {{ image.disk_format }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Size
+        </td>
+        <td>
+            {{ image.size }}
+        </td>
+    </tr>
+    {% endif %}
+</table>

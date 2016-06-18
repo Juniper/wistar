@@ -5,7 +5,10 @@ from django.contrib import messages
 
 from common.lib import osUtils
 from common.lib import libvirtUtils
+from common.lib import openstackUtils
+
 from wistar import settings
+from wistar import configuration
 
 from images.models import Image
 from images.models import ImageForm
@@ -53,7 +56,7 @@ def update(request):
 
 def new(request):
     image_form = ImageForm()
-    context = {'image_form': image_form, "vm_types": settings.VM_IMAGE_TYPES}
+    context = {'image_form': image_form, "vm_types": configuration.vm_image_types}
     return render(request, 'images/new.html', context)
 
 
@@ -235,16 +238,53 @@ def detail(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
     image_state = osUtils.is_image_thin_provisioned(image.filePath.path)
     vm_type = "N/A"
-    for vt in settings.VM_IMAGE_TYPES:
+    for vt in configuration.vm_image_types:
         if vt["name"] == image.type:
             vm_type = vt["description"]
             break
 
+    glance_id = ""
+    if configuration.deployment_backend == "openstack":
+        openstackUtils.connect_to_openstack()
+        glance_id = openstackUtils.get_image_id_for_name(image.name)
+
     return render(request, 'images/details.html', {'image': image,
                                                    'state': image_state,
                                                    "vm_type": vm_type,
-                                                   "settings": settings
+                                                   "settings": settings,
+                                                   "glance_id": glance_id,
+                                                   "use_openstack": configuration.use_openstack,
+                                                   "openstack_host": configuration.openstack_host
                                                    })
+
+
+def glance_detail(request):
+    """
+    OpenStack specific action to get image details from Glance
+    :param request: HTTPRequest
+    :return: rendered HTML
+    """
+    required_fields = set(['imageId'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    image_id = request.POST["imageId"]
+
+    image = get_object_or_404(Image, pk=image_id)
+
+    if openstackUtils.connect_to_openstack():
+        glance_id = openstackUtils.get_image_id_for_name(image.name)
+        glance_json = openstackUtils.get_glance_image_detail(glance_id)
+        print "glance json of %s is" % glance_id
+        print glance_json
+        print "---"
+        return render(request, 'images/glance_detail.html', {'image': glance_json,
+                                                             "image_id": image_id,
+                                                             "glance_id": glance_id,
+                                                             "openstack_host": configuration.openstack_host
+                                                             })
+    else:
+        return render(request, 'error.html', {'error': "Could not connect to OpenStack"})
 
 
 def delete(request, image_id):
@@ -252,6 +292,28 @@ def delete(request, image_id):
     image.filePath.delete()
     image.delete()
     return HttpResponseRedirect('/images/')
+
+
+def list_glance_images(request):
+    if openstackUtils.connect_to_openstack():
+        image_list = openstackUtils.list_glance_images()
+
+        context = {'error': image_list}
+        return render(request, 'error.html', context)
+
+    context = {'error': "Could not connect to OpenStack"}
+    return render(request, 'error.html', context)
+
+
+def upload_to_glance(request, image_id):
+    if openstackUtils.connect_to_openstack():
+        image = get_object_or_404(Image, pk=image_id)
+        print "Uploading now!"
+        if osUtils.check_path(image.filePath.path):
+            openstackUtils.upload_image_to_glance(image.name, image.filePath.path)
+
+        print "All done"
+        return HttpResponseRedirect('/images/%s' % image_id)
 
 
 def error(request):

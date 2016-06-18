@@ -2,12 +2,13 @@ from django.db import models
 from django.forms import ModelForm
 from django.forms import widgets
 from django import forms
+from wistar import configuration
 from wistar import settings
 
 
 class Image(models.Model):
 
-    type_choices = ((x["name"], x["description"]) for x in settings.VM_IMAGE_TYPES)
+    type_choices = ((x["name"], x["description"]) for x in configuration.vm_image_types)
 
     name = models.CharField(max_length=32)
     type = models.CharField(max_length=32, choices=type_choices, default='junos_vmx')

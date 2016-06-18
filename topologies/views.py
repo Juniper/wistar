@@ -15,12 +15,14 @@ from common.lib import wistarUtils
 from common.lib import libvirtUtils
 from common.lib import junosUtils
 from common.lib import osUtils
+from common.lib import openstackUtils
+
 from images.models import Image
 from scripts.models import Script
 import time
 # mild hack alert
 from ajax import views as av
-from wistar import settings
+from wistar import configuration
 
 
 # FIXME = debug should be a global setting
@@ -43,7 +45,7 @@ def edit(request):
 def new(request):
     image_list = Image.objects.all().order_by('name')
     script_list = Script.objects.all().order_by('name')
-    vm_types = settings.VM_IMAGE_TYPES
+    vm_types = configuration.vm_image_types
     vm_types_string = json.dumps(vm_types)
     context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string}
     return render(request, 'topologies/new.html', context)
@@ -100,7 +102,7 @@ def import_topology(request):
 
             image_list = Image.objects.all().order_by('name')
             script_list = Script.objects.all().order_by('name')
-            vm_types = settings.VM_IMAGE_TYPES
+            vm_types = configuration.vm_image_types
             vm_types_string = json.dumps(vm_types)
             context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string}
             return render(request, 'topologies/new.html', context)
@@ -122,7 +124,7 @@ def clone(request, topo_id):
     topology.id = 0
     image_list = Image.objects.all().order_by('name')
     script_list = Script.objects.all().order_by('name')
-    vm_types = settings.VM_IMAGE_TYPES
+    vm_types = configuration.vm_image_types
     vm_types_string = json.dumps(vm_types)
     context = {'image_list': image_list, 'script_list': script_list, 'topo': topology, 'vm_types': vm_types_string}
     return render(request, 'topologies/new.html', context)
@@ -383,16 +385,14 @@ def export_as_heat_template(request, topology_id):
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     try:
-        # keep a quick local cache around of found image_name to image_id pairs
-        image_names = dict()
-
         # let's parse the json and convert to simple lists and dicts
         config = wistarUtils.load_json(topology.json, topology_id)
 
         heat_template = wistarUtils.get_heat_json_from_topology_config(config)
-        print heat_template
-        return HttpResponse(heat_template, content_type="text/plain")
+        heat_template_json = json.loads(heat_template)
+        return HttpResponse(json.dumps(heat_template_json, indent=2), content_type="text/plain")
     except Exception as e:
         print "Caught Exception in deploy"
         print str(e)
         return render(request, 'error.html', {'error': str(e)})
+
