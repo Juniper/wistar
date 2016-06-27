@@ -1,5 +1,5 @@
 import time
-
+import logging
 import pexpect
 
 from WistarException import WistarException
@@ -7,6 +7,7 @@ import osUtils
 
 # simple utility lib to use virsh console to set up a device before 
 # networking is available
+logger = logging.getLogger(__name__)
 
 
 def get_console(dom):
@@ -47,7 +48,7 @@ def is_junos_device_at_prompt(dom):
 
 
 # if the device is already logged in, let's try to recover and get
-# back to a login prompt before continueing
+# back to a login prompt before continuing
 def recover_junos_prompt(dom):
     print "Getting boot up state of: " + str(dom)
     try:

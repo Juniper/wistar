@@ -497,7 +497,8 @@ def refresh_deployment_status(request):
             is_linux = True
             network_list = libvirtUtils.get_networks_for_topology("t" + topology_id + "_")
 
-        context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topology_id, 'isLinux': is_linux}
+        context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topology_id,
+                   'isLinux': is_linux}
         return render(request, 'ajax/deploymentStatus.html', context)
 
 
@@ -783,7 +784,6 @@ def deploy_topology(request):
         return render(request, 'ajax/ajaxError.html', {'error': "No Topology Id in request"})
     
     topology_id = request.POST['topologyId']
-    topo = dict()
     try:
         topo = Topology.objects.get(pk=topology_id)
     except Exception as ex:

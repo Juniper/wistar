@@ -100,7 +100,9 @@
 
         // a little magic number safety
         if (octets.length != 4) {
-            octets = ['192', '168', '122', ''];
+            default_octets = '{{ management_prefix }}'.split('.');
+            d = default_octets;
+            octets = [d[0], d[1], d[2], ''];
         }
 
         var url = "/ajax/nextIp/";
@@ -779,8 +781,9 @@
                     IP Address
                 </td>
                 <td>
-                    <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value="192.168.122."
-                           title="Choose an IP from the 192.168.122.0/24 range"
+                    <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp"
+                           value="{{ management_prefix}}"
+                           title="Choose an IP from the {{ management_subnet }} range"
                            onblur="javascript: checkIp();" style="width: 85%"/>
                     <input type="button" name="next_ip_button" id="next_ip_button"
                            value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
@@ -922,7 +925,7 @@
                         {% endfor %}
                     </select>
                 </td>
-            <!--
+
                 <tr>
                 <td>
                     vPFE vCPU
@@ -954,8 +957,6 @@
                     </select> MB
                 </td>
             </tr>
-            -->
-
             </tbody>
             <!--
             <tbody id="addInstanceTbodyAdd">

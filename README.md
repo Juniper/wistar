@@ -1,18 +1,25 @@
 wistar
 ======
 
-Wistar is a tool to manage a topologies of VMs on a KVM server. You can quickly setup complex topologies of 
-multiple instances, generate all the necessary KVM XML domain and network configurations, and deploy the topology.
+Wistar is a tool to help manage complex topologies of Virtual Machines and appliances. By default, Wistar is used to 
+simplify the process of creating networks of VMs on KVM, however, other deployment methods such as Openstack are being 
+developed.
 
-To get started, you need a server running Ubuntu 14.04 (or some similar flavor) with libvirt, kvm and few python tools:
 
-Set up networking to use a default bridge called br0. Wistar will use this bridge to connect instances to the
-external network.
+Quick Start instructions for KVM deployments:
+======
+To get started, you need a server running Ubuntu 14.04 (or some similar flavor) with libvirt, kvm and a few python
+tools:
+
+Wistar uses Linux bridges to connect VMs to each other and to any external networks. To connect VMs to the external
+ world, you'll need at least one NIC in a bridge. In this example, the first NIC is put in a bridge called 'br0'. To
+ connect VMs to this NIC, add an 'External Bridge' object to the topology with the corresponding name 'br0'. Multiple
+ external bridges are supported.
 
         auto lo
         iface lo inet loopback
         
-        iface eth1 inet manual
+        iface eth0 inet manual
 
         auto br0
         iface br0 inet static
@@ -21,29 +28,28 @@ external network.
                 network 10.10.0.0
                 broadcast 10.10.15.255
                 gateway 10.10.10.1
-                # dns-* options are implemented by the resolvconf package, if installed
                 dns-nameservers 8.8.8.8
-                bridge_ports eth1
+                bridge_ports eth0
                 bridge_stp off
                 bridge_fd 0
                 bridge_maxwait 0
 
         Install all required packages:
-        root@dc17-all:~# apt-get install python-pip python-dev build-essential qemu-kvm libz-dev libvirt-bin socat
-            python-pexpect python-libvirt python-django libxml2-dev libxslt1-dev unzip bridge-utils python-numpy
-            genisoimage netaddr
+        root@wistar-build:~# apt-get install python-pip python-dev build-essential qemu-kvm libz-dev libvirt-bin socat
+            python-pexpect python-libvirt libxml2-dev libxslt1-dev unzip bridge-utils python-numpy
+            genisoimage python-netaddr
 
-        root@dc17-all:~# pip install pyvbox junos-eznc pyYAML
+        root@wistar-build:~# pip install pyvbox junos-eznc pyYAML Django==1.8.13
         
         Create the images and instances directories
-        root@dc17-all:~# mkdir -p /opt/images/user_images/instances
+        root@wistar-build:~# mkdir -p /opt/images/user_images/instances
         
         Clone the repo
-        root@dc17-all:/opt/wistar# git clone https://github.com/nembery/wistar.git
+        root@wistar-build:/opt/wistar# git clone https://github.com/nembery/wistar.git
         
         create the sql tables
-        root@dc17-all:/opt/wistar# cd wistar-master/
-        root@dc17-all:/opt/wistar/wistar-master# ./manage.py syncdb
+        root@wistar-build:/opt/wistar# cd wistar-master/
+        root@wistar-build:/opt/wistar/wistar-master# ./manage.py syncdb
         Creating tables ...
         --snip--
         
@@ -52,12 +58,12 @@ external network.
         Installing custom SQL ...
         Installing indexes ...
         Installed 0 object(s) from 0 fixture(s)
-        root@dc17-all:/opt/wistar/wistar-master#
+        root@wistar-build:/opt/wistar/wistar-master#
         
         Answer ‘no’ when asked to create an admin user as this is not currently used.
-        Launch the built-in webserver:
-        root@dc17-all:/opt/wistar# cd wistar-master/
-        root@dc17-all:/opt/wistar/wistar-master# ./manage.py runserver 0.0.0.0:8080
+        Launch the built-in web server:
+        root@wistar-build:/opt/wistar# cd wistar-master/
+        root@wistar-build:/opt/wistar/wistar-master# ./manage.py runserver 0.0.0.0:8080
 
 To begin, browse to the 'Images' page and upload a qcow2 based image. 
 

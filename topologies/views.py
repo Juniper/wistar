@@ -37,7 +37,10 @@ def edit(request):
     logger.debug('---- topology edit ----')
     image_list = Image.objects.all().order_by('name')
     script_list = Script.objects.all().order_by('name')
-    context = {'image_list': image_list, 'script_list': script_list}
+    context = {'image_list': image_list, 'script_list': script_list,
+               'management_subnet': configuration.management_subnet,
+               'management_prefix': configuration.management_prefix
+               }
     return render(request, 'topologies/edit.html', context)
 
 
@@ -47,7 +50,10 @@ def new(request):
     script_list = Script.objects.all().order_by('name')
     vm_types = configuration.vm_image_types
     vm_types_string = json.dumps(vm_types)
-    context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string}
+    context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string,
+               'management_subnet': configuration.management_subnet,
+               'management_prefix': configuration.management_prefix
+               }
     return render(request, 'topologies/new.html', context)
 
 
