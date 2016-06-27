@@ -7,6 +7,7 @@ from jinja2 import Environment
 from netaddr import *
 
 from wistar import settings
+from wistar import configuration
 
 
 # used to determine if we should try kvm or virtualbox
@@ -78,10 +79,11 @@ def copy_image_to_clone(old_path, new_path):
 # *If on KVM, otherwise, clone the full hd for virtualbox
 def create_thin_provision_instance(image, instance):
     instance_file = get_instance_path_from_image(image, instance)
-    if check_is_linux():
-        rv = os.system("qemu-img create -b '" + image + "' -f qcow2 '" + instance_file + "'")
-    else:
+    if configuration.deployment_backend == "virtualbox":
         rv = os.system("vboxmanage clonehd '" + image + "' '" + instance_file + "'")
+    else:
+        # assume kvm
+        rv = os.system("qemu-img create -b '" + image + "' -f qcow2 '" + instance_file + "'")
 
     if rv == 0:
         return True
@@ -93,10 +95,10 @@ def create_thin_provision_instance(image, instance):
 # useful for installing from ISO files
 def create_blank_image(filename, size):
 
-    if check_is_linux():
+    if configuration.deployment_backend == "kvm":
         rv = os.system("qemu-img create '" + filename + "' -f qcow2 " + size)
     else:
-        print "VirtualBox isn't supported for this feature! (yet anyway, patches welcome)"
+        print "Only KVM backend is supported for this function"
         rv = 1
 
     if rv == 0:
@@ -116,7 +118,7 @@ def list_dir(directory):
 
 def is_image_thin_provisioned(image_path):
     """ Check to see if the qemu-img info command reports a backing file """
-    if check_is_linux():
+    if configuration.deployment_backend == "kvm":
         rv = os.system("qemu-img info " + image_path + " | grep backing")
         if rv == 0:
             print "Found a backing file!"
@@ -124,17 +126,22 @@ def is_image_thin_provisioned(image_path):
         else:
             return False
     else:
-        # non linux hosts (i.e. virtualbox) will never have a backing file
+        # non kvm based deployments (i.e. virtualbox) will never have a backing file
         return False
 
 
 def remove_instance(instance_path):
     rv = 0
-    if check_is_linux():
+    if configuration.deployment_backend == "kvm":
         if os.path.exists(instance_path):
             os.remove(instance_path)
-    else:
+
+    elif configuration.deployment_backend == "virtualbox":
         rv = os.system("vboxmanage closemedium disk \"" + instance_path  + "\" --delete")
+
+    else:
+        print "configured deployment backend %s is not yet implemented!" % configuration.deployment_backend
+        return False
     
     if rv == 0:
         return True

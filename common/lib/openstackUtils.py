@@ -6,7 +6,7 @@ from urllib2 import URLError
 from wistar import configuration
 
 
-# all OpenStack component URLs
+# OpenStack component URLs
 _glance_url = ':9292/v1'
 _analytics_url = ':8081'
 _api_url = ':8082'
@@ -22,25 +22,6 @@ _data_url = ':8143/api/tenant/networking/'
 # and referenced by each subsequent call
 _auth_token = ""
 _tenant_id = ""
-
-
-def create_glance_url(url):
-    return "http://" + configuration.openstack_host + _glance_url + url
-
-
-def create_os_url(url):
-    return "http://" + configuration.openstack_host + _os_url + url
-
-
-def create_heat_url(url):
-    if not url.startswith("/"):
-        url = "/" + url
-
-    return "http://" + configuration.openstack_host + _heat_url + url
-
-
-def create_nova_url(url):
-    return "http://" + configuration.openstack_host + _nova_url + url
 
 
 def connect_to_openstack():
@@ -311,8 +292,30 @@ def create_stack(stack_name, template_string):
     return do_post(url, data)
 
 
+# URL Utility functions
+def create_glance_url(url):
+    return "http://" + configuration.openstack_host + _glance_url + url
+
+
+def create_os_url(url):
+    return "http://" + configuration.openstack_host + _os_url + url
+
+
+def create_heat_url(url):
+    return "http://" + configuration.openstack_host + _heat_url + url
+
+
+def create_nova_url(url):
+    return "http://" + configuration.openstack_host + _nova_url + url
+
+
 # Utility REST functions below
 def do_get(url):
+    """
+    Performs a simple REST GET
+    :param url: full URL for GET request
+    :return: response from urllib2.urlopen(r).read() or None
+    """
     try:
         request = urllib2.Request(url)
         request.add_header("Content-Type", "application/json")
@@ -327,6 +330,12 @@ def do_get(url):
 
 
 def do_post(url, data):
+    """
+    Performs a simple REST POST
+    :param url: full url to use for POST
+    :param data: url encoded data
+    :return: string response from urllib2.urlopen(r,data).read() or None
+    """
     try:
         request = urllib2.Request(url)
         request.add_header("Content-Type", "application/json")
@@ -341,6 +350,12 @@ def do_post(url, data):
 
 
 def do_put(url, data=""):
+    """
+    Performs a simple REST PUT
+    :param url: full URL to use for PUT
+    :param data: url encoded data
+    :return: string response from urllib2.urlopen(r, data).read() or None
+    """
     try:
         request = urllib2.Request(url)
         request.add_header("Content-Type", "application/json")
@@ -360,6 +375,13 @@ def do_put(url, data=""):
 
 
 def do_nova_delete(url, project_name, data=""):
+    """
+    Performs a DELETE request with the specified project auth token
+    :param url: full url to use for DELETE
+    :param project_name: name of the project
+    :param data: (optional) url encoded data
+    :return: string response from urllib2.urlopen(r, data).read() or None
+    """
     try:
         project_token = get_project_auth_token(project_name)
         request = urllib2.Request(url)
@@ -380,6 +402,12 @@ def do_nova_delete(url, project_name, data=""):
 
 
 def do_delete(url, data=""):
+    """
+    Performs a simple REST DELETE call
+    :param url: full url to use for Delete
+    :param data: (optional) url encoded data
+    :return: string response from urllib2.urlopen(r, data).read() or None
+    """
     try:
         request = urllib2.Request(url)
         request.add_header("Content-Type", "application/json")

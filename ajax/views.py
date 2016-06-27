@@ -413,7 +413,7 @@ def start_topology(request):
     domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
     network_list = []
 
-    if osUtils.check_is_linux():
+    if configuration.deployment_backend == "kvm":
         network_list = libvirtUtils.get_networks_for_topology("t" + topology_id + "_")
 
     for network in network_list:
@@ -488,20 +488,7 @@ def refresh_deployment_status(request):
         return refresh_hypervisor_status(request)
 
     if configuration.deployment_backend == "openstack":
-        if openstackUtils.connect_to_openstack():
-            topology = Topology.objects.get(pk=topology_id)
-            stack_name = topology.name.replace(' ', '_')
-            stack_details = openstackUtils.get_stack_details(stack_name)
-            stack_resources = dict()
-            print stack_details
-            if stack_details is not None and stack_details["stack_status"] == "CREATE_COMPLETE":
-                stack_resources = openstackUtils.get_stack_resources(stack_name, stack_details["id"])
-
-        context = {"stack": stack_details, "topology_id": topology.id,
-                   "openstack_host": configuration.openstack_host,
-                   "stack_resources": stack_resources
-                   }
-        return render(request, 'ajax/openstackDeploymentStatus.html', context)
+        refresh_openstack_deployment_status(request, topology_id)
     else:
         domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
         network_list = []
@@ -512,6 +499,23 @@ def refresh_deployment_status(request):
 
         context = {'domain_list': domain_list, 'network_list': network_list, 'topologyId': topology_id, 'isLinux': is_linux}
         return render(request, 'ajax/deploymentStatus.html', context)
+
+
+def refresh_openstack_deployment_status(request, topology_id):
+    if openstackUtils.connect_to_openstack():
+        topology = Topology.objects.get(pk=topology_id)
+        stack_name = topology.name.replace(' ', '_')
+        stack_details = openstackUtils.get_stack_details(stack_name)
+        stack_resources = dict()
+        print stack_details
+        if stack_details is not None and stack_details["stack_status"] == "CREATE_COMPLETE":
+            stack_resources = openstackUtils.get_stack_resources(stack_name, stack_details["id"])
+
+    context = {"stack": stack_details, "topology_id": topology.id,
+               "openstack_host": configuration.openstack_host,
+               "stack_resources": stack_resources
+               }
+    return render(request, 'ajax/openstackDeploymentStatus.html', context)
 
 
 @csrf_exempt
@@ -929,7 +933,7 @@ def inline_deploy_topology(config):
                 # perform some special hacks for vbox
                 management_interfaces = device["managementInterfaces"]
                 management_ip = str(management_interfaces[0]["ip"])
-                vboxUtils.preconfigureVMX(device["name"], management_ip)
+                vboxUtils.preconfigure_vmx(device["name"], management_ip)
 
         except Exception as ex:
             print "Raising exception"

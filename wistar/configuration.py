@@ -8,7 +8,7 @@ user_images_dir = "/opt/images/user_images"
 # defaults to kvm
 # options are 'openstack', 'vagrant', 'virtualbox'
 deployment_backend = 'kvm'
-#deployment_backend = 'openstack'
+# deployment_backend = 'openstack'
 
 # Openstack configuration
 use_openstack = True
@@ -21,6 +21,11 @@ openstack_project = 'admin'
 
 openstack_mgmt_network = 'wistar_mgmt'
 openstack_external_network = 'public-br-eth0'
+
+# Parameters for use with the VirtualBox deployment backend
+# Host only network name in VirtualBox
+virtual_box_host_only_net_name = 'vboxnet0'
+
 
 # VM management network prefix
 # this should match your Openstack mgmt_network subnet or the config of virbr0 when using KVM

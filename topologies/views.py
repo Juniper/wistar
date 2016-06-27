@@ -1,3 +1,4 @@
+import logging
 import json
 
 from django.shortcuts import render, get_object_or_404
@@ -5,7 +6,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
-from django.template.loader import render_to_string
 
 from topologies.models import Topology
 from topologies.models import ConfigSet
@@ -15,7 +15,6 @@ from common.lib import wistarUtils
 from common.lib import libvirtUtils
 from common.lib import junosUtils
 from common.lib import osUtils
-from common.lib import openstackUtils
 
 from images.models import Image
 from scripts.models import Script
@@ -24,18 +23,18 @@ import time
 from ajax import views as av
 from wistar import configuration
 
-
-# FIXME = debug should be a global setting
-debug = True
+logger = logging.getLogger(__name__)
 
 
 def index(request):
+    logger.debug('---- topology index ----')
     topology_list = Topology.objects.all().order_by('modified')
     context = {'latest_topo_list': topology_list}
     return render(request, 'topologies/index.html', context)
 
 
 def edit(request):
+    logger.debug('---- topology edit ----')
     image_list = Image.objects.all().order_by('name')
     script_list = Script.objects.all().order_by('name')
     context = {'image_list': image_list, 'script_list': script_list}
@@ -43,6 +42,7 @@ def edit(request):
 
 
 def new(request):
+    logger.debug('---- topology new ----')
     image_list = Image.objects.all().order_by('name')
     script_list = Script.objects.all().order_by('name')
     vm_types = configuration.vm_image_types
@@ -52,6 +52,7 @@ def new(request):
 
 
 def export_topology(request, topo_id):
+    logger.debug('---- topology export ----')
     topology = get_object_or_404(Topology, pk=topo_id)
     json_data = json.loads(topology.json)
     info_data = dict()
@@ -66,6 +67,7 @@ def export_topology(request, topo_id):
 
 @csrf_exempt
 def import_topology(request):
+    logger.debug('---- topology import ----')
     try:
         if request.method == "POST":
             print str(request.FILES)
@@ -112,11 +114,13 @@ def import_topology(request):
             context = {'form': form }
             return render(request, 'topologies/import.html', context)
     except Exception as e:
-        print str(e)   
+        logger.error('Could nt parse imported data')
+        logger.error(e)
         return error(request, 'Could not parse imported data')
 
 
 def clone(request, topo_id):
+    logger.debug('---- topology clone ----')
     topology = get_object_or_404(Topology, pk=topo_id)
     orig_name = topology.name
     topology.name = orig_name + " clone"
@@ -131,8 +135,10 @@ def clone(request, topo_id):
 
 
 def multi_clone(request):
+    logger.debug('---- topology mulit_clone ----')
     required_fields = set(['clones', 'topoId'])
     if not required_fields.issubset(request.POST):
+        logger.error('Invalid parameters in POST')
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     topology_id = request.POST["topoId"]
@@ -156,17 +162,19 @@ def multi_clone(request):
 
 
 def parent(request, domain_name):
+    logger.debug('---- topology parent ----')
     topology_id = domain_name.split('_')[0].replace('t', '')
     print "Found topology_id of %s" % topology_id
     return HttpResponseRedirect('/topologies/%s' % topology_id)
 
 
 def detail(request, topo_id):
+    logger.debug('---- topology detail ----')
     print "getting topology %s" % topo_id
     try:
         topology = Topology.objects.get(pk=topo_id)
     except ObjectDoesNotExist:
-        print "not found!"
+        logger.error('topology id %s was not found!' % topo_id)
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     domain_list = libvirtUtils.get_domains_for_topology("t" + topo_id)
@@ -178,7 +186,7 @@ def detail(request, topo_id):
 
 
 def delete(request, topology_id):
-
+    logger.debug('---- topology delete ----')
     topology_prefix = "t%s_" % topology_id
     network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
     for network in network_list:
@@ -204,10 +212,13 @@ def delete(request, topology_id):
 
 
 def error(request, message):
+    logger.debug('---- topology error ----')
+    logger.info('error is: %s' % message)
     return render(request, 'error.html', {'error_message': message})
 
 
 def create(request):
+    logger.debug('---- topology create ----')
     url = '/topologies/'
     try:
         if request.POST.has_key('id'):
@@ -218,14 +229,15 @@ def create(request):
             topo.description = request.POST['description']
             topo.save()
         else:
-            json = request.POST['json']
+            json_string = request.POST['json']
             description = request.POST['description']
             name = request.POST['name']
-            t = Topology(name=name, description=description, json=json)
+            t = Topology(name=name, description=description, json=json_string)
             t.save()
             url += str(t.id)
 
     except KeyError:
+        logger.error('Invalid data in POST')
         return render(request, 'error.html', { 
             'error_message': "Invalid data in POST"
         })
@@ -240,6 +252,7 @@ def create(request):
 
 
 def create_config_set(request):
+    logger.debug('---- topology create_config_set ----')
     required_fields = set(['name', 'description', 'topoId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -265,13 +278,14 @@ def create_config_set(request):
                 cfg.save()
 
             except Exception as e:
+                logger.error('exception: %s' % e)
                 print "Could not connect to " + device["ip"], e
    
     return HttpResponseRedirect('/topologies/' + topology_id + '/')
 
 
 def launch(request, topology_id):
-    topology = dict()
+    logger.debug('---- topology launch ----')
     try:
         topology = Topology.objects.get(pk=topology_id)
     except ObjectDoesNotExist as ex:
@@ -288,6 +302,7 @@ def launch(request, topology_id):
         # than utility and view layers ... unless I want to mix utility libs
         av.inline_deploy_topology(config)
     except Exception as e:
+        logger.error('exception: %s' % e)
         return render(request, 'error.html', {'error': str(e)})
 
     domain_list = libvirtUtils.get_domains_for_topology("t%s_" % topology_id)
@@ -321,67 +336,17 @@ def launch(request, topology_id):
 
 
 @csrf_exempt
-def export_as_heat_template_OLD(request, topology_id):
-    """
-    :param request: Django request
-    :param topology_id: id of the topology to export
-    :return: renders the heat template
-    """
-    topology = dict()
-    try:
-        topology = Topology.objects.get(pk=topology_id)
-    except ObjectDoesNotExist:
-        return render(request, 'error.html', {'error': "Topology not found!"})
-
-    try:
-        # keep a quick local cache around of found image_name to image_id pairs
-        image_names = dict()
-
-        # let's parse the json and convert to simple lists and dicts
-        config = wistarUtils.load_json(topology.json, topology_id)
-
-        for device in config["devices"]:
-            image_id = device["imageId"]
-            # have we already looked up this image_id ?
-            if image_id in image_names:
-                name = image_names[image_id]
-            else:
-                # nope, cache it and return it
-                image = Image.objects.get(pk=device["imageId"])
-                name = image.name
-                image_names[image_id] = name
-
-            device["imageName"] = name
-            # FIXME - add code to set the flavor here based on CPU and RAM
-            device["flavor"] = "m1.medium"
-
-            for interface in device["interfaces"]:
-                if interface["bridge"] == "br0":
-                    interface["bridge"] = "public"
-
-                if interface["bridge"] == "virbr0":
-                    interface["bridge"] = "wistar_mgmt"
-
-        heat_template = render_to_string("openstack_heat_template", {'config': config})
-        print heat_template
-        return HttpResponse(heat_template, content_type="text/plain")
-    except Exception as e:
-        print "Caught Exception in deploy"
-        print str(e)
-        return render(request, 'error.html', {'error': str(e)})
-
-
-@csrf_exempt
 def export_as_heat_template(request, topology_id):
     """
     :param request: Django request
     :param topology_id: id of the topology to export
     :return: renders the heat template
     """
-    topology = dict()
+    logger.debug('---- topology export heat ----')
     try:
         topology = Topology.objects.get(pk=topology_id)
     except ObjectDoesNotExist:
+        logger.error('topology id %s was not found!' % topology_id)
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     try:
@@ -392,7 +357,7 @@ def export_as_heat_template(request, topology_id):
         heat_template_json = json.loads(heat_template)
         return HttpResponse(json.dumps(heat_template_json, indent=2), content_type="text/plain")
     except Exception as e:
-        print "Caught Exception in deploy"
-        print str(e)
+        print "Caught Exception in deploy heat"
+        logger.error('exception: %s' % e)
         return render(request, 'error.html', {'error': str(e)})
 

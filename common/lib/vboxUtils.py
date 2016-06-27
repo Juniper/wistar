@@ -1,43 +1,45 @@
 # 10-24-14 nembery
 import virtualbox
 
-vbox = ""
+from wistar import configuration
+
+vbox_session = ""
 
 
-def initSession():
-    global vbox
-    if vbox == "":
-        vbox = virtualbox.VirtualBox()
+def init_session():
+    global vbox_session
+    if vbox_session == "":
+        vbox_session = virtualbox.VirtualBox()
 
 
-def getVMHONetName(hoNetIPAddr):
+def get_vm_host_only_net_name(host_only_net_ip_address):
     from vbhonetutil import VBHONetUtil
-    honetName = 'vboxnet0'
-    if (hoNetIPAddr != None):
-        vbhoNetUtil = VBHONetUtil()
-        honetName = vbhoNetUtil.getHostOnlyNetworkNameByGuestIP(hoNetIPAddr)
-    print " getVMHONetName():  %s ==> %s" % (hoNetIPAddr, honetName)
-    return honetName
+    host_only_net_name = configuration.virtual_box_host_only_net_name
+    if host_only_net_ip_address is not None:
+        host_only_network_util = VBHONetUtil()
+        host_only_net_name = host_only_network_util.getHostOnlyNetworkNameByGuestIP(host_only_net_ip_address)
+    print " get_vm_host_only_net_name():  %s ==> %s" % (host_only_net_ip_address, host_only_net_name)
+    return host_only_net_name
 
 
-def getInstance(name):
-    initSession()
-    instance = vbox.find_machine(name)
+def get_instance(name):
+    init_session()
+    instance = vbox_session.find_machine(name)
     return instance
 
 
-def getVMSession(name):
+def get_vm_session(name):
     try:
-        m = getInstance(name)
+        m = get_instance(name)
         session = m.create_session()
         instance = session.machine 
-        return (session, instance)
+        return session, instance
     except Exception:
         print "Could not get VM Session"
         return None
 
 
-def saveSession(session, instance):
+def save_session(session, instance):
     try:
         instance.save_settings()
         session.unlock_machine() 
@@ -49,24 +51,24 @@ def saveSession(session, instance):
         return False
 
 
-def preconfigureVMX(name, mgmtipaddr):
-    (session, instance) = getVMSession(name)
-    if not removeExtraniousControllers(instance):
+def preconfigure_vmx(name, mgmtipaddr):
+    (session, instance) = get_vm_session(name)
+    if not remove_extraneous_controllers(instance):
         session.unlock_machine() 
         return False
 
-    if not setSerialPortAsServer(instance):
+    if not set_serial_port_as_server(instance):
         session.unlock_machine() 
         return False
 
-    if not setManagementNetwork(instance, mgmtipaddr):
+    if not set_management_network(instance, mgmtipaddr):
         session.unlock_machine() 
         return False
 
-    return saveSession(session, instance)
+    return save_session(session, instance)
 
 
-def removeExtraniousControllers(instance):
+def remove_extraneous_controllers(instance):
     try:
         controllers = instance.storage_controllers
         for c in controllers:
@@ -81,12 +83,12 @@ def removeExtraniousControllers(instance):
 
 
 # get the first interface and set it to be a host only network called vboxnet0
-def setManagementNetwork(instance, mgmtipaddr):
+def set_management_network(instance, mgmtipaddr):
     try:
         iface = instance.get_network_adapter(0)
         iface.enabled = True
         # iface.host_only_interface = 'vboxnet0'
-        iface.host_only_interface = getVMHONetName(mgmtipaddr)
+        iface.host_only_interface = get_vm_host_only_net_name(mgmtipaddr)
         iface.attachment_type = virtualbox.library.NetworkAttachmentType(4)
         return True
     except Exception:
@@ -96,7 +98,7 @@ def setManagementNetwork(instance, mgmtipaddr):
 
 # get the first serial port
 # and set it to 'create' by default
-def setSerialPortAsServer(instance):
+def set_serial_port_as_server(instance):
     try:
         sp = instance.get_serial_port(0)
 
