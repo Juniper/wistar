@@ -38,19 +38,23 @@ def check_path(path):
 
 # on linux, let's verify if a process is running
 # used to check on libvirtd process status
-def check_process(procName):
+def check_process(process_name):
     cmd = "ps aux"
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
     (o, e) = p.communicate()
-    if procName in o:
+    if process_name in o:
         return True
     else:
         return False
 
 
 def check_ip(ip_address):
-    """ check to see if the given ip address is already reachable """
+    """
+    check to see if the given ip address is already reachable
+    :param ip_address: IP address to check
+    :returns: True if reachable, False otherwise
+    """
 
     rv = os.system("ping -c 1 -q %s " % ip_address)
     if rv == 0:

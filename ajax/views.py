@@ -2,9 +2,9 @@ import os
 import time
 import json
 import random
+import logging
 
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -30,8 +30,7 @@ from topologies.models import Config
 from wistar import configuration
 
 
-# FIXME = debug should be a global setting
-debug = True
+logger = logging.getLogger(__name__)
 
 
 def index(request):
@@ -58,7 +57,6 @@ def view_network(request, network_name):
         return render(request, 'ajax/ajaxError.html', {'error': e})
 
 
-@csrf_exempt
 def preconfig_junos_domain(request):
     response_data = {"result": True}
     required_fields = set(['domain', 'password', 'ip', 'mgmtInterface'])
@@ -99,7 +97,6 @@ def preconfig_junos_domain(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def preconfig_linux_domain(request):
     response_data = {"result": True}
     required_fields = set(['domain', 'hostname', 'password', 'ip', 'mgmtInterface'])
@@ -124,7 +121,6 @@ def preconfig_linux_domain(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def preconfig_firefly(request):
     response_data = {"result": True}
     required_fields = set(['domain', 'password', 'mgmtInterface'])
@@ -164,7 +160,6 @@ def preconfig_firefly(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def config_junos_interfaces(request):
     response_data = {"result": True}
     required_fields = set(['password', 'ip'])
@@ -184,7 +179,6 @@ def config_junos_interfaces(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def execute_cli(request):
     response_data = {"result": True}
     required_fields = set(['ip', 'pw', 'cli'])
@@ -205,7 +199,6 @@ def execute_cli(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def execute_linux_cli(request):
     response_data = {"result": True}
     required_fields = set(['ip', 'pw', 'cli'])
@@ -226,7 +219,6 @@ def execute_linux_cli(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def get_junos_startup_state(request):
     response_data = dict()
     response_data["console"] = False
@@ -247,7 +239,6 @@ def get_junos_startup_state(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def get_linux_startup_state(request):
     response_data = dict()
     response_data["console"] = False
@@ -258,15 +249,22 @@ def get_linux_startup_state(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
-    if libvirtUtils.is_domain_running(name):
-        time.sleep(random.randint(0, 10) * .10)
-        response_data["power"] = True
-        response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
+
+    if configuration.deployment_backend == "openstack":
+        if openstackUtils.connect_to_openstack():
+            serial_url = openstackUtils.get_nova_serial_console(name)
+            time.sleep(random.randint(0, 10) * .10)
+            response_data["power"] = True
+            response_data["console"] = consoleUtils.is_linux_device_at_prompt(serial_url)
+    else:
+        if libvirtUtils.is_domain_running(name):
+            time.sleep(random.randint(0, 10) * .10)
+            response_data["power"] = True
+            response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def get_junos_config(request):
     response_data = {"result": True}
     required_fields = set(['ip', 'password'])
@@ -288,7 +286,6 @@ def get_junos_config(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def get_config_templates(request):
     required_fields = set(['ip'])
     if not required_fields.issubset(request.POST):
@@ -301,7 +298,6 @@ def get_config_templates(request):
     return render(request, 'ajax/configTemplates.html', context)
 
 
-@csrf_exempt
 def get_scripts(request):
     required_fields = set(['ip'])
     if not required_fields.issubset(request.POST):
@@ -314,7 +310,6 @@ def get_scripts(request):
     return render(request, 'ajax/scripts.html', context)
 
 
-@csrf_exempt
 def push_script(request):
     required_fields = set(['script_id', 'username', 'password', 'ip'])
     if not required_fields.issubset(request.POST):
@@ -342,7 +337,6 @@ def push_script(request):
         return render(request, 'ajax/scriptOutput.html', context)
 
 
-@csrf_exempt
 def sync_link_data(request):
     response_data = {"result": True}
     required_fields = set(['sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp',
@@ -398,7 +392,6 @@ def sync_link_data(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def start_topology(request):
     required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
@@ -438,7 +431,6 @@ def start_topology(request):
     return refresh_deployment_status(request)
 
 
-@csrf_exempt
 def pause_topology(request):
     required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
@@ -475,8 +467,8 @@ def pause_topology(request):
     return refresh_deployment_status(request)
 
 
-@csrf_exempt
 def refresh_deployment_status(request):
+    logger.debug('---- ajax refresh_deployment_status ----')
     required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -488,7 +480,8 @@ def refresh_deployment_status(request):
         return refresh_hypervisor_status(request)
 
     if configuration.deployment_backend == "openstack":
-        refresh_openstack_deployment_status(request, topology_id)
+        logger.info('Refresh openstack deployment status')
+        return refresh_openstack_deployment_status(request, topology_id)
     else:
         domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
         network_list = []
@@ -503,14 +496,19 @@ def refresh_deployment_status(request):
 
 
 def refresh_openstack_deployment_status(request, topology_id):
-    if openstackUtils.connect_to_openstack():
-        topology = Topology.objects.get(pk=topology_id)
-        stack_name = topology.name.replace(' ', '_')
-        stack_details = openstackUtils.get_stack_details(stack_name)
-        stack_resources = dict()
-        print stack_details
-        if stack_details is not None and stack_details["stack_status"] == "CREATE_COMPLETE":
-            stack_resources = openstackUtils.get_stack_resources(stack_name, stack_details["id"])
+    logger.debug('---- ajax refresh_openstack_deployment_status ----')
+    if not openstackUtils.connect_to_openstack():
+        error_message = "Could not connect to Openstack!"
+        logger.error(error_message)
+        return render(request, 'ajax/ajaxError.html', {'error': error_message})
+
+    topology = Topology.objects.get(pk=topology_id)
+    stack_name = topology.name.replace(' ', '_')
+    stack_details = openstackUtils.get_stack_details(stack_name)
+    stack_resources = dict()
+    logger.debug(stack_details)
+    if stack_details is not None and stack_details["stack_status"] == "CREATE_COMPLETE":
+        stack_resources = openstackUtils.get_stack_resources(stack_name, stack_details["id"])
 
     context = {"stack": stack_details, "topology_id": topology.id,
                "openstack_host": configuration.openstack_host,
@@ -519,7 +517,6 @@ def refresh_openstack_deployment_status(request, topology_id):
     return render(request, 'ajax/openstackDeploymentStatus.html', context)
 
 
-@csrf_exempt
 def refresh_host_load(request):
     (one, five, ten) = os.getloadavg()
     load = {'one': one, 'five': five, 'ten': ten}
@@ -527,7 +524,6 @@ def refresh_host_load(request):
     return render(request, 'ajax/hostLoad.html', context)
 
 
-@csrf_exempt
 def refresh_hypervisor_status(request):
     try:
         domains = libvirtUtils.list_domains()
@@ -543,7 +539,6 @@ def refresh_hypervisor_status(request):
         return render(request, 'ajax/ajaxError.html', {'error': e})
 
 
-@csrf_exempt
 def check_ip(request):
     required_fields = set(['ip'])
     if not required_fields.issubset(request.POST):
@@ -555,7 +550,6 @@ def check_ip(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def get_available_ip(request):
     # just grab the next available IP
     print "getting IPS"
@@ -567,7 +561,6 @@ def get_available_ip(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def manage_domain(request):
 
     required_fields = set(['domainId', 'action', 'topologyId'])
@@ -625,7 +618,6 @@ def manage_domain(request):
             return render(request, 'ajax/ajaxError.html', {'error': "Unknown Parameters in POST!"})
 
 
-@csrf_exempt
 def manage_network(request):
 
     required_fields = set(['networkName', 'action', 'topologyId'])
@@ -655,7 +647,6 @@ def manage_network(request):
             return render(request, 'ajax/ajaxError.html', {'error': "Unknown Parameters in POST!"})
 
 
-@csrf_exempt
 def apply_config_template(request):
     print "Pushing Config Template"
     response_data = {"result": True, "message": "Applied configuration successfully"}
@@ -680,7 +671,6 @@ def apply_config_template(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def apply_junos_set_config(request):
     print "Pushing Set Config"
     response_data = {"result": True, "message": "Applied configuration successfully"}
@@ -702,7 +692,6 @@ def apply_junos_set_config(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def push_config_set(request):
     print "Pushing ConfigSet"
     response_data = {"result": True}
@@ -731,7 +720,6 @@ def push_config_set(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def delete_config_set(request):
     print "Deleting ConfigSet"
     response_data = {"result": True}
@@ -747,7 +735,6 @@ def delete_config_set(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def multi_clone_topology(request):
     response_data = {"result": True}
     required_fields = set(['clones', 'topologyId'])
@@ -777,7 +764,6 @@ def multi_clone_topology(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def deploy_topology(request):
 
     if 'topologyId' not in request.POST:
@@ -792,7 +778,7 @@ def deploy_topology(request):
 
     try:
         # let's parse the json and convert to simple lists and dicts
-        config = wistarUtils.load_json(topo.json, topology_id)
+        config = wistarUtils.load_config_from_topology_json(topo.json, topology_id)
         # FIXME - should this be pushed into another module?
         inline_deploy_topology(config)
     except Exception as e:
@@ -809,7 +795,6 @@ def deploy_topology(request):
     return render(request, 'ajax/deploymentStatus.html', context)
 
 
-@csrf_exempt
 def inline_deploy_topology(config):
     # only create networks on Linux/KVM
     print "Checking if we should create networks first!"
@@ -817,8 +802,7 @@ def inline_deploy_topology(config):
         for network in config["networks"]:
             try:
                 if not libvirtUtils.network_exists(network["name"]):
-                    if debug:
-                        print "Rendering networkXml for: " + network["name"]
+                    logger.debug("Rendering networkXml for: %s" % network["name"])
                     network_xml = render_to_string("ajax/kvm/network.xml", {'network': network})
                     print network_xml
                     libvirtUtils.define_network_from_xml(network_xml)
@@ -850,8 +834,7 @@ def inline_deploy_topology(config):
     for device in config["devices"]:
         try:
             if not libvirtUtils.domain_exists(device["name"]):
-                if debug:
-                    print "Rendering deviceXml for: " + device["name"]
+                logger.debug("Rendering deviceXml for: %s" % device["name"])
 
                 configuration_file = device["configurationFile"]
                 print "using config file: " + configuration_file
@@ -940,7 +923,6 @@ def inline_deploy_topology(config):
             raise Exception(str(ex))
 
 
-@csrf_exempt
 def launch_web_console(request):
     print "Let's launch a console!"
 
@@ -1036,7 +1018,6 @@ def launch_web_console(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-@csrf_exempt
 def get_topology_config(request):
     """
         Grab a json object representing the topology config
@@ -1054,7 +1035,7 @@ def get_topology_config(request):
     try:
         topo = Topology.objects.get(pk=topology_id)
         # let's parse the json and convert to simple lists and dicts
-        config = wistarUtils.load_json(topo.json, topology_id)
+        config = wistarUtils.load_config_from_topology_json(topo.json, topology_id)
         domain_status = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
 
         context = {'config': config, 'domain_status': domain_status, 'topologyId': topology_id}
@@ -1066,7 +1047,6 @@ def get_topology_config(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
 
-@csrf_exempt
 def execute_linux_automation(request):
     """
        execute cli command on all linux instances in topology
@@ -1081,7 +1061,7 @@ def execute_linux_automation(request):
     try:
         topo = Topology.objects.get(pk=topology_id)
         # let's parse the json and convert to simple lists and dicts
-        config = wistarUtils.load_json(topo.json, topology_id)
+        config = wistarUtils.load_config_from_topology_json(topo.json, topology_id)
         print "Running automation cli: " + cli
         result_string = "Automation Command: " + cli + "\n\n"
         result_string += "==================================="
@@ -1107,7 +1087,6 @@ def execute_linux_automation(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
 
-@csrf_exempt
 def execute_junos_automation(request):
     """
        execute cli command on all junos instances in topology
@@ -1122,7 +1101,7 @@ def execute_junos_automation(request):
     try:
         topo = Topology.objects.get(pk=topology_id)
         # let's parse the json and convert to simple lists and dicts
-        config = wistarUtils.load_json(topo.json, topology_id)
+        config = wistarUtils.load_config_from_topology_json(topo.json, topology_id)
         print "Running automation cli: " + cli
         result_string = "Automation Command: " + cli + "\n\n"
         result_string += "==================================="
@@ -1148,7 +1127,6 @@ def execute_junos_automation(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
 
-@csrf_exempt
 # query libvirt for all instances that are currently running
 # grab configured ip addresses from topology as well.
 def get_available_instances(request):
@@ -1234,7 +1212,6 @@ def launch_script(request):
     return render(request, 'ajax/scriptOutput.html', context)
 
 
-@csrf_exempt
 def manage_iso(request):
 
     required_fields = set(['domainName', 'path', 'topologyId', 'action'])
@@ -1263,7 +1240,6 @@ def manage_iso(request):
     return HttpResponse(json.dumps(context), content_type="application/json")
 
 
-@csrf_exempt
 def list_isos(request):
 
     required_fields = set(['domainName'])
@@ -1286,25 +1262,20 @@ def list_isos(request):
     return render(request, 'ajax/manageIso.html', context)
 
 
-@csrf_exempt
 def deploy_stack(request, topology_id):
     """
     :param request: Django request
     :param topology_id: id of the topology to export
     :return: renders the heat template
     """
-    topology = dict()
     try:
         topology = Topology.objects.get(pk=topology_id)
     except ObjectDoesNotExist:
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     try:
-        # keep a quick local cache around of found image_name to image_id pairs
-        image_names = dict()
-
         # let's parse the json and convert to simple lists and dicts
-        config = wistarUtils.load_json(topology.json, topology_id)
+        config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
         heat_template = wistarUtils.get_heat_json_from_topology_config(config)
         if not openstackUtils.connect_to_openstack():
             return render(request, 'error.html', {'error': "Could not connect to Openstack"})
@@ -1327,7 +1298,6 @@ def deploy_stack(request, topology_id):
         return render(request, 'error.html', {'error': str(e)})
 
 
-@csrf_exempt
 def delete_stack(request, topology_id):
     """
     :param request: Django request
@@ -1341,6 +1311,7 @@ def delete_stack(request, topology_id):
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     stack_name = topology.name.replace(' ', '_')
-    print openstackUtils.delete_stack(stack_name)
+    if openstackUtils.connect_to_openstack():
+        print openstackUtils.delete_stack(stack_name)
 
     return HttpResponseRedirect('/topologies/' + topology_id + '/')

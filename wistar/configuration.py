@@ -7,12 +7,15 @@ user_images_dir = "/opt/images/user_images"
 # deployment backend to use!
 # defaults to kvm
 # options are 'openstack', 'vagrant', 'virtualbox'
-deployment_backend = 'kvm'
-# deployment_backend = 'openstack'
+# deployment_backend = 'kvm'
+deployment_backend = 'openstack'
 
 # Openstack configuration
+# show openstack options even if not the primary deployment option
+# i.e. upload to glance is available but still deploy locally to kvm
 use_openstack = True
-openstack_host = '10.0.1.144'
+# authenticaion parameters
+openstack_host = '10.0.1.129'
 openstack_user = 'admin'
 openstack_password = 'secret'
 
@@ -29,9 +32,9 @@ virtual_box_host_only_net_name = 'vboxnet0'
 
 # VM management network prefix
 # this should match your Openstack mgmt_network subnet or the config of virbr0 when using KVM
-management_subnet = '192.168.122.0/24'
-management_prefix = '192.168.122.'
-management_gateway = '192.168.122.1'
+management_subnet = '192.168.128.0/24'
+management_prefix = '192.168.128.'
+management_gateway = '192.168.128.1'
 
 # Registered VM Image types
 # this list will register the javascript VM configuration settings in

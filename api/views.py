@@ -178,7 +178,7 @@ def start_topology(request):
             print "not yet deployed!"
 
             # let's parse the json and convert to simple lists and dicts
-            config = wistarUtils.load_json(topo.json, topo.id)
+            config = wistarUtils.load_config_from_topology_json(topo.json, topo.id)
 
             print "Deploying to hypervisor now"
             # FIXME - should this be pushed into another module?

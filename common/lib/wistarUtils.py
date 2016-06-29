@@ -14,19 +14,15 @@ macIndex = 0
 # silly attempt to keep mac addresses unique
 # use the topology id to generate 2 octets, and the number of
 # macs used so far to generate the last one
-def generate_next_mac(topo_id):
+def generate_next_mac(topology_id):
     global macIndex
     base = "52:54:00:"
-    tid = "%04x" % int(topo_id)
+    tid = "%04x" % int(topology_id)
     mac_base = base + str(tid[:2]) + ":" + str(tid[2:4]) + ":"
     mac = mac_base + (str("%02x" % macIndex)[:2])
 
     macIndex += 1
     return mac
-
-
-def get_device_name(index):
-    return "vmx" + str("%02i" % index)
 
 
 def get_heat_json_from_topology_config(config):
@@ -67,27 +63,33 @@ def get_heat_json_from_topology_config(config):
 
     for device in config["devices"]:
 
-        # FIXME - grab flavor definitions from OpenStack directly here...
-        if device["cpu"] == 8:
+        # determine openstack flavor here
+        # possibly a good idea to modify these to not have such
+        # stupidly high disk space requirements!
+        device_ram = int(device["ram"])
+
+        if device_ram >= 16384:
             flavor = "m1.xlarge"
-        elif device["cpu"] == 4:
+        elif device_ram >= 8192:
             flavor = "m1.large"
-        elif device["cpu"] == 2:
+        elif device_ram >= 4096:
             flavor = "m1.medium"
-        else:
+        elif device_ram >= 1024:
             flavor = "m1.small"
+        else:
+            flavor = "m1.tiny"
 
         dr = dict()
         dr["type"] = "OS::Nova::Server"
         dr["properties"] = dict()
         dr["properties"]["flavor"] = flavor
         dr["properties"]["networks"] = []
-        indx = 0
+        index = 0
         for p in device["interfaces"]:
             port = dict()
             port["port"] = dict()
-            port["port"]["get_resource"] = device["name"] + "_port" + str(indx)
-            indx += 1
+            port["port"]["get_resource"] = device["name"] + "_port" + str(index)
+            index += 1
             dr["properties"]["networks"].append(port)
 
         image = Image.objects.get(pk=device["imageId"])
@@ -97,7 +99,7 @@ def get_heat_json_from_topology_config(config):
         template["resources"][device["name"]] = dr
 
     for device in config["devices"]:
-        indx = 0
+        index = 0
         for port in device["interfaces"]:
             pr = dict()
             pr["type"] = "OS::Neutron::Port"
@@ -111,14 +113,20 @@ def get_heat_json_from_topology_config(config):
                 p["network_id"] = {"get_resource": network["name"]}
 
             pr["properties"] = p
-            template["resources"][device["name"] + "_port" + str(indx)] = pr
-            indx += 1
+            template["resources"][device["name"] + "_port" + str(index)] = pr
+            index += 1
 
     return json.dumps(template)
 
 
-def load_json(raw_json, topo_id):
-    print "loading json object from topology: %s" % topo_id
+def load_config_from_topology_json(raw_json, topology_id):
+    """
+    Generates dict containing a list of devices and networks from the topology JSON
+    :param raw_json: json from the stored Topology object
+    :param topology_id: id of the topology from the db
+    :return: dict containing list of devices and networks
+    """
+    print "loading json object from topology: %s" % topology_id
     global macIndex
     macIndex = 0
     json_data = json.loads(raw_json)
@@ -129,22 +137,20 @@ def load_json(raw_json, topo_id):
     devices = []
     networks = []
 
-    # external bridge is a highlander (there can be only one)
-    external_uuid = ""
+    # allow multiple external bridges
     external_bridges = dict()
     # allow multiple internal bridges
-    internal_uuids = []
+    internal_bridges = []
 
     device_index = 0
 
-    # magic number slot index -
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
             user_data = json_object["userData"]
             print "Found a topology vm"
             device = dict()
 
-            device["name"] = "t" + str(topo_id) + "_" + user_data["name"]
+            device["name"] = "t" + str(topology_id) + "_" + user_data["name"]
             device["label"] = user_data["name"]
             device["imageId"] = user_data["image"]
 
@@ -217,7 +223,7 @@ def load_json(raw_json, topo_id):
                 # setup management interface
                 # management interface mi will always be connected to default management network (virbr0 on KVM)
                 mi = dict()
-                mi["mac"] = generate_next_mac(topo_id)
+                mi["mac"] = generate_next_mac(topology_id)
                 mi["bridge"] = "virbr0"
                 mi["type"] = user_data["mgmtInterfaceType"]
 
@@ -225,16 +231,16 @@ def load_json(raw_json, topo_id):
 
                 for dummy in user_data["dummyInterfaceList"]:
                     dm = dict()
-                    dm["mac"] = generate_next_mac(topo_id)
-                    dm["bridge"] = "t%s_d" % str(topo_id)
+                    dm["mac"] = generate_next_mac(topology_id)
+                    dm["bridge"] = "t%s_d" % str(topology_id)
                     dm["type"] = user_data["interfaceType"]
 
                     device_interface_wiring[dummy] = dm
 
                 for companion in user_data["companionInterfaceList"]:
                     cm = dict()
-                    cm["mac"] = generate_next_mac(topo_id)
-                    cm["bridge"] = "t%s_%s_c" % (str(topo_id), chassis_name)
+                    cm["mac"] = generate_next_mac(topology_id)
+                    cm["bridge"] = "t%s_%s_c" % (str(topology_id), chassis_name)
                     cm["type"] = user_data["interfaceType"]
 
                     device_interface_wiring[companion] = cm
@@ -261,19 +267,22 @@ def load_json(raw_json, topo_id):
                     if not found and interface_config["bridge"] != "virbr0":
                         nn = dict()
                         nn["name"] = interface_config["bridge"]
-                        nn["mac"] = generate_next_mac(topo_id)
+                        nn["mac"] = generate_next_mac(topology_id)
                         networks.append(nn)
 
             devices.append(device)
+
+        # this object is not a VM, let's check if it's a cloud/bridge object
         elif json_object["type"] == "draw2d.shape.node.externalCloud":
-            external_uuid = json_object["id"]
             if json_object["userData"]["label"] == "External":
                 # is this an old topology? manually fix here!
                 external_bridges[json_object["id"]] = "br0"
             else:
+                # track all external bridges here for later use
                 external_bridges[json_object["id"]] = json_object["userData"]["label"]
         elif json_object["type"] == "draw2d.shape.node.internalCloud":
-            internal_uuids.append(json_object["id"])
+            # track all internal bridges as well
+            internal_bridges.append(json_object["id"])
 
     conn_index = 1
 
@@ -285,23 +294,23 @@ def load_json(raw_json, topo_id):
             # should we create a new bridge for this connection?
             create_bridge = True
 
-            bridge_name = "t" + str(topo_id) + "_br" + str(conn_index)
+            bridge_name = "t" + str(topology_id) + "_br" + str(conn_index)
 
             for d in devices:
                 if d["uuid"] == source_uuid:
                     # slot should always start with 6 (or 5 for vmx phase 2/3)
                     slot = "%#04x" % int(len(d["interfaces"]) + device["slot_offset"])
                     interface = dict()
-                    interface["mac"] = generate_next_mac(topo_id)
+                    interface["mac"] = generate_next_mac(topology_id)
 
-                    if target_uuid in internal_uuids:
-                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(target_uuid))
+                    if target_uuid in internal_bridges:
+                        bridge_name = "t" + str(topology_id) + "_private_br" + str(internal_bridges.index(target_uuid))
                         interface["bridge"] = bridge_name
-                    #elif target_uuid == external_uuid:
                     elif target_uuid in external_bridges.keys():
-                        # FIXME - this is hard coded to br0 - should maybe use a config object
                         bridge_name = external_bridges[target_uuid]
                         interface["bridge"] = bridge_name
+                        # do not create external bridges...
+                        create_bridge = False
                     else:
                         interface["bridge"] = bridge_name
 
@@ -315,7 +324,7 @@ def load_json(raw_json, topo_id):
                     if d["companionInterfaceMirror"] and "parent" in d:
                         pci_slot_str = "%#04x" % int(len(d["interfaces"]) + d["companionInterfaceMirrorOffset"])
                         em = dict()
-                        em["mac"] = generate_next_mac(topo_id)
+                        em["mac"] = generate_next_mac(topology_id)
                         em["bridge"] = bridge_name
                         em["slot"] = pci_slot_str
 
@@ -329,14 +338,15 @@ def load_json(raw_json, topo_id):
                     # slot should always start with 6
                     slot = "%#04x" % int(len(d["interfaces"]) + device["slot_offset"])
                     interface = dict()
-                    interface["mac"] = generate_next_mac(topo_id)
+                    interface["mac"] = generate_next_mac(topology_id)
 
-                    if source_uuid in internal_uuids:
-                        bridge_name = "t" + str(topo_id) + "_private_br" + str(internal_uuids.index(source_uuid))
+                    if source_uuid in internal_bridges:
+                        bridge_name = "t" + str(topology_id) + "_private_br" + str(internal_bridges.index(source_uuid))
                         interface["bridge"] = bridge_name
                     if source_uuid in external_bridges.keys():
                         bridge_name = external_bridges[source_uuid]
                         interface["bridge"] = bridge_name
+                        create_bridge = False
                     else:
                         interface["bridge"] = bridge_name
 
@@ -350,7 +360,7 @@ def load_json(raw_json, topo_id):
                     if d["companionInterfaceMirror"] and "parent" in d:
                         pci_slot_str = "%#04x" % int(len(d["interfaces"]) + d["companionInterfaceMirrorOffset"])
                         em = dict()
-                        em["mac"] = generate_next_mac(topo_id)
+                        em["mac"] = generate_next_mac(topology_id)
                         em["bridge"] = bridge_name
                         em["slot"] = pci_slot_str
 
@@ -367,11 +377,11 @@ def load_json(raw_json, topo_id):
                     create_bridge = False
                     continue
 
-            if create_bridge is True and bridge_name != "br0":
+            if create_bridge is True:
                 print "Setting " + bridge_name + " for creation"
                 connection = dict()
                 connection["name"] = bridge_name
-                connection["mac"] = generate_next_mac(topo_id)
+                connection["mac"] = generate_next_mac(topology_id)
                 networks.append(connection)
                 conn_index += 1
 
@@ -380,16 +390,16 @@ def load_json(raw_json, topo_id):
     for d in devices:
         if d["mgmtInterfaceIndex"] == -1:
             mi = dict()
-            mi["mac"] = generate_next_mac(topo_id)
+            mi["mac"] = generate_next_mac(topology_id)
             mi["slot"] = "%#04x" % int(len(d["interfaces"]) + d["slot_offset"])
             mi["bridge"] = "virbr0"
             mi["type"] = user_data["mgmtInterfaceType"]
             d["interfaces"].append(mi)
 
-    return_object = dict()
-    return_object["networks"] = networks
-    return_object["devices"] = devices
-    return return_object
+    topology_config = dict()
+    topology_config["networks"] = networks
+    topology_config["devices"] = devices
+    return topology_config
 
 
 # iterate through topology json and increment
@@ -422,6 +432,13 @@ def clone_topology(raw_json):
 
 
 def launch_web_socket(vnc_port, web_socket_port, server):
+    """
+    Launch a new websockify session to connect spice terminal to VNC port of VMs
+    :param vnc_port: vnc port to connect to
+    :param web_socket_port: web socket port to connect from
+    :param server: server to redirect to
+    :return: pid of the websockify process
+    """
     
     path = os.path.abspath(os.path.dirname(__file__))
     ws = os.path.join(path, "../../webConsole/bin/websockify.py")
@@ -438,9 +455,12 @@ def launch_web_socket(vnc_port, web_socket_port, server):
 
 
 def check_pid(pid):
-    """ Check For the existence of a unix pid. 
+    """
+    Check For the existence of a unix pid.
         shamelessly taken from stackoverflow
         http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
+    :param pid: process id of the process in question
+    :return: boolean
     """
     try:
         os.kill(pid, 0)

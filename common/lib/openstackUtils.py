@@ -21,6 +21,7 @@ _data_url = ':8143/api/tenant/networking/'
 # auth token will get populated by connect on each instantiation
 # and referenced by each subsequent call
 _auth_token = ""
+_project_auth_token = ""
 _tenant_id = ""
 
 
@@ -78,6 +79,13 @@ def get_project_auth_token(project):
     :param project: project name string
     :return: auth_token specific to this project, None on error
     """
+
+    global _project_auth_token
+
+    # keep this cached for life of this short lived module
+    if _project_auth_token != "":
+        return _project_auth_token
+
     _auth_json = """
         { "auth": {
             "identity": {
@@ -108,7 +116,9 @@ def get_project_auth_token(project):
         request.add_header("charset", "UTF-8")
         request.add_header("Content-Length", len(_auth_json))
         result = urllib2.urlopen(request, _auth_json)
-        return result.info().getheader('X-Subject-Token')
+        _project_auth_token = result.info().getheader('X-Subject-Token')
+        return _project_auth_token
+
     except URLError as e:
         print str(e)
         return None
@@ -369,6 +379,60 @@ def do_put(url, data=""):
             result = urllib2.urlopen(request, data)
 
         return result.read()
+    except URLError as e:
+        print str(e)
+        return None
+
+
+def do_nova_get(url):
+    """
+    Performs a simple REST GET
+    :param url: full URL for GET request
+    :return: response from urllib2.urlopen(r).read() or None
+    """
+    try:
+        project_auth_token = get_project_auth_token(configuration.openstack_project)
+        request = urllib2.Request(url)
+        request.add_header("Content-Type", "application/json")
+        request.add_header("charset", "UTF-8")
+        request.add_header("X-Auth-Token", project_auth_token)
+        request.get_method = lambda: 'GET'
+        result = urllib2.urlopen(request)
+        return result.read()
+    except Exception as e:
+        print str(e)
+        return None
+
+
+def get_nova_serial_console(instance_name):
+    # FIXME
+    print "Looking for instance: %s" % instance_name
+    server_detail_url = create_nova_url('/%s/servers?name=%s' % (_tenant_id, instance_name))
+    server_detail = do_nova_get(server_detail_url)
+
+    # print "got details: %s" % server_detail
+
+    if server_detail is None:
+        return None
+
+    json_data = json.loads(server_detail)
+    server_uuid = json_data["servers"][0]["id"]
+
+    print server_uuid
+    data = '{"os-getSerialConsole": {"type": "serial"}}'
+    url = create_nova_url('/%s/servers/%s/action' % (_tenant_id, server_uuid))
+
+    try:
+        project_auth_token = get_project_auth_token(configuration.openstack_project)
+        request = urllib2.Request(url)
+        request.add_header("Content-Type", "application/json")
+        request.add_header("charset", "UTF-8")
+        request.add_header("X-Auth-Token", project_auth_token)
+        request.get_method = lambda: 'POST'
+        result = urllib2.urlopen(request, data)
+        console_json_data = json.loads(result.read())
+        print json.dumps(console_json_data, indent=2)
+        return console_json_data["console"]["url"]
     except URLError as e:
         print str(e)
         return None

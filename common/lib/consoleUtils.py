@@ -1,9 +1,10 @@
 import time
 import logging
 import pexpect
+import websocket
+from wistar import configuration
 
 from WistarException import WistarException
-import osUtils
 
 # simple utility lib to use virsh console to set up a device before 
 # networking is available
@@ -11,10 +12,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_console(dom):
-    if osUtils.check_is_linux():
-        return pexpect.spawn("virsh console " + dom, timeout=60)
-    else:
+    if configuration.deployment_backend == "openstack":
+        return websocket.create_connection(dom, subprotocols=['binary', 'base64'])
+
+    elif configuration.deployment_backend == "virtualbox":
         return pexpect.spawn("socat /tmp/" + dom + ".pipe - ", timeout=60)
+    # default to assuming KVM
+    else:
+        return pexpect.spawn("virsh console " + dom, timeout=60)
 
 
 # is this Junos device at login yet?
@@ -151,7 +156,7 @@ def is_linux_device_at_prompt(dom):
             # print str(child)
             return False
     except Exception as e:
-        # print str(e)
+        print str(e)
         print "console does not appear to be available"
         return False
 

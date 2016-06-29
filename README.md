@@ -37,7 +37,7 @@ Wistar uses Linux bridges to connect VMs to each other and to any external netwo
         Install all required packages:
         root@wistar-build:~# apt-get install python-pip python-dev build-essential qemu-kvm libz-dev libvirt-bin socat
             python-pexpect python-libvirt libxml2-dev libxslt1-dev unzip bridge-utils python-numpy
-            genisoimage python-netaddr
+            genisoimage python-netaddr websocket-client
 
         root@wistar-build:~# pip install pyvbox junos-eznc pyYAML Django==1.8.13
         

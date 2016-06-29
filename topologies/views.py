@@ -269,7 +269,7 @@ def create_config_set(request):
 
     topology = get_object_or_404(Topology, pk=topology_id)
     # let's parse the json and convert to simple lists and dicts
-    config = wistarUtils.load_json(topology.json, topology_id)
+    config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
 
     c = ConfigSet(name=name, description=description, topology=topology)
     c.save()
@@ -299,7 +299,7 @@ def launch(request, topology_id):
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     # let's parse the json and convert to simple lists and dicts
-    config = wistarUtils.load_json(topology.json, topology_id)
+    config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
 
     try:
         print "Deploying topology: %s" % topology_id
@@ -357,7 +357,7 @@ def export_as_heat_template(request, topology_id):
 
     try:
         # let's parse the json and convert to simple lists and dicts
-        config = wistarUtils.load_json(topology.json, topology_id)
+        config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
 
         heat_template = wistarUtils.get_heat_json_from_topology_config(config)
         heat_template_json = json.loads(heat_template)
