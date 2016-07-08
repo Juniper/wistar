@@ -1,6 +1,7 @@
 import urllib2
 import mmap
 import json
+import logging
 
 from urllib2 import URLError
 from wistar import configuration
@@ -23,6 +24,8 @@ _data_url = ':8143/api/tenant/networking/'
 _auth_token = ""
 _project_auth_token = ""
 _tenant_id = ""
+
+logger = logging.getLogger(__name__)
 
 
 def connect_to_openstack():
@@ -410,7 +413,7 @@ def get_nova_serial_console(instance_name):
     :param instance_name: name of the instance
     :return: websocket url ws://x.x.x.x:xxxx/token=xxxxx
     """
-    print "Looking for instance: %s" % instance_name
+    # print "Looking for instance: %s" % instance_name
     server_detail_url = create_nova_url('/%s/servers?name=%s' % (_tenant_id, instance_name))
     server_detail = do_nova_get(server_detail_url)
 
@@ -422,7 +425,7 @@ def get_nova_serial_console(instance_name):
     json_data = json.loads(server_detail)
     server_uuid = json_data["servers"][0]["id"]
 
-    print server_uuid
+    # print server_uuid
     data = '{"os-getSerialConsole": {"type": "serial"}}'
     url = create_nova_url('/%s/servers/%s/action' % (_tenant_id, server_uuid))
 
@@ -435,7 +438,7 @@ def get_nova_serial_console(instance_name):
         request.get_method = lambda: 'POST'
         result = urllib2.urlopen(request, data)
         console_json_data = json.loads(result.read())
-        print json.dumps(console_json_data, indent=2)
+        logger.debug(json.dumps(console_json_data, indent=2))
         return console_json_data["console"]["url"]
     except URLError as e:
         print str(e)

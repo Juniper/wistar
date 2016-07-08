@@ -23,11 +23,12 @@ def get_console(name):
     """
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
+            print "Getting openstack console!"
             ws_url = openstackUtils.get_nova_serial_console(name)
             path = os.path.abspath(os.path.dirname(__file__))
             ws = os.path.join(path, "../../webConsole/bin/websocket_console_client.py")
             web_socket_path = os.path.abspath(ws)
-            print "running python %s  %s" % (web_socket_path, ws_url)
+            # print "running python %s  %s" % (web_socket_path, ws_url)
             return pexpect.spawn("python %s %s" % (web_socket_path, ws_url), timeout=60)
 
     elif configuration.deployment_backend == "virtualbox":
@@ -56,8 +57,8 @@ def is_junos_device_at_prompt(dom):
             # no timeout indicates we are at some sort of prompt!
             return True
         except pexpect.TIMEOUT:
-            print "console is available, but not at login prompt"
-            # print str(child)
+            print "console is available, but not at login prompt -"
+            logger.debug(str(child))
             return False
     except Exception as e:
         # print str(e)

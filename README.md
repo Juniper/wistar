@@ -68,7 +68,7 @@ Wistar uses Linux bridges to connect VMs to each other and to any external netwo
         root@wistar-build:/opt/wistar/wistar-master# ./manage.py runserver 0.0.0.0:8080
 
 	To configure apache:
-	apt-get install libapache2_mod_wsgi
+	apt-get install libapache2-mod-wsgi
 
 	root@wistar-build:~# cat /etc/apache2/sites-enabled/999-wistar.conf 
 	Define wistar_path /opt/wistar

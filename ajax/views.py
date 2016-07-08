@@ -1281,8 +1281,11 @@ def deploy_stack(request, topology_id):
 
     try:
         # let's parse the json and convert to simple lists and dicts
+        print "loading config"
         config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
+        print "Config is loaded"
         heat_template = wistarUtils.get_heat_json_from_topology_config(config)
+        print "heat template created"
         if not openstackUtils.connect_to_openstack():
             return render(request, 'error.html', {'error': "Could not connect to Openstack"})
 

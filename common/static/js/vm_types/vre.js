@@ -24,4 +24,17 @@ draw2d.shape.node.vre = draw2d.shape.node.wistarSetParent.extend({
     SMBIOS_MANUFACTURER: "Juniper",
     SMBIOS_VERSION: "0.1.0",
 
+    CONFIG_DRIVE_SUPPORT: true,
+    CONFIG_DRIVE_PARAMS: {
+        "hw.pci.link.0x60.irq": 10,
+        "vm_chassis_i2cid": "161",
+        "vm_i2cid": "0xBAB",
+        "vm_instance": 0,
+        "vm_is_virtual": 1,
+        "vm_ore_present": 0,
+        "vm_retype": "RE-VMX",
+        "vmtype": 0,
+        "console": "vidconsole"
+    }
+
 });

@@ -106,6 +106,13 @@ def get_heat_json_from_topology_config(config):
         image_name = image.name
         dr["properties"]["image"] = image_name
         dr["properties"]["name"] = device["name"]
+
+        if device["configDriveSupport"]:
+            dr["properties"]["config_drive"] = True
+            metadata = device["configDriveParams"]
+            metadata["hostname"] = device["name"]
+            dr["properties"]["metadata"] = metadata
+
         template["resources"][device["name"]] = dr
 
     for device in config["devices"]:
@@ -177,12 +184,12 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["slot_offset"] = user_data["pciSlotOffset"]
             device["interfaceType"] = user_data["interfaceType"]
 
-            device["smbiosProduct"] = user_data["smbios_product_string"]
-            device["smbiosManufacturer"] = user_data["smbios_manufacturer"]
-            device["smbiosVersion"] = user_data["smbios_version"]
+            device["smbiosProduct"] = user_data["smbiosProductString"]
+            device["smbiosManufacturer"] = user_data["smbiosManufacturer"]
+            device["smbiosVersion"] = user_data["smbiosVersion"]
 
-            device["secondaryDiskType"] = user_data["secondary_disk_type"]
-            device["tertiaryDiskType"] = user_data["tertiary_disk_type"]
+            device["secondaryDiskType"] = user_data["secondaryDiskType"]
+            device["tertiaryDiskType"] = user_data["tertiaryDiskType"]
 
             device["managementInterface"] = user_data["mgmtInterface"]
 
@@ -201,6 +208,15 @@ def load_config_from_topology_json(topology_json, topology_id):
 
             device["configScriptId"] = 0
             device["configScriptParam"] = 0
+
+            device["configDriveSupport"] = False
+
+            if "configDriveSupport" in user_data:
+                device["configDriveSupport"] = user_data["configDriveSupport"]
+                if "configDriveParams" in user_data:
+                    device["configDriveParams"] = user_data["configDriveParams"]
+                else:
+                    device["configDriveParams"] = dict()
 
             if "configScriptId" in user_data:
                 print "Found a configScript to use!"

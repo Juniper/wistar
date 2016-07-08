@@ -5,13 +5,13 @@ user_images_dir = "/opt/images/user_images"
 
 
 # shortcut to fill in default instance password in 'New VM' screen
-default_instance_password = ''
+default_instance_password = 'Clouds123'
 
 # deployment backend to use!
 # defaults to kvm
 # options are 'openstack', 'vagrant', 'virtualbox'
-deployment_backend = 'kvm'
-# deployment_backend = 'openstack'
+# deployment_backend = 'kvm'
+deployment_backend = 'openstack'
 
 # Openstack configuration
 # show openstack options even if not the primary deployment option

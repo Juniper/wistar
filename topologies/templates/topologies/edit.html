@@ -1038,12 +1038,12 @@
 
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
-            if (data["result"] == false) {
-                figure.setBootState("down");
-                alert('Device is not yet booted up!');
-            } else {
+            if (data["console"] == true) {
                 figure.setBootState("up");
                 alert('Device is booted and ready!');
+            } else {
+                figure.setBootState("down");
+                alert('Device is not yet booted up!');
             }
         });
 

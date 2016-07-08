@@ -220,8 +220,19 @@
 
         //  remove all non alpha numeric
         var first_pass = input_string.replace(/[^a-zA-Z0-9_\ \.\\\#\-_\/]/g, "");
+        var second_pass = first_pass.replace(/\./g, "_");
+        input_object.value = second_pass;
+    }
 
-        input_object.value = first_pass;
+    // remove special chars and enforces first character is alpha
+    function clean_string_first_alpha(input_object) {
+        var input_string = input_object.value;
+
+        //  remove all non alpha numeric
+        var first_pass = input_string.replace(/[^a-zA-Z0-9_\ \.\\\#\-_\/]/g, "");
+        var second_pass = first_pass.replace(/\./g, "_");
+        var third_pass = second_pass.replace(/^([0-9])/, 'z$1')
+        input_object.value = third_pass;
     }
 
      // removes non alpha

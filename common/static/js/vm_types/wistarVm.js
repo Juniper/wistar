@@ -56,6 +56,7 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
     // Some VMs look for a specific PCI offset for the first interface, set it here.
     // all additional interfaces will be incremented by 1
     // for example: <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    // note there is NO WAY to pass this information to openstack!
     PCI_SLOT_OFFSET: 3,
     // some VMs require at least 1 interface be unused but present. Use this to connect it to a dummy bridge
     DUMMY_INTERFACE_LIST: [],
@@ -82,6 +83,11 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
     // wistar will automatically create a cloud-init script to configure tings like
     // management IP, hostname, etc
     CLOUD_INIT_SUPPORT: false,
+    // some VM require cloud_drive support
+    // used in heat templates
+    CONFIG_DRIVE_SUPPORT: false,
+    // list of parameters to pass to cloud drive
+    CONFIG_DRIVE_PARAMS: {},
 
     /*
         End configurable options
@@ -247,6 +253,7 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
     },
 
     setPersistentAttributes: function(memento) {
+        // capture user configurable settings
     	this._super(memento);
     	this.setImage(memento.userData.image);
         this.setType(memento.userData.type);
@@ -278,12 +285,14 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
         ud["companionInterfaceMirror"] = this.COMPANION_INTERFACE_MIRROR;
         ud["companionInterfaceMirrorOffset"] = this.COMPANION_INTERFACE_MIRROR_OFFSET;
         ud["companionType"] = this.COMPANION_TYPE;
-        ud["secondary_disk_type"] = this.SECONDARY_DISK_TYPE;
-        ud["tertiary_disk_type"] = this.TERTIARY_DISK_TYPE;
-        ud["smbios_product_string"] = this.getSmBiosProductString();
-        ud["smbios_version"] = this.SMBIOS_VERSION;
-        ud["smbios_manufacturer"] = this.SMBIOS_MANUFACTURER;
-        ud["cloud_init_support"] = this.CLOUD_INIT_SUPPORT;
+        ud["secondaryDiskType"] = this.SECONDARY_DISK_TYPE;
+        ud["tertiaryDiskType"] = this.TERTIARY_DISK_TYPE;
+        ud["smbiosProductString"] = this.getSmBiosProductString();
+        ud["smbiosVersion"] = this.SMBIOS_VERSION;
+        ud["smbiosManufacturer"] = this.SMBIOS_MANUFACTURER;
+        ud["cloudInitSupport"] = this.CLOUD_INIT_SUPPORT;
+        ud["configDriveSupport"] = this.CONFIG_DRIVE_SUPPORT;
+        ud["configDriveParams"] = this.CONFIG_DRIVE_PARAMS;
 
         return this._super();
     },
