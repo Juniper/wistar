@@ -96,7 +96,7 @@ def config_junos_interfaces(ip, pw):
     # we have the em interfaces with their macs
     # now, lets convert those to ge-0/0/X names ...
     for em in em_interfaces:
-        if not em == "em0" and not em  == "em1":
+        if not em == "em0" and not em == "em1":
             print "em should not be em0 or em1"
             print em
             em_num = re.sub("\D", "", em)

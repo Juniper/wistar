@@ -60,6 +60,9 @@
     var selectedObject;
 
     var vm_types = $.parseJSON('{{ vm_types|safe }}');
+
+    var images = $.parseJSON('{{ image_list_json|safe }}');
+
     // check if an IP address is currently available
     function checkIp() {
         var ip = jQuery('#topoIconIp').val();
@@ -100,7 +103,7 @@
 
         // a little magic number safety
         if (octets.length != 4) {
-            default_octets = '{{ management_prefix }}'.split('.');
+            default_octets = '{{ configuration.management_prefix }}'.split('.');
             d = default_octets;
             octets = [d[0], d[1], d[2], ''];
         }
@@ -180,7 +183,7 @@
     	var scriptId = jQuery('#topoIconScriptSelect').val();
     	var scriptParam = jQuery('#topoIconScriptParam').val();
 
-    	var vpfe_image = jQuery('#topoIconImageVPFESelect').val();
+    	var vpfe_image = jQuery('#topoIconImageVFPCSelect').val();
 
         // enforce names always end with a digit
         console.log(name);
@@ -261,8 +264,8 @@
 
 	    if (icon.getCompanionType() != "") {
 	        console.log("GOT A COMPANION!");
-	        //var vpfe_cpu = jQuery('#topoIconVPFECpu').val();
-    	    //var vpfe_ram = jQuery('#topoIconVPFERam').val();
+	        var vpfe_cpu = jQuery('#topoIconVFPCCpu').val();
+    	    var vpfe_ram = jQuery('#topoIconVFPCRam').val();
 
             var vpfe = eval("new " + icon.COMPANION_TYPE + "()" );
             vpfe.setup("Child", name, ip, pw, vpfe_image);
@@ -289,7 +292,7 @@
     	jQuery('#topoIconScriptSelect').val(0);
     	jQuery('#topoIconScriptParam').val(0);
 
-    	// jQuery('#topoIconImageVPFESelect').val(0);
+    	// jQuery('#topoIconImageVFPCSelect').val(0);
     }
 
     function addLabel() {
@@ -379,7 +382,7 @@
 
         // by default, let's hide some things
         jQuery('#addInstanceTbodyCloudInit').css("display", "none");
-        jQuery('#addInstanceTbodyVPFE').css("display", "none");
+        jQuery('#addInstanceTbodyVFPC').css("display", "none");
         jQuery('#addInstanceTbodySecondaryDisk').css("display", "none");
         jQuery('#addInstanceTbodyTertiaryDisk').css("display", "none");
 
@@ -396,19 +399,65 @@
 
                 if (icon.SECONDARY_DISK_TYPE != "") {
                     jQuery('#addInstanceTbodySecondaryDisk').css("display", "");
+                    filterCompanionSelect(icon.SECONDARY_DISK_NAME_FILTER, "topoIconSecondaryDisk");
                 }
 
                 if (icon.TERTIARY_DISK_TYPE != "") {
                     jQuery('#addInstanceTbodyTertiaryDisk').css("display", "");
+                    filterCompanionSelect(icon.TERTIARY_DISK_NAME_FILTER, "topoIconTertiaryDisk");
                 }
 
                 if (icon.COMPANION_TYPE != "") {
-                    jQuery('#addInstanceTbodyVPFE').css("display", "");
+                    jQuery('#addInstanceTbodyVFPC').css("display", "");
+                    filterCompanionSelect(icon.COMPANION_NAME_FILTER, "topoIconImageVFPCSelect");
                 }
 
                 if (icon.CLOUD_INIT_SUPPORT) {
                     jQuery('#addInstanceTbodyCloudInit').css("display", "");
                 }
+            }
+        }
+    }
+
+    function filterCompanionSelect(filter_string, select_name) {
+        var companion_select = jQuery('#' + select_name);
+        companion_select.empty();
+        companion_select.append('<option value="0">None</option>');
+        for (index in images) {
+            var image_name = images[index]["fields"]["name"];
+            var image_id = images[index]["pk"];
+            if (image_name.match(filter_string)) {
+                companion_select.append('<option value="' + image_id + '">' + image_name + '</option>');
+            }
+        }
+    }
+
+    function setCompanionParams(o) {
+        var companion_image = jQuery('#topoIconImageVFPCSelect').val();
+        console.log(companion_image);
+        var companion_type = "blank";
+        for(i=0;i<images.length;i++) {
+
+            if(images[i]["pk"] == companion_image) {
+                companion_type = images[i]["fields"]["type"];
+                console.log('found it');
+                console.log(companion_type);
+                break;
+            }
+        }
+
+        for (v=0;v<vm_types.length;v++) {
+            vm_type = vm_types[v];
+            console.log(vm_type.name);
+            if (vm_type.name == companion_type) {
+                console.log('found it');
+                var companion = eval("new " + vm_type.js + "()");
+                var cpu = companion.VCPU;
+                var ram = companion.VRAM;
+                console.log(cpu);
+                jQuery('#topoIconVFPCCpu').val(cpu);
+                jQuery('#topoIconVFPCRam').val(ram);
+                break;
             }
         }
     }
@@ -782,8 +831,8 @@
                 </td>
                 <td>
                     <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp"
-                           value="{{ management_prefix}}"
-                           title="Choose an IP from the {{ management_subnet }} range"
+                           value="{{ configuration.management_prefix}}"
+                           title="Choose an IP from the {{ configuration.management_subnet }} range"
                            onblur="javascript: checkIp();" style="width: 85%"/>
                     <input type="button" name="next_ip_button" id="next_ip_button"
                            value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
@@ -796,7 +845,7 @@
                 </td>
                 <td>
                     <input type="text" size="15" maxsize="15"
-                           name="topoIconPass" id="topoIconPass" value=""
+                           name="topoIconPass" id="topoIconPass" value="{{ configuration.default_instance_password }}"
                            onblur="javascript: checkPass(this.value);"/>
                 </td>
             </tr>
@@ -884,11 +933,7 @@
                 </td>
                 <td>
                     <select name="topoIconSecondaryDisk" id="topoIconSecondaryDisk">
-                        <option value="0">No Secondary Disk</option>
-                        <!-- not a better way to do this? -->
-                        {% for i in image_list %}
-                        <option value="{{ i.id }}">{{ i.name }}</option>
-                        {% endfor %}
+
                     </select>
                 </td>
             </tr>
@@ -900,38 +945,28 @@
                 </td>
                 <td>
                     <select name="topoIconTertiaryDisk" id="topoIconTertiaryDisk">
-                        <option value="0">No Tertiary Disk</option>
-                        <!-- not a better way to do this? -->
-                        {% for i in image_list %}
-                        <option value="{{ i.id }}">{{ i.name }}</option>
-                        {% endfor %}
+
                     </select>
                 </td>
             </tr>
             </tbody>
-            <tbody id="addInstanceTbodyVPFE" style="display: none">
+            <tbody id="addInstanceTbodyVFPC" style="display: none">
             <tr>
                 <td title="Only useful for vmx > 14.2">
-                    Virtual PFE
+                    Virtual FPC
                 </td>
                 <td>
-                    <select name="topoIconImageVPFESelect" id="topoIconImageVPFESelect">
-                        <option value="0">No vPFE</option>
-                        <!-- not a better way to do this? -->
-                        {% for i in image_list %}
-
-                        <option value="{{ i.id }}">{{ i.name }}</option>
-
-                        {% endfor %}
+                    <select name="topoIconImageVFPCSelect" id="topoIconImageVFPCSelect"
+                            onchange="javascript: setCompanionParams(this)">
                     </select>
                 </td>
 
                 <tr>
                 <td>
-                    vPFE vCPU
+                    vFPC vCPU
                 </td>
                 <td>
-                    <select name="topoIconVPFECpu" id="topoIconVPFECpu">
+                    <select name="topoIconVFPCCpu" id="topoIconVFPCCpu">
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3" selected>3</option>
@@ -942,10 +977,10 @@
             </tr>
             <tr>
                 <td>
-                    vPFE vRAM
+                    vFPC vRAM
                 </td>
                 <td>
-                    <select name="topoIconVPFERam" id="topoIconVPFERam">
+                    <select name="topoIconVFPCRam" id="topoIconVFPCRam">
                         <option value="512">512</option>
                         <option value="768">768</option>
                         <option value="1024">1024</option>
@@ -1001,7 +1036,7 @@
                     External Access:
                 </td>
                 <td>
-                    <input type="text" style="width: 150px;" id="externalCloudName" value="br0"/>
+                    <input type="text" style="width: 150px;" id="externalCloudName" value="{{ external_bridge }}"/>
 		    &nbsp;
                     <input type="button" value="Add External Bridge" title="Add Existing Bridge"
                            onclick="javascript: addExternalCloud()"/>
@@ -1014,7 +1049,7 @@
                 <td>
                     <input type="text" style="width: 150px;" id="internalCloudName" value="Private 1"/>
                     &nbsp;
-                    <input type="button" value="Add Private Bridge" title="Add int_br0"
+                    <input type="button" value="Add Private Bridge" title="Add private network"
                            onclick="javascript: addInternalCloud()"/>
                 </td>
             </tr>

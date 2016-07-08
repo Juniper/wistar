@@ -36,10 +36,10 @@ Wistar uses Linux bridges to connect VMs to each other and to any external netwo
 
         Install all required packages:
         root@wistar-build:~# apt-get install python-pip python-dev build-essential qemu-kvm libz-dev libvirt-bin socat
-            python-pexpect python-libvirt libxml2-dev libxslt1-dev unzip bridge-utils python-numpy
+            python-pexpect python-libvirt libxml2-dev libxslt1-dev unzip bridge-utils
             genisoimage python-netaddr websocket-client
 
-        root@wistar-build:~# pip install pyvbox junos-eznc pyYAML Django==1.8.13
+        root@wistar-build:~# pip install pyvbox junos-eznc pyYAML Django==1.8.13 numpy
         
         Create the images and instances directories
         root@wistar-build:~# mkdir -p /opt/images/user_images/instances
@@ -61,15 +61,48 @@ Wistar uses Linux bridges to connect VMs to each other and to any external netwo
         root@wistar-build:/opt/wistar/wistar-master#
         
         Answer ‘no’ when asked to create an admin user as this is not currently used.
+
+	For development you can use the built-in web server, or configure apache to start wistar for you
         Launch the built-in web server:
         root@wistar-build:/opt/wistar# cd wistar-master/
         root@wistar-build:/opt/wistar/wistar-master# ./manage.py runserver 0.0.0.0:8080
 
-To begin, browse to the 'Images' page and upload a qcow2 based image. 
+	To configure apache:
+	apt-get install libapache2_mod_wsgi
 
-Now, browse to Topologies to create and deploy a new network.
+	root@wistar-build:~# cat /etc/apache2/sites-enabled/999-wistar.conf 
+	Define wistar_path /opt/wistar
+	Listen 8080
+	<VirtualHost *:8080>
+	    WSGIScriptAlias / ${wistar_path}/wistar/wsgi.py
+	    WSGIDaemonProcess wistar python-path=${wistar_path}
+	    WSGIProcessGroup wistar
+	    ErrorLog /var/log/apache2/wistar.log
+	    CustomLog /var/log/apache2/wistar_access.log combined
+	    Alias /static/ ${wistar_path}/common/static/
+	
+	    <Directory "${wistar_path}/common/static">
+	        Require all granted
+	    </Directory>
+	    <Directory ${wistar_path}>
+	        <Files wsgi.py>
+	            Require all granted
+	        </Files>
+	    </Directory>
+	</VirtualHost>
 
-Send questions to nembery@juniper.net / nembery@gmail.com
 
-Happy Hacking!
+	Also, ensure the apache user is in the libvirtd group
 
+	root@wistar-build:~# cat /etc/group | grep libvirt
+	libvirtd:x:111:nembery,nova,www-data
+	
+	
+	To begin, browse to the 'Images' page and upload a qcow2 based image. 
+	
+	Now, browse to Topologies to create and deploy a new network!
+	
+	Send questions to nembery@juniper.net / nembery@gmail.com
+	
+	Happy Hacking!
+	

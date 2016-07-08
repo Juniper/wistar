@@ -17,14 +17,14 @@ except: from SocketServer import ForkingMixIn
 try:    from http.server import HTTPServer
 except: from BaseHTTPServer import HTTPServer
 from select import select
-import websocket
+import websocket_local
 try:
     from urllib.parse import parse_qs, urlparse
 except:
     from cgi import parse_qs
     from urlparse import urlparse
 
-class ProxyRequestHandler(websocket.WebSocketRequestHandler):
+class ProxyRequestHandler(websocket_local.WebSocketRequestHandler):
 
     traffic_legend = """
 Traffic Legend:
@@ -60,7 +60,7 @@ Traffic Legend:
             msg += " (using SSL)"
         self.log_message(msg)
 
-        tsock = websocket.WebSocketServer.socket(self.server.target_host,
+        tsock = websocket_local.WebSocketServer.socket(self.server.target_host,
                                                  self.server.target_port,
                 connect=True, use_ssl=self.server.ssl_target, unix_socket=self.server.unix_target)
 
@@ -177,7 +177,7 @@ Traffic Legend:
                 cqueue.append(buf)
                 self.print_traffic("{")
 
-class WebSocketProxy(websocket.WebSocketServer):
+class WebSocketProxy(websocket_local.WebSocketServer):
     """
     Proxy traffic to and from a WebSockets client to a normal TCP
     socket server target. All traffic to/from the client is base64
@@ -228,7 +228,7 @@ class WebSocketProxy(websocket.WebSocketServer):
                 "REBIND_OLD_PORT": str(kwargs['listen_port']),
                 "REBIND_NEW_PORT": str(self.target_port)})
 
-        websocket.WebSocketServer.__init__(self, RequestHandlerClass, *args, **kwargs)
+        websocket_local.WebSocketServer.__init__(self, RequestHandlerClass, *args, **kwargs)
 
     def run_wrap_cmd(self):
         self.msg("Starting '%s'", " ".join(self.wrap_cmd))
@@ -374,7 +374,7 @@ def websockify_init():
         if len(args) > 2:
             parser.error("Too many arguments")
 
-    if not websocket.ssl and opts.ssl_target:
+    if not websocket_local.ssl and opts.ssl_target:
         parser.error("SSL target requested and Python SSL module not loaded.");
 
     if opts.ssl_only and not os.path.exists(opts.cert):

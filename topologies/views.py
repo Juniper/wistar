@@ -3,6 +3,8 @@ import json
 
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
+from django.core import serializers
+
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
@@ -50,9 +52,17 @@ def new(request):
     script_list = Script.objects.all().order_by('name')
     vm_types = configuration.vm_image_types
     vm_types_string = json.dumps(vm_types)
+    image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
+
+    if configuration.deployment_backend == "openstack":
+        external_bridge = configuration.openstack_external_network
+    else:
+        external_bridge = configuration.kvm_external_bridge
+
     context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string,
-               'management_subnet': configuration.management_subnet,
-               'management_prefix': configuration.management_prefix
+               'image_list_json': image_list_json,
+               'configuration': configuration,
+               'external_bridge': external_bridge
                }
     return render(request, 'topologies/new.html', context)
 

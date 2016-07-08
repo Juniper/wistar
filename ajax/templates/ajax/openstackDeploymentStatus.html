@@ -51,14 +51,15 @@
                 <td>
                     Status
                 </td>
-                <td>
+                <td style="white-space: nowrap;">
                         {% if resource.resource_status == "CREATE_COMPLETE" %}
-                        <img src="{% static 'images/running.png' %}" width="20px" height="20px"/>
-                        &nbsp;
+                        <img src="{% static 'images/running.png' %}" width="20px" height="20px"/>&nbsp;
                         <a href="#"
                             onclick="javascript: window.open('http://{{ openstack_host }}/horizon/project/instances/{{ resource.physical_resource_id }}/?tab=instance_details__console');"
                             title="Launch Console"
-                            ><img src="{% static 'images/console.png' %}" width="20px" height="20px"/></a>
+                            >
+                            <img src="{% static 'images/console.png' %}" width="20px" height="20px"/>
+                        </a>
                         {% else %}
                         <img src="{% static 'images/stopped.png' %}" width="20px" height="20px"/>
                         {% endif %}

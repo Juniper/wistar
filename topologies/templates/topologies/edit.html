@@ -177,7 +177,7 @@
         var figure = canvas.getFigure(id);
         var type = figure.getType();
 
-        if (figure.getBootState() == "up" && updateBootCounter % 2) {
+        if (updateBootCounter % 3 && figure.getBootState() == "up") {
             console.log("Skipping check on running instance");
             return;
         }
@@ -2054,15 +2054,15 @@
               </th>
               <tr>
                 <td>
-                  Instance Configuration
-                </td>
+
                 <td>
-                    <!--
+
                   <input type="button" onclick="javascript: getInstanceStartupState();"
                          value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
                     <br/>
                     <br/>
-                    -->
+                 </td>
+                  <td>
                   <input type="button" onclick="javascript: configureInstanceAccess();"
                          value="Configure Access" title="Configures Management IP Address">
                     <br/>
@@ -2198,7 +2198,7 @@
                   Bootup Status
                 </td>
                 <td>
-                  <div id="junosIconStatus"></div>
+                  <div id="junosIconStatus"></div> <a href="#" onclick="javascript: return getInstanceStartupState()">?</a>
                 </td>
               </tr>
             </table>
@@ -2206,25 +2206,24 @@
               <th colspan="2">
                  Instance Tools
               </th>
-              <tr>
-                <td>
-                  Instance Configuration
-                </td>
-                <td>
-                    <!--
-                  <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready"> 
-                    <br/>
-                    <br/>
-                    -->
-                  <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures SSH + Netconf"> 
-                    <br/>
-                    <br/>
-                  <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
-                    <br/>
-                    <br/>
-                  <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
-                </td>
-              </tr>
+                <tr>
+                    <td>
+                        <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures SSH + Netconf">
+                    </td>
+
+                    <td>
+                        <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
+                    </td>
+
+                </tr>
+                <tr>
+                    <td>
+                        <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
+                    </td>
+                    <td>
+                        <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                    </td>
+                </tr>
             </table>
             <table>
               <th colspan="2">

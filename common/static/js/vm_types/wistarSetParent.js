@@ -10,6 +10,7 @@ draw2d.shape.node.wistarSetParent = draw2d.shape.node.wistarVm.extend({
     DUMMY_INTERFACE_LIST: [],
     COMPANION_TYPE: "draw2d.shape.node.wistarSetChild",
     COMPANION_INTERFACE_LIST: ["1"],
+    COMPANION_NAME_FILTER: ".*",
 
     getChildId: function() {
         // if this is a vre, then there should be a child

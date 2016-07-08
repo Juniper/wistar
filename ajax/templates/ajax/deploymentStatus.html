@@ -31,10 +31,9 @@
             </a>
         </td>
         <td>
-
             {{ d.state }}
         </td>
-        <td>
+        <td style="white-space: nowrap;">
             <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}', '{{ topologyId }}');"
                title="Delete Instance entirely!">
                 <img src="{% static 'images/undefine.png' %}" width="20px" height="20px"/></a>

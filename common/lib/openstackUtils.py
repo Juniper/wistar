@@ -405,7 +405,11 @@ def do_nova_get(url):
 
 
 def get_nova_serial_console(instance_name):
-    # FIXME
+    """
+    Get the websocket URL for the serial proxy for a given nova server (instance)
+    :param instance_name: name of the instance
+    :return: websocket url ws://x.x.x.x:xxxx/token=xxxxx
+    """
     print "Looking for instance: %s" % instance_name
     server_detail_url = create_nova_url('/%s/servers?name=%s' % (_tenant_id, instance_name))
     server_detail = do_nova_get(server_detail_url)

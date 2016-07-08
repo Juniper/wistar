@@ -1,7 +1,8 @@
 import time
 import logging
 import pexpect
-import websocket
+import os
+import openstackUtils
 from wistar import configuration
 
 from WistarException import WistarException
@@ -11,27 +12,40 @@ from WistarException import WistarException
 logger = logging.getLogger(__name__)
 
 
-def get_console(dom):
+def get_console(name):
+    """
+    Spawn some program to give us a console
+    for KVM use virsh
+    for VirtualBox, Vagrant use socat
+    for OpenStack use websocket_console_client
+    :param name: domain or instance name
+    :return: pexpect child process
+    """
     if configuration.deployment_backend == "openstack":
-        return websocket.create_connection(dom, subprotocols=['binary', 'base64'])
+        if openstackUtils.connect_to_openstack():
+            ws_url = openstackUtils.get_nova_serial_console(name)
+            path = os.path.abspath(os.path.dirname(__file__))
+            ws = os.path.join(path, "../../webConsole/bin/websocket_console_client.py")
+            web_socket_path = os.path.abspath(ws)
+            print "running python %s  %s" % (web_socket_path, ws_url)
+            return pexpect.spawn("python %s %s" % (web_socket_path, ws_url), timeout=60)
 
     elif configuration.deployment_backend == "virtualbox":
-        return pexpect.spawn("socat /tmp/" + dom + ".pipe - ", timeout=60)
+        return pexpect.spawn("socat /tmp/" + name + ".pipe - ", timeout=60)
     # default to assuming KVM
     else:
-        return pexpect.spawn("virsh console " + dom, timeout=60)
+        return pexpect.spawn("virsh console " + name, timeout=60)
 
 
 # is this Junos device at login yet?
 # open the console and see if there a prompt
 # if we don't see one in 3 seconds, return False!
 def is_junos_device_at_prompt(dom):
-    print "Getting boot up state of: " + str(dom)
     try:
         child = get_console(dom)
         try:
-            child.send("\r")
-            index = child.expect(["error: failed to get domain", "login:"], timeout=1)
+            child.send("\r\r\r")
+            index = child.expect(["error: failed to get domain", "login:"], timeout=3)
             if index == 0:
                 print "Domain is not configured!"
                 return False
@@ -273,6 +287,7 @@ def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
 
             child = get_console(dom)
             print "Logging in as root"
+            child.send("\r")
             child.sendline("root")
 
             ret = child.expect(["assword:", "[^\s]%"])

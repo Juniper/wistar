@@ -8,24 +8,34 @@ from images.models import Image
 from wistar import configuration
 
 # keep track of how many mac's we've used
-macIndex = 0
+mac_counter = 0
 
 
-# silly attempt to keep mac addresses unique
-# use the topology id to generate 2 octets, and the number of
-# macs used so far to generate the last one
 def generate_next_mac(topology_id):
-    global macIndex
+    """
+    silly attempt to keep mac addresses unique
+    use the topology id to generate 2 octets, and the number of
+    macs used so far to generate the last one
+    :param topology_id: id of the topology we are building 
+    :return: mostly unique mac address that should be safe to deploy
+    """
+    global mac_counter
     base = "52:54:00:"
     tid = "%04x" % int(topology_id)
     mac_base = base + str(tid[:2]) + ":" + str(tid[2:4]) + ":"
-    mac = mac_base + (str("%02x" % macIndex)[:2])
+    mac = mac_base + (str("%02x" % mac_counter)[:2])
 
-    macIndex += 1
+    mac_counter += 1
     return mac
 
 
 def get_heat_json_from_topology_config(config):
+    """
+    Generates heat template from the topology configuration object
+    use load_config_from_topology_json to get the configuration from the Topology 
+    :param config: configuration dict from load_config_from_topology_json
+    :return: json encoded heat template as String
+    """
 
     template = dict()
     template["heat_template_version"] = "2013-05-23"
@@ -51,7 +61,7 @@ def get_heat_json_from_topology_config(config):
         p["name"] = network["name"] + "_subnet"
         if network["name"] == "virbr0":
             p["network_id"] = configuration.openstack_mgmt_network
-        elif network["name"].startswith("br"):
+        elif network["name"] == configuration.openstack_external_network:
             p["network_id"] = configuration.openstack_external_network
         else:
             p["network_id"] = {"get_resource": network["name"]}
@@ -107,10 +117,11 @@ def get_heat_json_from_topology_config(config):
 
             if port["bridge"] == "virbr0":
                 p["network_id"] = configuration.openstack_mgmt_network
-            elif port["bridge"].startswith("br"):
+                # FIXME = should not be hardcoded to br!
+            elif port["bridge"] == configuration.openstack_external_network:
                 p["network_id"] = configuration.openstack_external_network
             else:
-                p["network_id"] = {"get_resource": network["name"]}
+                p["network_id"] = {"get_resource": port["bridge"]}
 
             pr["properties"] = p
             template["resources"][device["name"] + "_port" + str(index)] = pr
@@ -119,20 +130,23 @@ def get_heat_json_from_topology_config(config):
     return json.dumps(template)
 
 
-def load_config_from_topology_json(raw_json, topology_id):
+def load_config_from_topology_json(topology_json, topology_id):
     """
     Generates dict containing a list of devices and networks from the topology JSON
-    :param raw_json: json from the stored Topology object
+        config["devices"]
+        config["networks"]
+
+    :param topology_json: json from the stored Topology object
     :param topology_id: id of the topology from the db
     :return: dict containing list of devices and networks
     """
     print "loading json object from topology: %s" % topology_id
-    global macIndex
-    macIndex = 0
-    json_data = json.loads(raw_json)
+    global mac_counter
+    mac_counter = 0
+    json_data = json.loads(topology_json)
 
     # configuration json will consist of a list of devices and networks
-    # iterate through the raw_json and construct the appropriate device and network objects
+    # iterate through the topology_json and construct the appropriate device and network objects
     # and each to the appropriate list
     devices = []
     networks = []
@@ -302,6 +316,9 @@ def load_config_from_topology_json(raw_json, topology_id):
                     slot = "%#04x" % int(len(d["interfaces"]) + device["slot_offset"])
                     interface = dict()
                     interface["mac"] = generate_next_mac(topology_id)
+                    # does this bridge already exist? Possibly external bridge for example
+                    # essentially same of create_bridge flag, but kept on the interface for later use in heat template
+                    interface["bridge_preexists"] = False
 
                     if target_uuid in internal_bridges:
                         bridge_name = "t" + str(topology_id) + "_private_br" + str(internal_bridges.index(target_uuid))
@@ -311,6 +328,7 @@ def load_config_from_topology_json(raw_json, topology_id):
                         interface["bridge"] = bridge_name
                         # do not create external bridges...
                         create_bridge = False
+                        interface["bridge_preexists"] = True
                     else:
                         interface["bridge"] = bridge_name
 
@@ -347,6 +365,8 @@ def load_config_from_topology_json(raw_json, topology_id):
                         bridge_name = external_bridges[source_uuid]
                         interface["bridge"] = bridge_name
                         create_bridge = False
+                        # keep bridge existence information on the interface for use in heat template
+                        interface["bridge_preexists"] = True
                     else:
                         interface["bridge"] = bridge_name
 
@@ -402,26 +422,30 @@ def load_config_from_topology_json(raw_json, topology_id):
     return topology_config
 
 
-# iterate through topology json and increment
-# all found management IPs to provide for some
-# small uniqueness protection. The right way to do this
-# would be to track all used management ips, but I would rather
-# each topology be a transient thing to be used and throwaway
-def clone_topology(raw_json):
-    json_data = json.loads(raw_json)
+def clone_topology(topology_json):
+    """
+    iterate through topology json and increment
+    all found management IPs to provide for some
+    small uniqueness protection. The right way to do this
+    would be to track all used management ips, but I would rather
+    each topology be a transient thing to be used and thrown away
+    :param topology_json: json string from Topology
+    :return: new topology_json with incremented management IPs
+    """
+    json_data = json.loads(topology_json)
 
-    num_topo_icons = 0
+    wistar_vm_counter = 0
 
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
-            num_topo_icons += 1
+            wistar_vm_counter += 1
 
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
             ud = json_object["userData"]
             ip = ud["ip"]
             ip_octets = ip.split('.')
-            new_octets = int(ip_octets[3]) + num_topo_icons
+            new_octets = int(ip_octets[3]) + wistar_vm_counter
             if new_octets > 255:
                 new_octets -= 255
             ip_octets[3] = str(new_octets)
@@ -471,6 +495,12 @@ def check_pid(pid):
 
 
 def check_web_socket(server, web_socket_port):
+    """
+    Verify if websockify process already exists for given service address and websocket port
+    :param server: address of server
+    :param web_socket_port: web socket port
+    :return: boolean
+    """
     rt = os.system('ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + '" | grep -v grep')
     if rt == 0:
         return True
@@ -479,8 +509,20 @@ def check_web_socket(server, web_socket_port):
 
 
 def kill_web_socket(server, web_socket_port):
+    """
+    Kills given websockify process for a server and websocket port
+    :param server: address of server
+    :param web_socket_port: web socket port
+    :return: boolean
+    """
     print "Killing webConsole sessions"
     cmd = 'ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + '" | awk "{ print $2 }" | xargs -n 1 kill'
     print "Running cmd: " + cmd
+    rt = os.system(cmd)
+    if rt == 0:
+        return True
+    else:
+        return False
+
 
 

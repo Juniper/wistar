@@ -74,7 +74,7 @@ def preconfig_junos_domain(request):
         # let's see if we need to kill any webConsole sessions first
         wc_dict = request.session.get("webConsoleDict")
         if wc_dict is not None:
-            if wc_dict.has_key(domain):
+            if domain in wc_dict:
                 wc_config = wc_dict[domain]
                 wc_port = wc_config["wsPort"]
                 server = request.get_host().split(":")[0]
@@ -86,7 +86,7 @@ def preconfig_junos_domain(request):
         elif mgmt_interface == "em0":
             if not osUtils.check_is_linux():
                 mgmt_interface = "fxp0"
-        
+
         response_data["result"] = consoleUtils.preconfig_junos_domain(domain, password, ip, mgmt_interface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -229,10 +229,16 @@ def get_junos_startup_state(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
-    if libvirtUtils.is_domain_running(name):
+    if configuration.deployment_backend == "kvm" and libvirtUtils.is_domain_running(name):
         # topologies/edit will fire multiple calls at once
         # let's just put a bit of a breather between each one
         time.sleep(random.randint(0, 10) * .10)
+        response_data["power"] = True
+        response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
+
+    elif configuration.deployment_backend == "openstack":
+
+        time.sleep(random.randint(0, 20) * .10)
         response_data["power"] = True
         response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
 
