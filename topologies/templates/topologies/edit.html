@@ -223,188 +223,6 @@
         jQuery.post(url, params, success);
     }
 
-    // check if an IP address is currently available
-    function checkIp() {
-        var ip = jQuery('#topoIconIp').val();
-
-        if (! ip.match('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')) {
-            alert('IP format is not valid!');
-            return False;
-        }
-
-        var url = "/ajax/checkIp/";
-
-        var params = {
-            'ip' : ip
-        };
-
-        var success = function(response) {
-            data = eval(response);
-
-            if (data["result"] == false) {
-                console.log("ip is not currently pingable");
-            } else {
-                alert("IP Address " + ip + " is already in use!");
-            }
-        };
-
-        jQuery.post(url, params, success);
-    }
-
-    // get next available ip
-    // FIXME - does not try to wrap around subnets
-    // FIXME - always assume KVM default subnet
-    // FIXME - doesn't account for IPs used in this topology already!
-    function nextIp() {
-        var ipBox = jQuery('#topoIconIp');
-        var ip = ipBox.val();
-
-        var octets = ip.split('.');
-
-        // a little magic number safety
-        if (octets.length != 4) {
-            octets = ['192', '168', '122', ''];
-        }
-
-        var url = "/ajax/nextIp/";
-
-        var success = function(response) {
-            data = eval(response);
-
-            if (data["result"] == false) {
-                console.log("ip is not currently pingable");
-            } else {
-                octets[3] = data["result"];
-                ipBox.val(octets.join('.'));
-            }
-        };
-
-        jQuery.get(url, success);
-    }
-
-    // used when a new instance is added to the topology
-    // convenience func to increment the previously entered ip by 1
-    // as wistar currently only supports a /24 for mgmt access
-    // there is no need to account for wrapping beyond 255
-    function incrementIconIp(ip)  {
-        var iparray = ip.split('.');
-        if(iparray.length == 4) {
-            var last = parseInt(iparray[3]);
-            if(! isNaN(last)) {
-                return iparray[0] + "." + iparray[1] + "." + iparray[2] + "." + (last + 1);
-            } else {
-                return ip;
-            }
-        } else {
-            return ip;
-        }
-    }
-
-    // convenience func to increment icon name is it happens to end
-    // in a digit
-    function incrementIconName(name) {
-        var last = name.substr(-1);
-        var lastInt = parseInt(last);
-        if (last == "9") {
-            var lastTwo = name.substr(-2);
-            var lastTwoInt = parseInt(lastTwo);
-            if (! isNaN(lastTwoInt)) {
-                return name.substring(0, name.length -2) + (lastTwoInt + 1);
-            } else {
-                // last two are not an int, check for single digit suffix
-                if (! isNaN(lastInt)) {
-                    return name.substring(0, name.length -1) + (lastInt + 1);
-                } else {
-                    return name;
-                }
-            }
-        } else {
-            if (! isNaN(lastInt)) {
-                return name.substring(0, name.length -1) + (lastInt + 1);
-            } else {
-                return name;
-            }
-        }
-    }
-
-    // add icon to the topology with the indicated values
-    function addIcon() {
-    	var ip = jQuery('#topoIconIp').val();
-    	var pw = jQuery('#topoIconPass').val();
-    	var name = jQuery('#topoIconName').val();
-    	var type = jQuery('#topoIconType').val();
-    	var image = jQuery('#topoIconImage').val();
-    	var cpu = jQuery('#topoIconCpu').val();
-    	var ram = jQuery('#topoIconRam').val();
-    	var iconData = jQuery('#topoIconIcon').val();
-
-    	var scriptId = jQuery('#topoIconScriptSelect').val();
-    	var scriptParam = jQuery('#topoIconScriptParam').val();
-
-
-        if (ip == "") {
-            alert("Please add a valid IP address");
-            return;
-        }
-
-        if (name == "") {
-            alert("Please add a valid instance name");
-            return;
-        }
-
-        var icon = iconData.split(":")[0];
-        var width = iconData.split(":")[1];
-        var height = iconData.split(":")[2];
-        var iconPath = "/static/images/" + icon + ".png";
-
-    	var canvas_object = new draw2d.shape.node.topologyIcon(iconPath, width, height);
-        canvas_object.setup(type, name, ip, pw, image, cpu, ram);
-
-        if (scriptId != "0") {
-            canvas_object.setConfigScriptId(scriptId);
-            canvas_object.setConfigScriptParam(scriptParam);
-        }
-
-    	lastX += 0;
-    	lastY += 100;
-    	wistarVmCount += 1;
-    	iconCount += 1;
-
-    	if (iconCount > iconWrapLimit) {
-    	    lastX = iconOffset;
-    	    lastY = 50;
-    	    iconCount = 1;
-    	    iconOffset += 110;
-    	}
-    	console.log("adding " + lastX + " " + lastY);
-	    canvas.addFigure(canvas_object, lastX, lastY);
-
-        // testing!
-
-	    //if(type == "junos_vmx_p2") {
-        //    console.log('Configuring phase 2 vmx');
-        //    canvas_object.setLabel(name + "_re0");
-        //    canvas_object.ipLabel.text = "";
-
-        //    var vmx_fpc = new draw2d.shape.node.topologyIcon(iconPath, width, height);
-        //    vmx_fpc.setup(type, name + "_fpc0", ip, pw, image, "2", "2048");
-        //    canvas.addFigure(vmx_fpc, lastX, lastY + 75);
-        //    figures = new draw2d.util.ArrayList([canvas_object, vmx_fpc]);
-        //    var cg = new draw2d.command.CommandGroup(canvas, figures);
-
-        //    cg.execute();
-
-        //}
-        //console.log(type);
-
-        // let's try to increment everything nicely
-    	jQuery('#topoIconIp').val(incrementIconIp(ip));
-    	jQuery('#topoIconName').val(incrementIconName(name));
-
-    	jQuery('#topoIconScriptSelect').val(0);
-    	jQuery('#topoIconScriptParam').val(0);
-    }
-
     function addLabel() {
 
         var label = jQuery('#newLabel').val();
@@ -426,7 +244,6 @@
     	    iconCount = 1;
     	    iconOffset += 110;
     	}
-
 
         canvas.addFigure(l, lastX, lastY);
     }
@@ -506,40 +323,6 @@
 	    }
     }
 
-    // simple validation against Junos password rules
-    function checkPass(pw) {
-        if(pw != "") {
-            upper = pw.match('[A-Z]');
-            lower = pw.match('[a-z]');
-            digit = pw.match('[0-9]');
-
-            if (upper && lower && digit) {
-                console.log('password accepted');
-            } else {
-                alert('Password does not meet complexity requirements');
-            }
-        } else {
-                alert('Password is required');
-        }
-
-    }
-
-    // breaks up image type string into data members and sets on the icon
-    function setImageType() {
-        id = jQuery('#topoIconImageSelect').val().split(':')[0]
-        type = jQuery('#topoIconImageSelect').val().split(':')[1]
-        console.log("Setting image to " + id + " and type to " + type);
-        jQuery('#topoIconType').val(type);
-        jQuery('#topoIconImage').val(id);
-
-        if (type == "linux") {
-            jQuery('#addInstanceTbodyCloudInit').css("display", "");
-        } else {
-            jQuery('#addInstanceTbodyCloudInit').css("display", "none");
-        }
-
-    }
-
     // get the name that was used to create the vm instance
     // these use a very simple method to ensure some amount
     // of uniqueness within the hypervisor
@@ -579,8 +362,9 @@
         var label = figure.getLabel();
         var ip = figure.getIp();
         var password = figure.getPassword();
+        var user = figure.getUser();
         var mgmtInterface = figure.getMgmtInterface();
-
+        console.log(user);
         // default url for junos devices
         var url = "/ajax/preconfigJunosDomain/";
 
@@ -596,13 +380,14 @@
                 'domain' : domain,
                 'hostname' : label,
                 'ip' : ip,
+                'user': user,
                 'password' : password,
                 'mgmtInterface' : mgmtInterface
         };
 
         var success = function(response) {
             data = eval(response);
-            var message = "Could not configure access";
+            var message = data["message"];
             if (data["result"] == true) {
                 figure.setBootState("up");
                 message = "Successfully configured Instance Access";
@@ -643,10 +428,12 @@
         }
 
         var ip = figure.getIp();
+        var user = figure.getUser();
         var password = figure.getPassword();
         var url = "/ajax/configJunosInterfaces/";
         var params = {
             'ip' : ip,
+            'user': user,
             'password' : password
         };
 
@@ -727,12 +514,14 @@
         var figure = canvas.getFigure(figureId);
 
         var ip = figure.getIp();
+        var user = figure.getUser();
         var password = figure.getPassword();
 
         var url = "/ajax/applyConfigTemplate/"
         var params = {
             'id' : template_id,
             'ip' : ip,
+            'user': user,
             'password' : password
         };
 
@@ -767,6 +556,7 @@
         var figure = canvas.getFigure(figureId);
 
         var ip = figure.getIp();
+        var user = figure.getUser();
         var password = figure.getPassword();
 
         var setConfig = jQuery('#' + field_id).val();
@@ -775,6 +565,7 @@
         var params = {
             'config' : setConfig,
             'ip' : ip,
+            'user': user,
             'password' : password
         };
 
@@ -851,12 +642,13 @@
         }
 
         var ip = figure.getIp();
+        var user = figure.getUser();
         var pw = figure.getPassword();
 
         var url = "/ajax/pushScript/"
         var params = {
             'script_id' : scriptId,
-            'username' : 'root',
+            'username' : user,
             'password' : pw,
             'ip' : ip
         };
@@ -894,7 +686,6 @@
         simpleAjaxRequest(url, params, successMessage);
         location.reload();
     }
-
 
     function syncLinkData() {
 
@@ -960,7 +751,6 @@
 
         saveConnectionData();
     }
-
 
     function deployTopology() {
         var doc = jQuery(document.documentElement);
@@ -1068,6 +858,7 @@
         }
 
         var ip = jQuery('#junosIconIp').val();
+        var user = jQuery('#junosIconUser').val();
         var pw = jQuery('#junosIconPass').val();
         var cli = jQuery('#cli').val();
 
@@ -1076,9 +867,10 @@
 
         var url = '/ajax/executeCli/';
         var params = {
-             'pw' : pw,
-             'ip' : ip,
-             'cli' : cli
+            'user': user,
+            'pw' : pw,
+            'ip' : ip,
+            'cli' : cli
         };
         var post = jQuery.post(url, params, function(response) {
             data = eval(response);
@@ -1103,6 +895,7 @@
 
     function executeLinuxCli() {
         var ip = jQuery('#linuxIconIp').val();
+        var user = jQuery('#linuxIconUser').val();
         var pw = jQuery('#linuxIconPass').val();
         var cli = jQuery('#linuxCli').val();
 
@@ -1112,6 +905,7 @@
         var url = '/ajax/executeLinuxCli/';
         var params = {
              'pw' : pw,
+             'user': user,
              'ip' : ip,
              'cli' : cli
         };
@@ -1273,10 +1067,6 @@
 	    jQuery('#debug').val(jQuery('#json').val());
     }
 
-    function getCanvasObject() {
-
-    }
-
     function showConfigSetEditor() {
         manuallyTogglePanel('configSetCreateForm', '');
         manuallyTogglePanel('configSetCreateRow', 'none');
@@ -1319,6 +1109,7 @@
         var instance = canvas.getFigure(figureId);
         jQuery('#junosIconName').val(instance.getLabel());
         jQuery('#junosIconIp').val(instance.getIp());
+        jQuery('#junosIconUser').val(instance.getUser());
         jQuery('#junosIconPass').val(instance.getPassword());
         jQuery('#junosIconCpu').html(instance.getCpu());
         jQuery('#junosIconRam').html(instance.getRam());
@@ -1359,12 +1150,12 @@
 
             var neighbor;
 
-            if (sourcePort.getId() != port.getId()) {
+            if (sourcePort.getId() == port.getId()) {
                 var interfacePrefix = sourcePort.getParent().getInterfacePrefix() + c;
-                neighbor =  interfacePrefix + "   :   " + sourcePort.getParent().getLabel();
+                neighbor =  interfacePrefix + "   :   " + targetPort.getParent().getLabel();
             } else {
                 var interfacePrefix = targetPort.getParent().getInterfacePrefix() + c;
-                neighbor = interfacePrefix + "   :   " + targetPort.getParent().getLabel();
+                neighbor = interfacePrefix + "   :   " + sourcePort.getParent().getLabel();
             }
 
             jQuery('#junosIconNeighbors').html(jQuery('#junosIconNeighbors').html() + neighbor + "<br/>");
@@ -1385,6 +1176,7 @@
         console.log(instance.getLabel());
         jQuery('#genericIconName').val(instance.getLabel());
         jQuery('#genericIconIp').val(instance.getIp());
+        jQuery('#genericIconUser').val(instance.getUser());
         jQuery('#genericIconPass').val(instance.getPassword());
         jQuery('#genericIconCpu').html(instance.getCpu());
         jQuery('#genericIconRam').html(instance.getRam());
@@ -1408,6 +1200,7 @@
         jQuery('#linuxIconName').val(instance.getLabel());
         jQuery('#linuxIconIp').val(instance.getIp());
         jQuery('#linuxIconPass').val(instance.getPassword());
+        jQuery('#linuxIconUser').val(instance.getUser());
         jQuery('#linuxIconCpu').html(instance.getCpu());
         jQuery('#linuxIconRam').html(instance.getRam());
         jQuery('#linuxIconImage').html("<a href='/images/" + instance.getImage() + "'>Image Detail</a>");
@@ -1418,7 +1211,6 @@
             currentSelection = "linuxIconEditor";
         }
     }
-
 
     function manageIso(action, domainName, path) {
         var url = "/ajax/manageIso/"
@@ -1479,6 +1271,7 @@
 
         instance.setIp(jQuery('#junosIconIp').val());
         instance.setLabel(jQuery('#junosIconName').val());
+        instance.setUser(jQuery('#junosIconUser').val());
         instance.setPassword(jQuery('#junosIconPass').val());
 
         instance.repaint();
@@ -1532,7 +1325,7 @@
                 break;
             }
         }
-        // do the right this if we are connected to an external Bridge
+        // do the right thing if we are connected to an external Bridge
         // FIXME - redundant check - internal extends external, so this is really just to be verbose
         if (targetPort.getParent()  instanceof draw2d.shape.node.externalCloud ||
             targetPort.getParent() instanceof draw2d.shape.node.internalCloud)
@@ -1712,11 +1505,9 @@
                 </td>
               </tr>
              </tbody>
-            {% if topo_id != None %}
+
              <tbody id="topoInfo">
-            {% else %}
-             <tbody id="topoInfo" style="display: none">
-            {% endif %}
+
               <tr>
                 <th colspan="2">
                   Topology Details
@@ -1757,221 +1548,7 @@
              </tbody>
             </table>
           </form>
-          {% if topo_id == None %}
 
-          <div id="addInstanceForm">
-            <br/>
-            <h3>Add Instance</h3>
-              <table>
-                  <tbody id="addInstanceTbody">
-                  <tr>
-                      <td>
-                          IP Address
-                      </td>
-                      <td>
-                          <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp" value="192.168.122."
-                                 title="Choose an IP from the 192.168.122.0/24 range"
-                                 onblur="javascript: checkIp();" style="width: 85%"/>
-                          <input type="button" name="next_ip_button" id="next_ip_button"
-                                 value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
-                                 title="Find next available IP address"/>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          Root Password
-                      </td>
-                      <td>
-                          <input type="text" size="15" maxsize="15"
-                                 name="topoIconPass" id="topoIconPass" value=""
-                                 onblur="javascript: checkPass(this.value);"/>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          Instance Name
-                      </td>
-                      <td>
-                          <input type="text" size="15" name="topoIconName" id="topoIconName" value=""
-                                 onblur="javascript: clean_string(this);"/>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          Base Image
-                      </td>
-                      <td>
-                          <select name="topoIconImageSelect" id="topoIconImageSelect" onchange="javascript: setImageType();">
-                              <option value="0">Choose Image</option>
-                              <!-- not a better way to do this? -->
-                              {% for i in image_list %}
-                              <option value="{{ i.id }}:{{i.type}}">{{ i.name }}</option>
-                              {% endfor %}
-                          </select>
-
-                      </td>
-                  </tr>
-                  </tbody>
-                  <tbody id="addInstance"
-                  <tbody id="addInstanceTbodyAdvanced">
-                  <tr>
-                      <td>
-                          vCPU
-                      </td>
-                      <td>
-                          <select name="topoIconCpu" id="topoIconCpu">
-                              <option value="1">1</option>
-                              <option value="2" selected>2</option>
-                              <option value="4">4</option>
-                              <option value="8">8</option>
-                          </select>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          vRAM
-                      </td>
-                      <td>
-                          <select name="topoIconRam" id="topoIconRam">
-                              <option value="512">512</option>
-                              <option value="768">768</option>
-                              <option value="1024">1024</option>
-                              <option value="2048" selected>2048</option>
-                              <option value="4096">4096</option>
-                              <option value="8192">8192</option>
-                              <option value="16384">16384</option>
-                          </select> MB
-                      </td>
-                  </tr>
-                  </tbody>
-                  <tbody id="addInstanceTbodyCloudInit" style="display: none">
-                  <tr>
-                      <td>
-                          Cloud-Init Script
-                      </td>
-                      <td>
-                          <select name="topoIconScriptSelect" id="topoIconScriptSelect">
-                              <option value="0">Default cloud-init script</option>
-                              <!-- not a better way to do this? -->
-                              {% for s in script_list %}
-                              <option value="{{ s.id }}">{{ s.name }}</option>
-                              {% endfor %}
-                          </select>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          Cloud-Init Param
-                      </td>
-                      <td>
-                          <input type="text" size="15" name="topoIconScriptParam" id="topoIconScriptParam" value="0"
-                                 onblur="javascript: clean_string_no_special(this);"/>
-                      </td>
-                  </tr>
-                  </tbody>
-                  <tbody id="addInstanceTbodyAdd">
-                  <tr>
-                      <td>
-                          Icon
-                      </td>
-                      <td>
-                          <select name="topoIconIcon" id="topoIconIcon">
-                              <option value="mx_large:50:60">MX Large</option>
-                              <option value="mx_small:50:40">MX Small</option>
-                              <option value="firefly:40:40">Firefly</option>
-                              <option value="router:40:40">Generic Router</option>
-                              <option value="server:25:50">Generic Server</option>
-                          </select>
-                          <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
-                          <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td colspan="2">
-                          <input type="button" onclick="javascript: addIcon();" value="Add Instance"/>
-                      </td>
-                  </tr>
-                  </tbody>
-              </table>
-            <br/>
-            <h3>Add Object</h3>
-            <table>
-              <tr>
-                <td>
-                  External Access:
-                </td>
-                <td>
-                  <input type="button" value="Add External Bridge" title="Add br0"
-                         onclick="javascript: addExternalCloud()"/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Private Network:
-                </td>
-                <td>
-                    <input type="text" style="width: 150px;" id="internalCloudName" value="Private 1"/>
-                    &nbsp;
-                    <input type="button" value="Add Private Bridge" title="Add int_br0"
-                         onclick="javascript: addInternalCloud()"/>
-                </td>
-              </tr>
-            </table>
-            <br/>
-            <h3>Add Label</h3>
-            <table>
-              <tr>
-                <td>
-                  Text:
-                </td>
-                <td>
-                  <input type="text" id="newLabel"/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Font Size:
-                </td>
-                <td>
-                  <select id="newLabelFontSize">
-                    <option value="8">8</option>
-                    <option value="10">10</option>
-                    <option value="12">12</option>
-                    <option value="14">14</option>
-                    <option value="16" selected>16</option>
-                    <option value="18">18</option>
-                    <option value="20">20</option>
-                    <option value="22">22</option>
-                    <option value="24">24</option>
-                    <option value="26">26</option>
-                    <option value="28">28</option>
-                    <option value="30">30</option>
-                    <option value="40">40</option>
-                    <option value="48">48</option>
-                  </select>
-                </td>
-                </tr>
-              <tr>
-                <td colspan="2">
-                  <input type="button" value="Add Label" onclick="javascript: addLabel()"/>
-                </td>
-              </tr>
-            </table>
-            <br/>
-            <h3>Tools</h3>
-            <table>
-              <tr>
-                <td>
-                  Delete Object:
-                </td>
-                <td>
-                  <input type="button" value="Delete" title="Remove selected Object from Topology"
-                         onclick="javascript: deleteSelectedObject()"/>
-                </td>
-              </tr>
-            </table>
-          </div>
-              {% endif %}
           <div id="linuxIconEditor" style="display:none">
               <table>
                   <th colspan="2">
@@ -1995,10 +1572,13 @@
                   </tr>
                   <tr>
                       <td>
-                          Root Password
+                          Authentication
                       </td>
                       <td>
-                          <input type="text" disabled="true"
+                          <input type="text" disabled="true" style="width: 75px;"
+                                 name="linuxIconUser" id="linuxIconUser" value=""/>
+                          &nbsp;
+                          <input type="text" disabled="true"  style="width: 75px;"
                                  name="linuxIconPass" id="linuxIconPass" value=""/>
                       </td>
                   </tr>
@@ -2098,11 +1678,14 @@
               </tr>
               <tr>
                 <td>
-                   Root Password
+                   Authentication
                 </td>
                 <td>
-                  <input type="text" disabled="true"
-                    name="genericIconPass" id="genericIconPass" value=""/>
+                    <input type="text" disabled="true" style="width: 75px;"
+                        name="genericIconUser" id="genericIconUser" value=""/>
+                    &nbsp;
+                    <input type="text" disabled="true" style="width: 75px;"
+                        name="genericIconPass" id="genericIconPass" value=""/>
                 </td>
               </tr>
               <tr>
@@ -2160,11 +1743,14 @@
               </tr>
               <tr>
                 <td>
-                   Root Password
+                   Authentication
                 </td>
                 <td>
-                  <input type="text" disabled="true"
-                    name="junosIconPass" id="junosIconPass" value=""/>
+                    <input type="text" disabled="true" style="width: 75px;"
+                        name="junosIconUser" id="junosIconUser" value=""/>
+                    &nbsp;
+                    <input type="text" disabled="true" style="width: 75px;"
+                        name="junosIconPass" id="junosIconPass" value=""/>
                 </td>
               </tr>
               <tr>

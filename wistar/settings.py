@@ -102,6 +102,7 @@ STATICFILES_DIRS = (
     MEDIA_ROOT,
 )
 
+STATIC_ROOT = BASE_DIR + '/static'
 
 # setup log file at /var/log/wistar.log
 LOGGING = {

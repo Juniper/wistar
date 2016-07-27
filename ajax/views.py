@@ -58,12 +58,13 @@ def view_network(request, network_name):
 
 
 def preconfig_junos_domain(request):
-    response_data = {"result": True}
-    required_fields = set(['domain', 'password', 'ip', 'mgmtInterface'])
+    response_data = {"result": True, "message": "success"}
+    required_fields = set(['domain', 'user', 'password', 'ip', 'mgmtInterface'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     domain = request.POST['domain']
+    user = request.POST["user"]
     password = request.POST['password']
     ip = request.POST['ip']
     mgmt_interface = request.POST['mgmtInterface']
@@ -87,8 +88,17 @@ def preconfig_junos_domain(request):
             if not osUtils.check_is_linux():
                 mgmt_interface = "fxp0"
 
-        response_data["result"] = consoleUtils.preconfig_junos_domain(domain, password, ip, mgmt_interface)
-        print str(response_data)
+        if user != "root":
+            response_data["result"] = False
+            response_data["message"] = "Junos preconfiguration user must be root!"
+            return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+        if consoleUtils.preconfig_junos_domain(domain, user, password, ip, mgmt_interface):
+            response_data["result"] = True
+            response_data["message"] = "Success"
+        else:
+            response_data["result"] = False
+            response_data["message"] = "Could not configure domain"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
         print we
@@ -99,11 +109,12 @@ def preconfig_junos_domain(request):
 
 def preconfig_linux_domain(request):
     response_data = {"result": True}
-    required_fields = set(['domain', 'hostname', 'password', 'ip', 'mgmtInterface'])
+    required_fields = set(['domain', 'hostname', 'user', 'password', 'ip', 'mgmtInterface'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     domain = request.POST['domain']
+    user = request.POST["user"]
     password = request.POST['password']
     ip = request.POST['ip']
     mgmt_interface = request.POST['mgmtInterface']
@@ -111,7 +122,7 @@ def preconfig_linux_domain(request):
 
     print "Configuring linux domain:" + str(domain)
     try:
-        response_data["result"] = consoleUtils.preconfig_linux_domain(domain, hostname, password, ip, mgmt_interface)
+        response_data["result"] = consoleUtils.preconfig_linux_domain(domain, hostname, user, password, ip, mgmt_interface)
         print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
@@ -123,11 +134,12 @@ def preconfig_linux_domain(request):
 
 def preconfig_firefly(request):
     response_data = {"result": True}
-    required_fields = set(['domain', 'password', 'mgmtInterface'])
+    required_fields = set(['domain', 'user', 'password', 'mgmtInterface'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     domain = request.POST['domain']
+    user = request.POST["user"]
     password = request.POST['password']
     mgmt_interface = request.POST['mgmtInterface']
     ip = request.POST['ip']
@@ -143,10 +155,10 @@ def preconfig_firefly(request):
                 wistarUtils.kill_web_socket(server, wc_port)
 
         print "Configuring management Access"
-        if consoleUtils.preconfig_junos_domain(domain, password, ip, mgmt_interface):
+        if consoleUtils.preconfig_junos_domain(domain, user, password, ip, mgmt_interface):
             print "Configuring Firefly management zones:" + str(domain)
             time.sleep(3)
-            response_data["result"] = consoleUtils.preconfig_firefly(domain, password, mgmt_interface)
+            response_data["result"] = consoleUtils.preconfig_firefly(domain, user, password, mgmt_interface)
         else:
             response_data["result"] = False
             response_data["message"] = "Could not configure Firefly access"
@@ -167,10 +179,11 @@ def config_junos_interfaces(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     ip = request.POST['ip']
+    user = request.POST["user"]
     password = request.POST['password']
     print "Configuring interfaces for " + str(ip)
     try:
-        response_data["result"] = junosUtils.config_junos_interfaces(ip, password)
+        response_data["result"] = junosUtils.config_junos_interfaces(ip, user, password)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
         print we
@@ -181,15 +194,16 @@ def config_junos_interfaces(request):
 
 def execute_cli(request):
     response_data = {"result": True}
-    required_fields = set(['ip', 'pw', 'cli'])
+    required_fields = set(['ip', 'user', 'pw', 'cli'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     ip = request.POST['ip']
+    user = request.POST['user']
     pw = request.POST['pw']
     cli = request.POST['cli']
 
-    result = junosUtils.execute_cli(ip, pw, cli)
+    result = junosUtils.execute_cli(ip, user, pw, cli)
     if result is None:
         response_data["result"] = False
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -258,10 +272,9 @@ def get_linux_startup_state(request):
 
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
-            serial_url = openstackUtils.get_nova_serial_console(name)
             time.sleep(random.randint(0, 10) * .10)
             response_data["power"] = True
-            response_data["console"] = consoleUtils.is_linux_device_at_prompt(serial_url)
+            response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
     else:
         if libvirtUtils.is_domain_running(name):
             time.sleep(random.randint(0, 10) * .10)
@@ -272,6 +285,11 @@ def get_linux_startup_state(request):
 
 
 def get_junos_config(request):
+    """
+    No longer used
+    :param request:
+    :return:
+    """
     response_data = {"result": True}
     required_fields = set(['ip', 'password'])
     if not required_fields.issubset(request.POST):
@@ -657,19 +675,20 @@ def apply_config_template(request):
     print "Pushing Config Template"
     response_data = {"result": True, "message": "Applied configuration successfully"}
 
-    required_fields = set(['id', 'ip', 'password'])
+    required_fields = set(['id', 'ip', 'user', 'password'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     config_template_id = request.POST['id'] 
-    ip = request.POST['ip'] 
+    ip = request.POST['ip']
+    user = request.POST["user"]
     password = request.POST['password']
 
     config_template = ConfigTemplate.objects.get(pk=config_template_id)
     template = config_template.template
     cleaned_template = template.replace('\r\n', '\n')
     print cleaned_template
-    if junosUtils.push_config(cleaned_template, ip, password):
+    if junosUtils.push_config(cleaned_template, ip, user, password):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     else:
         response_data["result"] = False
@@ -681,16 +700,17 @@ def apply_junos_set_config(request):
     print "Pushing Set Config"
     response_data = {"result": True, "message": "Applied configuration successfully"}
 
-    required_fields = set(['config', 'ip', 'password'])
+    required_fields = set(['config', 'ip', 'user', 'password'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     config = request.POST['config']
     ip = request.POST['ip']
+    user = request.POST["user"]
     password = request.POST['password']
 
     print config
-    if junosUtils.push_config(config, ip, password):
+    if junosUtils.push_config(config, ip, user, password):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     else:
         response_data["result"] = False
@@ -717,7 +737,7 @@ def push_config_set(request):
     for config in configs:
         print config.ip
         try:
-            junosUtils.push_config_string(config.deviceConfig, config.ip, config.password)
+            junosUtils.push_config_string(config.deviceConfig, config.ip, config.user, config.password)
         except Exception as e:
             print "Could not reload config on " + str(config.ip)
             response_data["message"] = response_data["message"] + " Error pushing to " + str(config.ip)
@@ -1076,7 +1096,7 @@ def execute_linux_automation(request):
             if device["type"] == "linux":
                 print "running automation cmd on " + device["ip"]
                 # host, username, password, cli
-                output = linuxUtils.execute_cli(device["ip"], "root", device["password"], cli)
+                output = linuxUtils.execute_cli(device["ip"], device["user"], device["password"], cli)
                 print "got output: " + output
                 result_string += "\n\n"
                 result_string += "Instance: " + device["label"] + "\n"
@@ -1116,7 +1136,7 @@ def execute_junos_automation(request):
             if "junos" in device["type"]:
                 print "running automation cmd on " + device["ip"]
                 # host, username, password, cli
-                output = junosUtils.execute_cli(device["ip"], device["password"], cli)
+                output = junosUtils.execute_cli(device["ip"], device["user"], device["password"], cli)
                 print "got output: " + output
                 result_string += "\n\n"
                 result_string += "Instance: " + device["label"] + "\n"
@@ -1200,17 +1220,18 @@ def launch_script(request):
                     ip = str(obj["userData"]["ip"])
                     o += "name: %s, ip %s\n" % (instance, ip)
                     print "name: %s, ip %s" % (instance, ip)
+                    user = str(obj["userData"]["user"])
                     password = str(obj["userData"]["password"])
                     management_interface = str(obj["userData"]["mgmtInterface"])
                     if configure_access == "yes":
                         print "Configuring access"
                         o += "Configuring access\n"
-                        consoleUtils.preconfig_linux_domain(instance, "root", password, management_interface)
+                        consoleUtils.preconfig_linux_domain(instance, user, password, management_interface)
 
                     print "Pushing script " + script.name
-                    linuxUtils.push_remote_script(ip, 'root', password, script.script, script.destination)
+                    linuxUtils.push_remote_script(ip, user, password, script.script, script.destination)
                     print "Executing script"
-                    o += linuxUtils.execute_cli(ip, 'root', password, script.destination)
+                    o += linuxUtils.execute_cli(ip, user, password, script.destination)
                     o += "\n"
                     continue
 

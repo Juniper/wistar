@@ -2,6 +2,7 @@ import urllib2
 import mmap
 import json
 import logging
+import time
 
 from urllib2 import URLError
 from wistar import configuration
@@ -25,6 +26,12 @@ _auth_token = ""
 _project_auth_token = ""
 _tenant_id = ""
 
+_token_cache_time = time.time()
+_project_token_cache_time = time.time()
+
+# cache auth tokens for 1 hour
+_max_cache_time = 3600
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,8 +42,25 @@ def connect_to_openstack():
     calls from this module
     :return: True on successful authentication to keystone, False otherwise
     """
+
+    logger.debug("--- connect_to_openstack ---")
     global _auth_token
     global _tenant_id
+    global _token_cache_time
+
+    # simple cache calculation
+    # _token_cache_time will get updated when we refresh the token
+    # so let's find out how long ago that was
+    # and if we should refresh again
+    now = time.time()
+    diff = now - _token_cache_time
+
+    if diff < _max_cache_time and _auth_token != "":
+        return _auth_token
+
+    logger.debug("refreshing auth token")
+    _token_cache_time = now
+    _auth_token = ""
 
     _auth_json = """
         { "auth": {
@@ -63,6 +87,7 @@ def connect_to_openstack():
         """ % (configuration.openstack_user, configuration.openstack_password)
 
     try:
+        _auth_token = ""
         request = urllib2.Request("http://" + configuration.openstack_host + _auth_url)
         request.add_header("Content-Type", "application/json")
         request.add_header("charset", "UTF-8")
@@ -71,9 +96,11 @@ def connect_to_openstack():
         _auth_token = result.info().getheader('X-Subject-Token')
         # now get the tenant_id for the chosen project
         _tenant_id = get_project_id(configuration.openstack_project)
+        # print _auth_token
         return True
     except URLError as e:
-        print str(e)
+        logger.error("Could not authenticate to openstack!")
+        logger.error("error was %s" % str(e))
         return False
 
 
@@ -82,12 +109,20 @@ def get_project_auth_token(project):
     :param project: project name string
     :return: auth_token specific to this project, None on error
     """
+    logger.debug("--- get_project_auth_token ---")
 
     global _project_auth_token
+    global _project_token_cache_time
 
-    # keep this cached for life of this short lived module
-    if _project_auth_token != "":
+    now = time.time()
+    diff = now - _project_token_cache_time
+
+    if diff < _max_cache_time and _project_auth_token != "":
         return _project_auth_token
+
+    logger.debug("refreshing project auth token")
+    _project_token_cache_time = now
+    _project_auth_token = ""
 
     _auth_json = """
         { "auth": {
@@ -123,7 +158,8 @@ def get_project_auth_token(project):
         return _project_auth_token
 
     except URLError as e:
-        print str(e)
+        logger.error("Could not get project auth token")
+        logger.error("error was %s" % str(e))
         return None
 
 
@@ -133,6 +169,9 @@ def get_project_id(project_name):
     :param project_name: Name of the Project
     :return: string UUID or None
     """
+
+    logger.debug("--- get_project_id ---")
+
     projects_url = create_os_url('/projects')
     projects_string = do_get(projects_url)
     if projects_string is None:
@@ -153,6 +192,7 @@ def upload_image_to_glance(name, image_file_path):
     :param image_file_path: full filesystem path as string to the image
     :return: json encoded results string from glance REST api
     """
+    logger.debug("--- upload_image_to_glance ---")
 
     url = create_glance_url('/images')
 
@@ -172,7 +212,8 @@ def upload_image_to_glance(name, image_file_path):
         result = urllib2.urlopen(request)
         return result.read()
     except Exception as e:
-        print str(e)
+        logger.error("Could not upload image to glance")
+        logger.error("error was %s" % str(e))
 
     finally:
         fio.close()
@@ -184,6 +225,8 @@ def list_glance_images():
     """
     :return: json response from glance /images URL
     """
+    logger.debug("--- list_glance_images ---")
+
     url = create_glance_url('/images')
     return do_get(url)
 
@@ -193,8 +236,9 @@ def get_glance_image_detail(glance_id):
     :param glance_id: id of the glance image to retrieve
     :return: json response from glance /images/glance_id URL
     """
+    logger.debug("--- get_glance_image_detail ---")
+
     url = create_glance_url("/images/detail")
-    print url
     image_list_string = do_get(url)
     if image_list_string is None:
         return None
@@ -213,6 +257,8 @@ def get_image_id_for_name(image_name):
     :param image_name: name of image to search for
     :return: glance id or None on failure
     """
+    logger.debug("--- get_image_id_for_name ---")
+
     image_list_string = list_glance_images()
     if image_list_string is None:
         return None
@@ -231,17 +277,17 @@ def get_stack_details(stack_name):
     :param stack_name: name of the stack to find
     :return: stack object or None if not found!
     """
+    logger.debug("--- get_stack_details ---")
+
     url = create_heat_url("/%s/stacks" % _tenant_id)
-    print url
-    print _auth_token
+
     stacks_list_string = do_get(url)
-    print stacks_list_string
     stacks_list = json.loads(stacks_list_string)
     for stack in stacks_list["stacks"]:
         if stack["stack_name"] == stack_name:
             return stack
 
-    print "stack name %s was not found!" % stack_name
+    logger.info("stack name %s was not found!" % stack_name)
     return None
 
 
@@ -252,6 +298,8 @@ def get_stack_resources(stack_name, stack_id):
     :param stack_id: id of stack - use get_stack_details to retrieve this
     :return: json response from HEAT API
     """
+    logger.debug("--- get_stack_resources ---")
+
     url = create_heat_url("/%s/stacks/%s/%s/resources" % (_tenant_id, stack_name, stack_id))
     stack_resources_string = do_get(url)
     if stack_resources_string is None:
@@ -266,6 +314,8 @@ def delete_stack(stack_name):
     :param stack_name: name of the stack to be deleted
     :return: JSON response fro HEAT API
     """
+    logger.debug("--- delete_stack ---")
+
     stack_details = get_stack_details(stack_name)
     if stack_details is None:
         return None
@@ -280,6 +330,7 @@ def get_nova_flavors():
     Returns flavors from Nova in JSON encoded string
     :return: JSON encoded string
     """
+    logger.debug("--- get_nova_flavors ---")
     url = create_nova_url('/flavors')
     return do_get(url)
 
@@ -291,6 +342,8 @@ def create_stack(stack_name, template_string):
     :param template_string: HEAT template to be used
     :return: JSON response from HEAT-API or None on failure
     """
+    logger.debug("--- create_stack ---")
+
     url = create_heat_url("/" + str(_tenant_id) + "/stacks")
     data = '''{
         "disable_rollback": true,
@@ -298,11 +351,61 @@ def create_stack(stack_name, template_string):
         "stack_name": "%s",
         "template": %s
     }''' % (stack_name, template_string)
-    print url
-    print "----"
-    print data
-    print "----"
+    logger.debug("Creating stack with data:")
+    logger.debug(data)
     return do_post(url, data)
+
+
+def get_nova_serial_console(instance_name):
+    """
+    Get the websocket URL for the serial proxy for a given nova server (instance)
+    :param instance_name: name of the instance
+    :return: websocket url ws://x.x.x.x:xxxx/token=xxxxx
+    """
+    logger.debug("--- get_nova_serial_console ---")
+
+    print "Looking for instance: %s" % instance_name
+    server_detail_url = create_nova_url('/%s/servers?name=%s' % (_tenant_id, instance_name))
+    server_detail = do_nova_get(server_detail_url)
+
+    # print "got details: %s" % server_detail
+
+    if server_detail is None:
+        return None
+
+    json_data = json.loads(server_detail)
+    if len(json_data["servers"]) == 0:
+        return None
+
+    server_uuid = ""
+    for s in json_data["servers"]:
+        if s["name"] == instance_name:
+            server_uuid = s["id"]
+            break
+
+    if server_uuid == "":
+        logger.error("Console not found with server name %s" % instance_name)
+        return None
+
+    # print server_uuid
+    data = '{"os-getSerialConsole": {"type": "serial"}}'
+    url = create_nova_url('/%s/servers/%s/action' % (_tenant_id, server_uuid))
+
+    try:
+        project_auth_token = get_project_auth_token(configuration.openstack_project)
+        request = urllib2.Request(url)
+        request.add_header("Content-Type", "application/json")
+        request.add_header("charset", "UTF-8")
+        request.add_header("X-Auth-Token", project_auth_token)
+        request.get_method = lambda: 'POST'
+        result = urllib2.urlopen(request, data)
+        console_json_data = json.loads(result.read())
+        logger.debug(json.dumps(console_json_data, indent=2))
+        return console_json_data["console"]["url"]
+    except URLError as e:
+        logger.error("Could not get serial console to instance: %s" % instance_name)
+        logger.error("error was %s" % str(e))
+        return None
 
 
 # URL Utility functions
@@ -338,7 +441,8 @@ def do_get(url):
         result = urllib2.urlopen(request)
         return result.read()
     except Exception as e:
-        print str(e)
+        logger.error("Could not perform GET to url: %s" % url)
+        logger.error("error was %s" % str(e))
         return None
 
 
@@ -358,7 +462,8 @@ def do_post(url, data):
         result = urllib2.urlopen(request, data)
         return result.read()
     except URLError as e:
-        print str(e)
+        logger.error("Could not perform POST to url: %s" % url)
+        logger.error("error was %s" % str(e))
         return None
 
 
@@ -383,7 +488,8 @@ def do_put(url, data=""):
 
         return result.read()
     except URLError as e:
-        print str(e)
+        logger.error("Could not perform PUT to url: %s" % url)
+        logger.error("error was %s" % str(e))
         return None
 
 
@@ -403,45 +509,8 @@ def do_nova_get(url):
         result = urllib2.urlopen(request)
         return result.read()
     except Exception as e:
-        print str(e)
-        return None
-
-
-def get_nova_serial_console(instance_name):
-    """
-    Get the websocket URL for the serial proxy for a given nova server (instance)
-    :param instance_name: name of the instance
-    :return: websocket url ws://x.x.x.x:xxxx/token=xxxxx
-    """
-    # print "Looking for instance: %s" % instance_name
-    server_detail_url = create_nova_url('/%s/servers?name=%s' % (_tenant_id, instance_name))
-    server_detail = do_nova_get(server_detail_url)
-
-    # print "got details: %s" % server_detail
-
-    if server_detail is None:
-        return None
-
-    json_data = json.loads(server_detail)
-    server_uuid = json_data["servers"][0]["id"]
-
-    # print server_uuid
-    data = '{"os-getSerialConsole": {"type": "serial"}}'
-    url = create_nova_url('/%s/servers/%s/action' % (_tenant_id, server_uuid))
-
-    try:
-        project_auth_token = get_project_auth_token(configuration.openstack_project)
-        request = urllib2.Request(url)
-        request.add_header("Content-Type", "application/json")
-        request.add_header("charset", "UTF-8")
-        request.add_header("X-Auth-Token", project_auth_token)
-        request.get_method = lambda: 'POST'
-        result = urllib2.urlopen(request, data)
-        console_json_data = json.loads(result.read())
-        logger.debug(json.dumps(console_json_data, indent=2))
-        return console_json_data["console"]["url"]
-    except URLError as e:
-        print str(e)
+        logger.error("Could not perform GET to url: %s" % url)
+        logger.error("error was %s" % str(e))
         return None
 
 
@@ -453,6 +522,7 @@ def do_nova_delete(url, project_name, data=""):
     :param data: (optional) url encoded data
     :return: string response from urllib2.urlopen(r, data).read() or None
     """
+    logger.debug("--- connect_to_openstack ---")
     try:
         project_token = get_project_auth_token(project_name)
         request = urllib2.Request(url)
@@ -468,7 +538,8 @@ def do_nova_delete(url, project_name, data=""):
 
         return result.read()
     except URLError as e:
-        print str(e)
+        logger.error("Could not perform DELETE to url: %s" % url)
+        logger.error("error was %s" % str(e))
         return None
 
 
@@ -493,5 +564,6 @@ def do_delete(url, data=""):
 
         return result.read()
     except URLError as e:
-        print str(e)
+        logger.error("Could not perform DELETE to url: %s" % url)
+        logger.error("error was %s" % str(e))
         return None

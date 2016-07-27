@@ -10,8 +10,8 @@ default_instance_password = 'Clouds123'
 # deployment backend to use!
 # defaults to kvm
 # options are 'openstack', 'vagrant', 'virtualbox'
-# deployment_backend = 'kvm'
-deployment_backend = 'openstack'
+deployment_backend = 'kvm'
+# deployment_backend = 'openstack'
 
 # Openstack configuration
 # show openstack options even if not the primary deployment option
@@ -37,9 +37,9 @@ kvm_external_bridge = "br0"
 
 # VM management network prefix
 # this should match your Openstack mgmt_network subnet or the config of virbr0 when using KVM
-management_subnet = '192.168.128.0/24'
-management_prefix = '192.168.128.'
-management_gateway = '192.168.128.1'
+management_subnet = '192.168.122.0/24'
+management_prefix = '192.168.122.'
+management_gateway = '192.168.122.1'
 
 # Registered VM Image types
 # this list will register the javascript VM configuration settings in

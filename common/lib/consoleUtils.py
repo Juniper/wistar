@@ -23,8 +23,11 @@ def get_console(name):
     """
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
-            print "Getting openstack console!"
+            logger.debug("Getting openstack console!")
             ws_url = openstackUtils.get_nova_serial_console(name)
+            if ws_url is None:
+                raise WistarException("serial console not found for %s" % name)
+
             path = os.path.abspath(os.path.dirname(__file__))
             ws = os.path.join(path, "../../webConsole/bin/websocket_console_client.py")
             web_socket_path = os.path.abspath(ws)
@@ -46,23 +49,24 @@ def is_junos_device_at_prompt(dom):
         child = get_console(dom)
         try:
             child.send("\r\r\r")
-            index = child.expect(["error: failed to get domain", "login:"], timeout=3)
+            index = child.expect(
+                    ["error: failed to get domain", "login:", "[^\s]%", "[^\s]>", "[^\s]#", "[^\s]@.*:~ #"],
+                    timeout=3)
             if index == 0:
-                print "Domain is not configured!"
+                logger.info("Domain is not configured!")
                 return False
             elif index == 1:
-                print "domain is at the login prompt"
+                logger.debug("domain is at the login prompt")
                 return True
-
             # no timeout indicates we are at some sort of prompt!
             return True
         except pexpect.TIMEOUT:
-            print "console is available, but not at login prompt -"
+            logger.info("console is available, but not at login prompt -")
             logger.debug(str(child))
             return False
     except Exception as e:
         # print str(e)
-        print "console does not appear to be available"
+        logger.info("console does not appear to be available")
         # print str(child)
         return False
 
@@ -176,12 +180,12 @@ def is_linux_device_at_prompt(dom):
         return False
 
 
-def preconfig_firefly(dom, pw, mgmtInterface="em0"):
+def preconfig_firefly(dom, user, pw, mgmt_interface="em0"):
     try:
         if recover_junos_prompt(dom):
             child = get_console(dom)
-            print "Logging in as root"
-            child.send("root\r")
+            print "Logging in as user: %s" % user
+            child.sendline(user)
             child.expect("assword:")
             print "Sending password"
             child.send(pw + "\r")
@@ -194,8 +198,8 @@ def preconfig_firefly(dom, pw, mgmtInterface="em0"):
             ret = child.expect(["root.*#", "error.*"])
             if ret == 1:
                 raise WistarException("Could not obtain private lock on db")
-            print "Adding " + str(mgmtInterface) + " to trust zone"
-            long_command = "set security zones security-zone trust interfaces " + mgmtInterface
+            print "Adding " + str(mgmt_interface) + " to trust zone"
+            long_command = "set security zones security-zone trust interfaces " + mgmt_interface
             long_command += " host-inbound-traffic system-services all\r"
             child.send(long_command)
             print "Committing changes"
@@ -221,10 +225,15 @@ def preconfig_firefly(dom, pw, mgmtInterface="em0"):
         return False
 
 
-def preconfig_linux_domain(dom, hostname, pw, ip, mgmtInterface="eth0"):
+def preconfig_linux_domain(dom, hostname, user, pw, ip, mgmt_interface="eth0"):
     print "in preconfig_linux_domain"
     child = get_console(dom)
     # child.logfile=sys.stdout
+    prompt = "%s.*#" % user
+    sudo = ""
+    if user != "root":
+        prompt = "%s.*>" % user
+        sudo = "sudo "
     try:
         child.send("\r")
         child.send("\r")
@@ -241,28 +250,31 @@ def preconfig_linux_domain(dom, hostname, pw, ip, mgmtInterface="eth0"):
             time.sleep(1) 
         print "looking for login prompt"
         child.expect(".*login:")
-        print "Logging in as root"
-        child.sendline("root")
+        print "Logging in as %s" % user
+        child.sendline(user)
         child.expect("assword:")
         print "sending pw"
         child.sendline(pw)
-        index = child.expect(["root.*#", "Login incorrect"])
+        index = child.expect([prompt, "Login incorrect"])
         if index == 1:
             print "Incorrect login information"
             raise WistarException("Incorrect Login Information")
 
         print "flushing ip information"
-        child.sendline("ip addr flush dev " + mgmtInterface)
-        child.expect("root.*#")
+        child.sendline("%sip addr flush dev %s" % (sudo, mgmt_interface))
+        child.expect(prompt)
         print "sending ip information"
-        child.sendline("ip addr add " + ip + "/24 dev " + mgmtInterface)
-        child.expect("root.*#")
+        child.sendline("%sip addr add %s/24 dev %s" % (sudo, ip, mgmt_interface))
+        child.expect(prompt)
+        print "sending route information"
+        child.sendline("%sip route add default via %s" % (sudo, configuration.management_gateway))
+        child.expect(prompt)
         print "sending link up"
-        child.sendline("ip link set " + mgmtInterface + " up")
-        child.expect("root.*#")
+        child.sendline("%sip link set %s up" % (sudo, mgmt_interface))
+        child.expect(prompt)
         print "sending hostnamectl"
-        child.sendline("hostnamectl set-hostname " + hostname)
-        child.expect("root.*#")
+        child.sendline("%shostnamectl set-hostname %s" % (sudo, hostname))
+        child.expect(prompt)
         print "sending exit"
         child.sendline("exit")
         print "looking for login prompt"
@@ -281,24 +293,27 @@ def preconfig_linux_domain(dom, hostname, pw, ip, mgmtInterface="eth0"):
         raise WistarException("Console process unexpectedly quit! Is the console already open?")
 
 
-def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
+def preconfig_junos_domain(dom, user, pw, mgmt_ip, mgmt_interface="em0"):
     try:
         if recover_junos_prompt(dom):
             needs_pw = False
 
             child = get_console(dom)
-            print "Logging in as root"
+            print "Got console, Logging in as root"
             child.send("\r")
-            child.sendline("root")
+            child.send("\r")
+            child.expect(".*ogin:")
+            print "sending user: %s" % user
+            child.sendline(user)
 
-            ret = child.expect(["assword:", "[^\s]%"])
+            ret = child.expect(["assword:", "[^\s]%", "root@.*:~ #"])
             if ret == 0:
                 print "Sending password"
                 child.sendline(pw)
                 child.expect("root@.*")
                 print "Sending cli"
                 child.sendline("cli")
-            elif ret == 1:
+            elif ret == 1 or ret == 2:
                 child.sendline("cli")
                 # there is no password or hostname set yet
                 needs_pw = True
@@ -328,11 +343,12 @@ def preconfig_junos_domain(dom, pw, em0Ip, mgmtInterface="em0"):
             print "Turning on netconf and ssh"
             child.sendline("set system services netconf ssh")
             child.sendline("set system services ssh")
-            child.sendline("delete interface " + mgmtInterface)
+            child.sendline("delete interface " + mgmt_interface)
             time.sleep(.5)
-            print "Configuring " + mgmtInterface + " default to /24 for now!!!"
-            child.sendline("set interface " + mgmtInterface + " unit 0 family inet address " + em0Ip + "/24")
-
+            print "Configuring " + mgmt_interface + " default to /24 for now!!!"
+            child.sendline("set interface " + mgmt_interface + " unit 0 family inet address " + mgmt_ip + "/24")
+            print "setting default route"
+            child.sendline("set routing-options static route 0.0.0.0/0 next-hop %s" % configuration.management_gateway)
             time.sleep(.5)
             print "Committing changes"
             child.sendline("commit and-quit")

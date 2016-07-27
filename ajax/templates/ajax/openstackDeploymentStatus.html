@@ -16,6 +16,7 @@
             <input type="button" name="refreshDSButton"
                    value="Refresh OpenStack Status"
                    onclick="javascript: refreshDeploymentStatus('{{ topology_id }}');"/>
+            <input type="hidden" id="deployed" value="1"/>
         </td>
     </tr>
     {% else %}

@@ -74,8 +74,6 @@ def get_heat_json_from_topology_config(config):
     for device in config["devices"]:
 
         # determine openstack flavor here
-        # possibly a good idea to modify these to not have such
-        # stupidly high disk space requirements!
         device_ram = int(device["ram"])
 
         if device_ram >= 16384:
@@ -200,6 +198,11 @@ def load_config_from_topology_json(topology_json, topology_id):
                 device["tertiaryDisk"] = user_data["tertiaryDisk"]
 
             device["ip"] = user_data["ip"]
+
+            device["user"] = "root"
+            if "user" in user_data:
+                device["user"] = user_data["user"]
+
             device["password"] = user_data["password"]
 
             device["companionInterfaceMirror"] = user_data["companionInterfaceMirror"]

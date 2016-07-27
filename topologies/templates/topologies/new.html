@@ -36,8 +36,8 @@
 
     <script type="text/javascript">
     var canvas;
-    var lastX = 50;
-    var lastY = -50;
+    var lastX = -50;
+    var lastY = 25;
 
     var vmxCount = 1;
     var instanceArray = []
@@ -50,9 +50,7 @@
     // perform simple wrapping if above 10
     var iconWrapLimit = 5;
     var iconCount = 0;
-    var iconOffset = 160;
-
-    var externalCloudAdded = false;
+    var iconOffset = 135;
 
     var internalCloudCounter = 0;
     var externalCloudCounter = 0;
@@ -172,6 +170,7 @@
     // add icon to the topology with the indicated values
     function addIcon() {
     	var ip = jQuery('#topoIconIp').val();
+    	var user = jQuery('#topoIconUser').val();
     	var pw = jQuery('#topoIconPass').val();
     	var name = jQuery('#topoIconName').val();
     	var type = jQuery('#topoIconType').val();
@@ -218,14 +217,15 @@
             return;
         } 
 
-    	lastX += 0;
-    	lastY += 100;
+        // simple algorithm to add icons to the screen without overlapping
+    	lastX += 100;
+    	lastY += 0;
     	vmxCount += 1;
     	iconCount += 1;
 
     	if (iconCount > iconWrapLimit) {
-    	    lastX = iconOffset;
-    	    lastY = 50;
+    	    lastX = 50;
+    	    lastY = iconOffset;
     	    iconCount = 1;
     	    iconOffset += 110;
     	}
@@ -245,7 +245,7 @@
         icon = eval("new " + vm_type_data.js + "()" );
 
         console.log(icon);
-        icon.setup(type, name, ip, pw, image);
+        icon.setup(type, name, ip, user, pw, image);
 
         icon.setCpu(cpu);
         icon.setRam(ram);
@@ -268,7 +268,7 @@
     	    var vpfe_ram = jQuery('#topoIconVFPCRam').val();
 
             var vpfe = eval("new " + icon.COMPANION_TYPE + "()" );
-            vpfe.setup("Child", name, ip, pw, vpfe_image);
+            vpfe.setup("Child", name, ip, user, pw, vpfe_image);
 
             // bind them together here!
             vpfe.setParentId(icon.getId());
@@ -305,15 +305,15 @@
         l.setFontSize(labelSize);
         l.setStroke(0);
 
-        iconCount += 1;
+        iconsInRow += 1;
 
         lastX += 0;
         lastY += 100;
 
-    	if (iconCount > iconWrapLimit) {
+    	if (iconsInRow > iconWrapLimit) {
     	    lastX = iconOffset;
     	    lastY = 50;
-    	    iconCount = 1;
+    	    iconsInRow = 1;
     	    iconOffset += 110;
     	}
         canvas.addFigure(l, lastX, lastY);
@@ -520,30 +520,34 @@
         if (so != 0) {
             var figure = canvas.getFigure(so);
             if (figure == null) {
+                // this is a connection, not a VM or cloud icon
                 figure  = canvas.getLine(so);
-            }
-            if (figure.NAME == "draw2d.shape.node.externalCloud") {
-                externalCloudAdded = false;
-            }
-            if (figure.NAME == "draw2d.shape.composite.Group") {
-                console.log("removing composite group!");
-
-                while(figure.getAssignedFigures().size > 0) {
-                    var child = figure.getAssignedFigures().first();
-
-                    var connections = child.getConnections();
-
-                    connections.each(function(i,v) { canvas.removeFigure(v) });
-
-                    figure.unassignFigure(child);
-                    canvas.removeFigure(child);
-                };
             } else {
+                // remove all connections, if any
                 var connections = figure.getConnections();
                 connections.each(function(i,v) { canvas.removeFigure(v) });
+
+                // remove all members of composite groups
+                if (figure.NAME == "draw2d.shape.composite.Group") {
+                    console.log("removing composite group!");
+
+                    while(figure.getAssignedFigures().size > 0) {
+                        var child = figure.getAssignedFigures().first();
+
+                        var connections = child.getConnections();
+
+                        connections.each(function(i,v) { canvas.removeFigure(v) });
+
+                        figure.unassignFigure(child);
+                        canvas.removeFigure(child);
+                    };
+                }
+                // remove this entirely!
                 canvas.removeFigure(figure);
             }
+            // reset our selected value!
             jQuery('#selectedObject').val("0");
+            hideAllEditors();
         }
     }
 
@@ -811,8 +815,8 @@
                 </td>
                 <td>
                     <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp"
-                           value="{{ configuration.management_prefix}}"
-                           title="Choose an IP from the {{ configuration.management_subnet }} range"
+                           value="{{ global_config.management_prefix}}"
+                           title="Choose an IP from the {{ global_config.management_subnet }} range"
                            onblur="javascript: checkIp();" style="width: 85%"/>
                     <input type="button" name="next_ip_button" id="next_ip_button"
                            value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
@@ -821,12 +825,15 @@
             </tr>
             <tr>
                 <td>
-                    Root Password
+                    Authentication
                 </td>
                 <td>
-                    <input type="text" size="15" maxsize="15"
-                           name="topoIconPass" id="topoIconPass" value="{{ configuration.default_instance_password }}"
-                           onblur="javascript: checkPass(this.value);"/>
+                    <input type="text" size="15" maxsize="15" style="width: 75px;"
+                           name="topoIconUser" id="topoIconUser" value="root" title="Username"/>
+                    &nbsp;
+                    <input type="text" size="15" maxsize="15"  style="width: 75px;"
+                           name="topoIconPass" id="topoIconPass" value="{{ global_config.default_instance_password }}"
+                           onblur="javascript: checkPass(this.value);" title="Password"/>
                 </td>
             </tr>
             <tr>

@@ -28,9 +28,15 @@
             <td>
                 <a href="/topologies/">Topologies</a>
             </td>
+            {% if global_config.deployment_backend == "kvm" %}
             <td>
                 <a href="/ajax/manageHypervisor/">Manage Hypervisor</a>
             </td>
+            {% elif global_config.deployment_backend == "openstack" %}
+            <td>
+                <a href="http://{{ global_config.openstack_host }}/horizon/project/stacks">Manage Openstack</a>
+            </td>
+            {% endif %}
             <td>
                 <a href="/images/">Images</a>
             </td>

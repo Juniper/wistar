@@ -61,7 +61,6 @@ def new(request):
 
     context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string,
                'image_list_json': image_list_json,
-               'configuration': configuration,
                'external_bridge': external_bridge
                }
     return render(request, 'topologies/new.html', context)

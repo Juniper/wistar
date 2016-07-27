@@ -18,9 +18,9 @@ def get_device_reference(host, user, pw):
         raise WistarException("Could not connect to Device")
 
 
-def execute_cli(ip, pw, cli):
+def execute_cli(ip, user, pw, cli):
     try:
-        dev = get_device_reference(ip, 'root', pw)
+        dev = get_device_reference(ip, user, pw)
         return dev.cli(cli)
     except Exception as e:
         print "Could not execute cli command"
@@ -88,10 +88,10 @@ def set_interface_ip_address(device_ip, pw, name, interface_ip):
 # log into each device, get the list of em interfaces
 # create the corresponding ge-0/0/X interfaces
 # then netconf in and configure them with appropriate mac appropriately
-def config_junos_interfaces(ip, pw):
+def config_junos_interfaces(ip, user, pw):
     interfaces = {}
     # FIXME - move un and pw to config object
-    dev = get_device_reference(ip, "root", pw)
+    dev = get_device_reference(ip, user, pw)
     em_interfaces = get_device_em_interface_macs(dev)
     # we have the em interfaces with their macs
     # now, lets convert those to ge-0/0/X names ...
@@ -113,8 +113,8 @@ def config_junos_interfaces(ip, pw):
 # push random config to the device
 # let pyez figure out what format it is in
 # used by configTemplates from user that can be in any format
-def push_config(conf_string, ip, pw):
-    dev = get_device_reference(ip, "root", pw)
+def push_config(conf_string, ip, user, pw):
+    dev = get_device_reference(ip, user, pw)
 
     # try to determine the format of our config_string
     config_format = 'set'
