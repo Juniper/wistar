@@ -12,12 +12,12 @@ draw2d.shape.node.vre = draw2d.shape.node.wistarSetParent.extend({
 
     COMPANION_TYPE: "draw2d.shape.node.vpfe",
     COMPANION_INTERFACE_LIST: ["1"],
-    COMPANION_NAME_FILTER: "vFPC",
+    COMPANION_NAME_FILTER: "FPC|PFE|FP|pfe|fpc|fp",
 
     SECONDARY_DISK_TYPE: "ide",
-    SECONDARY_DISK_NAME_FILTER: "HDD",
+    SECONDARY_DISK_NAME_FILTER: "HDD|hdd|hard|disk|scratch|config",
     TERTIARY_DISK_TYPE: "usb",
-    TERTIARY_DISK_NAME_FILTER: "USB",
+    TERTIARY_DISK_NAME_FILTER: "USB|usb|ide",
 
     SMBIOS_PRODUCT_STRING_PREFIX: "VM-",
     SMBIOS_PRODUCT_STRING_SUFFIX: "-161-re-0",

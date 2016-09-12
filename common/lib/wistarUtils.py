@@ -4,6 +4,7 @@ import subprocess
 import time
 
 import libvirtUtils
+from django.core.exceptions import ObjectDoesNotExist
 from images.models import Image
 from wistar import configuration
 
@@ -122,7 +123,6 @@ def get_heat_json_from_topology_config(config):
 
             if port["bridge"] == "virbr0":
                 p["network_id"] = configuration.openstack_mgmt_network
-                # FIXME = should not be hardcoded to br!
             elif port["bridge"] == configuration.openstack_external_network:
                 p["network_id"] = configuration.openstack_external_network
             else:
@@ -172,6 +172,12 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["name"] = "t" + str(topology_id) + "_" + user_data["name"]
             device["label"] = user_data["name"]
             device["imageId"] = user_data["image"]
+
+            try:
+                image = Image.objects.get(pk=device["imageId"])
+                image_name = image.name
+            except ObjectDoesNotExist:
+                raise Exception("Not all images are present!")
 
             print json_object
 

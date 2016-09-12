@@ -1,23 +1,21 @@
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 
-from django.http import HttpResponseRedirect
-from django.contrib import messages
-
-from common.lib import osUtils
+from common.lib import imageUtils
 from common.lib import libvirtUtils
 from common.lib import openstackUtils
-
-from wistar import settings
-from wistar import configuration
-
+from common.lib import osUtils
 from images.models import Image
-from images.models import ImageForm
 from images.models import ImageBlankForm
+from images.models import ImageForm
 from images.models import ImageLocalForm
+from wistar import configuration
+from wistar import settings
 
 
 def index(request):
-    image_list = Image.objects.all().order_by('name')
+    image_list = imageUtils.get_local_image_list()
     context = {'image_list': image_list}
     return render(request, 'images/index.html', context)
 
@@ -131,7 +129,6 @@ def create_blank(request):
 
 def create_local(request):
 
-    print "valid form!"
     name = request.POST["name"]
     file_path = request.POST["filePath"]
     description = request.POST["description"]
@@ -236,7 +233,7 @@ def create_from_instance(request, uuid):
 
 def detail(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
-    image_state = osUtils.is_image_thin_provisioned(image.filePath.path)
+
     vm_type = "N/A"
     for vt in configuration.vm_image_types:
         if vt["name"] == image.type:
@@ -244,9 +241,13 @@ def detail(request, image_id):
             break
 
     glance_id = ""
+    image_state = ""
+
     if configuration.deployment_backend == "openstack":
         openstackUtils.connect_to_openstack()
         glance_id = openstackUtils.get_image_id_for_name(image.name)
+    elif configuration.deployment_backend == "kvm" and image.filePath != "":
+        image_state = osUtils.is_image_thin_provisioned(image.filePath.path)
 
     return render(request, 'images/details.html', {'image': image,
                                                    'state': image_state,
@@ -287,6 +288,13 @@ def glance_detail(request):
         return render(request, 'error.html', {'error': "Could not connect to OpenStack"})
 
 
+def glance_list(request):
+    image_list = imageUtils.get_glance_image_list()
+    context = {'image_list': image_list}
+    return render(request, 'images/glance_list.html', context)
+
+
+
 def delete(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
     image.filePath.delete()
@@ -314,6 +322,30 @@ def upload_to_glance(request, image_id):
 
         print "All done"
         return HttpResponseRedirect('/images/%s' % image_id)
+
+
+def import_from_glance(request, glance_id):
+    """
+    Creates a local db entry for the glance image
+    Everything in Wistar depends on a db entry in the Images table
+    If you have an existing openstack cluster, you may want to import those
+    images here without having to physically copy the images to local disk
+    :param request: HTTPRequest object
+    :param glance_id: id of the glance image to import
+    :return: redirect to /images/image_id
+    """
+    if openstackUtils.connect_to_openstack():
+        image_details = openstackUtils.get_glance_image_detail(glance_id)
+        image = Image()
+        image.description = "Imported from Glance"
+        image.name = image_details["name"]
+        image.type = 'blank'
+        image.save()
+        print "All done"
+        return HttpResponseRedirect('/images/%s' % image.id)
+
+    context = {'error': "Could not connect to OpenStack"}
+    return render(request, 'error.html', context)
 
 
 def error(request):

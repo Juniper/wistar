@@ -47,6 +47,15 @@
             {{ image.description }}
         </td> 
     </tr>
+        <tr>
+        <td>
+            VM type
+        </td>
+        <td>
+            {{ vm_type }}
+        </td>
+    </tr>
+    {% if global_config.deployment_backend = "kvm" %}
     <tr>
         <td>
             Backing File Path
@@ -54,14 +63,6 @@
         <td>
             <a href="{% static image.filePath.url %}">{{ settings.MEDIA_ROOT }}/{{ image.filePath.url }}</a>
         </td> 
-    </tr>
-    <tr>
-        <td>
-            VM type
-        </td>
-        <td>
-            {{ vm_type }}
-        </td>
     </tr>
     <tr>
         <td>
@@ -75,14 +76,17 @@
             {% endif %}
         </td>
     </tr>
+     {% endif %}
     <tr>
         <td>
             Options
         </td>
         <td>
 		    <a href='edit/{{ image.id }}'>Edit</a>
+            {% if global_config.deployment_backend = "kvm" %}
             &nbsp;
             <a href="{% static image.filePath.url %}">Download</a>
+            {% endif %}
             &nbsp;
 		    <a href='delete/{{ image.id }}'>Delete</a>
 	    </td>

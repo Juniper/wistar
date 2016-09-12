@@ -34,7 +34,7 @@
             </td>
             {% elif global_config.deployment_backend == "openstack" %}
             <td>
-                <a href="http://{{ global_config.openstack_host }}/horizon/project/stacks">Manage Openstack</a>
+                <a href="javascript: window.open('http://{{ global_config.openstack_host }}/horizon/project/stacks')">Manage Openstack</a>
             </td>
             {% endif %}
             <td>

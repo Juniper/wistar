@@ -1,12 +1,11 @@
-import urllib2
-import mmap
 import json
 import logging
+import mmap
 import time
+import urllib2
 
 from urllib2 import URLError
 from wistar import configuration
-
 
 # OpenStack component URLs
 _glance_url = ':9292/v1'
@@ -15,7 +14,7 @@ _api_url = ':8082'
 _os_url = ':5000/v3'
 _nova_url = ':8774/v2'
 _neutron_url = ':9696/v2.0'
-_glance_url = ':9292/v1'
+_glance_url = ':9292/v2'
 _heat_url = ':8004/v1'
 _auth_url = _os_url + "/auth/tokens"
 _data_url = ':8143/api/tenant/networking/'
@@ -221,14 +220,19 @@ def upload_image_to_glance(name, image_file_path):
         return None
 
 
-def list_glance_images():
+def get_glance_image_list():
     """
-    :return: json response from glance /images URL
+    :return: json response from glance /images/ URL
     """
-    logger.debug("--- list_glance_images ---")
+    logger.debug("--- get_glance_image_list ---")
 
-    url = create_glance_url('/images')
-    return do_get(url)
+    url = create_glance_url("/images")
+    image_list_string = do_get(url)
+    if image_list_string is None:
+        return None
+
+    image_list = json.loads(image_list_string)
+    return image_list
 
 
 def get_glance_image_detail(glance_id):
@@ -238,17 +242,12 @@ def get_glance_image_detail(glance_id):
     """
     logger.debug("--- get_glance_image_detail ---")
 
-    url = create_glance_url("/images/detail")
-    image_list_string = do_get(url)
-    if image_list_string is None:
+    url = create_glance_url("/images/%s" % glance_id)
+    image_string = do_get(url)
+    if image_string is None:
         return None
 
-    image_list = json.loads(image_list_string)
-    for image in image_list["images"]:
-        if image["id"] == glance_id:
-            return image
-
-    return None
+    return json.loads(image_string)
 
 
 def get_image_id_for_name(image_name):
@@ -259,11 +258,10 @@ def get_image_id_for_name(image_name):
     """
     logger.debug("--- get_image_id_for_name ---")
 
-    image_list_string = list_glance_images()
-    if image_list_string is None:
+    image_list = get_glance_image_list()
+    if image_list is None:
         return None
 
-    image_list = json.loads(image_list_string)
     for image in image_list["images"]:
         if image["name"] == image_name:
             return image["id"]

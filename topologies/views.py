@@ -1,28 +1,26 @@
-import logging
 import json
+import logging
+import time
+import yaml
 
-from django.shortcuts import render, get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
-from django.core import serializers
-
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib import messages
+from django.core import serializers
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
-from topologies.models import Topology
-from topologies.models import ConfigSet
-from topologies.models import Config
-from topologies.forms import ImportForm
-from common.lib import wistarUtils
-from common.lib import libvirtUtils
+from ajax import views as av
 from common.lib import junosUtils
+from common.lib import libvirtUtils
 from common.lib import osUtils
-
+from common.lib import wistarUtils
 from images.models import Image
 from scripts.models import Script
-import time
-# mild hack alert
-from ajax import views as av
+from topologies.forms import ImportForm
+from topologies.models import Config
+from topologies.models import ConfigSet
+from topologies.models import Topology
 from wistar import configuration
 
 logger = logging.getLogger(__name__)
@@ -86,16 +84,16 @@ def import_topology(request):
     try:
         if request.method == "POST":
             print str(request.FILES)
-            
+
             json_file = request.FILES['file']
             print str(json_file)
             json_string = json_file.read()
             json_data = json.loads(json_string)
-            
+
             topology = Topology()
             topology.name = "Imported Topology"
             topology.id = 0
-           
+
             for json_object in json_data:
                 if "userData" in json_object and "wistarVm" in json_object["userData"]:
                     ud = json_object["userData"]
@@ -110,7 +108,7 @@ def import_topology(request):
                     image = image_list[0]
                     print str(image.id)
                     json_object["userData"]["image"] = image.id
-                
+
                 elif json_object["type"] == "wistar.info":
                     topology.name = json_object["name"]
                     topology.description = json_object["description"]
@@ -126,7 +124,7 @@ def import_topology(request):
 
         else:
             form = ImportForm()
-            context = {'form': form }
+            context = {'form': form}
             return render(request, 'topologies/import.html', context)
     except Exception as e:
         logger.error('Could nt parse imported data')
@@ -162,7 +160,7 @@ def multi_clone(request):
     topology = get_object_or_404(Topology, pk=topology_id)
     json_string = topology.json
     i = 0
-    while i < num_clones: 
+    while i < num_clones:
         new_topo = topology
         orig_name = topology.name
         new_topo.name = orig_name
@@ -253,7 +251,7 @@ def create(request):
 
     except KeyError:
         logger.error('Invalid data in POST')
-        return render(request, 'error.html', { 
+        return render(request, 'error.html', {
             'error_message': "Invalid data in POST"
         })
     else:
@@ -295,7 +293,7 @@ def create_config_set(request):
             except Exception as e:
                 logger.error('exception: %s' % e)
                 print "Could not connect to " + device["ip"], e
-   
+
     return HttpResponseRedirect('/topologies/' + topology_id + '/')
 
 
@@ -369,10 +367,10 @@ def export_as_heat_template(request, topology_id):
         config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
 
         heat_template = wistarUtils.get_heat_json_from_topology_config(config)
-        heat_template_json = json.loads(heat_template)
-        return HttpResponse(json.dumps(heat_template_json, indent=2), content_type="text/plain")
+        heat_template_object = json.loads(heat_template)
+        heat_template_yaml = yaml.safe_dump(heat_template_object)
+        return HttpResponse(heat_template_yaml, content_type="text/plain")
     except Exception as e:
         print "Caught Exception in deploy heat"
         logger.error('exception: %s' % e)
         return render(request, 'error.html', {'error': str(e)})
-

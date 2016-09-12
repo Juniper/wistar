@@ -1,20 +1,18 @@
-from django.http import HttpResponseRedirect, HttpResponse
+import json
+import time
+
 from django.core.exceptions import ObjectDoesNotExist
-
-from common.lib import wistarUtils
-from common.lib import libvirtUtils
-from common.lib import consoleUtils
-from common.lib import linuxUtils
-from common.lib import osUtils
-
-from topologies.models import Topology
-from scripts.models import Script
+from django.http import HttpResponseRedirect, HttpResponse
 
 from ajax import views as av
 from api.lib import apiUtils
-
-import json
-import time
+from common.lib import consoleUtils
+from common.lib import libvirtUtils
+from common.lib import linuxUtils
+from common.lib import osUtils
+from common.lib import wistarUtils
+from scripts.models import Script
+from topologies.models import Topology
 
 # FIXME = debug should be a global setting
 debug = True
@@ -88,7 +86,7 @@ def get_topology_status(request):
                         print "%s does not have a console ready" % domain_name
                         context["message"] = "not all instances have a console ready"
                         return HttpResponse(json.dumps(context), content_type="application/json")
-                    # FIXME - add junos support here
+                        # FIXME - add junos support here
 
         context["console-status"] = "ready"
 
@@ -266,7 +264,8 @@ def configure_topology(request):
                             script = Script.objects.get(pk=script_id)
                             # push the
                             linuxUtils.push_remote_script(ip, "root", password, script.script, script.destination)
-                            output = linuxUtils.execute_cli(ip, "root", password, script.destination + " " + script_data)
+                            output = linuxUtils.execute_cli(ip, "root", password,
+                                                            script.destination + " " + script_data)
                             print output
                     except Exception as e:
                         print "Could not configure domain: %s" % e

@@ -1,13 +1,19 @@
+import logging
 import libvirt
 from lxml import etree
+
+logger = logging.getLogger(__name__)
 
 conn = None
 is_init = False
 
-# FIXME - improve error handling here... lots of catching and smothering exceptions...
-
 
 def connect():
+    """
+    connect to libvirt
+    must be called before any other calls in this library!
+    :return: boolean
+    """
     global is_init
     global conn
     if is_init is True:
@@ -22,6 +28,10 @@ def connect():
 
 
 def close():
+    """
+    close the connection to libvirt
+    :return: None
+    """
     global is_init
     if is_init is True:
         conn.close()
@@ -85,8 +95,8 @@ def promote_instance_to_image(domain_name):
         image_path = get_image_for_domain(domain.UUIDString())
 
         if domain.blockJobInfo(image_path, 0) != {}:
-                print "block job already in progress"
-                return None 
+            print "block job already in progress"
+            return None
 
         print "Performing blockPull on " + image_path
         domain.blockPull(image_path, 0, 0)
@@ -174,7 +184,6 @@ def get_domains_for_topology(topology_id):
 
 
 def undefine_all_in_topology(topology_id):
-
     network_list = get_networks_for_topology(topology_id)
     for network in network_list:
         print "Undefining network: " + network["name"]
@@ -559,4 +568,3 @@ def get_iso_for_domain(domain_name):
         return source_file
     else:
         return None
-

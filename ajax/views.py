@@ -1,34 +1,32 @@
-import os
-import time
 import json
-import random
 import logging
+import os
+import random
+import time
 
-from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
-from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render
+from django.template.loader import render_to_string
 
-from common.lib.WistarException import WistarException
-from common.lib import wistarUtils
-from common.lib import libvirtUtils
-from common.lib import junosUtils
-from common.lib import linuxUtils
+from api.lib import apiUtils
 from common.lib import consoleUtils
+from common.lib import junosUtils
+from common.lib import libvirtUtils
+from common.lib import linuxUtils
+from common.lib import openstackUtils
 from common.lib import osUtils
 from common.lib import vboxUtils
-from common.lib import openstackUtils
-from api.lib import apiUtils
+from common.lib import wistarUtils
+from common.lib.WistarException import WistarException
 from images.models import Image
 from scripts.models import ConfigTemplate
 from scripts.models import Script
-from topologies.models import Topology
-from topologies.models import ConfigSet
 from topologies.models import Config
-
+from topologies.models import ConfigSet
+from topologies.models import Topology
 from wistar import configuration
-
 
 logger = logging.getLogger(__name__)
 

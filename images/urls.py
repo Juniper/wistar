@@ -22,6 +22,7 @@ urlpatterns = patterns('',
                        url(r'^(?P<image_id>\d+)$', views.detail, name='detail'),
                        url(r'^glance$', views.list_glance_images, name='glance'),
                        url(r'^glanceDetail$', views.glance_detail, name='glance_detail'),
-
+                        url(r'^glanceImages/$', views.glance_list, name='glance_list'),
                        url(r'^uploadToGlance/(?P<image_id>\d+)/$', views.upload_to_glance, name='upload'),
+                       url(r'^importFromGlance/(?P<glance_id>[^/]+)/$', views.import_from_glance, name='glance_import'),
                        )

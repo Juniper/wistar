@@ -1,13 +1,13 @@
 import os
-import subprocess
 import platform
 import shutil
+import subprocess
 
 from jinja2 import Environment
 from netaddr import *
 
-from wistar import settings
 from wistar import configuration
+from wistar import settings
 
 
 # used to determine if we should try kvm or virtualbox
@@ -16,10 +16,12 @@ def check_is_linux():
     if os.uname()[0] == "Linux":
         return True
     else:
-        return False        
+        return False
 
 
-# Is this version of linux Ubuntu based?
+    # Is this version of linux Ubuntu based?
+
+
 def check_is_ubuntu():
     dist = platform.dist()[0]
     if "buntu" in dist:
@@ -98,7 +100,6 @@ def create_thin_provision_instance(image, instance):
 # creates a new blank image
 # useful for installing from ISO files
 def create_blank_image(filename, size):
-
     if configuration.deployment_backend == "kvm":
         rv = os.system("qemu-img create '" + filename + "' -f qcow2 " + size)
     else:
@@ -121,7 +122,11 @@ def list_dir(directory):
 
 
 def is_image_thin_provisioned(image_path):
-    """ Check to see if the qemu-img info command reports a backing file """
+    """
+    Check to see if the qemu-img info command reports a backing file
+    :param image_path: full path to an image to check
+    :return: boolean
+    """
     if configuration.deployment_backend == "kvm":
         rv = os.system("qemu-img info " + image_path + " | grep backing")
         if rv == 0:
@@ -141,12 +146,12 @@ def remove_instance(instance_path):
             os.remove(instance_path)
 
     elif configuration.deployment_backend == "virtualbox":
-        rv = os.system("vboxmanage closemedium disk \"" + instance_path  + "\" --delete")
+        rv = os.system("vboxmanage closemedium disk \"" + instance_path + "\" --delete")
 
     else:
         print "configured deployment backend %s is not yet implemented!" % configuration.deployment_backend
         return False
-    
+
     if rv == 0:
         return True
     else:
@@ -155,7 +160,7 @@ def remove_instance(instance_path):
 
 def remove_instances_for_topology(topology_id_prefix):
     directory = settings.MEDIA_ROOT + "/user_images/instances"
-    print "Deleteing for topology_id_prefix %s" % topology_id_prefix
+    print "Deleting for topology_id_prefix %s" % topology_id_prefix
     for entry in os.listdir(directory):
         full_path = os.path.join(directory, entry)
         if entry.startswith(topology_id_prefix):
@@ -167,8 +172,7 @@ def remove_instances_for_topology(topology_id_prefix):
 
 
 def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, password, script="", script_param=""):
- 
-    try: 
+    try:
         seed_dir = "/tmp/" + domain_name
         seed_img_name = seed_dir + "/seed.iso"
 
@@ -178,7 +182,7 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         if check_path(seed_img_name):
             print "seed.img already created!"
             return seed_img_name
- 
+
         # read template
         this_path = os.path.abspath(os.path.dirname(__file__))
         meta_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_meta_data"))
@@ -202,9 +206,9 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         env = Environment()
         meta_data = env.from_string(meta_data_template_string)
         user_data = env.from_string(user_data_template_string)
-        
+
         ip_network = IPNetwork(mgmt_ip)
-    
+
         config = dict()
         config["domain_name"] = domain_name
         config["hostname"] = host_name
@@ -217,11 +221,11 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
 
         if script_param != "":
             config["param"] = script_param
-    
+
         meta_data_string = meta_data.render(config=config)
         user_data_string = user_data.render(config=config)
-    
-        print "writing meta-data file" 
+
+        print "writing meta-data file"
         mdf = open(seed_dir + "/meta-data", "w")
         mdf.write(meta_data_string)
         mdf.close()
@@ -232,15 +236,15 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         udf.close()
 
         rv = os.system(
-            'genisoimage -output {0} -volid cidata -joliet -rock {1}/user-data {2}/meta-data'.format(seed_img_name,
-                                                                                                     seed_dir,
-                                                                                                     seed_dir))
+                'genisoimage -output {0} -volid cidata -joliet -rock {1}/user-data {2}/meta-data'.format(seed_img_name,
+                                                                                                         seed_dir,
+                                                                                                         seed_dir))
         if rv != 0:
             print "Could not create iso image!"
             return None
 
         return seed_img_name
-    
+
     except Exception as e:
         print "Caught exception in create_cloud_init_img " + str(e)
         return None
@@ -266,3 +270,11 @@ def remove_cloud_init_tmp_dirs(topology_prefix):
     except Exception as e:
         # smother error
         print str(e)
+
+
+def get_image_size(image_path):
+    cmd = "du -b %s | awk '{ print $1 }'" % image_path
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    (o, e) = p.communicate()
+    return o
