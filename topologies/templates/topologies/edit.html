@@ -28,6 +28,8 @@
     <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vriot.js' %}"></script>
+
     <script type="text/javascript" src="{% static 'js/vm_types/vpfe.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vqfxRe.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vqfxCosim.js' %}"></script>
@@ -54,6 +56,10 @@
 
     // convenience variable for debug prompt - always set to currently selected object
     var s;
+
+    // what is our topology id anyway?
+    var topology_id = '{{ topo.id }}';
+
 
     // keep track of how many icons we've added to the canvas
     // perform simple wrapping if above 10
@@ -1167,6 +1173,16 @@
             currentSelection = "junosIconEditor";
         }
 
+        var legacyToolsDiv = jQuery("#junosIconEditorToolsLegacy");
+        var toolsDiv = jQuery("#junosIconEditorTools");
+
+        if (instance.getType() == "junos_vmx") {
+            legacyToolsDiv.css("display", "");
+            toolsDiv.css("display", "none");
+        } else {
+            toolsDiv.css("display", "");
+            legacyToolsDiv.css("display", "none");
+        }
     }
 
     function loadGenericIconEditor(figureId) {
@@ -1784,32 +1800,46 @@
                   Bootup Status
                 </td>
                 <td>
-                  <div id="junosIconStatus"></div> <a href="#" onclick="javascript: return getInstanceStartupState()">?</a>
+                  <div id="junosIconStatus" style="display: inline"></div> <a href="#" onclick="javascript: return getInstanceStartupState()">?</a>
                 </td>
               </tr>
             </table>
             <table>
-              <th colspan="2">
-                 Instance Tools
-              </th>
-                <tr>
-                    <td>
-                        <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures SSH + Netconf">
-                    </td>
+                <tbody id="junosIconEditorToolsLegacy" style="display:none">
+                <th colspan="2">
+                    vMX Phase 1 Tools
+                </th>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures SSH + Netconf">
+                        </td>
 
-                    <td>
-                        <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
-                    </td>
-
-                </tr>
-                <tr>
-                    <td>
-                        <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
-                    </td>
-                    <td>
-                        <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
-                    </td>
-                </tr>
+                        <td>
+                            <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                        </td>
+                    </tr>
+                </tbody>
+                <tbody id="junosIconEditorTools">
+                    <th colspan="2">
+                        Instance Tools
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                        </td>
+                    </tr>
+                </tbody>
             </table>
             <table>
               <th colspan="2">

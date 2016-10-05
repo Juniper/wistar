@@ -1,7 +1,7 @@
 # some basic configuration parameters for wistar
 
 # images director
-user_images_dir = "/opt/images/user_images"
+user_images_dir = "/opt/wistar/user_images"
 
 
 # shortcut to fill in default instance password in 'New VM' screen
@@ -33,7 +33,7 @@ openstack_external_network = 'public-br-eth0'
 virtual_box_host_only_net_name = 'vboxnet0'
 
 # default external bridge name
-kvm_external_bridge = "br0"
+kvm_external_bridge = "brq75d9e11e-28"
 
 # VM management network prefix
 # this should match your Openstack mgmt_network subnet or the config of virbr0 when using KVM
@@ -41,6 +41,12 @@ management_subnet = '192.168.122.0/24'
 management_prefix = '192.168.122.'
 management_gateway = '192.168.122.1'
 
+# wistar cloud init seeds director / temp directory
+seeds_dir = "/opt/wistar/seeds/"
+
+ssh_user = "nembery"
+# this key will be added to cloud-init enabled hosts in the user-data file
+ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCT2doVdV0R6XaijW3KzjN+h7MWajkb+RAtlEhxPUwvnn2aWmi8tFrhjN4AfRZ3bXlnEKQIfQ4Rnztew6rq7UXyTYaiCi0lOLuf5lq80VKvP3XJDqBz0yMd/CBU/dqQii0NlJY+Y0qTCVkhVIldJWbby1AL+w4nWwwMFDXg/quyRSQuNULsMar7QA1N+nxrkNc5IFzCRbzqQ8og+8RASnKzFelRKNrkq7vrQxk6nWXHA/4BYXwrVZIvI4kTlG7b5FYzxOldcLkXfbC0whgxUbWhl1iCL3YcWLkDKUljNxiYOrUixzQrm235dgNUX4QX0xlctTbDbdvyrm/PcoFal5lJ nembery@feynman"
 # Registered VM Image types
 # this list will register the javascript VM configuration settings in
 # common/static/js/vm_types
@@ -69,6 +75,11 @@ vm_image_types = [
         "name": "junos_vpfe",
         "description": "Junos vMX vFPC",
         "js": "draw2d.shape.node.vpfe",
+    },
+    {
+        "name": "junos_riot",
+        "description": "Junos vMX RIOT",
+        "js": "draw2d.shape.node.vriot",
     },
     {
         "name": "junos_vpfe_haswell",

@@ -5,24 +5,11 @@
     <os>
         <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
         <boot dev='hd'/>
-        <!-- <smbios mode='sysinfo'/> -->
     </os>
-    <!--
-    <sysinfo type='smbios'>
-        <bios>
-            <entry name='vendor'>{{ device.smbiosManufacturer }}</entry>
-        </bios>
-        <system>
-            <entry name='product'>{{ device.smbiosProduct }}</entry>
-            <entry name='version'>{{ device.smbiosVersion }}</entry>
-            <entry name='manufacturer'>{{ device.smbiosManufacturer }}</entry>
-        </system>
-    </sysinfo>
-    -->
     <features>
         <acpi/>
         <apic/>
-        <!-- <pae/> -->
+        <pae/>
     </features>
     <clock offset='utc'/>
     <on_poweroff>destroy</on_poweroff>
@@ -36,7 +23,7 @@
             <target dev='hda' bus='ide'/>
             <address type='drive' controller='0' bus='0' target='0' unit='0'/>
         </disk>
-        {% if secondary_disk_path|length > 0 %}
+       {% if secondary_disk_path|length > 0 %}
         <disk type='file' device='disk'>
             <driver name='qemu' type='{{ device.secondaryDiskParams.qemu_type }}' cache='none' io='native'/>
             <source file='{{ secondary_disk_path }}'/>

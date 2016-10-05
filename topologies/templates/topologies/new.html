@@ -28,6 +28,8 @@
     <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vpfe.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vriot.js' %}"></script>
+
     <script type="text/javascript" src="{% static 'js/vm_types/vqfxRe.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vqfxCosim.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/cloud.js' %}"></script>
@@ -61,6 +63,8 @@
 
     var images = $.parseJSON('{{ image_list_json|safe }}');
 
+    var allocated_ips = $.parseJSON('{{ allocated_ips|safe }}');
+
     // check if an IP address is currently available
     function checkIp() {
         var ip = jQuery('#topoIconIp').val();
@@ -93,7 +97,8 @@
     // FIXME - does not try to wrap around subnets
     // FIXME - always assume KVM default subnet
     // FIXME - doesn't account for IPs used in this topology already!
-    function nextIp() {
+    function nextIpOLD() {
+        alert(allocated_ips);
         var ipBox = jQuery('#topoIconIp');
         var ip = ipBox.val();
 
@@ -122,21 +127,18 @@
         jQuery.get(url, success);
     }
 
-    // used when a new instance is added to the topology
-    // convenience func to increment the previously entered ip by 1
-    // as wistar currently only supports a /24 for mgmt access
-    // there is no need to account for wrapping beyond 255
-    function incrementIconIp(ip)  {
-        var iparray = ip.split('.');
-        if(iparray.length == 4) {
-            var last = parseInt(iparray[3]);
-            if(! isNaN(last)) {
-                return iparray[0] + "." + iparray[1] + "." + iparray[2] + "." + (last + 1);
-            } else { 
-                return ip;
+    var ip_floor = 2;
+
+    function nextIp() {
+        console.log('ip_floor is ' + ip_floor);
+
+        for(i=ip_floor;i<255;i++) {
+            if ($.inArray(i, allocated_ips) < 0) {
+                ip_floor = i + 1;
+                return '{{ global_config.management_prefix }}' + i;
+            } else {
+                console.log(i + ' is taken');
             }
-        } else {
-            return ip;
         }
     }
 
@@ -167,9 +169,14 @@
         }
     }
 
+    function addIconAndClose() {
+        addIcon();
+        hideOverlay('#add_vm_form');
+    }
+
     // add icon to the topology with the indicated values
     function addIcon() {
-    	var ip = jQuery('#topoIconIp').val();
+    	var ip = nextIp();
     	var user = jQuery('#topoIconUser').val();
     	var pw = jQuery('#topoIconPass').val();
     	var name = jQuery('#topoIconName').val();
@@ -251,15 +258,14 @@
         icon.setRam(ram);
 
 	    canvas.addFigure(icon, lastX, lastY);
-	    
-	    if (icon.getSecondaryDiskType() != "") {
-	        var secondary_disk_id = jQuery('#topoIconSecondaryDisk').val();
-	        icon.setSecondaryDisk(secondary_disk_id);
-	    }
 
-        if (icon.getTertiaryDiskType() != "") {
-	        var tertiary_disk_id = jQuery('#topoIconTertiaryDisk').val();
-	        icon.setTertiaryDisk(tertiary_disk_id);
+	    if (icon.getSecondaryDiskParams() != "") {
+	        var params = icon.getSecondaryDiskParams();
+	        var type = params["type"];
+	        if (type == "image") {
+                params["image_id"] = jQuery('#topoIconSecondaryDisk').val();
+                icon.setSecondaryDiskParams(params);
+            }
 	    }
 
 	    if (icon.getCompanionType() != "") {
@@ -270,6 +276,8 @@
             var vpfe = eval("new " + icon.COMPANION_TYPE + "()" );
             vpfe.setup("Child", name, ip, user, pw, vpfe_image);
 
+            vpfe.setCpu(vpfe_cpu);
+            vpfe.setRam(vpfe_ram);
             // bind them together here!
             vpfe.setParentId(icon.getId());
             icon.setChildId(vpfe.getId());
@@ -286,7 +294,7 @@
 	    }
 
         // let's try to increment everything nicely
-    	jQuery('#topoIconIp').val(incrementIconIp(ip));
+    	// jQuery('#topoIconIp').val(incrementIconIp(ip));
     	jQuery('#topoIconName').val(incrementIconName(name));
 
     	jQuery('#topoIconScriptSelect').val(0);
@@ -384,7 +392,7 @@
         jQuery('#addInstanceTbodyCloudInit').css("display", "none");
         jQuery('#addInstanceTbodyVFPC').css("display", "none");
         jQuery('#addInstanceTbodySecondaryDisk').css("display", "none");
-        jQuery('#addInstanceTbodyTertiaryDisk').css("display", "none");
+        //jQuery('#addInstanceTbodyTertiaryDisk').css("display", "none");
 
         for (v=0;v<vm_types.length;v++) {
             vm_type = vm_types[v];
@@ -397,14 +405,26 @@
                 jQuery('#topoIconCpu').val(icon.VCPU);
                 jQuery('#topoIconRam').val(icon.VRAM);
 
-                if (icon.SECONDARY_DISK_TYPE != "") {
-                    jQuery('#addInstanceTbodySecondaryDisk').css("display", "");
-                    filterCompanionSelect(icon.SECONDARY_DISK_NAME_FILTER, "topoIconSecondaryDisk");
+                // FIXME - we may actually never have a need for 'image' selectable types again!
+                // just generate the disks images we need!
+                if (icon.getSecondaryDiskParams() != "") {
+                    var params = icon.getSecondaryDiskParams();
+                    type = params["type"];
+                    if (type == "image") {
+                        filter = params["filter"];
+                        jQuery('#addInstanceTbodySecondaryDisk').css("display", "");
+                        filterCompanionSelect(filter, "topoIconSecondaryDisk");
+                    }
                 }
 
-                if (icon.TERTIARY_DISK_TYPE != "") {
-                    jQuery('#addInstanceTbodyTertiaryDisk').css("display", "");
-                    filterCompanionSelect(icon.TERTIARY_DISK_NAME_FILTER, "topoIconTertiaryDisk");
+                if (icon.getTertiaryDiskParams() != "") {
+                    var params = icon.getTertiaryDiskParams();
+                    var type = params["type"];
+                    if (type == "image") {
+                        filter = params["filter"];
+                        jQuery('#addInstanceTbodyTertiaryDisk').css("display", "");
+                        filterCompanionSelect(filter, "topoIconTertiaryDisk");
+                    }
                 }
 
                 if (icon.COMPANION_TYPE != "") {
@@ -649,6 +669,8 @@
         c.width = 100;
         c.height = 100;
         canvas.addFigure(c, 385 + (externalCloudCounter * 60), 15 + (externalCloudCounter * 50));
+
+        hideOverlay('#add_bridge_form');
     }
 
     function addInternalCloud() {
@@ -658,6 +680,8 @@
         c.width = 100;
         c.height = 100;
         canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
+
+        hideOverlay('#add_bridge_form');
     }
 
     function addRectangle() {
@@ -811,20 +835,6 @@
             </tr>
             <tr>
                 <td>
-                    IP Address
-                </td>
-                <td>
-                    <input type="text" size="15" maxsize="15" name="topoIconIp" id="topoIconIp"
-                           value="{{ global_config.management_prefix}}"
-                           title="Choose an IP from the {{ global_config.management_subnet }} range"
-                           onblur="javascript: checkIp();" style="width: 85%"/>
-                    <input type="button" name="next_ip_button" id="next_ip_button"
-                           value="^" onclick="javascript: nextIp();" style="display: inline; border: 1px solid #ccc;"
-                           title="Find next available IP address"/>
-                </td>
-            </tr>
-            <tr>
-                <td>
                     Authentication
                 </td>
                 <td>
@@ -925,18 +935,6 @@
                 </td>
             </tr>
             </tbody>
-            <tbody id="addInstanceTbodyTertiaryDisk" style="display: none">
-            <tr>
-                <td title="Only useful for vmx > 14.2">
-                    Tertiary Disk
-                </td>
-                <td>
-                    <select name="topoIconTertiaryDisk" id="topoIconTertiaryDisk">
-
-                    </select>
-                </td>
-            </tr>
-            </tbody>
             <tbody id="addInstanceTbodyVFPC" style="display: none">
             <tr>
                 <td title="Only useful for vmx > 14.2">
@@ -947,8 +945,8 @@
                             onchange="javascript: setCompanionParams(this)">
                     </select>
                 </td>
-
-                <tr>
+            </tr>
+            <tr>
                 <td>
                     vFPC vCPU
                 </td>
@@ -1001,7 +999,9 @@
                 <td colspan="2">
                     <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
                     <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
-                    <input type="button" onclick="javascript: addIcon();" value="Add Instance"/>
+                    <input type="button" onclick="javascript: addIconAndClose();" value="Add and Close"/>
+                    &nbsp;
+                    <input type="button" onclick="javascript: addIcon();" value="Add Another Instance"/>
                 </td>
             </tr>
         </table>

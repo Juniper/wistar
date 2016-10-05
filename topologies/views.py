@@ -1,8 +1,8 @@
 import json
 import logging
 import time
-import yaml
 
+import yaml
 from django.contrib import messages
 from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
@@ -52,6 +52,8 @@ def new(request):
     vm_types_string = json.dumps(vm_types)
     image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
 
+    currently_allocated_ips = wistarUtils.get_used_ips()
+
     if configuration.deployment_backend == "openstack":
         external_bridge = configuration.openstack_external_network
     else:
@@ -59,7 +61,8 @@ def new(request):
 
     context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string,
                'image_list_json': image_list_json,
-               'external_bridge': external_bridge
+               'external_bridge': external_bridge,
+               'allocated_ips': currently_allocated_ips
                }
     return render(request, 'topologies/new.html', context)
 
@@ -94,6 +97,11 @@ def import_topology(request):
             topology.name = "Imported Topology"
             topology.id = 0
 
+            # keep track of all the ips that are currently used
+            # we will import this topology and ensure that any assigned ips are unique for this environment
+            currently_allocated_ips = wistarUtils.get_used_ips()
+            next_ip_floor = 2
+
             for json_object in json_data:
                 if "userData" in json_object and "wistarVm" in json_object["userData"]:
                     ud = json_object["userData"]
@@ -108,6 +116,11 @@ def import_topology(request):
                     image = image_list[0]
                     print str(image.id)
                     json_object["userData"]["image"] = image.id
+
+                    valid_ip = wistarUtils.get_next_ip(currently_allocated_ips, next_ip_floor)
+                    next_ip_floor = valid_ip
+
+                    json_object["userData"]["ip"] = configuration.management_prefix + valid_ip
 
                 elif json_object["type"] == "wistar.info":
                     topology.name = json_object["name"]
@@ -190,34 +203,45 @@ def detail(request, topo_id):
         logger.error('topology id %s was not found!' % topo_id)
         return render(request, 'error.html', {'error': "Topology not found!"})
 
-    domain_list = libvirtUtils.get_domains_for_topology("t" + topo_id)
-    network_list = libvirtUtils.get_networks_for_topology("t" + topo_id)
     config_sets = ConfigSet.objects.filter(topology=topology)
-    context = {'domain_list': domain_list, 'network_list': network_list, 'topo_id': topo_id,
-               'configSets': config_sets, 'topo': topology}
+    context = {'topo_id': topo_id, 'configSets': config_sets, 'topo': topology}
     return render(request, 'topologies/edit.html', context)
 
 
 def delete(request, topology_id):
     logger.debug('---- topology delete ----')
     topology_prefix = "t%s_" % topology_id
-    network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
-    for network in network_list:
-        print "undefine network: " + network["name"]
-        libvirtUtils.undefine_network(network["name"])
 
-    domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
-    for domain in domain_list:
-        print "undefine domain: " + domain["name"]
-        source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
-        if libvirtUtils.undefine_domain(domain["uuid"]):
-            if source_file is not None:
-                osUtils.remove_instance(source_file)
+    should_reconfigure_dhcp = False
 
-    topology = get_object_or_404(Topology, pk=topology_id)
+    if configuration.deployment_backend == "kvm":
 
-    osUtils.remove_instances_for_topology(topology_prefix)
-    osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
+        network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
+        for network in network_list:
+            print "undefine network: " + network["name"]
+            libvirtUtils.undefine_network(network["name"])
+
+        domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
+        for domain in domain_list:
+
+            # remove reserved mac addresses for all domains in this topology
+            mac_address = libvirtUtils.get_management_interface_mac_for_domain(domain["name"])
+            if osUtils.release_management_ip_for_mac(mac_address):
+                should_reconfigure_dhcp = True
+
+            print "undefine domain: " + domain["name"]
+            source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
+            if libvirtUtils.undefine_domain(domain["uuid"]):
+                if source_file is not None:
+                    osUtils.remove_instance(source_file)
+
+        topology = get_object_or_404(Topology, pk=topology_id)
+
+        osUtils.remove_instances_for_topology(topology_prefix)
+        osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
+
+        if should_reconfigure_dhcp:
+            osUtils.reload_dhcp_config()
 
     topology.delete()
     messages.info(request, 'Topology %s deleted' % topology.name)

@@ -3,10 +3,14 @@ import os
 import subprocess
 import time
 
-import libvirtUtils
 from django.core.exceptions import ObjectDoesNotExist
+
+import libvirtUtils
+import osUtils
 from images.models import Image
+from topologies.models import Topology
 from wistar import configuration
+from wistar import settings
 
 # keep track of how many mac's we've used
 mac_counter = 0
@@ -192,18 +196,13 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["smbiosManufacturer"] = user_data["smbiosManufacturer"]
             device["smbiosVersion"] = user_data["smbiosVersion"]
 
-            device["secondaryDiskType"] = user_data["secondaryDiskType"]
-            device["tertiaryDiskType"] = user_data["tertiaryDiskType"]
+            device["secondaryDiskParams"] = user_data["secondaryDiskParams"]
+            device["tertiaryDiskParams"] = user_data["tertiaryDiskParams"]
 
             device["managementInterface"] = user_data["mgmtInterface"]
 
-            if "secondaryDisk" in user_data:
-                device["secondaryDisk"] = user_data["secondaryDisk"]
-
-            if "tertiaryDisk" in user_data:
-                device["tertiaryDisk"] = user_data["tertiaryDisk"]
-
             device["ip"] = user_data["ip"]
+            device["type"] = user_data["type"]
 
             device["user"] = "root"
             if "user" in user_data:
@@ -224,6 +223,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                 device["configDriveSupport"] = user_data["configDriveSupport"]
                 if "configDriveParams" in user_data:
                     device["configDriveParams"] = user_data["configDriveParams"]
+                    device["configDriveParamsFile"] = user_data["configDriveParamsFile"]
                 else:
                     device["configDriveParams"] = dict()
 
@@ -272,7 +272,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     dm = dict()
                     dm["mac"] = generate_next_mac(topology_id)
                     dm["bridge"] = "t%s_d" % str(topology_id)
-                    dm["type"] = user_data["interfaceType"]
+                    dm["type"] = user_data["mgmtInterfaceType"]
 
                     device_interface_wiring[dummy] = dm
 
@@ -457,27 +457,32 @@ def clone_topology(topology_json):
     :param topology_json: json string from Topology
     :return: new topology_json with incremented management IPs
     """
-    json_data = json.loads(topology_json)
+    try:
+        json_data = json.loads(topology_json)
 
-    wistar_vm_counter = 0
+        wistar_vm_counter = 0
 
-    for json_object in json_data:
-        if "userData" in json_object and "wistarVm" in json_object["userData"]:
-            wistar_vm_counter += 1
+        for json_object in json_data:
+            if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                wistar_vm_counter += 1
 
-    for json_object in json_data:
-        if "userData" in json_object and "wistarVm" in json_object["userData"]:
-            ud = json_object["userData"]
-            ip = ud["ip"]
-            ip_octets = ip.split('.')
-            new_octets = int(ip_octets[3]) + wistar_vm_counter
-            if new_octets > 255:
-                new_octets -= 255
-            ip_octets[3] = str(new_octets)
-            new_ip = ".".join(ip_octets)
-            ud["ip"] = new_ip
+        all_used_ips = get_used_ips()
+        floor_ip = 2
 
-    return json.dumps(json_data)
+        for json_object in json_data:
+            if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                ud = json_object["userData"]
+                next_ip = get_next_ip(all_used_ips, floor_ip)
+                floor_ip = next_ip
+                new_ip = configuration.management_prefix + str(next_ip)
+                print "new_ip is " + new_ip
+                ud["ip"] = new_ip
+
+        return json.dumps(json_data)
+
+    except Exception as e:
+        print str(e)
+        return None
 
 
 def launch_web_socket(vnc_port, web_socket_port, server):
@@ -488,14 +493,14 @@ def launch_web_socket(vnc_port, web_socket_port, server):
     :param server: server to redirect to
     :return: pid of the websockify process
     """
-    
+
     path = os.path.abspath(os.path.dirname(__file__))
     ws = os.path.join(path, "../../webConsole/bin/websockify.py")
 
     web_socket_path = os.path.abspath(ws)
 
     cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (web_socket_path, server, vnc_port, server, web_socket_port)
-    
+
     print cmd
 
     proc = subprocess.Popen(cmd, shell=True, close_fds=True)
@@ -541,7 +546,7 @@ def kill_web_socket(server, web_socket_port):
     :return: boolean
     """
     print "Killing webConsole sessions"
-    cmd = 'ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + '" | awk "{ print $2 }" | xargs -n 1 kill'
+    cmd = 'ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + '" | awk \'{ print $2 }\' | xargs -n 1 kill'
     print "Running cmd: " + cmd
     rt = os.system(cmd)
     if rt == 0:
@@ -550,4 +555,143 @@ def kill_web_socket(server, web_socket_port):
         return False
 
 
+def get_used_ips():
+    """
+    get a list of all IPs that have been configured on topologyIcon objects
+    and also append all the current dhcp leases as well
+    :return: list of used ips
+    """
 
+    all_ips = set()
+
+    topologies = Topology.objects.all()
+
+    for topology in topologies:
+        json_data = json.loads(topology.json)
+        for json_object in json_data:
+
+            if "userData" in json_object and json_object["userData"] is not None and "ip" in json_object["userData"]:
+                ud = json_object["userData"]
+                ip = ud["ip"]
+                last_octet = ip.split('.')[-1]
+                all_ips.add(int(last_octet))
+
+    # let's also grab current dhcp leases as well
+    dhcp_leases = osUtils.get_dhcp_leases()
+    for lease in dhcp_leases:
+        ip = str(lease["ip-address"])
+        print "adding active lease %s" % ip
+        last_octet = ip.split('.')[-1]
+        all_ips.add(int(last_octet))
+
+    # let's also grab current dhcp reservations
+    dhcp_leases = osUtils.get_dhcp_reservations()
+    for lease in dhcp_leases:
+        ip = str(lease["ip-address"])
+        print "adding active reservation %s" % ip
+        last_octet = ip.split('.')[-1]
+        all_ips.add(int(last_octet))
+
+    print "sorting and returning all_ips"
+    all_ips_list = list(all_ips)
+    all_ips_list.sort()
+    return all_ips_list
+
+
+def get_next_ip(all_ips, floor):
+    try:
+
+        all_ips.sort()
+
+        print "floor is " + str(floor)
+
+        for i in range(2, 254):
+            if i > floor and i not in all_ips:
+                return i
+
+    except Exception as e:
+        print e
+        return floor
+
+
+def create_disk_instance(device, disk_params):
+    """
+    Creates a disk according to the parameters specified.
+    Can be blank, image, or config_drive
+
+    :param device: device dictionary created from wistarUtils.loadJson()
+    :param disk_params: parameters for the specific disk we are working with
+    :return: the path to the created disk or ""
+    """
+
+    domain_name = device["name"]
+    disk_instance_path = ""
+
+    if "type" in disk_params:
+        if disk_params["type"] == "image" and "image_id" in disk_params:
+            print "Creating secondary Disk information"
+            image_id = disk_params["image_id"]
+            disk_image = Image.objects.get(pk=image_id)
+            disk_base_path = settings.MEDIA_ROOT + "/" + disk_image.filePath.url
+
+            disk_instance_path = osUtils.get_instance_path_from_image(disk_base_path,
+                                                                      domain_name + "_secondary_image.img"
+                                                                      )
+
+            if not osUtils.check_path(disk_instance_path):
+                if not osUtils.create_thin_provision_instance(disk_base_path,
+                                                              domain_name + "_secondary_image.img"
+                                                              ):
+                    raise Exception("Could not create image instance for image: " + disk_base_path)
+
+        elif disk_params["type"] == "blank":
+            disk_instance_path = settings.MEDIA_ROOT \
+                                 + "/user_images/instances/" + domain_name + "_secondary_blank.img"
+
+            disk_size = "16G"
+            if "size" in disk_params:
+                disk_size = disk_params["size"]
+
+            if not osUtils.check_path(disk_instance_path):
+                if not osUtils.create_blank_image(disk_instance_path, disk_size):
+                    raise Exception("Could not create image instance for image: " + disk_instance_path)
+
+        elif disk_params["type"] == "config_drive":
+            # let's check if config_drive is supported for this vm_type!
+            # this is usually used for vMX in openstack, however, we can also use it here for KVM deployments
+            disk_instance_path = ''
+            if "configDriveSupport" in device and device["configDriveSupport"] is True:
+
+                print "Lets create a config-drive!"
+
+                # keep a dict of files with format: filename: filecontents
+                files = dict()
+                if "configDriveParamsFile" in device and device["configDriveParamsFile"]:
+                    params = device["configDriveParams"]
+                    name = device["configDriveParamsFile"]
+                    file_data = ""
+                    # config drive params are usually a dict - to make json serialization easier
+                    # for our purposes here, let's just make a file with a single key: value per line
+                    # note, we can add a serialization format to the vm_type.js if needed here
+                    # only currently used for /boot/loader.conf in vmx and riot
+                    for k in params:
+                        file_data += '%s="%s"\n' % (k, params[k])
+
+                # junos customization
+                # let's also inject a default config here as well if possible!
+                if "junos_vre" in device["type"]:
+                    junos_config = osUtils.get_junos_default_config_template(device["name"],
+                                                                             device["label"],
+                                                                             device["password"],
+                                                                             device["ip"])
+
+                    if junos_config is not None:
+                        files["/juniper.conf"] = junos_config
+
+                files[name] = file_data
+                disk_instance_path = osUtils.create_cloud_drive(device["name"], files)
+                if disk_instance_path is None:
+                    disk_instance_path = ''
+
+    print "Using %s" % disk_instance_path
+    return disk_instance_path

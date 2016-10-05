@@ -3,6 +3,11 @@
 {% load staticfiles %}
 {% block content %}
 <h2>Imported Disk Images</h2>
+<ul class="messages">
+    {% for message in messages %}
+    <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
 <table>
     <tr>
         <th>Name</th>

@@ -62,9 +62,8 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	DUMMY_INTERFACE_LIST: [],
 	// if the VM requires a secondary disk be attached, this will define the bus type in the libvirt XML
 	// can be ide, usb or any other option that libvirt supports
-	SECONDARY_DISK_TYPE: "",
-	// same for teriary disk. vMX uses both a secondary and tertiary disk, one an ide and one a usb
-	TERTIARY_DISK_TYPE: "",
+	SECONDARY_DISK_PARAMS: "",
+	TERTIARY_DISK_PARAMS: "",
 	// set's the SMBIOS string in the libvirt XML
 	/*
 	 <system>
@@ -76,7 +75,7 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	SMBIOS_PRODUCT_STRING_PREFIX: "Wistar-",
 	SMBIOS_PRODUCT_STRING_SUFFIX: "-VM",
 	SMBIOS_MANUFACTURER: "Wistar",
-	SMBIOS_VERSION: "2.0",
+	SMBIOS_VERSION: "0.1.0",
 	// if the VM supports cloud-init, set to true.
 	// the UI will present an option to pass a cloud-init config script to the device
 	// useful for things like ubuntu cloud images
@@ -88,6 +87,8 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	CONFIG_DRIVE_SUPPORT: false,
 	// list of parameters to pass to cloud drive
 	CONFIG_DRIVE_PARAMS: {},
+	// in kvm write cofig-drive-params to this file!
+	CONFIG_DRIVE_PARAMS_FILE: "",
 	// default username
 	DEFAULT_USER: "root",
 
@@ -148,34 +149,17 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 		var ud = this.getUserData();
 		ud["ram"] = ram;
 	},
-	getSecondaryDiskType: function() {
-		return this.SECONDARY_DISK_TYPE;
+	getSecondaryDiskParams: function() {
+		return this.SECONDARY_DISK_PARAMS;
 	},
-	getTertiaryDiskType: function() {
-		return this.TERTIARY_DISK_TYPE;
+	getTertiaryDiskParams: function() {
+		return this.TERTIARY_DISK_PARAMS;
 	},
-
-	getSecondaryDisk: function() {
-		if (this.getUserData()["secondaryDisk"] != undefined) {
-			return this.getUserData()["secondaryDisk"];
-		} else {
-			return "";
-		}
+	setSecondaryDiskParams: function(params) {
+		this.SECONDARY_DISK_PARAMS = params;
 	},
-	setSecondaryDisk: function(disk_id) {
-		var ud = this.getUserData();
-		ud["secondaryDisk"] = disk_id;
-	},
-	getTertiaryDisk: function() {
-		if (this.getUserData()["tertiaryDisk"] != undefined) {
-			return this.getUserData()["tertiaryDisk"];
-		} else {
-			return "";
-		}
-	},
-	setTertiaryDisk: function(disk_id) {
-		var ud = this.getUserData();
-		ud["tertiaryDisk"] = disk_id;
+	setTertiaryDiskParams: function(params) {
+		this.TERTIARY_DISK_PARAMS = params;
 	},
 	getMgmtInterface: function() {
 		// can we declare this now?
@@ -278,8 +262,8 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 		this.setIp(memento.userData.ip);
 		this.setLabel(memento.userData.name);
 		this.setName(memento.userData.name);
-		this.setSecondaryDisk(memento.userData.secondaryDisk);
-		this.setTertiaryDisk(memento.userData.tertiaryDisk);
+		this.setSecondaryDiskParams(memento.userData.secondaryDiskParams);
+		this.setTertiaryDiskParams(memento.userData.tertiaryDiskParams);
 	},
 	getPersistentAttributes: function() {
 		// force grabbing the mgnt interface
@@ -300,19 +284,22 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 		ud["companionInterfaceMirror"] = this.COMPANION_INTERFACE_MIRROR;
 		ud["companionInterfaceMirrorOffset"] = this.COMPANION_INTERFACE_MIRROR_OFFSET;
 		ud["companionType"] = this.COMPANION_TYPE;
-		ud["secondaryDiskType"] = this.SECONDARY_DISK_TYPE;
-		ud["tertiaryDiskType"] = this.TERTIARY_DISK_TYPE;
+		ud["secondaryDiskParams"] = this.SECONDARY_DISK_PARAMS;
+		ud["tertiaryDiskParams"] = this.TERTIARY_DISK_PARAMS;
 		ud["smbiosProductString"] = this.getSmBiosProductString();
 		ud["smbiosVersion"] = this.SMBIOS_VERSION;
 		ud["smbiosManufacturer"] = this.SMBIOS_MANUFACTURER;
 		ud["cloudInitSupport"] = this.CLOUD_INIT_SUPPORT;
 		ud["configDriveSupport"] = this.CONFIG_DRIVE_SUPPORT;
 		ud["configDriveParams"] = this.CONFIG_DRIVE_PARAMS;
+		ud["configDriveParamsFile"] = this.CONFIG_DRIVE_PARAMS_FILE;
 
 		return this._super();
 	},
 	// override default dc handler
 	onDoubleClick: function() {
-		return;
+	    if (typeof topology_id != 'undefined') {
+		    launchWebConsole(generateDomainNameFromLabel(this.getName()));
+		}
 	},
 });

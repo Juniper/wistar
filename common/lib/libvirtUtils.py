@@ -1,3 +1,4 @@
+import json
 import logging
 import libvirt
 from lxml import etree
@@ -568,3 +569,45 @@ def get_iso_for_domain(domain_name):
         return source_file
     else:
         return None
+
+
+def get_management_interface_mac_for_domain(domain_name):
+    try:
+        domain = get_domain_by_name(domain_name)
+    except Exception as e:
+        print "Domain not configured"
+        print str(e)
+        return None
+
+    xml = domain.XMLDesc(0)
+    doc = etree.fromstring(xml)
+    mac_el = doc.find(".//interface/source[@bridge='virbr0']/../mac")
+    if mac_el is not None:
+        mac_address = mac_el.get("address")
+        return mac_address
+    else:
+        return None
+
+
+def get_management_ip_for_domain(domain_name):
+    """
+    The leases file is kept as a list of JSON objects:
+    {
+        "ip-address": "192.168.122.171",
+        "mac-address": "52:54:00:00:42:00",
+        "hostname": "uuu01",
+        "expiry-time": 1474921933
+    },
+    "param domain_name: name of the domain to search for
+    :return: ip address assigned to domain
+    """
+    mac_address = get_management_interface_mac_for_domain(domain_name)
+    leases_file_path = "/var/lib/libvirt/dnsmasq/virbr0.status"
+    with open(leases_file_path) as leases_file:
+        leases_list = json.loads(leases_file.read())
+        for lease in leases_list:
+            if lease["mac-address"] == mac_address:
+                return str(lease["ip-address"])
+
+    print "Could not find leased IP address for mac"
+    return None

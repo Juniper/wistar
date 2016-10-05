@@ -67,11 +67,18 @@
         doc.css('cursor', 'progress');
        
         if (action == "stop") {
+            if (typeof s != 'undefined') {
+                s.setBootState("down");
+            }
+
             if (! confirm("This will power off the instance ungracefully!")) {
                 doc.css('cursor', '');
                 return false;
             }
         } else if (action == "undefine") {
+            if (typeof s != 'undefined') {
+                s.setBootState("down");
+            }
             if (! confirm("This will delete this instance entirely!")) {
                 doc.css('cursor', '');
                 return false;

@@ -41,14 +41,17 @@ def update(request):
         image.description = image_description
         image.type = image_type
         image.save()
+        messages.info(request, "Image updated")
         return HttpResponseRedirect('/images/')
 
     else:
         if "image_id" in request.POST:
             image_id = request.POST["image_id"]
             image = get_object_or_404(Image, pk=image_id)
+            messages.info(request, "Image updated")
             return render(request, 'edit.html', {'image': image})
         else:
+            messages.info(request, "Could not update image! No name or ID found in request!")
             return HttpResponseRedirect('/images/')
 
 
@@ -154,7 +157,7 @@ def create_local(request):
     image.filePath = file_path
     image.type = image_type
     image.save()
-
+    messages.info(request, "Image Created!")
     return HttpResponseRedirect('/images')
 
 
@@ -294,11 +297,11 @@ def glance_list(request):
     return render(request, 'images/glance_list.html', context)
 
 
-
 def delete(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
     image.filePath.delete()
     image.delete()
+    messages.info(request, "Image deleted!")
     return HttpResponseRedirect('/images/')
 
 

@@ -575,9 +575,9 @@ def check_ip(request):
 def get_available_ip(request):
     # just grab the next available IP
     print "getting IPS"
-    all_used_ips = apiUtils.get_used_ips()
+    all_used_ips = wistarUtils.get_used_ips()
     print all_used_ips
-    next_ip = apiUtils.get_next_ip(all_used_ips, 2)
+    next_ip = wistarUtils.get_next_ip(all_used_ips, 2)
     print next_ip
     response_data = {"result": next_ip}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -629,10 +629,16 @@ def manage_domain(request):
             return render(request, 'ajax/ajaxError.html', {'error': "Could not suspend domain!"})
 
     elif action == "undefine":
+
+        domain = libvirtUtils.get_domain_by_uuid(domain_id)
+        domain_name = domain.name()
+
         source_file = libvirtUtils.get_image_for_domain(domain_id)
         if libvirtUtils.undefine_domain(domain_id):
             if source_file is not None:
                 osUtils.remove_instance(source_file)
+                osUtils.remove_cloud_init_seed_dir_for_domain(domain_name)
+
             return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
@@ -777,12 +783,16 @@ def multi_clone_topology(request):
     json_data = topology.json
     i = 0
     while i < int(num_clones):
-        new_topology = topology
-        new_topology.name = orig_name + " " + str(i + 1).zfill(2)
-        new_topology.json = wistarUtils.clone_topology(json_data)
-        json_data = new_topology.json
-        new_topology.id = None
-        new_topology.save()
+
+        nj = wistarUtils.clone_topology(json_data)
+        if nj is not None:
+            new_topology = topology
+            new_topology.name = orig_name + " " + str(i + 1).zfill(2)
+            new_topology.json = nj
+            json_data = new_topology.json
+            new_topology.id = None
+            new_topology.save()
+
         i += 1
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -855,6 +865,8 @@ def inline_deploy_topology(config):
         # if we're not on Linux, then let's try to use vbox instead
         domain_xml_path = "ajax/vbox/"
 
+    should_reconfigure_dhcp = False
+
     for device in config["devices"]:
         try:
             if not libvirtUtils.domain_exists(device["name"]):
@@ -873,37 +885,11 @@ def inline_deploy_topology(config):
                     if not osUtils.create_thin_provision_instance(image_base_path, device["name"]):
                         raise Exception("Could not create image instance for image: " + image_base_path)
 
-                if "secondaryDisk" in device:
-                    print "Creating secondary Disk information"
-                    secondary_image = Image.objects.get(pk=device["secondaryDisk"])
-                    secondary_base_path = settings.MEDIA_ROOT + "/" + secondary_image.filePath.url
-                    secondary_instance_path = osUtils.get_instance_path_from_image(secondary_base_path,
-                                                                                   device["name"] + "_secondary"
-                                                                                   )
+                if "type" in device["secondaryDiskParams"]:
+                    secondary_disk = wistarUtils.create_disk_instance(device, device["secondaryDiskParams"])
 
-                    if not osUtils.check_path(secondary_instance_path):
-                        if not osUtils.create_thin_provision_instance(secondary_base_path, 
-                                                                      device["name"] + "_secondary"
-                                                                      ):
-                            raise Exception("Could not create image instance for image: " + secondary_base_path)
-
-                    device["secondaryDiskPath"] = secondary_instance_path
-
-                if "tertiaryDisk" in device:
-                    print "Creating tertiary Disk information"
-                    tertiary_image = Image.objects.get(pk=device["tertiaryDisk"])
-                    tertiary_base_path = settings.MEDIA_ROOT + "/" + tertiary_image.filePath.url
-                    tertiary_instance_path = osUtils.get_instance_path_from_image(tertiary_base_path,
-                                                                                  device["name"] + "_tertiary"
-                                                                                  )
-
-                    if not osUtils.check_path(tertiary_instance_path):
-                        if not osUtils.create_thin_provision_instance(tertiary_base_path, 
-                                                                      device["name"] + "_tertiary"
-                                                                      ):
-                            raise Exception("Could not create image instance for image: " + tertiary_base_path)
-
-                    device["tertiaryDiskPath"] = tertiary_instance_path
+                if "type" in device["tertiaryDiskParams"]:
+                    tertiary_disk = wistarUtils.create_disk_instance(device, device["tertiaryDiskParams"])
 
                 cloud_init_path = ''
                 if image.type == "linux":
@@ -931,7 +917,9 @@ def inline_deploy_topology(config):
 
                 device_xml = render_to_string(domain_xml_path + configuration_file,
                                               {'device': device, 'instancePath': instance_path,
-                                               'vm_env': vm_env, 'cloud_init_path': cloud_init_path}
+                                               'vm_env': vm_env, 'cloud_init_path': cloud_init_path,
+                                               'secondary_disk_path': secondary_disk,
+                                               'tertiary_disk_path': tertiary_disk}
                                               )
                 print device_xml
                 libvirtUtils.define_domain_from_xml(device_xml)
@@ -942,9 +930,18 @@ def inline_deploy_topology(config):
                 management_ip = str(management_interfaces[0]["ip"])
                 vboxUtils.preconfigure_vmx(device["name"], management_ip)
 
+            print "Reserving IP with dnsmasq"
+            management_mac = libvirtUtils.get_management_interface_mac_for_domain(device["name"])
+            if osUtils.reserve_management_ip_for_mac(management_mac, device["ip"]):
+                should_reconfigure_dhcp = True
+
         except Exception as ex:
             print "Raising exception"
             raise Exception(str(ex))
+
+    # finally, let's reload our dhcp config
+    if should_reconfigure_dhcp:
+        osUtils.reload_dhcp_config()
 
 
 def launch_web_console(request):

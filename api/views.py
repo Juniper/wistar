@@ -14,9 +14,6 @@ from common.lib import wistarUtils
 from scripts.models import Script
 from topologies.models import Topology
 
-# FIXME = debug should be a global setting
-debug = True
-
 
 def index(request):
     return HttpResponseRedirect('/topologies/')
@@ -140,7 +137,7 @@ def start_topology(request):
         topology = Topology.objects.get(pk=clone_id)
 
         # get a list of all the currently used IPs defined
-        all_used_ips = apiUtils.get_used_ips()
+        all_used_ips = wistarUtils.get_used_ips()
         print str(all_used_ips)
 
         raw_json = json.loads(topology.json)
@@ -150,7 +147,7 @@ def start_topology(request):
                 ip = ud["ip"]
                 ip_octets = ip.split('.')
                 # get the next available ip
-                next_ip = apiUtils.get_next_ip(all_used_ips, 2)
+                next_ip = wistarUtils.get_next_ip(all_used_ips, 2)
                 # mark it as used so it won't appear in the next iteration
                 all_used_ips.append(next_ip)
 
@@ -299,6 +296,8 @@ def delete_topology(request):
 
     topology_name = request.POST['topology_name']
 
+    should_reconfigure_dhcp = False
+
     try:
         # get the topology by name
         topology = Topology.objects.get(name=topology_name)
@@ -321,6 +320,14 @@ def delete_topology(request):
         if libvirtUtils.undefine_domain(domain["uuid"]):
             if source_file is not None:
                 osUtils.remove_instance(source_file)
+
+        # remove reserved mac addresses for all domains in this topology
+        mac_address = libvirtUtils.get_management_interface_mac_for_domain(domain["name"])
+        if osUtils.release_management_ip_for_mac(mac_address):
+            should_reconfigure_dhcp = True
+
+    if should_reconfigure_dhcp:
+        osUtils.reload_dhcp_config()
 
     topology.delete()
     context["status"] = "deleted"

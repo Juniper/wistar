@@ -1,4 +1,5 @@
 import os
+import json
 import platform
 import shutil
 import subprocess
@@ -17,9 +18,6 @@ def check_is_linux():
         return True
     else:
         return False
-
-
-    # Is this version of linux Ubuntu based?
 
 
 def check_is_ubuntu():
@@ -171,9 +169,97 @@ def remove_instances_for_topology(topology_id_prefix):
             os.remove(full_path)
 
 
+def create_cloud_drive(domain_name, files=[]):
+    try:
+        seed_dir = configuration.seeds_dir + domain_name
+        seed_img_name = seed_dir + "/config-drive.img"
+
+        if not check_path(seed_dir):
+            os.mkdir(seed_dir)
+
+        if check_path(seed_img_name):
+            print "seed.img already created!"
+            return seed_img_name
+
+        if not os.system("qemu-img create -f raw  %s 16M" % seed_img_name) == 0:
+            raise Exception("Could not create config-drive image")
+
+        if not os.system("mkdosfs %s" % seed_img_name) == 0:
+            raise Exception("Could not create config-drive filesystem")
+
+        if not os.system("mount %s /mnt" % seed_img_name) == 0:
+            raise Exception("Could not mount config-drive filesystem")
+
+        for name in files:
+
+            if '/' in name:
+                # we need to create a directory structure here!
+                directory = os.path.dirname(name)
+                if not os.system("mkdir -p /mnt%s" % directory) == 0:
+                    raise Exception("Could not create confg-drive directory structure")
+            else:
+                # ensure a leading / just in case!
+                name = "/" + name
+
+            print "writing file: %s" % name
+            with open("/mnt%s" % name, "w") as mdf:
+                mdf.write(files[name])
+
+        os.system("cd /mnt && tar -cvf vmm-config.tar .")
+
+        return seed_img_name
+
+    except Exception as e:
+        print "Could not create_cloud_drive!!!"
+        print str(e)
+        return None
+
+    finally:
+        os.system("umount /mnt")
+
+
+def get_junos_default_config_template(domain_name, host_name, password, ip):
+    try:
+        # read template
+        this_path = os.path.abspath(os.path.dirname(__file__))
+        template_path = os.path.abspath(os.path.join(this_path, "../templates/junos_config.j2"))
+
+        template = open(template_path)
+        template_string = template.read()
+        template.close()
+
+        env = Environment()
+        template_data = env.from_string(template_string)
+
+        ip_network = IPNetwork(configuration.management_subnet)
+
+        config = dict()
+        config["domain_name"] = domain_name
+        config["host_name"] = host_name
+        config["mgmt_ip"] = ip + "/" + str(ip_network.prefixlen)
+        config["mgmt_gateway"] = configuration.management_gateway
+        config["ssh_key"] = configuration.ssh_key
+        config["ssh_user"] = configuration.ssh_user
+        config["password"] = password
+
+        template_data_string = template_data.render(config=config)
+        print template_data_string
+
+        seed_dir = configuration.seeds_dir + domain_name
+
+        if not check_path(seed_dir):
+            os.mkdir(seed_dir)
+
+        return template_data_string
+
+    except Exception as e:
+        print "Caught exception in create_cloud_init_img " + str(e)
+        return None
+
+
 def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, password, script="", script_param=""):
     try:
-        seed_dir = "/tmp/" + domain_name
+        seed_dir = configuration.seeds_dir + domain_name
         seed_img_name = seed_dir + "/seed.iso"
 
         if not check_path(seed_dir):
@@ -217,6 +303,9 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         config["network_address"] = ip_network.network.format()
         config["netmask"] = ip_network.netmask.format()
         config["mgmt_interface"] = mgmt_interface
+        config["default_gateway"] = configuration.management_gateway
+        config["ssh_key"] = configuration.ssh_key
+        config["ssh_user"] = configuration.ssh_user
         config["password"] = password
 
         if script_param != "":
@@ -252,7 +341,7 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
 
 def remove_cloud_init_tmp_dirs(topology_prefix):
     print "deleting cloud config drive for %s" % topology_prefix
-    seed_dir = '/tmp'
+    seed_dir = configuration.seeds_dir
     dirs = os.listdir(seed_dir)
     try:
         for d in dirs:
@@ -272,9 +361,141 @@ def remove_cloud_init_tmp_dirs(topology_prefix):
         print str(e)
 
 
+def remove_cloud_init_seed_dir_for_domain(domain_name):
+    try:
+        print "deleting cloud config drive for %s" % domain_name
+        seed_dir = configuration.seeds_dir + domain_name
+        print seed_dir
+        if os.path.isdir(seed_dir):
+            for f in os.listdir(seed_dir):
+                print "deleting cloud-init file: %s" % f
+                os.remove(os.path.join(seed_dir, f))
+
+            os.rmdir(seed_dir)
+    except Exception as e:
+        print "Got an error deleting cloud-init dir: %s" % e
+
+
 def get_image_size(image_path):
     cmd = "du -b %s | awk '{ print $1 }'" % image_path
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
     (o, e) = p.communicate()
     return o
+
+
+def get_dhcp_leases():
+    """
+    The leases file is kept as a list of JSON objects:
+    {
+        "ip-address": "192.168.122.171",
+        "mac-address": "52:54:00:00:42:00",
+        "hostname": "uuu01",
+        "expiry-time": 1474921933
+    },
+    :return: python list of lease objects
+    """
+    leases_file_path = "/var/lib/libvirt/dnsmasq/virbr0.status"
+    with open(leases_file_path) as leases_file:
+        return json.loads(leases_file.read())
+
+
+def get_dhcp_reservations():
+    """
+    Return all current reservations as a list of json objects
+    :return: list of objects in this format:
+    {
+        "ip-address": "192.168.122.171",
+        "mac-address": "52:54:00:00:42:00",
+    }
+    """
+    dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
+
+    # basic strategy is to pull all entries into an array unless the line matches our mac!
+    entries = []
+    with open(dhcp_hosts_file_path, 'r') as hosts_file:
+        for entry in hosts_file:
+            (m, i) = entry.strip().split(',')
+            entry_object = dict()
+            entry_object["ip-address"] = i
+            entry_object["mac-address"] = m
+            entries.append(entry_object)
+
+    return entries
+
+
+def reserve_management_ip_for_mac(mac, ip):
+    """
+    Open the libvirt dnsmasq dhcp-hosts file and add an entry for the mac / ip combo if it's
+    not already there
+    :param mac: mac address of the management interface
+    :param ip: desired IP address - presumably this has already been vetted as not in use
+    :return: boolean
+    """
+    dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
+    found = False
+    with open(dhcp_hosts_file_path, 'r') as hosts_file:
+        for entry in hosts_file:
+            (entry_mac, entry_ip) = entry.split(',')
+            if entry_ip == ip and entry_mac == mac:
+                print "management ip already reserved for this mac"
+                return False
+            elif entry_ip == ip and entry_mac != mac:
+                print "management ip Already in Use!"
+                return False
+            elif entry_ip != ip and entry_mac == mac:
+                print "management interface mac is already configured!"
+                return False
+
+    with open(dhcp_hosts_file_path, 'a') as hosts_file:
+        hosts_file.write("%s,%s\n" % (mac, ip))
+
+    return True
+
+
+def release_management_ip_for_mac(mac):
+    """
+    Open the libvirt dnsmasq dhcp-hosts file and remove an entry for the mac / ip combo if it's
+    not already there
+    :param mac: mac address of the management interface
+    :param ip: desired IP address - presumably this has already been vetted as not in use
+    :return: boolean
+    """
+    dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
+
+    # basic strategy is to pull all entries into an array unless the line matches our mac!
+    entries = []
+    found = False
+    with open(dhcp_hosts_file_path, 'r') as hosts_file:
+        for entry in hosts_file:
+            (m, i) = entry.strip().split(',')
+            if m == mac:
+                print "Removing management ip: %s reserved for mac: %s" % (i, m)
+                found = True
+                continue
+            else:
+                entries.append(entry.strip())
+
+    if found:
+        with open(dhcp_hosts_file_path, 'w') as hosts_file:
+            for entry in entries:
+                hosts_file.write("%s\n" % entry)
+
+        return True
+
+    return False
+
+
+def reload_dhcp_config():
+    """
+    sends a HUP to the dnsmasq process
+    :return: boolean
+    """
+    print "Sending HUP to dnsmsq processes"
+    cmd = 'ps -ef | grep dnsmasq | grep default.conf | awk \'{ print $2 }\' | xargs -n 1 kill -HUP'
+    print "Running cmd: " + cmd
+    rt = os.system(cmd)
+    if rt == 0:
+        return True
+    else:
+        return False
