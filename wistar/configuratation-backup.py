@@ -16,11 +16,11 @@ deployment_backend = 'kvm'
 # Openstack configuration
 # show openstack options even if not the primary deployment option
 # i.e. upload to glance is available but still deploy locally to kvm
-use_openstack = False
+use_openstack = True
 # authentication parameters
-openstack_host = '10.10.10.10'
+openstack_host = '10.0.1.129'
 openstack_user = 'admin'
-openstack_password = 'SECRET'
+openstack_password = 'secret'
 
 # project under which to place all topologies/stacks
 openstack_project = 'admin'
@@ -33,7 +33,7 @@ openstack_external_network = 'public-br-eth0'
 virtual_box_host_only_net_name = 'vboxnet0'
 
 # default external bridge name
-kvm_external_bridge = "br0"
+kvm_external_bridge = "brq75d9e11e-28"
 
 # VM management network prefix
 # this should match your Openstack mgmt_network subnet or the config of virbr0 when using KVM
@@ -44,12 +44,9 @@ management_gateway = '192.168.122.1'
 # wistar cloud init seeds director / temp directory
 seeds_dir = "/opt/wistar/seeds/"
 
-# user that will be configured via cloud-init - override this to your username if desired!
-ssh_user = "wistar"
+ssh_user = "nembery"
 # this key will be added to cloud-init enabled hosts in the user-data file
-# by default this is a dummy key! Replace this with your own key generated from 'ssh-keygen'
-ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCo33zCWVdSnQm2fDAZm9WsKH5W4ejMx8eaM7LssGjqefUlIu5LsNzbMUIxMT6eaXdlAwzw0jZfrI4fDj5nmBP2p2BCGYAFODpAKLJGr/cJZj4J+jbx3zxnW/eQ3PUkpu3ncWZj58hynOWDFWChMUV5nimbr5kVlFS5vhuvpZQUT9NMKo3NXuH8a3bkqh32hWS2eXE+FPy9vvcE3CoydgdPR+Z6T5Qqf0xCZ5Fzu7mMvB7BiVaj//KHI4xo/EE6vxKAMXwZ0YeaB1LyheEV66+DCcd5a/744LXxqfdA0yp38g68DBE6LK2jRWIPyTDSxWfW2lFe2M2XsUx0TDSKSLLb dummykey@REPLACEME"
-
+ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCT2doVdV0R6XaijW3KzjN+h7MWajkb+RAtlEhxPUwvnn2aWmi8tFrhjN4AfRZ3bXlnEKQIfQ4Rnztew6rq7UXyTYaiCi0lOLuf5lq80VKvP3XJDqBz0yMd/CBU/dqQii0NlJY+Y0qTCVkhVIldJWbby1AL+w4nWwwMFDXg/quyRSQuNULsMar7QA1N+nxrkNc5IFzCRbzqQ8og+8RASnKzFelRKNrkq7vrQxk6nWXHA/4BYXwrVZIvI4kTlG7b5FYzxOldcLkXfbC0whgxUbWhl1iCL3YcWLkDKUljNxiYOrUixzQrm235dgNUX4QX0xlctTbDbdvyrm/PcoFal5lJ nembery@feynman"
 # Registered VM Image types
 # this list will register the javascript VM configuration settings in
 # common/static/js/vm_types
@@ -78,6 +75,11 @@ vm_image_types = [
         "name": "junos_vpfe",
         "description": "Junos vMX vFPC",
         "js": "draw2d.shape.node.vpfe",
+    },
+    {
+        "name": "junos_riot",
+        "description": "Junos vMX RIOT",
+        "js": "draw2d.shape.node.vriot",
     },
     {
         "name": "junos_vpfe_haswell",

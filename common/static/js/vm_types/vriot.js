@@ -1,7 +1,7 @@
 draw2d.shape.node.vriot = draw2d.shape.node.wistarSetChild.extend({
     NAME: "draw2d.shape.node.vriot",
     VCPU: 1,
-    VRAM: 1024,
+    VRAM: 512,
     INTERFACE_PREFIX: "ge-0/0/",
     MANAGEMENT_INTERFACE_PREFIX: "fxp",
     MANAGEMENT_INTERFACE_TYPE: "e1000",
@@ -30,7 +30,9 @@ draw2d.shape.node.vriot = draw2d.shape.node.wistarSetChild.extend({
     CONFIG_DRIVE_PARAMS_FILE: "/boot/loader.conf",
     CONFIG_DRIVE_PARAMS: {
         "hw.pci.link.0x60.irq": 10,
-        "vm_chassis_i2cid": "21",
+        "hw.ata.ata_dma": 1,
+        "hw.ata.atapi_dma": 1,
+        "vm_chassis_i2cid": "161",
         "vm_i2cid": "0xBAA",
         "vm_instance": 0,
         "vm_is_virtual": 1,

@@ -102,14 +102,21 @@ def get_image_detail_from_local_image(local_image):
     image_detail["description"] = local_image.description
     image_detail["format"] = "qcow2"
     if local_image.filePath != "":
-
-        image_detail["size"] = osUtils.get_image_size(local_image.filePath.path)
-        image_detail["file"] = local_image.filePath.path
-        image_detail["local"] = True
+        try:
+            path = local_image.filePath.path
+            image_detail["size"] = osUtils.get_image_size(path)
+            image_detail["file"] = path
+            image_detail["local"] = True
+        except Exception as ve:
+            print str(ve)
+            image_detail["size"] = 0
+            image_detail["file"] = "None"
+            image_detail["local"] = True
     else:
         # this image does not actually exist locally!
         image_detail["local"] = False
 
+    print image_detail
     return image_detail
 
 

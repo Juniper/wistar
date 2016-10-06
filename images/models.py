@@ -11,7 +11,7 @@ class Image(models.Model):
     type_choices = ((x["name"], x["description"]) for x in configuration.vm_image_types)
 
     name = models.CharField(max_length=32)
-    type = models.CharField(max_length=32, choices=type_choices, default='junos_vmx')
+    type = models.CharField(max_length=32, choices=type_choices, default='junos_vre')
     description = models.TextField()
     filePath = models.FileField(upload_to='user_images')
     created = models.DateTimeField(auto_now_add=True)

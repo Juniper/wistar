@@ -76,7 +76,12 @@ def check_image_instance(image, instance):
 
 
 def copy_image_to_clone(old_path, new_path):
-    shutil.copy(old_path, new_path)
+    try:
+        shutil.copy(old_path, new_path)
+        return True
+    except Exception as e:
+        print str(e)
+        return False
 
 
 # creates a thinly provisioned instance of the given image
@@ -397,7 +402,11 @@ def get_dhcp_leases():
     """
     leases_file_path = "/var/lib/libvirt/dnsmasq/virbr0.status"
     with open(leases_file_path) as leases_file:
-        return json.loads(leases_file.read())
+        all_leases = leases_file.read()
+        if len(all_leases) > 0:
+            return json.loads(all_leases)
+        else:
+            return []
 
 
 def get_dhcp_reservations():

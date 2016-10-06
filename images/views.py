@@ -70,8 +70,27 @@ def create(request):
         #    return render(request, 'error.html', context)
 
         print "Saving form"
-        image_form.save()
+        orig_image = image_form.save()
         messages.info(request, "Image uploaded successfully")
+
+        image_type = request.POST["type"]
+        image_name = request.POST["name"]
+        full_path = orig_image.filePath.path
+
+        if image_type == "junos_vre" and ".img" in full_path:
+            print "Creating RIOT image for junos_vre"
+            new_image_path = full_path.replace('.img', '_riot.img')
+            new_image_file_name = new_image_path.split('/')[-1]
+            new_image_name = image_name + ' Riot PFE'
+            if osUtils.copy_image_to_clone(full_path, new_image_path):
+                print "Copied from %s" % full_path
+                print "Copied to %s" % new_image_path
+                image = Image()
+                image.name = new_image_name
+                image.description = orig_image.description + "\nRiot PFE"
+                image.filePath = "user_images/" + new_image_file_name
+                image.save()
+
         return HttpResponseRedirect('/images')
     else:
         print "UH OH"
@@ -193,7 +212,7 @@ def create_from_instance(request, uuid):
     print "got domain_image: " + domain_image
 
     if osUtils.is_image_thin_provisioned(domain_image):
-        print "Cannot clone disk that is thinly provisioned! Please perform a block pull before continueing"
+        print "Cannot clone disk that is thinly provisioned! Please perform a block pull before continuing"
         context = {'error': "Cannot Clone thinly provisioned disk! Please perform a block pull!"}
         return render(request, 'error.html', context)
 
@@ -299,9 +318,14 @@ def glance_list(request):
 
 def delete(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
-    image.filePath.delete()
-    image.delete()
-    messages.info(request, "Image deleted!")
+    try:
+        image.filePath.delete()
+    except Exception as e:
+        print str(e)
+    finally:
+        image.delete()
+        messages.info(request, "Image deleted!")
+
     return HttpResponseRedirect('/images/')
 
 
