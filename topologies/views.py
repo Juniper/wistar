@@ -86,10 +86,10 @@ def import_topology(request):
     logger.debug('---- topology import ----')
     try:
         if request.method == "POST":
-            print str(request.FILES)
+            logger.debug(str(request.FILES))
 
             json_file = request.FILES['file']
-            print str(json_file)
+            logger.debug(str(json_file))
             json_string = json_file.read()
             json_data = json.loads(json_string)
 
@@ -109,12 +109,12 @@ def import_topology(request):
                     image_list = Image.objects.filter(type=ud["type"])
                     if len(image_list) == 0:
                         # nope, bail out and let the user know what happened!
-                        print "Could not find image of type " + ud["type"]
+                        logger.debug("Could not find image of type " + ud["type"])
                         return error(request, 'Could not find a valid image of type ' + ud['type'] +
                                      '! Please upload an image of this type and try again')
 
                     image = image_list[0]
-                    print str(image.id)
+                    logger.debug(str(image.id))
                     json_object["userData"]["image"] = image.id
 
                     valid_ip = wistarUtils.get_next_ip(currently_allocated_ips, next_ip_floor)
@@ -190,13 +190,13 @@ def multi_clone(request):
 def parent(request, domain_name):
     logger.debug('---- topology parent ----')
     topology_id = domain_name.split('_')[0].replace('t', '')
-    print "Found topology_id of %s" % topology_id
+    logger.debug("Found topology_id of %s" % topology_id)
     return HttpResponseRedirect('/topologies/%s' % topology_id)
 
 
 def detail(request, topo_id):
     logger.debug('---- topology detail ----')
-    print "getting topology %s" % topo_id
+    logger.debug("getting topology %s" % topo_id)
     try:
         topology = Topology.objects.get(pk=topo_id)
     except ObjectDoesNotExist:
@@ -218,7 +218,7 @@ def delete(request, topology_id):
 
         network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
         for network in network_list:
-            print "undefine network: " + network["name"]
+            logger.debug("undefine network: " + network["name"])
             libvirtUtils.undefine_network(network["name"])
 
         domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
@@ -229,7 +229,7 @@ def delete(request, topology_id):
             if osUtils.release_management_ip_for_mac(mac_address):
                 should_reconfigure_dhcp = True
 
-            print "undefine domain: " + domain["name"]
+            logger.debug("undefine domain: " + domain["name"])
             source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
             if libvirtUtils.undefine_domain(domain["uuid"]):
                 if source_file is not None:
@@ -316,7 +316,7 @@ def create_config_set(request):
 
             except Exception as e:
                 logger.error('exception: %s' % e)
-                print "Could not connect to " + device["ip"], e
+                logger.debug("Could not connect to " + device["ip"], e)
 
     return HttpResponseRedirect('/topologies/' + topology_id + '/')
 
@@ -326,14 +326,14 @@ def launch(request, topology_id):
     try:
         topology = Topology.objects.get(pk=topology_id)
     except ObjectDoesNotExist as ex:
-        print ex
+        logger.debug(ex)
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     # let's parse the json and convert to simple lists and dicts
     config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
 
     try:
-        print "Deploying topology: %s" % topology_id
+        logger.debug("Deploying topology: %s" % topology_id)
         # this is a hack - inline deploy should be moved elsewhere
         # but the right structure isn't really there for a middle layer other
         # than utility and view layers ... unless I want to mix utility libs
@@ -349,7 +349,7 @@ def launch(request, topology_id):
         network_list = libvirtUtils.get_networks_for_topology("t%s_" % topology_id)
 
     for network in network_list:
-        print "Starting network: " + network["name"]
+        logger.debug("Starting network: " + network["name"])
         if libvirtUtils.start_network(network["name"]):
             time.sleep(1)
         else:
@@ -358,7 +358,7 @@ def launch(request, topology_id):
     num_domains = len(domain_list)
     iter_counter = 1
     for domain in domain_list:
-        print "Starting domain " + domain["name"]
+        logger.debug("Starting domain " + domain["name"])
         if libvirtUtils.start_domain(domain["uuid"]):
             if iter_counter < num_domains:
                 time.sleep(1)
@@ -366,7 +366,7 @@ def launch(request, topology_id):
         else:
             return render(request, 'error.html', {'error': "Could not start domain: " + domain["name"]})
 
-    print "All domains started"
+    logger.debug("All domains started")
     messages.info(request, 'Topology %s launched successfully' % topology.name)
 
     return HttpResponseRedirect('/topologies/')
@@ -395,6 +395,6 @@ def export_as_heat_template(request, topology_id):
         heat_template_yaml = yaml.safe_dump(heat_template_object)
         return HttpResponse(heat_template_yaml, content_type="text/plain")
     except Exception as e:
-        print "Caught Exception in deploy heat"
+        logger.debug("Caught Exception in deploy heat")
         logger.error('exception: %s' % e)
         return render(request, 'error.html', {'error': str(e)})
