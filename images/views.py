@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -12,6 +14,8 @@ from images.models import ImageForm
 from images.models import ImageLocalForm
 from wistar import configuration
 from wistar import settings
+
+logger = logging.getLogger(__name__)
 
 
 def index(request):
@@ -65,11 +69,11 @@ def create(request):
     image_form = ImageForm(request.POST, request.FILES)
     if image_form.is_valid():
         # if not osUtils.checkPath(image_form.cleaned_data['path']):
-        # print "PATH DOESN'T EXIST"
+        # logger.debug("PATH DOESN'T EXIST")
         # context = {'error' : "PATH DOESNT EXIST"}
         #    return render(request, 'error.html', context)
 
-        print "Saving form"
+        logger.debug("Saving form")
         orig_image = image_form.save()
         messages.info(request, "Image uploaded successfully")
 
@@ -78,13 +82,13 @@ def create(request):
         full_path = orig_image.filePath.path
 
         if image_type == "junos_vre" and ".img" in full_path:
-            print "Creating RIOT image for junos_vre"
+            logger.debug("Creating RIOT image for junos_vre")
             new_image_path = full_path.replace('.img', '_riot.img')
             new_image_file_name = new_image_path.split('/')[-1]
             new_image_name = image_name + ' Riot PFE'
             if osUtils.copy_image_to_clone(full_path, new_image_path):
-                print "Copied from %s" % full_path
-                print "Copied to %s" % new_image_path
+                logger.debug("Copied from %s" % full_path)
+                logger.debug("Copied to %s" % new_image_path)
                 image = Image()
                 image.name = new_image_name
                 image.description = orig_image.description + "\nRiot PFE"
@@ -93,7 +97,7 @@ def create(request):
 
         return HttpResponseRedirect('/images')
     else:
-        print "UH OH"
+        logger.debug("UH OH")
         context = {'image_form': image_form}
         return render(request, 'images/new.html', context)
 
@@ -112,8 +116,8 @@ def local(request):
 
 def create_blank(request):
     image_form = ImageBlankForm(request.POST)
-    print image_form
-    print str(image_form)
+    logger.debug(image_form)
+    logger.debug(str(image_form))
     if image_form.is_valid():
 
         name = request.POST["name"]
@@ -128,7 +132,6 @@ def create_blank(request):
         full_path = settings.MEDIA_ROOT + "/" + file_path
 
         if osUtils.create_blank_image(full_path, size + 'G'):
-
             image = Image()
             image.description = description
             image.name = name
@@ -137,11 +140,11 @@ def create_blank(request):
             image.save()
 
         # if not osUtils.checkPath(image_form.cleaned_data['path']):
-        # print "PATH DOESN'T EXIST"
+        # logger.debug("PATH DOESN'T EXIST")
         # context = {'error' : "PATH DOESNT EXIST"}
         #    return render(request, 'error.html', context)
 
-        print "Saving form"
+        logger.debug("Saving form")
         # image_form.save()
         return HttpResponseRedirect('/images')
     else:
@@ -150,26 +153,25 @@ def create_blank(request):
 
 
 def create_local(request):
-
     name = request.POST["name"]
     file_path = request.POST["filePath"]
     description = request.POST["description"]
     image_type = request.POST["type"]
 
     if osUtils.check_path(file_path):
-        print "path exists"
+        logger.debug("path exists")
         if settings.MEDIA_ROOT not in file_path:
             context = {'error': "Image must be in " + settings.MEDIA_ROOT}
             return render(request, 'error.html', context)
         else:
-            print "removing media_root"
+            logger.debug("removing media_root")
             file_path = file_path.replace(settings.MEDIA_ROOT + '/', '')
-            print file_path
+            logger.debug(file_path)
     else:
         context = {'error': "Invalid image path"}
         return render(request, 'error.html', context)
 
-    print file_path
+    logger.debug(file_path)
     image = Image()
     image.description = description
     image.name = name
@@ -186,7 +188,7 @@ def block_pull(request, uuid):
     image_path = libvirtUtils.get_image_for_domain(domain.UUIDString())
 
     if osUtils.is_image_thin_provisioned(image_path):
-        print "Found thinly provisioned image, promoting..."
+        logger.debug("Found thinly provisioned image, promoting...")
         rv = libvirtUtils.promote_instance_to_image(domain_name)
 
         if rv is None:
@@ -198,21 +200,21 @@ def block_pull(request, uuid):
 
     else:
         messages.info(request, "Image is already promoted. You may now shutdown the image and perform a Clone")
-        print "Image is already promoted"
+        logger.debug("Image is already promoted")
 
     return HttpResponseRedirect('/ajax/manageHypervisor/')
 
 
 def create_from_instance(request, uuid):
-    print "Creating new image from instance"
+    logger.debug("Creating new image from instance")
     domain = libvirtUtils.get_domain_by_uuid(uuid)
 
-    print "got domain " + domain.name()
+    logger.debug("got domain " + domain.name())
     domain_image = libvirtUtils.get_image_for_domain(uuid)
-    print "got domain_image: " + domain_image
+    logger.debug("got domain_image: " + domain_image)
 
     if osUtils.is_image_thin_provisioned(domain_image):
-        print "Cannot clone disk that is thinly provisioned! Please perform a block pull before continuing"
+        logger.error("Cannot clone disk that is thinly provisioned! Please perform a block pull before continuing")
         context = {'error': "Cannot Clone thinly provisioned disk! Please perform a block pull!"}
         return render(request, 'error.html', context)
 
@@ -235,13 +237,13 @@ def create_from_instance(request, uuid):
     new_full_image_path = full_path + "/image_" + str(domain.UUIDString()) + ".img"
 
     if osUtils.check_path(new_full_image_path):
-        print "Image has already been cloned"
+        logger.info("Image has already been cloned")
         context = {'error': "Instance has already been cloned!"}
         return render(request, 'error.html', context)
 
-    print "Copying image from " + domain_image
+    logger.debug("Copying image from " + domain_image)
 
-    print "To " + new_full_image_path
+    logger.debug("To " + new_full_image_path)
 
     osUtils.copy_image_to_clone(domain_image, new_full_image_path)
 
@@ -298,9 +300,9 @@ def glance_detail(request):
     if openstackUtils.connect_to_openstack():
         glance_id = openstackUtils.get_image_id_for_name(image.name)
         glance_json = openstackUtils.get_glance_image_detail(glance_id)
-        print "glance json of %s is" % glance_id
-        print glance_json
-        print "---"
+        logger.debug("glance json of %s is" % glance_id)
+        logger.debug(glance_json)
+        logger.debug("---")
         return render(request, 'images/glance_detail.html', {'image': glance_json,
                                                              "image_id": image_id,
                                                              "glance_id": glance_id,
@@ -321,7 +323,7 @@ def delete(request, image_id):
     try:
         image.filePath.delete()
     except Exception as e:
-        print str(e)
+        logger.error(str(e))
     finally:
         image.delete()
         messages.info(request, "Image deleted!")
@@ -343,11 +345,11 @@ def list_glance_images(request):
 def upload_to_glance(request, image_id):
     if openstackUtils.connect_to_openstack():
         image = get_object_or_404(Image, pk=image_id)
-        print "Uploading now!"
+        logger.debug("Uploading now!")
         if osUtils.check_path(image.filePath.path):
             openstackUtils.upload_image_to_glance(image.name, image.filePath.path)
 
-        print "All done"
+        logger.debug("All done")
         return HttpResponseRedirect('/images/%s' % image_id)
 
 
@@ -368,7 +370,7 @@ def import_from_glance(request, glance_id):
         image.name = image_details["name"]
         image.type = 'blank'
         image.save()
-        print "All done"
+        logger.debug("All done")
         return HttpResponseRedirect('/images/%s' % image.id)
 
     context = {'error': "Could not connect to OpenStack"}
