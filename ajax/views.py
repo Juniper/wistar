@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
+from api.lib import apiUtils
 from common.lib import consoleUtils
 from common.lib import junosUtils
 from common.lib import libvirtUtils
@@ -65,8 +66,8 @@ def preconfig_junos_domain(request):
     password = request.POST['password']
     ip = request.POST['ip']
     mgmt_interface = request.POST['mgmtInterface']
-
-    logger.debug("Configuring domain:" + str(domain))
+    
+    print "Configuring domain:" + str(domain)
     try:
 
         # let's see if we need to kill any webConsole sessions first
@@ -98,7 +99,7 @@ def preconfig_junos_domain(request):
             response_data["message"] = "Could not configure domain"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
-        logger.debug(we)
+        print we
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -117,14 +118,13 @@ def preconfig_linux_domain(request):
     mgmt_interface = request.POST['mgmtInterface']
     hostname = request.POST['hostname']
 
-    logger.debug("Configuring linux domain:" + str(domain))
+    print "Configuring linux domain:" + str(domain)
     try:
-        response_data["result"] = consoleUtils.preconfig_linux_domain(domain, hostname, user, password, ip,
-                                                                      mgmt_interface)
-        logger.debug(str(response_data))
+        response_data["result"] = consoleUtils.preconfig_linux_domain(domain, hostname, user, password, ip, mgmt_interface)
+        print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
-        logger.debug(we)
+        print we
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -141,7 +141,7 @@ def preconfig_firefly(request):
     password = request.POST['password']
     mgmt_interface = request.POST['mgmtInterface']
     ip = request.POST['ip']
-
+    
     try:
         # let's see if we need to kill any webConsole sessions first
         wc_dict = request.session.get("webConsoleDict")
@@ -152,9 +152,9 @@ def preconfig_firefly(request):
                 server = request.get_host().split(":")[0]
                 wistarUtils.kill_web_socket(server, wc_port)
 
-        logger.debug("Configuring management Access")
+        print "Configuring management Access"
         if consoleUtils.preconfig_junos_domain(domain, user, password, ip, mgmt_interface):
-            logger.debug("Configuring Firefly management zones:" + str(domain))
+            print "Configuring Firefly management zones:" + str(domain)
             time.sleep(3)
             response_data["result"] = consoleUtils.preconfig_firefly(domain, user, password, mgmt_interface)
         else:
@@ -164,7 +164,7 @@ def preconfig_firefly(request):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
     except WistarException as we:
-        logger.debug(we)
+        print we
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -179,12 +179,12 @@ def config_junos_interfaces(request):
     ip = request.POST['ip']
     user = request.POST["user"]
     password = request.POST['password']
-    logger.debug("Configuring interfaces for " + str(ip))
+    print "Configuring interfaces for " + str(ip)
     try:
         response_data["result"] = junosUtils.config_junos_interfaces(ip, user, password)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
-        logger.debug(we)
+        print we
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -205,9 +205,9 @@ def execute_cli(request):
     if result is None:
         response_data["result"] = False
         return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
+    else: 
 
-        response_data["output"] = result
+        response_data["output"] = result 
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -225,9 +225,9 @@ def execute_linux_cli(request):
     if result is None:
         response_data["result"] = False
         return HttpResponse(json.dumps(response_data), content_type="application/json")
-    else:
+    else: 
 
-        response_data["output"] = result
+        response_data["output"] = result 
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -295,14 +295,14 @@ def get_junos_config(request):
 
     ip = request.POST['ip']
     password = request.POST['password']
-    logger.debug("Getting Config for " + str(ip))
+    print "Getting Config for " + str(ip)
     try:
         xml = junosUtils.get_config(ip, password)
-        logger.debug(xml)
+        print xml
 
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
-        logger.debug(we)
+        print we
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -314,7 +314,7 @@ def get_config_templates(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     template_list = ConfigTemplate.objects.all().order_by('modified')
-
+    
     ip = request.POST['ip']
     context = {'template_list': template_list, 'ip': ip}
     return render(request, 'ajax/configTemplates.html', context)
@@ -345,7 +345,7 @@ def push_script(request):
 
     script = Script.objects.get(pk=script_id)
 
-    logger.debug("Executing script " + script.name)
+    print "Executing script " + script.name
 
     try:
         linuxUtils.push_remote_script(ip, username, password, script.script, script.destination)
@@ -362,10 +362,10 @@ def push_script(request):
 def sync_link_data(request):
     response_data = {"result": True}
     required_fields = set(['sourceIp', 'sourceType', 'targetIp', 'targetType', 'sourcePortIp', 'targetPortIp',
-                           'sourceIface', 'targetIface', 'sourcePw', 'targetPw', 'json', 'topologyId'])
+                       'sourceIface', 'targetIface', 'sourcePw', 'targetPw', 'json', 'topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
-
+    
     source_ip = request.POST['sourceIp']
     source_type = request.POST['sourceType']
     target_ip = request.POST['targetIp']
@@ -381,38 +381,34 @@ def sync_link_data(request):
 
     try:
         if source_ip != "0.0.0.0":
-            logger.debug("Configuring interfaces for " + str(source_ip))
+            print "Configuring interfaces for " + str(source_ip)
             if source_type == "linux":
-                source_results = linuxUtils.set_interface_ip_address(source_ip, "root", source_pw, source_interface,
-                                                                     source_port_ip)
+                source_results = linuxUtils.set_interface_ip_address(source_ip, "root", source_pw, source_interface, source_port_ip)
             else:
-                source_results = junosUtils.set_interface_ip_address(source_ip, source_pw, source_interface,
-                                                                     source_port_ip)
+                source_results = junosUtils.set_interface_ip_address(source_ip, source_pw, source_interface, source_port_ip)
 
             if source_results is False:
                 raise WistarException("Couldn't set ip address on source VM")
-
+        
         if target_ip != "0.0.0.0":
             if target_type == "linux":
-                target_results = linuxUtils.set_interface_ip_address(target_ip, "root", target_pw, target_interface,
-                                                                     target_port_ip)
+                target_results = linuxUtils.set_interface_ip_address(target_ip, "root", target_pw, target_interface, target_port_ip)
             else:
-                target_results = junosUtils.set_interface_ip_address(target_ip, target_pw, target_interface,
-                                                                     target_port_ip)
+                target_results = junosUtils.set_interface_ip_address(target_ip, target_pw, target_interface, target_port_ip)
 
             if target_results is False:
                 raise WistarException("Couldn't set ip address on target VM")
 
-        logger.debug("saving sync data on topology json as well")
+        print "saving sync data on topology json as well"
         topology = Topology.objects.get(pk=topology_id)
         topology.json = json_data
         topology.save()
 
         response_data["result"] = "Success"
-        logger.debug(str(response_data))
+        print str(response_data)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     except WistarException as we:
-        logger.debug(we)
+        print we
         response_data["result"] = False
         response_data["message"] = str(we)
         return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -422,11 +418,11 @@ def start_topology(request):
     required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
-
+    
     topology_id = request.POST['topologyId']
 
     if topology_id == "":
-        logger.debug("Found a blank topoId!")
+        print "Found a blank topoId!"
         return render(request, 'ajax/ajaxError.html', {'error': "Blank Topology Id found"})
 
     domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
@@ -436,7 +432,7 @@ def start_topology(request):
         network_list = libvirtUtils.get_networks_for_topology("t" + topology_id + "_")
 
     for network in network_list:
-        logger.debug("Starting network: " + network["name"])
+        print "Starting network: " + network["name"]
         if libvirtUtils.start_network(network["name"]):
             time.sleep(1)
         else:
@@ -445,7 +441,7 @@ def start_topology(request):
     num_domains = len(domain_list)
     iter_counter = 1
     for domain in domain_list:
-        logger.debug("Starting domain " + domain["name"])
+        print "Starting domain " + domain["name"]
         if libvirtUtils.start_domain(domain["uuid"]):
             if iter_counter < num_domains:
                 time.sleep(180)
@@ -453,7 +449,7 @@ def start_topology(request):
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not start domain: " + domain["name"]})
 
-    logger.debug("All domains started")
+    print "All domains started"
     return refresh_deployment_status(request)
 
 
@@ -465,31 +461,31 @@ def pause_topology(request):
     topology_id = request.POST['topologyId']
 
     if topology_id == "":
-        logger.debug("Found a blank topoId!")
+        print "Found a blank topoId!"
         return render(request, 'ajax/ajaxError.html', {'error': "Blank Topology Id found"})
 
     domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
 
     for domain in domain_list:
         if domain["state"] == "running":
-            logger.debug("Pausing domain " + domain["name"])
+            print "Pausing domain " + domain["name"]
             libvirtUtils.suspend_domain(domain["uuid"])
             time.sleep(5)
         else:
-            logger.debug("Domain %s is already shut down" % domain["name"])
+            print "Domain %s is already shut down" % domain["name"]
 
     network_list = []
     if osUtils.check_is_linux():
         network_list = libvirtUtils.get_networks_for_topology("t" + topology_id + "_")
 
     for network in network_list:
-        logger.debug("Stopping network: " + network["name"])
+        print "Stopping network: " + network["name"]
         if libvirtUtils.stop_network(network["name"]):
             time.sleep(1)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop network: " + network["name"]})
 
-    logger.debug("All domains paused")
+    print "All domains paused"
     return refresh_deployment_status(request)
 
 
@@ -498,11 +494,11 @@ def refresh_deployment_status(request):
     required_fields = set(['topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
-
+    
     topology_id = request.POST['topologyId']
 
     if topology_id == "":
-        logger.debug("Found a blank topology_id, returning full hypervisor status")
+        print "Found a blank topology_id, returning full hypervisor status"
         return refresh_hypervisor_status(request)
 
     if configuration.deployment_backend == "openstack":
@@ -578,16 +574,17 @@ def check_ip(request):
 
 def get_available_ip(request):
     # just grab the next available IP
-    logger.debug("getting IPS")
+    print "getting IPS"
     all_used_ips = wistarUtils.get_used_ips()
-    logger.debug(all_used_ips)
+    print all_used_ips
     next_ip = wistarUtils.get_next_ip(all_used_ips, 2)
-    logger.debug(next_ip)
+    print next_ip
     response_data = {"result": next_ip}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 def manage_domain(request):
+
     required_fields = set(['domainId', 'action', 'topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -610,7 +607,7 @@ def manage_domain(request):
         # if we have an ISO file configured, and it doesn't actually exist
         # just remove it completely
         if iso is not None and not osUtils.check_path(iso):
-            logger.debug("Removing non-existent ISO from domain")
+            print "Removing non-existent ISO from domain"
             libvirtUtils.detach_iso_from_domain(domain.name())
 
         # now we should be able to safely start the domain
@@ -624,7 +621,7 @@ def manage_domain(request):
             return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
-
+    
     elif action == "suspend":
         if libvirtUtils.suspend_domain(domain_id):
             return refresh_deployment_status(request)
@@ -646,10 +643,11 @@ def manage_domain(request):
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
     else:
-        return render(request, 'ajax/ajaxError.html', {'error': "Unknown Parameters in POST!"})
+            return render(request, 'ajax/ajaxError.html', {'error': "Unknown Parameters in POST!"})
 
 
 def manage_network(request):
+
     required_fields = set(['networkName', 'action', 'topologyId'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -657,7 +655,7 @@ def manage_network(request):
     network_name = request.POST['networkName']
     action = request.POST['action']
 
-    if action == "start":
+    if action == "start": 
         if libvirtUtils.start_network(network_name):
             return refresh_deployment_status(request)
         else:
@@ -674,18 +672,18 @@ def manage_network(request):
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
     else:
-        return render(request, 'ajax/ajaxError.html', {'error': "Unknown Parameters in POST!"})
+            return render(request, 'ajax/ajaxError.html', {'error': "Unknown Parameters in POST!"})
 
 
 def apply_config_template(request):
-    logger.debug("Pushing Config Template")
+    print "Pushing Config Template"
     response_data = {"result": True, "message": "Applied configuration successfully"}
 
     required_fields = set(['id', 'ip', 'user', 'password'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
-    config_template_id = request.POST['id']
+    config_template_id = request.POST['id'] 
     ip = request.POST['ip']
     user = request.POST["user"]
     password = request.POST['password']
@@ -693,7 +691,7 @@ def apply_config_template(request):
     config_template = ConfigTemplate.objects.get(pk=config_template_id)
     template = config_template.template
     cleaned_template = template.replace('\r\n', '\n')
-    logger.debug(cleaned_template)
+    print cleaned_template
     if junosUtils.push_config(cleaned_template, ip, user, password):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     else:
@@ -703,7 +701,7 @@ def apply_config_template(request):
 
 
 def apply_junos_set_config(request):
-    logger.debug("Pushing Set Config")
+    print "Pushing Set Config"
     response_data = {"result": True, "message": "Applied configuration successfully"}
 
     required_fields = set(['config', 'ip', 'user', 'password'])
@@ -715,7 +713,7 @@ def apply_junos_set_config(request):
     user = request.POST["user"]
     password = request.POST['password']
 
-    logger.debug(config)
+    print config
     if junosUtils.push_config(config, ip, user, password):
         return HttpResponse(json.dumps(response_data), content_type="application/json")
     else:
@@ -725,7 +723,7 @@ def apply_junos_set_config(request):
 
 
 def push_config_set(request):
-    logger.debug("Pushing ConfigSet")
+    print "Pushing ConfigSet"
     response_data = {"result": True}
 
     required_fields = set(['id'])
@@ -734,26 +732,26 @@ def push_config_set(request):
 
     config_set_id = request.POST['id']
 
-    logger.debug("csid is " + config_set_id)
+    print "csid is " + config_set_id
 
     cs = ConfigSet.objects.get(pk=config_set_id)
 
     configs = Config.objects.filter(configSet=cs)
 
     for config in configs:
-        logger.debug(config.ip)
+        print config.ip
         try:
             junosUtils.push_config_string(config.deviceConfig, config.ip, config.user, config.password)
         except Exception as e:
-            logger.debug("Could not reload config on " + str(config.ip))
+            print "Could not reload config on " + str(config.ip)
             response_data["message"] = response_data["message"] + " Error pushing to " + str(config.ip)
-            logger.debug(e)
+            print e
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 def delete_config_set(request):
-    logger.debug("Deleting ConfigSet")
+    print "Deleting ConfigSet"
     response_data = {"result": True}
 
     required_fields = set(['id'])
@@ -763,7 +761,7 @@ def delete_config_set(request):
     config_set_id = request.POST['id']
     cs = ConfigSet.objects.get(pk=config_set_id)
     cs.delete()
-
+    
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -771,13 +769,14 @@ def multi_clone_topology(request):
     response_data = {"result": True}
     required_fields = set(['clones', 'topologyId'])
     if not required_fields.issubset(request.POST):
+
         response_data["message"] = "Invalid Parameters in Post"
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
     topology_id = request.POST["topologyId"]
     num_clones = request.POST["clones"]
 
-    logger.debug(num_clones)
+    print num_clones
 
     topology = Topology.objects.get(pk=topology_id)
     orig_name = topology.name
@@ -800,14 +799,15 @@ def multi_clone_topology(request):
 
 
 def deploy_topology(request):
+
     if 'topologyId' not in request.POST:
         return render(request, 'ajax/ajaxError.html', {'error': "No Topology Id in request"})
-
+    
     topology_id = request.POST['topologyId']
     try:
         topo = Topology.objects.get(pk=topology_id)
     except Exception as ex:
-        logger.debug(ex)
+        print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
     try:
@@ -816,13 +816,13 @@ def deploy_topology(request):
         # FIXME - should this be pushed into another module?
         inline_deploy_topology(config)
     except Exception as e:
-        logger.debug("Caught Exception in deploy")
-        logger.debug(str(e))
+        print "Caught Exception in deploy"
+        print str(e)
         return render(request, 'ajax/ajaxError.html', {'error': str(e)})
 
     domain_list = libvirtUtils.get_domains_for_topology("t" + topology_id + "_")
     network_list = []
-
+        
     if osUtils.check_is_linux():
         network_list = libvirtUtils.get_networks_for_topology("t" + topology_id + "_")
     context = {'domain_list': domain_list, 'network_list': network_list, 'isLinux': True, 'topologyId': topology_id}
@@ -831,18 +831,18 @@ def deploy_topology(request):
 
 def inline_deploy_topology(config):
     # only create networks on Linux/KVM
-    logger.debug("Checking if we should create networks first!")
+    print "Checking if we should create networks first!"
     if osUtils.check_is_linux():
         for network in config["networks"]:
             try:
                 if not libvirtUtils.network_exists(network["name"]):
                     logger.debug("Rendering networkXml for: %s" % network["name"])
                     network_xml = render_to_string("ajax/kvm/network.xml", {'network': network})
-                    logger.debug(network_xml)
+                    print network_xml
                     libvirtUtils.define_network_from_xml(network_xml)
                     time.sleep(.5)
 
-                logger.debug("Starting network")
+                print "Starting network"
                 libvirtUtils.start_network(network["name"])
             except Exception as e:
                 raise Exception(str(e))
@@ -873,9 +873,9 @@ def inline_deploy_topology(config):
                 logger.debug("Rendering deviceXml for: %s" % device["name"])
 
                 configuration_file = device["configurationFile"]
-                logger.debug("using config file: " + configuration_file)
+                print "using config file: " + configuration_file
 
-                logger.debug(device)
+                print device
 
                 image = Image.objects.get(pk=device["imageId"])
                 image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
@@ -901,19 +901,19 @@ def inline_deploy_topology(config):
                     script_string = ""
                     script_param = ""
                     if device["configScriptId"] != 0:
-                        logger.debug("Passing script data!")
+                        print "Passing script data!"
                         script = Script.objects.get(pk=int(device["configScriptId"]))
                         script_string = script.script
                         script_param = device["configScriptParam"]
-                        logger.debug(script_string)
-                        logger.debug(script_param)
+                        print script_string
+                        print script_param
 
-                    logger.debug("Creating cloud init path for linux image")
+                    print "Creating cloud init path for linux image"
                     cloud_init_path = osUtils.create_cloud_init_img(device["name"], device["label"],
                                                                     management_ip, management_interface,
                                                                     device["password"], script_string, script_param)
 
-                    logger.debug(cloud_init_path)
+                    print cloud_init_path
 
                 device_xml = render_to_string(domain_xml_path + configuration_file,
                                               {'device': device, 'instancePath': instance_path,
@@ -921,7 +921,7 @@ def inline_deploy_topology(config):
                                                'secondary_disk_path': secondary_disk,
                                                'tertiary_disk_path': tertiary_disk}
                                               )
-                logger.debug(device_xml)
+                print device_xml
                 libvirtUtils.define_domain_from_xml(device_xml)
 
             if not osUtils.check_is_linux():
@@ -930,13 +930,13 @@ def inline_deploy_topology(config):
                 management_ip = str(management_interfaces[0]["ip"])
                 vboxUtils.preconfigure_vmx(device["name"], management_ip)
 
-            logger.debug("Reserving IP with dnsmasq")
+            print "Reserving IP with dnsmasq"
             management_mac = libvirtUtils.get_management_interface_mac_for_domain(device["name"])
             if osUtils.reserve_management_ip_for_mac(management_mac, device["ip"]):
                 should_reconfigure_dhcp = True
 
         except Exception as ex:
-            logger.debug("Raising exception")
+            print "Raising exception"
             raise Exception(str(ex))
 
     # finally, let's reload our dhcp config
@@ -945,7 +945,7 @@ def inline_deploy_topology(config):
 
 
 def launch_web_console(request):
-    logger.debug("Let's launch a console!")
+    print "Let's launch a console!"
 
     required_fields = set(['domain'])
     if not required_fields.issubset(request.POST):
@@ -953,27 +953,27 @@ def launch_web_console(request):
 
     response_data = {"result": True}
     domain = request.POST["domain"]
-    logger.debug("Got domain of: " + domain)
+    print "Got domain of: " + domain
     # this keeps a list of used ports around for us
     wc_dict = request.session.get("webConsoleDict")
 
     # server = request.META["SERVER_NAME"]
     server = request.get_host().split(":")[0]
 
-    logger.debug(wc_dict)
+    print wc_dict
     if wc_dict is None:
-        logger.debug("no previous webConsoles Found!")
+        print "no previous webConsoles Found!"
         wc_dict = {}
         request.session["webConsoleDict"] = wc_dict
 
-    logger.debug("OK, do we have this domain?")
+    print "OK, do we have this domain?"
     if domain in wc_dict:
         wc_config = wc_dict[domain]
         wc_port = wc_config["wsPort"]
         vnc_port = wc_config["vncPort"]
 
         if wistarUtils.check_web_socket(server, wc_port):
-            logger.debug("This WebSocket is already running")
+            print "This WebSocket is already running"
 
             response_data["message"] = "already running on port: " + wc_port
             response_data["port"] = wc_port
@@ -987,7 +987,7 @@ def launch_web_console(request):
             true_vnc_port = libvirtUtils.get_domain_vnc_port(d)
 
             if true_vnc_port != vnc_port:
-                logger.debug("Found out of sync vnc port!")
+                print "Found out of sync vnc port!"
                 vnc_port = true_vnc_port
 
             pid = wistarUtils.launch_web_socket(wc_port, vnc_port, server)
@@ -1005,32 +1005,32 @@ def launch_web_console(request):
                 response_data["message"] = "Could not start webConsole"
                 return HttpResponse(json.dumps(response_data), content_type="application/json")
     else:
-        logger.debug("nope")
+        print "nope"
         # start the ws ports at 6900
         wc_port = len(wc_dict.keys()) + 6900
 
-        logger.debug("using wsPort of " + str(wc_port))
+        print "using wsPort of " + str(wc_port)
         # get the domain from the hypervisor
         d = libvirtUtils.get_domain_by_name(domain)
         # now grab the configured vncport
         vnc_port = libvirtUtils.get_domain_vnc_port(d)
 
-        logger.debug("Got VNC port " + str(vnc_port))
+        print "Got VNC port " + str(vnc_port)
         pid = wistarUtils.launch_web_socket(wc_port, vnc_port, server)
 
         if pid is None:
-            logger.debug("oh no")
+            print "oh no"
             response_data["result"] = False
             response_data["message"] = "Could not start webConsole"
-            logger.debug("returning")
+            print "returning"
             return HttpResponse(json.dumps(response_data), content_type="application/json")
 
-        logger.debug("Launched with pid " + str(pid))
+        print "Launched with pid " + str(pid)
         wcConfig = dict()
         wcConfig["pid"] = str(pid)
         wcConfig["vncPort"] = str(vnc_port)
         wcConfig["wsPort"] = str(wc_port)
-
+      
         wc_dict[domain] = wcConfig
         request.session["webConsoleDict"] = wc_dict
 
@@ -1061,10 +1061,10 @@ def get_topology_config(request):
 
         context = {'config': config, 'domain_status': domain_status, 'topologyId': topology_id}
 
-        logger.debug("returning")
+        print "returning"
         return HttpResponse(json.dumps(context), content_type="application/json")
     except Exception as ex:
-        logger.debug(ex)
+        print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
 
@@ -1083,16 +1083,16 @@ def execute_linux_automation(request):
         topo = Topology.objects.get(pk=topology_id)
         # let's parse the json and convert to simple lists and dicts
         config = wistarUtils.load_config_from_topology_json(topo.json, topology_id)
-        logger.debug("Running automation cli: " + cli)
+        print "Running automation cli: " + cli
         result_string = "Automation Command: " + cli + "\n\n"
         result_string += "==================================="
 
         for device in config["devices"]:
             if device["type"] == "linux":
-                logger.debug("running automation cmd on " + device["ip"])
+                print "running automation cmd on " + device["ip"]
                 # host, username, password, cli
                 output = linuxUtils.execute_cli(device["ip"], device["user"], device["password"], cli)
-                logger.debug("got output: " + output)
+                print "got output: " + output
                 result_string += "\n\n"
                 result_string += "Instance: " + device["label"] + "\n"
                 result_string += output
@@ -1101,10 +1101,10 @@ def execute_linux_automation(request):
 
         context = {'result': result_string}
 
-        logger.debug("returning")
+        print "returning"
         return HttpResponse(json.dumps(context), content_type="application/json")
     except Exception as ex:
-        logger.debug(ex)
+        print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
 
@@ -1123,16 +1123,16 @@ def execute_junos_automation(request):
         topo = Topology.objects.get(pk=topology_id)
         # let's parse the json and convert to simple lists and dicts
         config = wistarUtils.load_config_from_topology_json(topo.json, topology_id)
-        logger.debug("Running automation cli: " + cli)
+        print "Running automation cli: " + cli
         result_string = "Automation Command: " + cli + "\n\n"
         result_string += "==================================="
 
         for device in config["devices"]:
             if "junos" in device["type"]:
-                logger.debug("running automation cmd on " + device["ip"])
+                print "running automation cmd on " + device["ip"]
                 # host, username, password, cli
                 output = junosUtils.execute_cli(device["ip"], device["user"], device["password"], cli)
-                logger.debug("got output: " + output)
+                print "got output: " + output
                 result_string += "\n\n"
                 result_string += "Instance: " + device["label"] + "\n"
                 result_string += output
@@ -1141,16 +1141,17 @@ def execute_junos_automation(request):
 
         context = {'result': result_string}
 
-        logger.debug("returning")
+        print "returning"
         return HttpResponse(json.dumps(context), content_type="application/json")
     except Exception as ex:
-        logger.debug(ex)
+        print ex
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
 
 # query libvirt for all instances that are currently running
 # grab configured ip addresses from topology as well.
 def get_available_instances(request):
+
     if 'scriptId' not in request.POST:
         return render(request, 'ajax/ajaxError.html', {'error': "No script Id in request"})
 
@@ -1164,7 +1165,7 @@ def get_available_instances(request):
         if domain["state"] == "running":
             name = domain["name"]
             topo_id = name.split('_')[0].replace('t', '')
-            # logger.debug(name + " " + topo_id)
+            # print name + " " + topo_id
             topology = Topology.objects.get(pk=topo_id)
             tj = json.loads(topology.json)
             for obj in tj:
@@ -1180,7 +1181,7 @@ def get_available_instances(request):
                             'topo_id': topo_id
                         }
 
-                        logger.debug("Found a running instance for this topology!")
+                        print "Found a running instance for this topology!"
                         instances.append(instance)
                         continue
 
@@ -1192,39 +1193,39 @@ def launch_script(request):
     if 'scriptId' not in request.POST:
         return render(request, 'ajax/ajaxError.html', {'error': "No script Id in request"})
 
-    logger.debug(request.POST)
+    print request.POST
     script_id = request.POST['scriptId']
     script = Script.objects.get(pk=script_id)
     instances = request.POST.getlist("instances")
-    logger.debug(instances)
+    print instances
     configure_access = request.POST["configureAccess"]
 
     o = "Output from script"
     for instance in instances:
-        logger.debug(instance)
+        print instance
         topo_id = instance.split("_")[0].replace('t', '')
-        logger.debug(topo_id)
+        print topo_id
         topology = Topology.objects.get(pk=topo_id)
         tj = json.loads(topology.json)
         for obj in tj:
             if "userData" in obj and "wistarVm" in obj["userData"]:
                 label = obj["userData"]["label"]
                 if label == instance.split('_')[1]:
-                    logger.debug("Found instance in topology configuration")
+                    print "Found instance in topology configuration"
                     ip = str(obj["userData"]["ip"])
                     o += "name: %s, ip %s\n" % (instance, ip)
-                    logger.debug("name: %s, ip %s" % (instance, ip))
+                    print "name: %s, ip %s" % (instance, ip)
                     user = str(obj["userData"]["user"])
                     password = str(obj["userData"]["password"])
                     management_interface = str(obj["userData"]["mgmtInterface"])
                     if configure_access == "yes":
-                        logger.debug("Configuring access")
+                        print "Configuring access"
                         o += "Configuring access\n"
                         consoleUtils.preconfig_linux_domain(instance, user, password, management_interface)
 
-                    logger.debug("Pushing script " + script.name)
+                    print "Pushing script " + script.name
                     linuxUtils.push_remote_script(ip, user, password, script.script, script.destination)
-                    logger.debug("Executing script")
+                    print "Executing script"
                     o += linuxUtils.execute_cli(ip, user, password, script.destination)
                     o += "\n"
                     continue
@@ -1234,6 +1235,7 @@ def launch_script(request):
 
 
 def manage_iso(request):
+
     required_fields = set(['domainName', 'path', 'topologyId', 'action'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -1242,18 +1244,18 @@ def manage_iso(request):
     file_path = settings.MEDIA_ROOT + "/media/" + request.POST["path"]
     action = request.POST["action"]
 
-    logger.debug(domain_name)
-    logger.debug(file_path)
+    print domain_name
+    print file_path
     if action == "attach":
         if libvirtUtils.attach_iso_to_domain(domain_name, file_path):
             context = {'result': "Success"}
-            logger.debug("iso attached to domain successfully")
+            print "iso attached to domain successfully"
         else:
             context = {'result': False}
     else:
         if libvirtUtils.detach_iso_from_domain(domain_name):
             context = {'result': "Success"}
-            logger.debug("iso detached from domain successfully")
+            print "iso detached from domain successfully"
         else:
             context = {'result': False}
 
@@ -1261,6 +1263,7 @@ def manage_iso(request):
 
 
 def list_isos(request):
+
     required_fields = set(['domainName'])
     if not required_fields.issubset(request.POST):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
@@ -1269,14 +1272,14 @@ def list_isos(request):
     current_iso = libvirtUtils.get_iso_for_domain(domain_name)
 
     dir_list = osUtils.list_dir(settings.MEDIA_ROOT + '/media')
-    logger.debug(str(dir_list))
+    print str(dir_list)
 
     context = {
         'media': dir_list,
         'currentIso': current_iso,
         'mediaDir': settings.MEDIA_ROOT + "/media",
         'domainName': domain_name
-    }
+        }
 
     return render(request, 'ajax/manageIso.html', context)
 
@@ -1294,29 +1297,29 @@ def deploy_stack(request, topology_id):
 
     try:
         # let's parse the json and convert to simple lists and dicts
-        logger.debug("loading config")
+        print "loading config"
         config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
-        logger.debug("Config is loaded")
+        print "Config is loaded"
         heat_template = wistarUtils.get_heat_json_from_topology_config(config)
-        logger.debug("heat template created")
+        print "heat template created"
         if not openstackUtils.connect_to_openstack():
             return render(request, 'error.html', {'error': "Could not connect to Openstack"})
 
         # get the tenant_id of the desired project
         tenant_id = openstackUtils.get_project_id(configuration.openstack_project)
-        logger.debug("using tenant_id of: %s" % tenant_id)
+        print "using tenant_id of: %s" % tenant_id
         if tenant_id is None:
             raise Exception("No project found for %s" % configuration.openstack_project)
 
         # FIXME - verify all images are in glance before jumping off here!
         stack_name = topology.name.replace(' ', '_')
-        logger.debug(openstackUtils.create_stack(stack_name, heat_template))
+        print openstackUtils.create_stack(stack_name, heat_template)
 
         return HttpResponseRedirect('/topologies/' + topology_id + '/')
 
     except Exception as e:
-        logger.debug("Caught Exception in deploy")
-        logger.debug(str(e))
+        print "Caught Exception in deploy"
+        print str(e)
         return render(request, 'error.html', {'error': str(e)})
 
 
@@ -1334,6 +1337,6 @@ def delete_stack(request, topology_id):
 
     stack_name = topology.name.replace(' ', '_')
     if openstackUtils.connect_to_openstack():
-        logger.debug(openstackUtils.delete_stack(stack_name))
+        print openstackUtils.delete_stack(stack_name)
 
     return HttpResponseRedirect('/topologies/' + topology_id + '/')

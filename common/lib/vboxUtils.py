@@ -1,13 +1,9 @@
 # 10-24-14 nembery
-import logging
-
 import virtualbox
 
 from wistar import configuration
 
 vbox_session = ""
-
-logger = logging.getLogger(__name__)
 
 
 def init_session():
@@ -22,7 +18,7 @@ def get_vm_host_only_net_name(host_only_net_ip_address):
     if host_only_net_ip_address is not None:
         host_only_network_util = VBHONetUtil()
         host_only_net_name = host_only_network_util.getHostOnlyNetworkNameByGuestIP(host_only_net_ip_address)
-    logger.debug(" get_vm_host_only_net_name():  %s ==> %s" % (host_only_net_ip_address, host_only_net_name))
+    print " get_vm_host_only_net_name():  %s ==> %s" % (host_only_net_ip_address, host_only_net_name)
     return host_only_net_name
 
 
@@ -36,37 +32,37 @@ def get_vm_session(name):
     try:
         m = get_instance(name)
         session = m.create_session()
-        instance = session.machine
+        instance = session.machine 
         return session, instance
     except Exception:
-        logger.debug("Could not get VM Session")
+        print "Could not get VM Session"
         return None
 
 
 def save_session(session, instance):
     try:
         instance.save_settings()
-        session.unlock_machine()
+        session.unlock_machine() 
         return True
     except Exception:
-        logger.debug("Could not save session")
+        print "Could not save session"
         # try to unlock again!
-        session.unlock_machine()
+        session.unlock_machine() 
         return False
 
 
 def preconfigure_vmx(name, mgmtipaddr):
     (session, instance) = get_vm_session(name)
     if not remove_extraneous_controllers(instance):
-        session.unlock_machine()
+        session.unlock_machine() 
         return False
 
     if not set_serial_port_as_server(instance):
-        session.unlock_machine()
+        session.unlock_machine() 
         return False
 
     if not set_management_network(instance, mgmtipaddr):
-        session.unlock_machine()
+        session.unlock_machine() 
         return False
 
     return save_session(session, instance)
@@ -77,12 +73,12 @@ def remove_extraneous_controllers(instance):
         controllers = instance.storage_controllers
         for c in controllers:
             if c.name != "IDE Controller":
-                logger.debug("Removing " + str(c.name))
+                print "Removing " + str(c.name)
                 instance.remove_storage_controller(c.name)
-
+       
         return True
     except Exception:
-        logger.debug("Could not modify controllers")
+        print "Could not modify controllers"
         return False
 
 
@@ -96,7 +92,7 @@ def set_management_network(instance, mgmtipaddr):
         iface.attachment_type = virtualbox.library.NetworkAttachmentType(4)
         return True
     except Exception:
-        logger.debug("Could not set managment network on first interface")
+        print "Could not set managment network on first interface"
         return False
 
 
@@ -112,5 +108,5 @@ def set_serial_port_as_server(instance):
         sp.server = True
         return True
     except Exception:
-        logger.debug("Could not set serial port pipe")
+        print "Could not set serial port pipe"
         return False

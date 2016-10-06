@@ -1,4 +1,3 @@
-import logging
 import re
 
 from jnpr.junos import Device
@@ -9,16 +8,13 @@ from lxml import etree
 from WistarException import WistarException
 
 
-logger = logging.getLogger(__name__)
-
-
 def get_device_reference(host, user, pw):
     try:
         dev = Device(host=host, user=user, password=pw)
         dev.open(gather_facts=False)
         return dev
     except:
-        logger.debug("Could not connect to device " + str(host) + "!")
+        print "Could not connect to device " + str(host) + "!"
         raise WistarException("Could not connect to Device")
 
 
@@ -27,8 +23,8 @@ def execute_cli(ip, user, pw, cli):
         dev = get_device_reference(ip, user, pw)
         return dev.cli(cli)
     except Exception as e:
-        logger.debug("Could not execute cli command")
-        logger.debug(str(e))
+        print "Could not execute cli command"
+        print str(e)
         return str(e)
 
 
@@ -75,8 +71,8 @@ def get_interface_ip_config_element(name, ip):
         inet_address_name_el = etree.SubElement(inet_address_el, "name")
         inet_address_name_el.text = ip
     except Exception as e:
-        logger.debug("Error creating interfaceIpConfig element!")
-        logger.debug(repr(e))
+        print "Error creating interfaceIpConfig element!"
+        print repr(e)
         raise WistarException("Could not create interface configuration")
 
     return xml_data
@@ -101,12 +97,12 @@ def config_junos_interfaces(ip, user, pw):
     # now, lets convert those to ge-0/0/X names ...
     for em in em_interfaces:
         if not em == "em0" and not em == "em1":
-            logger.debug("em should not be em0 or em1")
-            logger.debug(em)
+            print "em should not be em0 or em1"
+            print em
             em_num = re.sub("\D", "", em)
-            logger.debug(em_num)
+            print em_num
             ge_num = int(em_num) - 2
-            logger.debug(str(ge_num))
+            print str(ge_num)
             ge = "ge-0/0/" + str(ge_num)
             # let's grab the mac here
             interfaces[ge] = em_interfaces[em]
@@ -126,67 +122,67 @@ def push_config(conf_string, ip, user, pw):
         config_format = 'xml'
     elif re.search(r'^\s*(set|delete|replace|rename)\s', conf_string):
         config_format = 'set'
-    elif re.search(r'^[a-z:]*\s*\w+\s+\{', conf_string, re.I) and re.search(r'.*\}\s*$', conf_string):
+    elif re.search(r'^[a-z:]*\s*\w+\s+{', conf_string, re.I) and re.search(r'.*}\s*$', conf_string):
         config_format = 'text'
 
-    logger.debug("using format: " + config_format)
+    print "using format: " + config_format
     cu = Config(dev)
     try:
         cu.lock()
     except LockError as le:
-        logger.debug("Could not lock database!")
-        logger.debug(str(le))
+        print "Could not lock database!"
+        print str(le)
         dev.close()
         return False
 
     try:
         cu.load(conf_string, format=config_format)
     except Exception as e:
-        logger.debug("Could not load configuration")
-        logger.debug(str(e))
+        print "Could not load configuration"
+        print str(e)
         dev.close()
         return False
 
     diff = cu.diff()
-    logger.debug(diff)
+    print diff
     if diff is not None:
         try:
             cu.commit_check()
-            logger.debug("Committing config!")
+            print "Committing config!"
             cu.commit(comment="Commit via wistar")
 
         except CommitError as ce:
-            logger.debug("Could not load config!")
+            print "Could not load config!"
             cu.rollback()
-            logger.debug(repr(ce))
+            print repr(ce)
             return False
 
     else:
         # nothing to commit
-        logger.debug("Nothing to commit - no diff found")
+        print "Nothing to commit - no diff found"
         return True
 
     try:
-        logger.debug("Unlocking database!")
+        print "Unlocking database!"
         cu.unlock()
     except UnlockError as ue:
-        logger.debug("Could not unlock database")
-        logger.debug(str(ue))
+        print "Could not unlock database"
+        print str(ue)
         return False
 
-    logger.debug("Closing device handle")
+    print "Closing device handle"
     dev.close()
     return True
 
 
 def push_config_element(xml_data, dev, overwrite=False):
-    logger.debug(etree.tostring(xml_data, pretty_print=True))
+    print etree.tostring(xml_data, pretty_print=True)
     cu = Config(dev)
     try:
         cu.lock()
     except LockError as le:
-        logger.debug("Could not lock database!")
-        logger.debug(str(le))
+        print "Could not lock database!"
+        print str(le)
         dev.close()
         return False
 
@@ -194,44 +190,44 @@ def push_config_element(xml_data, dev, overwrite=False):
         cu.load(xml_data, overwrite=overwrite)
 
     except Exception as e:
-        logger.debug("Could not load configuration")
-        logger.debug(str(e))
+        print "Could not load configuration"
+        print str(e)
         dev.close()
         return False
 
     diff = cu.diff()
-    logger.debug(diff)
+    print diff
     if diff is not None:
         # nothing to commit
         try:
             cu.commit_check()
-            logger.debug("Committing config!")
+            print "Committing config!"
             cu.commit(comment="Commit via wistar")
-            logger.debug("Committed successfully!")
+            print "Committed successfully!"
 
         except CommitError as ce:
-            logger.debug("Could not load config!")
+            print "Could not load config!"
             cu.rollback()
 
     else:
-        logger.debug("Nothing to commit")
+        print "Nothing to commit"
 
     try:
-        logger.debug("Unlocking database!")
+        print "Unlocking database!"
         cu.unlock()
     except UnlockError as ue:
-        logger.debug("Could not unlock database")
-        logger.debug(str(ue))
+        print "Could not unlock database"
+        print str(ue)
         return False
 
-    logger.debug("Closing device handle")
+    print "Closing device handle"
     dev.close()
     return True
 
 
 def push_config_string(xml_string, ip, pw):
-    logger.debug("Pushing new config to " + str(ip))
-    logger.debug(xml_string)
+    print "Pushing new config to " + str(ip)
+    print xml_string
     dev = get_device_reference(ip, "root", pw)
     xml_data = etree.fromstring(xml_string)
     push_config_element(xml_data, dev, True)

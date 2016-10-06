@@ -1,5 +1,4 @@
 import json
-import logging
 import time
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -14,8 +13,6 @@ from common.lib import osUtils
 from common.lib import wistarUtils
 from scripts.models import Script
 from topologies.models import Topology
-
-logger = logging.getLogger(__name__)
 
 
 def index(request):
@@ -57,7 +54,7 @@ def get_topology_status(request):
 
     try:
 
-        logger.debug("Got topo " + str(topology.id))
+        print "Got topo " + str(topology.id)
         domain_prefix = "t%s_" % topology.id
 
         domains = libvirtUtils.get_domains_for_topology(domain_prefix)
@@ -83,7 +80,7 @@ def get_topology_status(request):
                 domain_name = domain_prefix + ud["label"]
                 if image_type == "linux":
                     if not consoleUtils.is_linux_device_at_prompt(domain_name):
-                        logger.debug("%s does not have a console ready" % domain_name)
+                        print "%s does not have a console ready" % domain_name
                         context["message"] = "not all instances have a console ready"
                         return HttpResponse(json.dumps(context), content_type="application/json")
                         # FIXME - add junos support here
@@ -105,7 +102,7 @@ def get_topology_status(request):
         return HttpResponse(json.dumps(context), content_type="application/json")
 
     except Exception as ex:
-        logger.debug(str(ex))
+        print str(ex)
         context["message"] = "Caught Exception!"
         return HttpResponse(json.dumps(context), content_type="application/json")
 
@@ -141,7 +138,7 @@ def start_topology(request):
 
         # get a list of all the currently used IPs defined
         all_used_ips = wistarUtils.get_used_ips()
-        logger.debug(str(all_used_ips))
+        print str(all_used_ips)
 
         raw_json = json.loads(topology.json)
         for json_object in raw_json:
@@ -168,23 +165,23 @@ def start_topology(request):
     try:
 
         # by this point, the topology already exists
-        logger.debug("Got topo " + str(topo.id))
+        print "Got topo " + str(topo.id)
         domain_status = libvirtUtils.get_domains_for_topology("t" + str(topo.id) + "_")
 
         if len(domain_status) == 0:
             # it has not yet been deployed!
-            logger.debug("not yet deployed!")
+            print "not yet deployed!"
 
             # let's parse the json and convert to simple lists and dicts
             config = wistarUtils.load_config_from_topology_json(topo.json, topo.id)
 
-            logger.debug("Deploying to hypervisor now")
+            print "Deploying to hypervisor now"
             # FIXME - should this be pushed into another module?
             av.inline_deploy_topology(config)
             time.sleep(1)
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         context["status"] = "unknown"
         context["message"] = "Exception"
         return HttpResponse(json.dumps(context), content_type="application/json")
@@ -204,11 +201,11 @@ def start_topology(request):
 
         context = {'status': 'booting', 'topologyId': topo.id, 'message': 'sandbox is booting'}
 
-        logger.debug("returning")
+        print "returning"
         return HttpResponse(json.dumps(context), content_type="application/json")
 
     except Exception as ex:
-        logger.debug(str(ex))
+        print str(ex)
         context["status"] = "unknown"
         context["message"] = "Caught Exception %s" % ex
         return HttpResponse(json.dumps(context), content_type="application/json")
@@ -266,9 +263,9 @@ def configure_topology(request):
                             linuxUtils.push_remote_script(ip, "root", password, script.script, script.destination)
                             output = linuxUtils.execute_cli(ip, "root", password,
                                                             script.destination + " " + script_data)
-                            logger.debug(output)
+                            print output
                     except Exception as e:
-                        logger.debug("Could not configure domain: %s" % e)
+                        print "Could not configure domain: %s" % e
                         context["status"] = "unknown"
                         context["message"] = "Could not configure domain: %s " % e
                         return HttpResponse(json.dumps(context), content_type="application/json")
@@ -276,7 +273,7 @@ def configure_topology(request):
                 elif image_type == "junos":
                     consoleUtils.preconfig_junos_domain(domain_name, password, ip, mgmt_interface)
                 else:
-                    logger.debug("Skipping unknown object")
+                    print "Skipping unknown object"
 
         context["status"] = "configured"
         context["message"] = "All sandbox nodes configured"
@@ -313,12 +310,12 @@ def delete_topology(request):
     topology_prefix = "t%s_" % topology.id
     network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
     for network in network_list:
-        logger.debug("undefining network: " + network["name"])
+        print "undefining network: " + network["name"]
         libvirtUtils.undefine_network(network["name"])
 
     domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
     for domain in domain_list:
-        logger.debug("undefining domain: " + domain["name"])
+        print "undefining domain: " + domain["name"]
         source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
         if libvirtUtils.undefine_domain(domain["uuid"]):
             if source_file is not None:

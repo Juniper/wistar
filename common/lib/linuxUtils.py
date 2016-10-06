@@ -1,12 +1,8 @@
-import logging
 import re
 
 import paramiko
 from paramiko.ssh_exception import SSHException
-
 from common.lib.WistarException import WistarException
-
-logger = logging.getLogger(__name__)
 
 
 # simple method to execute a cli on a remote host
@@ -40,13 +36,14 @@ def set_interface_ip_address(ip, username, pw, interface, interface_ip):
     cmd = cmd + " && ip link set dev " + interface + " up"
     # fixme - there needs to be a better way to inform of failure
     # always returning a string isn't the best...
-    logger.debug(execute_cli(ip, username, pw, cmd))
+    print execute_cli(ip, username, pw, cmd)
     return True
 
 
 # create a script on the remote host at the destination given with the
 # given script contents
 def push_remote_script(ip, username, pw, script_text, script_destination):
+
     try:
         # remove last thing after last "/"
         # results in only the path we care about
@@ -56,27 +53,27 @@ def push_remote_script(ip, username, pw, script_text, script_destination):
 
         client = paramiko.SFTPClient.from_transport(transport)
     except SSHException as se:
-        logger.debug("Caught SSHException")
-        logger.debug(str(se))
+        print "Caught SSHException"
+        print str(se)
         raise WistarException(str(se))
 
     try:
-        logger.debug("Creating directory: " + script_path)
+        print "Creating directory: " + script_path
         rstats = client.stat(script_path)
-        logger.debug(rstats)
+        print rstats
     except IOError:
-        logger.debug("creating non-existant path")
+        print "creating non-existant path"
         client.mkdir(script_path)
 
     try:
-        logger.debug("Writing file")
+        print "Writing file"
         f = client.file(script_destination, 'w')
         f.write(script_text)
         f.close()
-        logger.debug("setting execute permissions")
+        print "setting execute permissions"
         client.chmod(script_destination, 0744)
         client.close()
     except Exception as e:
-        logger.debug("Caught error!")
-        logger.debug(str(e))
+        print "Caught error!"
+        print str(e)
         raise WistarException(str(e))

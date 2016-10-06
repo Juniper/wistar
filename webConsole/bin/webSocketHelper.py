@@ -12,7 +12,7 @@ path = os.path.abspath(os.path.dirname(__file__))
 
 ws = os.path.join(path, "websockify.py")
 
-logger.debug(str(ws))
+print str(ws)
 
 os.system(ws + " " + first + " " + second + " &")
 

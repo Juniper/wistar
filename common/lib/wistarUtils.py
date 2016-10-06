@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import subprocess
 import time
@@ -15,8 +14,6 @@ from wistar import settings
 
 # keep track of how many mac's we've used
 mac_counter = 0
-
-logger = logging.getLogger(__name__)
 
 
 def generate_next_mac(topology_id):
@@ -152,7 +149,7 @@ def load_config_from_topology_json(topology_json, topology_id):
     :param topology_id: id of the topology from the db
     :return: dict containing list of devices and networks
     """
-    logger.debug("loading json object from topology: %s" % topology_id)
+    print "loading json object from topology: %s" % topology_id
     global mac_counter
     mac_counter = 0
     json_data = json.loads(topology_json)
@@ -173,7 +170,7 @@ def load_config_from_topology_json(topology_json, topology_id):
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
             user_data = json_object["userData"]
-            logger.debug("Found a topology vm")
+            print "Found a topology vm"
             device = dict()
 
             device["name"] = "t" + str(topology_id) + "_" + user_data["name"]
@@ -186,7 +183,7 @@ def load_config_from_topology_json(topology_json, topology_id):
             except ObjectDoesNotExist:
                 raise Exception("Not all images are present!")
 
-            logger.debug(json_object)
+            print json_object
 
             device["ram"] = user_data["ram"]
             device["cpu"] = user_data["cpu"]
@@ -231,7 +228,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     device["configDriveParams"] = dict()
 
             if "configScriptId" in user_data:
-                logger.debug("Found a configScript to use!")
+                print "Found a configScript to use!"
                 device["configScriptId"] = user_data["configScriptId"]
                 device["configScriptParam"] = user_data["configScriptParam"]
 
@@ -252,7 +249,7 @@ def load_config_from_topology_json(topology_json, topology_id):
             if "parent" in user_data:
                 device["parent"] = user_data["parent"]
 
-            logger.debug("Using chassis name of: %s" % chassis_name)
+            print "Using chassis name of: %s" % chassis_name
 
             # set this property for use later, we'll loop again after we have configured all the conections
             # to create the management interface at the end (i.e. for Linux hosts)
@@ -421,12 +418,12 @@ def load_config_from_topology_json(topology_json, topology_id):
             # let's check to see if we've already marked this internal bridge for creation
             for c in networks:
                 if c["name"] == bridge_name:
-                    logger.debug("Skipping bridge creation for " + bridge_name)
+                    print "Skipping bridge creation for " + bridge_name
                     create_bridge = False
                     continue
 
             if create_bridge is True:
-                logger.debug("Setting " + bridge_name + " for creation")
+                print "Setting " + bridge_name + " for creation"
                 connection = dict()
                 connection["name"] = bridge_name
                 connection["mac"] = generate_next_mac(topology_id)
@@ -478,13 +475,13 @@ def clone_topology(topology_json):
                 next_ip = get_next_ip(all_used_ips, floor_ip)
                 floor_ip = next_ip
                 new_ip = configuration.management_prefix + str(next_ip)
-                logger.debug("new_ip is " + new_ip)
+                print "new_ip is " + new_ip
                 ud["ip"] = new_ip
 
         return json.dumps(json_data)
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return None
 
 
@@ -504,7 +501,7 @@ def launch_web_socket(vnc_port, web_socket_port, server):
 
     cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (web_socket_path, server, vnc_port, server, web_socket_port)
 
-    logger.debug(cmd)
+    print cmd
 
     proc = subprocess.Popen(cmd, shell=True, close_fds=True)
     time.sleep(1)
@@ -548,10 +545,9 @@ def kill_web_socket(server, web_socket_port):
     :param web_socket_port: web socket port
     :return: boolean
     """
-    logger.debug("Killing webConsole sessions")
-    cmd = "ps -ef | grep 'websockify.py " + server + ":" + web_socket_port + \
-          "' | awk \'{ logger.debug($2 }\' | xargs -n 1 kill"
-    logger.debug("Running cmd: " + cmd)
+    print "Killing webConsole sessions"
+    cmd = 'ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + '" | awk \'{ print $2 }\' | xargs -n 1 kill'
+    print "Running cmd: " + cmd
     rt = os.system(cmd)
     if rt == 0:
         return True
@@ -584,7 +580,7 @@ def get_used_ips():
     dhcp_leases = osUtils.get_dhcp_leases()
     for lease in dhcp_leases:
         ip = str(lease["ip-address"])
-        logger.debug("adding active lease %s" % ip)
+        print "adding active lease %s" % ip
         last_octet = ip.split('.')[-1]
         all_ips.add(int(last_octet))
 
@@ -592,11 +588,11 @@ def get_used_ips():
     dhcp_leases = osUtils.get_dhcp_reservations()
     for lease in dhcp_leases:
         ip = str(lease["ip-address"])
-        logger.debug("adding active reservation %s" % ip)
+        print "adding active reservation %s" % ip
         last_octet = ip.split('.')[-1]
         all_ips.add(int(last_octet))
 
-    logger.debug("sorting and returning all_ips")
+    print "sorting and returning all_ips"
     all_ips_list = list(all_ips)
     all_ips_list.sort()
     return all_ips_list
@@ -607,14 +603,14 @@ def get_next_ip(all_ips, floor):
 
         all_ips.sort()
 
-        logger.debug("floor is " + str(floor))
+        print "floor is " + str(floor)
 
         for i in range(2, 254):
             if i > floor and i not in all_ips:
                 return i
 
     except Exception as e:
-        logger.debug(e)
+        print e
         return floor
 
 
@@ -633,7 +629,7 @@ def create_disk_instance(device, disk_params):
 
     if "type" in disk_params:
         if disk_params["type"] == "image" and "image_id" in disk_params:
-            logger.debug("Creating secondary Disk information")
+            print "Creating secondary Disk information"
             image_id = disk_params["image_id"]
             disk_image = Image.objects.get(pk=image_id)
             disk_base_path = settings.MEDIA_ROOT + "/" + disk_image.filePath.url
@@ -666,7 +662,7 @@ def create_disk_instance(device, disk_params):
             disk_instance_path = ''
             if "configDriveSupport" in device and device["configDriveSupport"] is True:
 
-                logger.debug("Lets create a config-drive!")
+                print "Lets create a config-drive!"
 
                 # keep a dict of files with format: filename: filecontents
                 files = dict()
@@ -697,5 +693,5 @@ def create_disk_instance(device, disk_params):
                 if disk_instance_path is None:
                     disk_instance_path = ''
 
-    logger.debug("Using %s" % disk_instance_path)
+    print "Using %s" % disk_instance_path
     return disk_instance_path

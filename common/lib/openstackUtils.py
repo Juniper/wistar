@@ -95,7 +95,7 @@ def connect_to_openstack():
         _auth_token = result.info().getheader('X-Subject-Token')
         # now get the tenant_id for the chosen project
         _tenant_id = get_project_id(configuration.openstack_project)
-        # logger.debug(_auth_token)
+        # print _auth_token
         return True
     except URLError as e:
         logger.error("Could not authenticate to openstack!")
@@ -362,11 +362,11 @@ def get_nova_serial_console(instance_name):
     """
     logger.debug("--- get_nova_serial_console ---")
 
-    logger.debug("Looking for instance: %s" % instance_name)
+    print "Looking for instance: %s" % instance_name
     server_detail_url = create_nova_url('/%s/servers?name=%s' % (_tenant_id, instance_name))
     server_detail = do_nova_get(server_detail_url)
 
-    # logger.debug("got details: %s" % server_detail)
+    # print "got details: %s" % server_detail
 
     if server_detail is None:
         return None
@@ -385,7 +385,7 @@ def get_nova_serial_console(instance_name):
         logger.error("Console not found with server name %s" % instance_name)
         return None
 
-    # logger.debug(server_uuid)
+    # print server_uuid
     data = '{"os-getSerialConsole": {"type": "serial"}}'
     url = create_nova_url('/%s/servers/%s/action' % (_tenant_id, server_uuid))
 

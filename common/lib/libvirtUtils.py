@@ -46,7 +46,7 @@ def get_network_by_name(network_name):
         return conn.networkLookupByName(network_name)
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         raise Exception("Could not get network by name")
 
 
@@ -57,7 +57,7 @@ def get_domain_by_uuid(domain_id):
         return conn.lookupByUUIDString(domain_id)
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         raise Exception("Could not get domain by uuid")
 
 
@@ -73,7 +73,7 @@ def domain_exists(domain_name):
         return False
 
     except Exception as ee:
-        logger.debug(repr(ee))
+        print repr(ee)
         return False
 
 
@@ -96,21 +96,21 @@ def promote_instance_to_image(domain_name):
         image_path = get_image_for_domain(domain.UUIDString())
 
         if domain.blockJobInfo(image_path, 0) != {}:
-            logger.debug("block job already in progress")
+            print "block job already in progress"
             return None
 
-        logger.debug("Performing blockPull on " + image_path)
+        print "Performing blockPull on " + image_path
         domain.blockPull(image_path, 0, 0)
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
 def is_image_in_block_pull(domain, image_path):
     if domain.blockJobInfo(image_path) != {}:
-        logger.debug("block job already in progress")
+        print "block job already in progress"
         return True
     else:
         return False
@@ -163,7 +163,7 @@ def list_domains():
         domain_list.sort(key=lambda k: k["name"])
         return domain_list
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         raise Exception("Could not list domains")
 
 
@@ -180,19 +180,19 @@ def get_domains_for_topology(topology_id):
 
         return domain_list
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         raise Exception("Could not list domains")
 
 
 def undefine_all_in_topology(topology_id):
     network_list = get_networks_for_topology(topology_id)
     for network in network_list:
-        logger.debug("Undefining network: " + network["name"])
+        print "Undefining network: " + network["name"]
         undefine_network(network["name"])
 
     domain_list = get_domains_for_topology(topology_id)
     for domain in domain_list:
-        logger.debug("undefining domain: " + domain["name"])
+        print "undefining domain: " + domain["name"]
         undefine_domain(domain["uuid"])
 
 
@@ -208,7 +208,7 @@ def network_exists(network_name):
         return False
 
     except Exception as e:
-        logger.debug(repr(e))
+        print repr(e)
         return False
 
 
@@ -231,7 +231,7 @@ def list_networks():
         network_list.sort(key=lambda k: k["name"])
         return network_list
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         raise Exception("Could not list networks")
 
 
@@ -277,11 +277,11 @@ def define_domain_from_xml(xml):
 
     try:
         domain = conn.defineXML(xml)
-        logger.debug("Defined Domain: " + domain.name())
+        print "Defined Domain: " + domain.name()
 
         return domain
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         raise Exception("Could not define domain")
 
 
@@ -290,11 +290,11 @@ def define_network_from_xml(xml):
 
     try:
         network = conn.networkDefineXML(xml)
-        logger.debug("Defined Network: " + network.name())
+        print "Defined Network: " + network.name()
 
         return network
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         raise Exception("Could not define network")
 
 
@@ -305,7 +305,7 @@ def undefine_domain(domain_id):
         domain = get_domain_by_uuid(domain_id)
 
         if domain.hasManagedSaveImage(0):
-            logger.debug("Removing saved state for domain " + domain.name())
+            print "Removing saved state for domain " + domain.name()
             domain.managedSaveRemove(0)
 
         if domain.info()[0] == 1:
@@ -315,7 +315,7 @@ def undefine_domain(domain_id):
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -328,7 +328,7 @@ def stop_domain(domain_id):
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -341,7 +341,7 @@ def suspend_domain(domain_id):
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -355,7 +355,7 @@ def start_domain(domain_id):
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -368,7 +368,7 @@ def start_domain_by_name(domain_name):
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -382,14 +382,14 @@ def undefine_network(network_name):
     try:
         network = get_network_by_name(network_name)
         if network.isActive() == 1:
-            logger.debug("Stopping network before destroy")
+            print "Stopping network before destroy"
             network.destroy()
 
         network.undefine()
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -406,12 +406,12 @@ def stop_network(network_name):
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
 def start_network(network_name):
-    logger.debug("Starting network " + str(network_name))
+    print "Starting network " + str(network_name)
     connect()
 
     # cannot delete default domain!
@@ -425,7 +425,7 @@ def start_network(network_name):
         return True
 
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -446,7 +446,7 @@ def get_domain_vnc_port(domain):
 
 # simple func to ensure we always use a valid vnc_port
 def get_next_domain_vnc_port(offset=0):
-    logger.debug("Getting next vnc port with offset: " + str(offset))
+    print "Getting next vnc port with offset: " + str(offset)
     current_iteration = 0
     connect()
 
@@ -461,13 +461,13 @@ def get_next_domain_vnc_port(offset=0):
         except Exception as e:
             # in some cases,port can be something other than int like None
             # just catch all the here and continue on
-            logger.debug("found unhandled error for vnc_port! " + str(vnc_port))
-            logger.debug(str(e))
+            print "found unhandled error for vnc_port! " + str(vnc_port)
+            print str(e)
             continue
 
     if len(used_ports) > 1:
         used_ports.sort()
-        logger.debug(str(used_ports))
+        print str(used_ports)
         last = used_ports[0]
         maximum = used_ports[-1]
         for p in used_ports:
@@ -475,10 +475,10 @@ def get_next_domain_vnc_port(offset=0):
             if (int(p) - int(last)) > 1:
                 next_port = int(last) + 1
                 if current_iteration == offset:
-                    logger.debug("retuning " + str(next_port))
+                    print "retuning " + str(next_port)
                     return str(next_port)
                 else:
-                    logger.debug("keep going:" + str(next_port))
+                    print "keep going:" + str(next_port)
                     current_iteration += 1
                     last = p
             else:
@@ -486,10 +486,10 @@ def get_next_domain_vnc_port(offset=0):
 
         # we ran through all the ports and didn't find a gap we can re-use
         next_port = int(maximum) + 1 + int(offset)
-        logger.debug("returning max+1+offset: " + str(next_port))
+        print "returning max+1+offset: " + str(next_port)
         return next_port
     else:
-        logger.debug("No vnc ports currently in use")
+        print "No vnc ports currently in use"
         return int(5900) + offset
 
 
@@ -519,13 +519,13 @@ def attach_iso_to_domain(domain_name, file_path):
           <address type='drive' controller='0' bus='0' target='0' unit='1'/>
         </disk>""".format(file_path)
 
-        logger.debug(xml)
+        print xml
 
         domain = get_domain_by_name(domain_name)
         domain.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         return True
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -539,13 +539,13 @@ def detach_iso_from_domain(domain_name):
           <address type='drive' controller='0' bus='0' target='0' unit='1'/>
         </disk>"""
 
-        logger.debug(xml)
+        print xml
 
         domain = get_domain_by_name(domain_name)
         domain.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         return True
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -557,8 +557,8 @@ def get_iso_for_domain(domain_name):
     try:
         domain = get_domain_by_name(domain_name)
     except Exception as e:
-        logger.debug("Domain not configured")
-        logger.debug(str(e))
+        print "Domain not configured"
+        print str(e)
         return None
 
     xml = domain.XMLDesc(0)
@@ -575,8 +575,8 @@ def get_management_interface_mac_for_domain(domain_name):
     try:
         domain = get_domain_by_name(domain_name)
     except Exception as e:
-        logger.debug("Domain not configured")
-        logger.debug(str(e))
+        print "Domain not configured"
+        print str(e)
         return None
 
     xml = domain.XMLDesc(0)
@@ -609,5 +609,5 @@ def get_management_ip_for_domain(domain_name):
             if lease["mac-address"] == mac_address:
                 return str(lease["ip-address"])
 
-    logger.debug("Could not find leased IP address for mac")
+    print "Could not find leased IP address for mac"
     return None

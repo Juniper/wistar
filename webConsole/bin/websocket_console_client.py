@@ -82,7 +82,7 @@ def main():
 
     try:
         old_settings = termios.tcgetattr(sys.stdin)
-        logger.debug('*** connected (type "%s." to exit)' % args.escape)
+        print '*** connected (type "%s." to exit)' % args.escape
         try:
             tty.setraw(sys.stdin)
             run_until_exit()
@@ -90,9 +90,9 @@ def main():
             # Make sure we restore terminal state
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
     except socket.error:
-        logger.debug('*** failed to connect to websocket')
+        print '*** failed to connect to websocket'
     except UserExit:
-        logger.debug('*** disconnected')
+        print '*** disconnected'
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,5 @@
 import os
 import json
-import logging
 import platform
 import shutil
 import subprocess
@@ -11,7 +10,6 @@ from netaddr import *
 from wistar import configuration
 from wistar import settings
 
-logger = logging.getLogger(__name__)
 
 # used to determine if we should try kvm or virtualbox
 # if Linux, then KVM, otherwise, we'll fallback to VirtualBox if possible
@@ -60,7 +58,7 @@ def check_ip(ip_address):
 
     rv = os.system("ping -c 1 -q %s " % ip_address)
     if rv == 0:
-        logger.debug("IP Exists and is pingable")
+        print "IP Exists and is pingable"
         return True
     else:
         return False
@@ -82,7 +80,7 @@ def copy_image_to_clone(old_path, new_path):
         shutil.copy(old_path, new_path)
         return True
     except Exception as e:
-        logger.debug(str(e))
+        print str(e)
         return False
 
 
@@ -108,7 +106,7 @@ def create_blank_image(filename, size):
     if configuration.deployment_backend == "kvm":
         rv = os.system("qemu-img create '" + filename + "' -f qcow2 " + size)
     else:
-        logger.debug("Only KVM backend is supported for this function")
+        print "Only KVM backend is supported for this function"
         rv = 1
 
     if rv == 0:
@@ -135,7 +133,7 @@ def is_image_thin_provisioned(image_path):
     if configuration.deployment_backend == "kvm":
         rv = os.system("qemu-img info " + image_path + " | grep backing")
         if rv == 0:
-            logger.debug("Found a backing file!")
+            print "Found a backing file!"
             return True
         else:
             return False
@@ -154,7 +152,7 @@ def remove_instance(instance_path):
         rv = os.system("vboxmanage closemedium disk \"" + instance_path + "\" --delete")
 
     else:
-        logger.debug("configured deployment backend %s is not yet implemented!" % configuration.deployment_backend)
+        print "configured deployment backend %s is not yet implemented!" % configuration.deployment_backend
         return False
 
     if rv == 0:
@@ -165,14 +163,14 @@ def remove_instance(instance_path):
 
 def remove_instances_for_topology(topology_id_prefix):
     directory = settings.MEDIA_ROOT + "/user_images/instances"
-    logger.debug("Deleting for topology_id_prefix %s" % topology_id_prefix)
+    print "Deleting for topology_id_prefix %s" % topology_id_prefix
     for entry in os.listdir(directory):
         full_path = os.path.join(directory, entry)
         if entry.startswith(topology_id_prefix):
-            logger.debug(entry)
-            logger.debug(directory)
-            logger.debug(full_path)
-            logger.debug("Removing stale entry: " + full_path)
+            print entry
+            print directory
+            print full_path
+            print "Removing stale entry: " + full_path
             os.remove(full_path)
 
 
@@ -185,7 +183,7 @@ def create_cloud_drive(domain_name, files=[]):
             os.mkdir(seed_dir)
 
         if check_path(seed_img_name):
-            logger.debug("seed.img already created!")
+            print "seed.img already created!"
             return seed_img_name
 
         if not os.system("qemu-img create -f raw  %s 16M" % seed_img_name) == 0:
@@ -208,7 +206,7 @@ def create_cloud_drive(domain_name, files=[]):
                 # ensure a leading / just in case!
                 name = "/" + name
 
-            logger.debug("writing file: %s" % name)
+            print "writing file: %s" % name
             with open("/mnt%s" % name, "w") as mdf:
                 mdf.write(files[name])
 
@@ -217,8 +215,8 @@ def create_cloud_drive(domain_name, files=[]):
         return seed_img_name
 
     except Exception as e:
-        logger.debug("Could not create_cloud_drive!!!")
-        logger.debug(str(e))
+        print "Could not create_cloud_drive!!!"
+        print str(e)
         return None
 
     finally:
@@ -250,7 +248,7 @@ def get_junos_default_config_template(domain_name, host_name, password, ip):
         config["password"] = password
 
         template_data_string = template_data.render(config=config)
-        logger.debug(template_data_string)
+        print template_data_string
 
         seed_dir = configuration.seeds_dir + domain_name
 
@@ -260,7 +258,7 @@ def get_junos_default_config_template(domain_name, host_name, password, ip):
         return template_data_string
 
     except Exception as e:
-        logger.debug("Caught exception in create_cloud_init_img " + str(e))
+        print "Caught exception in create_cloud_init_img " + str(e)
         return None
 
 
@@ -273,7 +271,7 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
             os.mkdir(seed_dir)
 
         if check_path(seed_img_name):
-            logger.debug("seed.img already created!")
+            print "seed.img already created!"
             return seed_img_name
 
         # read template
@@ -281,9 +279,9 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         meta_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_meta_data"))
         user_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_user_data"))
 
-        logger.debug(meta_data_template_path)
+        print meta_data_template_path
 
-        logger.debug(user_data_template_path)
+        print user_data_template_path
 
         meta_data_template = open(meta_data_template_path)
         meta_data_template_string = meta_data_template.read()
@@ -321,12 +319,12 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
         meta_data_string = meta_data.render(config=config)
         user_data_string = user_data.render(config=config)
 
-        logger.debug("writing meta-data file")
+        print "writing meta-data file"
         mdf = open(seed_dir + "/meta-data", "w")
         mdf.write(meta_data_string)
         mdf.close()
 
-        logger.debug("writing user-data file")
+        print "writing user-data file"
         udf = open(seed_dir + "/user-data", "w")
         udf.write(user_data_string)
         udf.close()
@@ -336,55 +334,55 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
                                                                                                          seed_dir,
                                                                                                          seed_dir))
         if rv != 0:
-            logger.debug("Could not create iso image!")
+            print "Could not create iso image!"
             return None
 
         return seed_img_name
 
     except Exception as e:
-        logger.debug("Caught exception in create_cloud_init_img " + str(e))
+        print "Caught exception in create_cloud_init_img " + str(e)
         return None
 
 
 def remove_cloud_init_tmp_dirs(topology_prefix):
-    logger.debug("deleting cloud config drive for %s" % topology_prefix)
+    print "deleting cloud config drive for %s" % topology_prefix
     seed_dir = configuration.seeds_dir
     dirs = os.listdir(seed_dir)
     try:
         for d in dirs:
             full_path = os.path.join(seed_dir, d)
-            logger.debug("checking %s" % d)
+            print "checking %s" % d
             if topology_prefix in d and os.path.isdir(full_path):
-                logger.debug("we found a domain config dir at %s" % full_path)
+                print "we found a domain config dir at %s" % full_path
                 for f in os.listdir(full_path):
-                    logger.debug("deleting cloud-init file: %s" % f)
+                    print "deleting cloud-init file: %s" % f
                     os.remove(os.path.join(full_path, f))
 
-                logger.debug("removing dir %s" % d)
+                print "removing dir %s" % d
                 os.rmdir(full_path)
 
     except Exception as e:
         # smother error
-        logger.debug(str(e))
+        print str(e)
 
 
 def remove_cloud_init_seed_dir_for_domain(domain_name):
     try:
-        logger.debug("deleting cloud config drive for %s" % domain_name)
+        print "deleting cloud config drive for %s" % domain_name
         seed_dir = configuration.seeds_dir + domain_name
-        logger.debug(seed_dir)
+        print seed_dir
         if os.path.isdir(seed_dir):
             for f in os.listdir(seed_dir):
-                logger.debug("deleting cloud-init file: %s" % f)
+                print "deleting cloud-init file: %s" % f
                 os.remove(os.path.join(seed_dir, f))
 
             os.rmdir(seed_dir)
     except Exception as e:
-        logger.debug("Got an error deleting cloud-init dir: %s" % e)
+        print "Got an error deleting cloud-init dir: %s" % e
 
 
 def get_image_size(image_path):
-    cmd = "du -b %s | awk '{ logger.debug($1 }'" % image_path
+    cmd = "du -b %s | awk '{ print $1 }'" % image_path
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
     (o, e) = p.communicate()
@@ -449,13 +447,13 @@ def reserve_management_ip_for_mac(mac, ip):
         for entry in hosts_file:
             (entry_mac, entry_ip) = entry.split(',')
             if entry_ip == ip and entry_mac == mac:
-                logger.debug("management ip already reserved for this mac")
+                print "management ip already reserved for this mac"
                 return False
             elif entry_ip == ip and entry_mac != mac:
-                logger.debug("management ip Already in Use!")
+                print "management ip Already in Use!"
                 return False
             elif entry_ip != ip and entry_mac == mac:
-                logger.debug("management interface mac is already configured!")
+                print "management interface mac is already configured!"
                 return False
 
     with open(dhcp_hosts_file_path, 'a') as hosts_file:
@@ -481,7 +479,7 @@ def release_management_ip_for_mac(mac):
         for entry in hosts_file:
             (m, i) = entry.strip().split(',')
             if m == mac:
-                logger.debug("Removing management ip: %s reserved for mac: %s" % (i, m))
+                print "Removing management ip: %s reserved for mac: %s" % (i, m)
                 found = True
                 continue
             else:
@@ -502,9 +500,9 @@ def reload_dhcp_config():
     sends a HUP to the dnsmasq process
     :return: boolean
     """
-    logger.debug("Sending HUP to dnsmsq processes")
-    cmd = 'ps -ef | grep dnsmasq | grep default.conf | awk \'{ logger.debug($2 }\' | xargs -n 1 kill -HUP'
-    logger.debug("Running cmd: " + cmd)
+    print "Sending HUP to dnsmsq processes"
+    cmd = 'ps -ef | grep dnsmasq | grep default.conf | awk \'{ print $2 }\' | xargs -n 1 kill -HUP'
+    print "Running cmd: " + cmd
     rt = os.system(cmd)
     if rt == 0:
         return True

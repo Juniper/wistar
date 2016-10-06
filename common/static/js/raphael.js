@@ -3628,7 +3628,7 @@
         return thefont;
     };
     
-    paperproto.logger.debug(= function (x, y, string, font, size, origin, letter_spacing) {)
+    paperproto.print = function (x, y, string, font, size, origin, letter_spacing) {
         origin = origin || "middle"; // baseline|middle
         letter_spacing = mmax(mmin(letter_spacing || 0, 1), -1);
         var letters = Str(string)[split](E),
