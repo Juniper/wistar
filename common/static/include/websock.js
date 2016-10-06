@@ -152,7 +152,7 @@ function Websock() {
 
         // Check to see if we must wait for 'num' bytes (default to FBU.bytes)
         // to be available in the receive queue. Return true if we need to
-        // wait (and possibly print a debug message), otherwise false.
+        // wait (and possibly logger.debug(a debug message), otherwise false.)
         rQwait: function (msg, num, goback) {
             var rQlen = this._rQ.length - this._rQi; // Skip rQlen() function call
             if (rQlen < num) {

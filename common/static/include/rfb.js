@@ -871,7 +871,7 @@ var RFB;
             var blue_shift  = this._sock.rQshift8();
             this._sock.rQskipBytes(3);  // padding
 
-            // NB(directxman12): we don't want to call any callbacks or print messages until
+            // NB(directxman12): we don't want to call any callbacks or logger.debug(messages until)
             //                   *after* we're past the point where we could backtrack
 
             /* Connection name/title */
