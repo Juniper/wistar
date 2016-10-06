@@ -25,3 +25,4 @@ urlpatterns = [
     url(r'^uploadToGlance/(?P<image_id>\d+)/$', views.upload_to_glance, name='upload'),
     url(r'^importFromGlance/(?P<glance_id>[^/]+)/$', views.import_from_glance, name='glance_import'),
 ]
+
