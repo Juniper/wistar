@@ -1,81 +1,82 @@
-
 # Author:      Subrata Mazumdar (subratam@junpier.net)
 # Description: A Python object to provide information about Host-Only Network Interfaces. 
 # 
 
+import logging
 import sys
 from pprint import pformat
 
-import virtualbox
 import netaddr
-
+import virtualbox
 
 
 # VirtualBox API: http://pythonhosted.org/pyvbox/virtualbox/library.html
 
 class VBHONetUtil:
     """ Utility Methods for Host-only network in VritualBox """
-    
+
     manager = None
-    vbox    = None
-    host    = None
+    vbox = None
+    host = None
 
-    ctx     = None
+    ctx = None
 
-    def __init__(self): 
+    logger = logging.getLogger(__name__)
+
+    def __init__(self):
 
         # vboxapi.VirtualBoxManager
         self.manager = virtualbox.Manager().manager
 
-        #IVrtualBox
+        # IVrtualBox
         self.vbox = self.manager.vbox
 
         # IHost
         self.host = self.manager.vbox.host
 
         self.ctx = {
-            'manager':       self.manager,
-            'vbox':          self.manager.vbox,
-            'host':          self.manager.vbox.host,
+            'manager': self.manager,
+            'vbox': self.manager.vbox,
+            'host': self.manager.vbox.host,
         }
 
     def getNetworkInterfaces(self):
         # IHostNetworkInterface[]
         niList = self.host.getNetworkInterfaces()
         # niList = manager.getArray(host, 'networkInterfaces')
-    
+
         return niList
-    
+
     def getNetworkInterfaceByName(self, netName):
-        if (netName == None) :
+        if (netName == None):
             return None
         # IHostNetworkInterface[]
         niList = self.host.getNetworkInterfaces()
         for ni in niList:
-            if ni.name == netName: 
+            if ni.name == netName:
                 return ni;
         return None
-    
+
     def getHostOnlyNetworkInterfaces(self):
         # IHostNetworkInterface[]
         niList = self.host.findHostNetworkInterfacesOfType(virtualbox.library.HostNetworkInterfaceType.host_only)
         return niList
-    
+
     def getHostOnlyNetworkNames(self):
         # IHostNetworkInterface[]
         niNameList = []
-    
+
         # IHostNetworkInterface[]
         niList = self.getHostOnlyNetworkInterfaces()
         for ni in niList:
             niNameList.append(str(ni.name))
         return niNameList
-    
+
     def getHostOnlyNetworkInterfaceByGuestIP(self, guestIP):
-    
+
         # IHostNetworkInterface[]
         niList = self.getHostOnlyNetworkInterfaces()
-    
+
         for ni in niList:
             # VirtulBox host-only networks are defined based on GW interface address for the network and net-mask
             vboxHoNetGWIPAddr = ni.IPAddress + "/" + ni.networkMask;
@@ -83,13 +84,13 @@ class VBHONetUtil:
 
             # guestIPNetAddr = guestIP + "/" + ni.networkMask;
             # Create a /32 network address first and then get subnet based on net-mask of GW
-            guestIPSubnet = netaddr.IPNetwork(guestIP) 
+            guestIPSubnet = netaddr.IPNetwork(guestIP)
             guestIPSubnet.prefixlen = vboxHoNetGWSubnet.prefixlen
 
-            # print " host-subnet: %s gw-subnet: %s)" % (str(guestIPSubnet), str(vboxHoNetGWSubnet))
-            # print " host-subnet: %s gw-subnet: %s)" % (str(guestIPSubnet.network), str(vboxHoNetGWSubnet.network))
+            # self.logger.debug(" host-subnet: %s gw-subnet: %s)" % (str(guestIPSubnet), str(vboxHoNetGWSubnet)))
+            # self.logger.debug(" host-subnet: %s gw-subnet: %s)" % (str(guestIPSubnet.network), str(vboxHoNetGWSubnet.network)))
             # Check to see the subnet for guest-ip is same as subnet for host-only net GW interface.
-            if (guestIPSubnet == vboxHoNetGWSubnet ) :
+            if (guestIPSubnet == vboxHoNetGWSubnet):
                 return ni
         return None
 
@@ -98,49 +99,48 @@ class VBHONetUtil:
         if (ni != None):
             return str(ni.name)
         return None
-    
+
     def getInternalNetworkInterfaces(self):
         # IHostNetworkInterface[]
         niList = self.vbox.getInternalNetworks();
         return niList
-    
-    
+
     def testHONetIfaces(self):
-    
+
         # Command line args are in sys.argv[1], sys.argv[2] ...
         # sys.argv[0] is the script name itself and can be ignored
-    
+
         niList = self.getNetworkInterfaces()
         for ni in niList:
-            print "  %s (%s/%s)" % (ni.name, ni.IPAddress, ni.networkMask)
-    
-        print ""
+            self.logger.debug("  %s (%s/%s)" % (ni.name, ni.IPAddress, ni.networkMask))
+
+        self.logger.debug("")
         niNameList = self.getHostOnlyNetworkNames()
-        print "  Vboxnets: ["
+        self.logger.debug("  Vboxnets: [")
         for niName in niNameList:
-            if (niName != None) :
+            if (niName != None):
                 vboxnet = self.getNetworkInterfaceByName(niName)
-                print "    " + str(niName) + " : " + str(vboxnet)
-        print "  ]"
-    
-        print ""
-        print "  Vboxnets: ["
+                self.logger.debug("    " + str(niName) + " : " + str(vboxnet))
+        self.logger.debug("  ]")
+
+        self.logger.debug("")
+        self.logger.debug("  Vboxnets: [")
         niList = self.getHostOnlyNetworkInterfaces()
         for ni in niList:
-            print "  %s (%s/%s)" % (ni.name, ni.IPAddress, ni.networkMask)
-        print "  ]"
-    
-        print ""
-        guestIPList = ['10.10.0.11', '10.10.0.0', '10.10.1.12', '10.10.2.255', '10.10.3.0', '10.10.4.1',] 
+            self.logger.debug("  %s (%s/%s)" % (ni.name, ni.IPAddress, ni.networkMask))
+        self.logger.debug("  ]")
+
+        self.logger.debug("")
+        guestIPList = ['10.10.0.11', '10.10.0.0', '10.10.1.12', '10.10.2.255', '10.10.3.0', '10.10.4.1', ]
         for guestIP in guestIPList:
             vboxnetName = self.getHostOnlyNetworkNameByGuestIP(guestIP)
-            print "  %s ==> %s" % (guestIP, vboxnetName)
-            if (vboxnetName != None) :
+            self.logger.debug("  %s ==> %s" % (guestIP, vboxnetName))
+            if (vboxnetName != None):
                 vboxnet = self.getNetworkInterfaceByName(vboxnetName)
-                print "    " + str(vboxnetName) + " : " + str(vboxnet)
-    
-        print ""
-    
+                self.logger.debug("    " + str(vboxnetName) + " : " + str(vboxnet))
+
+        self.logger.debug("")
+
     def getVMList(self):
         vmlist = []
         if self.vbox is not None:
@@ -150,17 +150,17 @@ class VBHONetUtil:
         return vmlist
 
     def getVMNetworkAdapaters(self, vm):
-        # print "vm: " + vm.name 
+        # self.logger.debug("vm: " + vm.name )
         naList = []
 
         sysProps = self.vbox.systemProperties
         maxAdapters = sysProps.getMaxNetworkAdapters(vm.chipsetType)
-        for slot in range(maxAdapters) :
+        for slot in range(maxAdapters):
             na = vm.getNetworkAdapter(slot)
             if (na != None and na.enabled):
                 naList.append(na)
         # for na in naList:
-        #     print "vm: %s naType: %s na.atType: %s enabled: %s" %(vm.name, na.adapterType, na.attachmentType, na.enabled)
+        #     self.logger.debug("vm: %s naType: %s na.atType: %s enabled: %s" %(vm.name, na.adapterType, na.attachmentType, na.enabled))
         return naList
 
     def getVMTypedNetworkAdapaters(self, vm, natype):
@@ -177,17 +177,17 @@ class VBHONetUtil:
         typedNINameList = []
         for na in typedNAList:
             naName = None
-            if (natype == virtualbox.library.NetworkAttachmentType.nat):        # 1
+            if (natype == virtualbox.library.NetworkAttachmentType.nat):  # 1
                 naName = na.NATNetwork
             elif (natype == virtualbox.library.NetworkAttachmentType.bridged):  # 2
                 naName = na.bridgedInterface
-            elif (natype == virtualbox.library.NetworkAttachmentType.internal): # 3
+            elif (natype == virtualbox.library.NetworkAttachmentType.internal):  # 3
                 naName = na.internalNetwork
-            elif (natype == virtualbox.library.NetworkAttachmentType.host_only): # 4
+            elif (natype == virtualbox.library.NetworkAttachmentType.host_only):  # 4
                 naName = na.hostOnlyInterface
-            elif (natype == virtualbox.library.NetworkAttachmentType.generic):   # 5
+            elif (natype == virtualbox.library.NetworkAttachmentType.generic):  # 5
                 naName = na.genericDriver
-            elif (natype == virtualbox.library.NetworkAttachmentType.nat_network): # 6
+            elif (natype == virtualbox.library.NetworkAttachmentType.nat_network):  # 6
                 naName = na.NATNetwork
             else:
                 naName = "Unattached"
@@ -213,17 +213,17 @@ class VBHONetUtil:
     def getNetworkAdapterName(self, na):
         naName = None
         natype = na.attachmentType;
-        if (natype == virtualbox.library.NetworkAttachmentType.nat):        # 1
+        if (natype == virtualbox.library.NetworkAttachmentType.nat):  # 1
             naName = na.NATNetwork
         elif (natype == virtualbox.library.NetworkAttachmentType.bridged):  # 2
             naName = na.bridgedInterface
-        elif (natype == virtualbox.library.NetworkAttachmentType.internal): # 3
+        elif (natype == virtualbox.library.NetworkAttachmentType.internal):  # 3
             naName = na.internalNetwork
-        elif (natype == virtualbox.library.NetworkAttachmentType.host_only): # 4
+        elif (natype == virtualbox.library.NetworkAttachmentType.host_only):  # 4
             naName = na.hostOnlyInterface
-        elif (natype == virtualbox.library.NetworkAttachmentType.generic):   # 5
+        elif (natype == virtualbox.library.NetworkAttachmentType.generic):  # 5
             naName = na.genericDriver
-        elif (natype == virtualbox.library.NetworkAttachmentType.nat_network): # 6
+        elif (natype == virtualbox.library.NetworkAttachmentType.nat_network):  # 6
             naName = na.NATNetwork
         else:
             naName = "Unattached"
@@ -233,7 +233,7 @@ class VBHONetUtil:
         naList = []
         for vm in vmList:
             vmNAList = self.getVMNetworkAdapaters(vm);
-            if (len(vmNAList) > 0) :
+            if (len(vmNAList) > 0):
                 naList.extend(vmNAList);
         return naList
 
@@ -251,7 +251,7 @@ class VBHONetUtil:
         for naName in naNameList:
             na = None
             # na = self.getNetworkAdapterByName(naName)
-            if (n != None):
+            if naName is not None:
                 naNameList.append(na)
         return naList
 
@@ -262,7 +262,6 @@ class VBHONetUtil:
             if (na.attachmentType == natype):
                 typedNAList.append(na)
         return typedNAList
-
 
     def getTopoTypedNetworkAdapterNames(self, vmList, natype):
         naList = self.getTopoTypedNetworkAdapaters(vmList, natype)
@@ -289,125 +288,125 @@ class VBHONetUtil:
         naList = self.getTopoTypedNetworkAdapterNames(vmList, virtualbox.library.NetworkAttachmentType.host_only)
         return naList;
 
-
     def getMachineById(self, uuid):
         try:
             mach = self.vbox.getMachine(uuid)
         except:
             mach = self.vbox.findMachine(uuid)
         return mach
-    
+
     def dumpVMInfo(self, vm):
-        # print "vm: " + str(vm)
+        # self.logger.debug("vm: " + str(vm))
         if vm == None:
-            return 
-    
+            return
+
         print
-        print "vm: " + vm.name + "{"
+        self.logger.debug("vm: " + vm.name + "{")
         sharedFolders = vm.getSharedFolders()
-        print "    sharedFolders: (%s) {" % (len(sharedFolders)) 
+        self.logger.debug("    sharedFolders: (%s) {" % (len(sharedFolders)))
         # for sf in ctx['manager'].getArray(vm, 'sharedFolders'):
         for sf in sharedFolders:
-            print "        name=%s host=%s accessible: %s writable: %s" % (sf.name, sf.hostPath, sf.accessible, sf.writable)
-        print "    }"
+            self.logger.debug("        name=%s host=%s accessible: %s writable: %s" % (
+                sf.name, sf.hostPath, sf.accessible, sf.writable))
+        self.logger.debug("    }")
 
         naList = self.getVMNetworkAdapaters(vm)
-        print "    Network Interfaces:" + pformat(naList, indent=4)
+        self.logger.debug("    Network Interfaces:" + pformat(naList, indent=4))
 
         inNAList = self.getVMInternalNetworkAdapaters(vm)
-        print "    InternalNetwork Interfaces:" + pformat(inNAList, indent=4)
+        self.logger.debug("    InternalNetwork Interfaces:" + pformat(inNAList, indent=4))
 
         for nat in virtualbox.library.NetworkAttachmentType._enums:
             name = nat[0]
             value = nat[1]
             typedNINameList = self.getVMTypedNetworkAdapterNames(vm, virtualbox.library.NetworkAttachmentType(value))
-            print "    %s interfaces { %s }" % (name, ",".join(typedNINameList))
-            # print ",".join(typedNINameList)
+            self.logger.debug("    %s interfaces { %s }" % (name, ",".join(typedNINameList)))
+            # self.logger.debug(",".join(typedNINameList))
             # pprint(typedNINameList)
             # name = nat["name"]
-            # print "}"
+            # self.logger.debug("}")
 
         inNINameList = self.getVMInternalNetworkAdapterNames(vm)
-        print "    %s interfaces { %s }" % ("InternalNetwork", ",".join(inNINameList))
+        self.logger.debug("    %s interfaces { %s }" % ("InternalNetwork", ",".join(inNINameList)))
 
         hoNINameList = self.getVMHONetworkAdapterNames(vm)
-        print "    %s interfaces : { %s }" % ("HostOnlyNetwork", ",".join(hoNINameList))
-        print "}"
-
+        self.logger.debug("    %s interfaces : { %s }" % ("HostOnlyNetwork", ",".join(hoNINameList)))
+        self.logger.debug("}")
 
     def testVM(self, args):
         naList = []
         if len(args) >= 2:
-            # print "usage: %s [vmname|uuid]" % (args[0])
+            # self.logger.debug("usage: %s [vmname|uuid]" % (args[0]))
             # return None
             uuid = args[1]
 
             # IMachine
             vm = self.vbox.findMachine(uuid)
             self.dumpVMInfo(vm)
-        else: 
+        else:
             vmlist = self.getVMList()
             for vm in vmlist:
                 self.dumpVMInfo(vm)
-            # end-of for
-        # end-of if
-    
+                # end-of for
+                # end-of if
+
     def dumpTopoInfo(self, vmList):
 
         naNameList = self.getTopoNetworkAdapterNames(vmList)
-        print "    Network Interfaces { %s }" % (",".join(naNameList))
+        self.logger.debug("    Network Interfaces { %s }" % (",".join(naNameList)))
 
         # inNAList = self.getVMInternalNetworkAdapaters(vmList)
-        # print "    InternalNetwork Interfaces:" + pformat(inNAList, indent=4)
+        # self.logger.debug("    InternalNetwork Interfaces:" + pformat(inNAList, indent=4))
 
         for nat in virtualbox.library.NetworkAttachmentType._enums:
             name = nat[0]
             value = nat[1]
-            typedNINameList = self.getTopoTypedNetworkAdapterNames(vmList, virtualbox.library.NetworkAttachmentType(value))
-            print "    %s interfaces { %s }" % (name, ",".join(typedNINameList))
-            # print ",".join(typedNINameList)
+            typedNINameList = self.getTopoTypedNetworkAdapterNames(vmList,
+                                                                   virtualbox.library.NetworkAttachmentType(value))
+            self.logger.debug("    %s interfaces { %s }" % (name, ",".join(typedNINameList)))
+            # self.logger.debug(",".join(typedNINameList))
             # pprint(typedNINameList)
             # name = nat["name"]
-            # print "}"
+            # self.logger.debug("}")
 
         inNINameList = self.getTopoInternalNetworkAdapterNames(vmList)
-        print "    %s interfaces { %s }" % ("InternalNetwork", ",".join(inNINameList))
+        self.logger.debug("    %s interfaces { %s }" % ("InternalNetwork", ",".join(inNINameList)))
 
         hoNINameList = self.getTopoHONetworkAdapterNames(vmList)
-        print "    %s interfaces : { %s }" % ("HostOnlyNetwork", ",".join(hoNINameList))
-        print "}"
+        self.logger.debug("    %s interfaces : { %s }" % ("HostOnlyNetwork", ",".join(hoNINameList)))
+        self.logger.debug("}")
 
     def testVMTopo(self, args):
 
         vmNameList = []
         if len(args) >= 2:
-            # print "usage: %s [vmname|uuid]" % (args[0])
+            # self.logger.debug("usage: %s [vmname|uuid]" % (args[0]))
             # return None
             uuid = args[1]
-            for i in (len(args) - 1) :
-                vmNameList.append(args[i+1])
-        else: 
+            for i in (len(args) - 1):
+                vmNameList.append(args[i + 1])
+        else:
             vmNameList = ['t6_VBN1-2VMX-31', 't6_VBN1-2VMX-32']
         # end-of if
-        print "    vmList: { %s }" % (",".join(vmNameList))
+        self.logger.debug("    vmList: { %s }" % (",".join(vmNameList)))
 
         vmList = []
         for vmName in vmNameList:
             vm = self.vbox.findMachine(vmName)
             if (vm != None):
                 vmList.append(vm)
-            # end-of if
+                # end-of if
         # end-of for
 
         # for vm in vmList:
         #     self.dumpVMInfo(vm)
 
         naNameList = self.getTopoNetworkAdapterNames(vmList)
-        print "    naNameList: { %s }" % (",".join(naNameList))
+        self.logger.debug("    naNameList: { %s }" % (",".join(naNameList)))
         self.dumpTopoInfo(vmList)
 
         # end-of for
-    
+
 
 # Gather our code in a main() function
 def main():
@@ -420,6 +419,7 @@ def main():
     # vbhoNetUtil.testVM(sys.argv)
 
     vbhoNetUtil.testVMTopo(sys.argv)
+
 
 # Standard boilerplate to call the main() function to begin
 # the program.

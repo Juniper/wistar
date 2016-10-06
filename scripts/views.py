@@ -1,11 +1,14 @@
-from django.shortcuts import render, get_object_or_404
+import logging
+
 from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 
 from scripts.models import ConfigTemplate
 from scripts.models import ConfigTemplateForm
-
 from scripts.models import Script
 from scripts.models import ScriptForm
+
+logger = logging.getLogger(__name__)
 
 
 def index(request):
@@ -35,7 +38,7 @@ def update(request):
             template = get_object_or_404(ConfigTemplate, pk=template_id)
             template.name = request.POST['name']
             template.description = request.POST['description']
-            template.template= request.POST['template']
+            template.template = request.POST['template']
             template.save()
             return HttpResponseRedirect('/scripts')
         else:
@@ -52,7 +55,7 @@ def update(request):
 def create(request):
     template_form = ConfigTemplateForm(request.POST, request.FILES)
     if template_form.is_valid():
-        print "Saving form"
+        logger.debug("Saving form")
         template_form.save()
         return HttpResponseRedirect('/scripts')
     else:
@@ -95,7 +98,7 @@ def create_script(request):
 
     script_form = ScriptForm(request.POST, request.FILES)
     if script_form.is_valid():
-        print "Saving form"
+        logger.debug("Saving form")
         script_form.save()
         return HttpResponseRedirect('/scripts')
     else:
@@ -136,12 +139,12 @@ def update_script(request):
             })
 
     except Exception as e:
-        print str(e)
+        logger.error(str(e))
         return render(request, 'scripts/error.html', {
             'error_message': 'Could not update script!'
         })
-    
-    
+
+
 def delete_script(request, script_id):
     script = get_object_or_404(Script, pk=script_id)
     script.delete()

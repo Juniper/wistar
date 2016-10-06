@@ -1,13 +1,15 @@
 #!/usr/bin/python
 # Demonstration contrail REST API library
 # nembery@juniper.net
-import urllib2
-import urllib
-import platform
 import json
-import time
-import netaddr
+import logging
 import mmap
+import platform
+import time
+import urllib
+import urllib2
+
+import netaddr
 
 
 class ContrailClient:
@@ -27,6 +29,8 @@ class ContrailClient:
     _auth_token = ""
 
     _project_uuid_cache = dict()
+
+    logger = logging.getLogger(__name__)
 
     def __init__(self, user, pw, host):
         self._user = user
@@ -169,55 +173,55 @@ class ContrailClient:
         :return:
         """
         try:
-            print "deleting from openstack"
+            self.logger.debug("deleting from openstack")
             # openstack cannot recognize uuid with '-'
             os_uuid = project_id.replace('-', '')
             os_url = self.create_os_url('/projects/%s' % os_uuid)
-            print os_url
+            self.logger.debug(os_url)
             self.do_delete(os_url)
             # give contrail 3 seconds to catch up!
             time.sleep(3)
 
         except urllib2.HTTPError as he:
-            print "Caught error - continuing..."
-            print str(he)
+            self.logger.debug("Caught error - continuing...")
+            self.logger.debug(str(he))
             try:
                 # if we can't delete it from openstack, but we still can get here
                 # something is out of sync, go ahead and get rid of it from contrail
                 api_url = self.create_api_url('/project/%s' % project_id)
                 self.do_delete(api_url)
-                print "project deleted successfully"
+                self.logger.debug("project deleted successfully")
             except urllib2.HTTPError:
-                print "damn it"
+                self.logger.debug("damn it")
 
     def delete_project(self, project_id):
         try:
-            print "clearing project_uuid_cache"
+            self.logger.debug("clearing project_uuid_cache")
             self._project_uuid_cache.clear()
 
-            print "deleting from openstack"
+            self.logger.debug("deleting from openstack")
             # openstack cannot recognize uuid with '-'
             os_uuid = project_id.replace('-', '')
             os_url = self.create_os_url('/projects/%s' % os_uuid)
-            print os_url
+            self.logger.debug(os_url)
             self.do_delete(os_url)
             # give contrail 3 seconds to catch up!
             time.sleep(3)
 
         except urllib2.HTTPError as he:
-            print "Caught error - continuing..."
-            print str(he)
+            self.logger.debug("Caught error - continuing...")
+            self.logger.debug(str(he))
 
         # go ahead and delete from Contrail as well...
         try:
-            print "Deleting from Contrail"
+            self.logger.debug("Deleting from Contrail")
             # if we can't delete it from openstack, but we still can get here
             # something is out of sync, go ahead and get rid of it from contrail
             api_url = self.create_api_url('/project/%s' % project_id)
             self.do_delete(api_url)
-            print "project deleted successfully"
+            self.logger.debug("project deleted successfully")
         except urllib2.HTTPError:
-            print "Could not delete from Contrail"
+            self.logger.debug("Could not delete from Contrail")
 
     def create_default_network(self, tenant_id):
         data = """
@@ -270,7 +274,7 @@ class ContrailClient:
                 }
             }""" % (security_group_id, tenant_id)
 
-        print "Creating rule 1"
+        self.logger.debug("Creating rule 1")
         self.do_post(security_group_rule_create_url, rule_1_data)
 
         rule_2_data = """
@@ -286,7 +290,7 @@ class ContrailClient:
                 }
             }""" % security_group_id
 
-        print "Creating rule 2"
+        self.logger.debug("Creating rule 2")
         self.do_post(security_group_rule_create_url, rule_2_data)
 
         rule_3_data = """
@@ -303,7 +307,7 @@ class ContrailClient:
                 }
             }""" % security_group_id
 
-        print "Creating rule 3"
+        self.logger.debug("Creating rule 3")
         self.do_post(security_group_rule_create_url, rule_3_data)
 
         rule_4_data = """
@@ -320,7 +324,7 @@ class ContrailClient:
                 }
             }""" % security_group_id
 
-        print "Creating rule 4"
+        self.logger.debug("Creating rule 4")
         self.do_post(security_group_rule_create_url, rule_4_data)
 
         rule_5_data = """
@@ -337,7 +341,7 @@ class ContrailClient:
                 }
             }""" % security_group_id
 
-        print "Creating rule 5"
+        self.logger.debug("Creating rule 5")
         self.do_post(security_group_rule_create_url, rule_5_data)
 
         rule_6_data = """
@@ -354,7 +358,7 @@ class ContrailClient:
                 }
             }""" % security_group_id
 
-        print "Creating rule 6"
+        self.logger.debug("Creating rule 6")
         self.do_post(security_group_rule_create_url, rule_6_data)
 
         return "OK"
@@ -364,7 +368,7 @@ class ContrailClient:
         # micro optimization. Let's keep these queries around
         # in a small cache
         if project_name in self._project_uuid_cache.keys():
-            print "cache hit!"
+            self.logger.debug("cache hit!")
             return self._project_uuid_cache[project_name]
 
         projects_url = self.create_os_url('/projects')
@@ -408,7 +412,7 @@ class ContrailClient:
         virtual_networks = self.get_json(virtual_networks_url)
         for virtual_network in virtual_networks["virtual-networks"]:
             if virtual_network["fq_name"][1] == project_name and \
-                    virtual_network["fq_name"][2] == virtual_network_name:
+                            virtual_network["fq_name"][2] == virtual_network_name:
                 return str(virtual_network["uuid"])
 
         return "ERROR"
@@ -418,7 +422,7 @@ class ContrailClient:
         network_policys = self.get_json(network_policys_url)
         for network_policy in network_policys["network-policys"]:
             if network_policy["fq_name"][1] == project_name and \
-                    network_policy["fq_name"][2] == network_policy_name:
+                            network_policy["fq_name"][2] == network_policy_name:
                 return str(network_policy["uuid"])
 
         return "ERROR"
@@ -464,7 +468,7 @@ class ContrailClient:
     # Get a list of service instances that are from a template
     # that has a name prefixed by 'SA_' or 'SA-'
     def get_stand_alone_service_instances_for_project(self, project_id):
-        print "Getting standalone instances for project"
+        self.logger.debug("Getting standalone instances for project")
         service_instances = self.get_url("/service-instances?parent_id=%s" % project_id)
         sij = json.loads(service_instances)
 
@@ -475,7 +479,7 @@ class ContrailClient:
             service_instance_details = self.get_url('/service-instance/%s' % uuid)
             sidj = json.loads(service_instance_details)
             si = dict()
-            print "Found instance: " + str(service_instance["fq_name"])
+            self.logger.debug("Found instance: " + str(service_instance["fq_name"]))
             si["fq_name"] = service_instance["fq_name"]
             si["uuid"] = uuid
             si["name"] = sidj["service-instance"]["name"]
@@ -488,9 +492,9 @@ class ContrailClient:
             # removing the _left will leave us with the location name where this service instance was deployed
             left_network = sidj["service-instance"]["service_instance_properties"]["left_virtual_network"]
             si["location"] = left_network.split(":")[2].replace("_left", "")
-            print "with template: " + si["template_name"]
+            self.logger.debug("with template: " + si["template_name"])
             if "SA-" in si["template_name"] or "SA_" in si["template_name"]:
-                print "appending: " + str(si)
+                self.logger.debug("appending: " + str(si))
                 instances.append(si)
 
         return instances
@@ -507,7 +511,7 @@ class ContrailClient:
         admin_url = "/projects/%s/users/%s/roles/%s" % (project_id, admin_id, admin_role_id)
         self.do_put(self.create_os_url(admin_url))
 
-        print "Added admin to project"
+        self.logger.debug("Added admin to project")
         return True
 
     def create_virtual_network(self, project_name, network_name, route_target,
@@ -516,9 +520,9 @@ class ContrailClient:
         Creates a virtual network
         Will calculate the gateway as broadcast -1
         """
-        print "creating virtual_network"
-        print ip_prefix
-        print ip_prefix_len
+        self.logger.debug("creating virtual_network")
+        self.logger.debug(ip_prefix)
+        self.logger.debug(ip_prefix_len)
 
         cidr = ip_prefix + "/" + ip_prefix_len
 
@@ -591,8 +595,8 @@ class ContrailClient:
                          route_distinguisher, ip_prefix, ip_prefix_len, gateway, dns, project_uuid)
 
         url = self.create_api_url('/virtual-networks')
-        print url
-        print virtual_network_data
+        self.logger.debug(url)
+        self.logger.debug(virtual_network_data)
         return self.do_post(url, virtual_network_data)
 
     def create_network_policy(self, project_name, policy_name, left, right):
@@ -641,8 +645,8 @@ class ContrailClient:
               }}
             }}""".format(project_name, policy_name, left, right)
         url = self.create_api_url('/network-policys')
-        print url
-        print network_policy_data
+        self.logger.debug(url)
+        self.logger.debug(network_policy_data)
         return self.do_post(url, network_policy_data)
 
     def add_network_policy_to_virtual_network(self, project_name, policy_name, virtual_network_name):
@@ -674,8 +678,8 @@ class ContrailClient:
             }
             """ % (project_name, virtual_network_name, project_name, policy_name)
         url = self.create_api_url('/virtual-network/%s' % virtual_network_id)
-        print url
-        print update_data
+        self.logger.debug(url)
+        self.logger.debug(update_data)
         return self.do_put(url, update_data)
 
     def create_service_instance(self, project_name, instance_name, template_name, location, interface_order):
@@ -735,8 +739,8 @@ class ContrailClient:
                    template_name, interface_list_string, project_uuid, cleaned_name)
 
         url = self.create_api_url('/service-instances')
-        print url
-        print instance_data
+        self.logger.debug(url)
+        self.logger.debug(instance_data)
         return self.do_post(url, instance_data)
 
     def add_service_instance_to_network_policy(self, project_name, network_policy, service_instance, left, right):
@@ -794,7 +798,7 @@ class ContrailClient:
                          service_instance, cleaned_instance_name)
 
         url = self.create_api_url('/network-policy/%s' % network_policy_id)
-        print url
+        self.logger.debug(url)
         return self.do_put(url, network_policy_data)
 
     def delete_network_policy_from_virtual_network(self, project_name, virtual_network_name):
@@ -818,8 +822,8 @@ class ContrailClient:
             }
             """ % (project_name, virtual_network_name)
         url = self.create_api_url('/virtual-network/%s' % virtual_network_id)
-        print url
-        print update_data
+        self.logger.debug(url)
+        self.logger.debug(update_data)
         return self.do_put(url, update_data)
 
     def get_id_by_fqname(self, fqname, object_type):
@@ -831,12 +835,12 @@ class ContrailClient:
         """ % (fqname, object_type)
 
         url = self.create_api_url('/fqname-to-id')
-        print url
-        print post_data
+        self.logger.debug(url)
+        self.logger.debug(post_data)
         try:
             return self.do_post(url, post_data)
         except urllib2.HTTPError as he:
-            print "http error: %s" % str(he)
+            self.logger.debug("http error: %s" % str(he))
             raise Exception("not found")
 
     def delete_service_instance(self, instance_id):
@@ -853,32 +857,32 @@ class ContrailClient:
                 #        vmi = self.get_json(self.create_api_url('/virtual-machine-interface/%s' % vmibr["uuid"]))
                 #        if "instance_ip_back_refs" in vmi["virtual-machine-interface"]:
                 #            for iibr in vmi["virtual-machine-interface"]["instance_ip_back_refs"]:
-                #                print "deleting instance_ip: %s" % iibr["uuid"]
+                #                self.logger.debug("deleting instance_ip: %s" % iibr["uuid"])
                 #                self.delete_url("instance-ip", iibr["uuid"])
                 #                time.sleep(.5)
 
-                #       print "deleting virtual_machine_interface: %s" % vmibr["uuid"]
+                #       self.logger.debug("deleting virtual_machine_interface: %s" % vmibr["uuid"])
                 #       self.delete_url("virtual-machine-interface", vmibr["uuid"])
                 #       time.sleep(.5)
 
-                # print "deleting virtual-machine: %s" % vmbr["uuid"]
+                # self.logger.debug("deleting virtual-machine: %s" % vmbr["uuid"])
                 # self.delete_url("virtual-machine", vmbr["uuid"])
                 # time.sleep(.5)
 
-        print "deleting service_instance: %s " % si["service-instance"]["uuid"]
+        self.logger.debug("deleting service_instance: %s " % si["service-instance"]["uuid"])
         self.delete_url("service-instance", si["service-instance"]["uuid"])
 
     def delete_nova_instance(self, vm_uuid, project_uuid, project_name):
         try:
             url = self.create_nova_url("/%s/servers/%s" % (project_uuid.replace("-", ""), vm_uuid))
-            print url
+            self.logger.debug(url)
             self.do_nova_delete(url, project_name)
         except urllib2.HTTPError as he:
             # smother the error
-            print "Could not delete nova instance!!!"
-            print str(he)
+            self.logger.debug("Could not delete nova instance!!!")
+            self.logger.debug(str(he))
         except IOError as io:
-            print "Caught io error: %s" % str(io)
+            self.logger.debug("Caught io error: %s" % str(io))
 
     def delete_virtual_network(self, virtual_network_id):
         virtual_network_detail = self.get_url('/virtual-network/%s' % virtual_network_id)
@@ -886,15 +890,15 @@ class ContrailClient:
 
         if "instance_ip_back_refs" in vndj["virtual-network"]:
             for iibr in vndj["virtual-network"]["instance_ip_back_refs"]:
-                print "Deleting interface ip back ref: %s" % iibr["uuid"]
+                self.logger.debug("Deleting interface ip back ref: %s" % iibr["uuid"])
                 self.delete_url('instance-ip', iibr["uuid"])
 
         if "virtual_machine_interface_back_refs" in vndj["virtual-network"]:
             for vmibr in vndj["virtual-network"]["virtual_machine_interface_back_refs"]:
-                print "Deleting virtual machine inteface back ref: %s" % vmibr["uuid"]
+                self.logger.debug("Deleting virtual machine inteface back ref: %s" % vmibr["uuid"])
                 self.delete_url('virtual-machine-interface', vmibr["uuid"])
 
-        print "Deleting virtual network: %s" % virtual_network_id
+        self.logger.debug("Deleting virtual network: %s" % virtual_network_id)
         self.delete_url('virtual-network', virtual_network_id)
 
     def delete_network_policy(self, network_policy_id):
@@ -1026,21 +1030,21 @@ class ContrailClient:
 
     def list_glance_images(self):
         url = self.create_glance_url('/images')
-        print url
+        self.logger.debug(url)
         return self.do_get(url)
 
     def reserve_image_old(self, name):
         data = urllib.urlencode([("name", name)])
-        print data
+        self.logger.debug(data)
         url = self.create_glance_url('/images')
-        print url
+        self.logger.debug(url)
         request = urllib2.Request(url)
         request.add_header("X-Auth-Token", self._auth_token)
         request.add_header("x-image-meta-name", name)
         request.add_header("Content-Length", len(data))
         request.add_header("x-image-meta-disk_format", "qcow2")
         request.add_header("x-image-meta-container_format", "bare")
-        print str(request)
+        self.logger.debug(str(request))
         result = urllib2.urlopen(request, data)
         return result.read()
 
@@ -1055,9 +1059,9 @@ class ContrailClient:
             "min_ram": "2048"
         }""" % name
 
-        print data
+        self.logger.debug(data)
         url = self.create_glance_url('/images')
-        print url
+        self.logger.debug(url)
         request = urllib2.Request(url)
         request.add_header("X-Auth-Token", self._auth_token)
         request.add_header("Content-Length", len(data))
@@ -1084,14 +1088,14 @@ class ContrailClient:
             result = urllib2.urlopen(request)
             return result.read()
         except Exception as e:
-            print str(e)
+            self.logger.debug(str(e))
 
         finally:
             fio.close()
             f.close()
 
     def post_heat_template(self, tenant_id, stack_name, template_string):
-        print "HEHEHEHEHEHEHEHEHEH"
+        self.logger.debug("HEHEHEHEHEHEHEHEHEH")
         url = self.create_heat_url("/" + str(tenant_id) + "/stacks")
         data = '''{
             "disable_rollback": true,
@@ -1099,12 +1103,12 @@ class ContrailClient:
             "stack_name": "%s",
             "template": %s
         }''' % (stack_name, template_string)
-        print url
-        print "----"
-        print data
-        print "----"
+        self.logger.debug(url)
+        self.logger.debug("----")
+        self.logger.debug(data)
+        self.logger.debug("----")
         return self.do_post(url, data)
 
 
 if __name__ == '__main__':
-    print "Contrail utility library"
+    self.logger.debug("Contrail utility library")

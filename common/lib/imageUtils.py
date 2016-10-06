@@ -108,7 +108,7 @@ def get_image_detail_from_local_image(local_image):
             image_detail["file"] = path
             image_detail["local"] = True
         except Exception as ve:
-            print str(ve)
+            logger.debug(str(ve))
             image_detail["size"] = 0
             image_detail["file"] = "None"
             image_detail["local"] = True
@@ -116,7 +116,7 @@ def get_image_detail_from_local_image(local_image):
         # this image does not actually exist locally!
         image_detail["local"] = False
 
-    print image_detail
+    logger.debug(image_detail)
     return image_detail
 
 
