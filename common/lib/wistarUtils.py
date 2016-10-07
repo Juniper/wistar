@@ -549,7 +549,7 @@ def kill_web_socket(server, web_socket_port):
     """
     logger.debug("Killing webConsole sessions")
     cmd = 'ps -ef | grep "websockify.py ' + server + ':' + web_socket_port + \
-          '" | awk \'{ logger.debug($2 }\' | xargs -n 1 kill'
+          '" | awk \'{ print $2 }\' | xargs -n 1 kill'
     logger.debug("Running cmd: " + cmd)
     rt = os.system(cmd)
     if rt == 0:

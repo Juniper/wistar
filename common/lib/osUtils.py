@@ -385,7 +385,7 @@ def remove_cloud_init_seed_dir_for_domain(domain_name):
 
 
 def get_image_size(image_path):
-    cmd = "du -b %s | awk '{ logger.debug($1 }'" % image_path
+    cmd = "du -b %s | awk '{ print $1 }'" % image_path
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
     (o, e) = p.communicate()
@@ -504,7 +504,7 @@ def reload_dhcp_config():
     :return: boolean
     """
     logger.debug("Sending HUP to dnsmsq processes")
-    cmd = 'ps -ef | grep dnsmasq | grep default.conf | awk \'{ logger.debug($2 }\' | xargs -n 1 kill -HUP'
+    cmd = 'ps -ef | grep dnsmasq | grep default.conf | awk \'{ print $2 }\' | xargs -n 1 kill -HUP'
     logger.debug("Running cmd: " + cmd)
     rt = os.system(cmd)
     if rt == 0:
