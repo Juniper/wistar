@@ -5,6 +5,8 @@ user_images_dir = "/opt/wistar/user_images"
 
 
 # shortcut to fill in default instance password in 'New VM' screen
+# Make sure this meets the complexity requirements for your VMs!
+# i.e. for junos you need 3 of these 4: upper / lower / special / number
 default_instance_password = 'Clouds123'
 
 # deployment backend to use!
@@ -88,6 +90,11 @@ vm_image_types = [
         "name": "junos_vqfx_re",
         "description": "Junos vQFX RE",
         "js": "draw2d.shape.node.vqfxRe",
+    },
+    {
+        "name": "junos_riot",
+        "description": "Junos vMX RIOT",
+        "js": "draw2d.shape.node.vriot",
     },
     {
         "name": "junos_vqfx_cosim",

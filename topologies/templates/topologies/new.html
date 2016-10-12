@@ -170,8 +170,10 @@
     }
 
     function addIconAndClose() {
-        addIcon();
-        hideOverlay('#add_vm_form');
+        rv = addIcon();
+        if (rv == true) {
+            hideOverlay('#add_vm_form');
+        }
     }
 
     // add icon to the topology with the indicated values
@@ -204,38 +206,25 @@
             }
             jQuery('#topoIconName').val(name + "1");
             jQuery('#topoIconName').focus();
-            return;
+            return false;
         }
 
         if (ip == "") {
             alert("Please add a valid IP address");
             jQuery('#next_ip_button').focus();
-            return;
+            return false;
         }
 
         if (ip.split('.')[3] == '') {
             alert("Please add a valid IP address");
             jQuery('#next_ip_button').focus();
-            return;
+            return false;
         }
 
         if (name == "") {
             alert("Please add a valid instance name");
-            return;
-        } 
-
-        // simple algorithm to add icons to the screen without overlapping
-    	lastX += 100;
-    	lastY += 0;
-    	vmxCount += 1;
-    	iconCount += 1;
-
-    	if (iconCount > iconWrapLimit) {
-    	    lastX = 50;
-    	    lastY = iconOffset;
-    	    iconCount = 1;
-    	    iconOffset += 110;
-    	}
+            return false;
+        }
 
         var icon;
 
@@ -251,13 +240,34 @@
 
         icon = eval("new " + vm_type_data.js + "()" );
 
+        // Should the user have selected a companion image?
+        if (icon.getCompanionType() != "") {
+            // yes, did they?
+        	if (vpfe_image == 0) {
+        	    // uh-oh!
+                alert('Please select a Companion Image before continuing!');
+                return false;
+            }
+        }
+
+        // simple algorithm to add icons to the screen without overlapping
+    	lastX += 100;
+    	lastY += 0;
+    	vmxCount += 1;
+    	iconCount += 1;
+
+    	if (iconCount > iconWrapLimit) {
+    	    lastX = 50;
+    	    lastY = iconOffset;
+    	    iconCount = 1;
+    	    iconOffset += 110;
+    	}
+
         console.log(icon);
         icon.setup(type, name, ip, user, pw, image);
 
         icon.setCpu(cpu);
         icon.setRam(ram);
-
-	    canvas.addFigure(icon, lastX, lastY);
 
 	    if (icon.getSecondaryDiskParams() != "") {
 	        var params = icon.getSecondaryDiskParams();
@@ -269,7 +279,7 @@
 	    }
 
 	    if (icon.getCompanionType() != "") {
-	        console.log("GOT A COMPANION!");
+
 	        var vpfe_cpu = jQuery('#topoIconVFPCCpu').val();
     	    var vpfe_ram = jQuery('#topoIconVFPCRam').val();
 
@@ -279,10 +289,20 @@
             vpfe.setCpu(vpfe_cpu);
             vpfe.setRam(vpfe_ram);
             // bind them together here!
-            vpfe.setParentId(icon.getId());
-            icon.setChildId(vpfe.getId());
 
-            canvas.addFigure(vpfe, lastX, lastY + 15);
+            if (typeof vpfe.setParentId != 'undefined') {
+                console.log("vpfe is actually a child!");
+                console.log(vpfe.NAME);
+                vpfe.setParentId(icon.getId());
+                icon.setChildId(vpfe.getId());
+
+                canvas.addFigure(vpfe, lastX, lastY + 15);
+            } else {
+                alert("Companion Doesn't appear to be a valid companion image type!");
+                return false;
+            }
+
+            canvas.addFigure(icon, lastX, lastY);
 
             figures = new draw2d.util.ArrayList([icon, vpfe]);
             var cg = new draw2d.command.CommandGroup(canvas, figures);
@@ -291,6 +311,8 @@
             // work around, ports are being drawn as hidden until they are clicked!
             vpfe.getPorts().first().toFront();
 
+	    } else {
+	        canvas.addFigure(icon, lastX, lastY);
 	    }
 
         // let's try to increment everything nicely
@@ -301,6 +323,8 @@
     	jQuery('#topoIconScriptParam').val(0);
 
     	// jQuery('#topoIconImageVFPCSelect').val(0);
+
+    	return true;
     }
 
     function addLabel() {
@@ -331,7 +355,7 @@
     // json div element for later retrieval and storage
     function exportJson() {
         // Create a JSON writer and convert it into a JSON-String representation.
-        
+
     	var writer = new draw2d.io.json.Writer();
 
         var jsonTxt = writer.marshal(canvas, function(json) {
@@ -343,7 +367,7 @@
         });
     }
 
-    // export and submit form 
+    // export and submit form
     function updateTopology() {
         alert('You may need to redeploy this topology after this update!');
 	    exportJson();
@@ -356,7 +380,7 @@
 	    jQuery('#topoForm').submit();
     }
 
-    // export and submit form 
+    // export and submit form
     function saveTopology() {
 	    exportJson();
 	    jQuery('#topoForm').submit();
@@ -427,7 +451,7 @@
                     }
                 }
 
-                if (icon.COMPANION_TYPE != "") {
+                if (typeof icon.setChildId != "undefined") {
                     jQuery('#addInstanceTbodyVFPC').css("display", "");
                     filterCompanionSelect(icon.COMPANION_NAME_FILTER, "topoIconImageVFPCSelect");
                 }
@@ -524,7 +548,7 @@
 
         post.always(function() {
             doc.css('cursor', '');
-        });  
+        });
     }
 
     /* UI related function */
@@ -599,7 +623,7 @@
         hideAllEditors();
         currentSelection = "None";
     }
-    
+
     function showDebug() {
         currentSelection = "debug";
 	    exportJson();
@@ -641,7 +665,7 @@
         instance.setPassword(jQuery('#junosIconPass').val());
 
         instance.repaint();
-        
+
     }
 
     function loadLabelEditor(figureId) {

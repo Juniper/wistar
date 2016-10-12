@@ -91,6 +91,7 @@ def create(request):
                 logger.debug("Copied to %s" % new_image_path)
                 image = Image()
                 image.name = new_image_name
+                image.type = "junos_riot"
                 image.description = orig_image.description + "\nRiot PFE"
                 image.filePath = "user_images/" + new_image_file_name
                 image.save()
@@ -178,6 +179,24 @@ def create_local(request):
     image.filePath = file_path
     image.type = image_type
     image.save()
+
+    full_path = image.filePath.path
+
+    if image_type == "junos_vre" and ".img" in full_path:
+        logger.debug("Creating RIOT image for junos_vre")
+        new_image_path = full_path.replace('.img', '_riot.img')
+        new_image_file_name = new_image_path.split('/')[-1]
+        new_image_name = name + ' Riot PFE'
+        if osUtils.copy_image_to_clone(full_path, new_image_path):
+            logger.debug("Copied from %s" % full_path)
+            logger.debug("Copied to %s" % new_image_path)
+            n_image = Image()
+            n_image.name = new_image_name
+            n_image.type = "junos_riot"
+            n_image.description = image.description + "\nRiot PFE"
+            n_image.filePath = "user_images/" + new_image_file_name
+            n_image.save()
+
     messages.info(request, "Image Created!")
     return HttpResponseRedirect('/images')
 
