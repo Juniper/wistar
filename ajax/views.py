@@ -881,6 +881,9 @@ def inline_deploy_topology(config):
                 image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
                 instance_path = osUtils.get_instance_path_from_image(image_base_path, device["name"])
 
+                secondary_disk = ""
+                tertiary_disk = ""
+
                 if not osUtils.check_path(instance_path):
                     if not osUtils.create_thin_provision_instance(image_base_path, device["name"]):
                         raise Exception("Could not create image instance for image: " + image_base_path)
