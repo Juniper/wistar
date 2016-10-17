@@ -404,6 +404,10 @@ def get_dhcp_leases():
     :return: python list of lease objects
     """
     leases_file_path = "/var/lib/libvirt/dnsmasq/virbr0.status"
+
+    if not os.path.exists(leases_file_path):
+        return []
+
     with open(leases_file_path) as leases_file:
         all_leases = leases_file.read()
         if len(all_leases) > 0:
@@ -422,6 +426,9 @@ def get_dhcp_reservations():
     }
     """
     dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
+
+    if not os.path.exists(dhcp_hosts_file_path):
+        return []
 
     # basic strategy is to pull all entries into an array unless the line matches our mac!
     entries = []
@@ -445,7 +452,10 @@ def reserve_management_ip_for_mac(mac, ip):
     :return: boolean
     """
     dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
-    found = False
+
+    if not os.path.exists(dhcp_hosts_file_path):
+        return False
+
     with open(dhcp_hosts_file_path, 'r') as hosts_file:
         for entry in hosts_file:
             (entry_mac, entry_ip) = entry.split(',')
@@ -474,6 +484,9 @@ def release_management_ip_for_mac(mac):
     :return: boolean
     """
     dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
+
+    if not os.path.exists(dhcp_hosts_file_path):
+        return False
 
     # basic strategy is to pull all entries into an array unless the line matches our mac!
     entries = []
