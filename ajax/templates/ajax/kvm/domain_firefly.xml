@@ -1,6 +1,6 @@
 <domain type='kvm'>
   <name>{{ device.name }}</name>
-  <memory unit='KiB'>{{ device.ram }}</memory>
+  <memory unit='MiB'>{{ device.ram }}</memory>
   <currentMemory unit='KiB'>{{ device.ram }}</currentMemory>
   <vcpu placement='static'>{{ device.cpu }}</vcpu>
   <os>

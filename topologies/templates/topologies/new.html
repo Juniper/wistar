@@ -209,18 +209,6 @@
             return false;
         }
 
-        if (ip == "") {
-            alert("Please add a valid IP address");
-            jQuery('#next_ip_button').focus();
-            return false;
-        }
-
-        if (ip.split('.')[3] == '') {
-            alert("Please add a valid IP address");
-            jQuery('#next_ip_button').focus();
-            return false;
-        }
-
         if (name == "") {
             alert("Please add a valid instance name");
             return false;
@@ -284,7 +272,9 @@
     	    var vpfe_ram = jQuery('#topoIconVFPCRam').val();
 
             var vpfe = eval("new " + icon.COMPANION_TYPE + "()" );
-            vpfe.setup("Child", name, ip, user, pw, vpfe_image);
+
+            vpfe_ip = nextIp();
+            vpfe.setup("Child", name, vpfe_ip, user, pw, vpfe_image);
 
             vpfe.setCpu(vpfe_cpu);
             vpfe.setRam(vpfe_ram);
@@ -337,15 +327,15 @@
         l.setFontSize(labelSize);
         l.setStroke(0);
 
-        iconsInRow += 1;
+        iconCount += 1;
 
         lastX += 0;
         lastY += 100;
 
-    	if (iconsInRow > iconWrapLimit) {
+        if (iconCount > iconWrapLimit) {
     	    lastX = iconOffset;
     	    lastY = 50;
-    	    iconsInRow = 1;
+            iconCount = 1;
     	    iconOffset += 110;
     	}
         canvas.addFigure(l, lastX, lastY);
@@ -746,6 +736,7 @@
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
         canvas.addSelectionListener(new topologySelectionListener());
+        loadTopology();
     });
     </script>
 {% endblock %}
@@ -822,7 +813,7 @@
                   <input type="text" size="30" maxsize="30" name="name" id="name"
                          onblur="javascript: clean_string_first_alpha(this)"
                          value=""/>
-                  <input type="hidden" name="json" id="json" value=""/>
+                  <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
                   <input type="hidden" id="selectedObject" value="0">
                 </td>
               </tr>

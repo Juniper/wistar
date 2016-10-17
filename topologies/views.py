@@ -62,7 +62,7 @@ def new(request):
     context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string,
                'image_list_json': image_list_json,
                'external_bridge': external_bridge,
-               'allocated_ips': currently_allocated_ips
+               'allocated_ips': currently_allocated_ips,
                }
     return render(request, 'topologies/new.html', context)
 
@@ -156,7 +156,28 @@ def clone(request, topo_id):
     script_list = Script.objects.all().order_by('name')
     vm_types = configuration.vm_image_types
     vm_types_string = json.dumps(vm_types)
-    context = {'image_list': image_list, 'script_list': script_list, 'topo': topology, 'vm_types': vm_types_string}
+
+    image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
+
+    # also grab all the ips from the currently cloned topology
+    currently_allocated_ips = wistarUtils.get_used_ips()
+    cloned_ips = wistarUtils.get_used_ips_from_topology_json(topology.json)
+    currently_allocated_ips += cloned_ips
+
+    currently_allocated_ips.sort()
+
+    if configuration.deployment_backend == "openstack":
+        external_bridge = configuration.openstack_external_network
+    else:
+        external_bridge = configuration.kvm_external_bridge
+
+    context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string,
+               'image_list_json': image_list_json,
+               'external_bridge': external_bridge,
+               'allocated_ips': currently_allocated_ips,
+               'topo': topology
+               }
+
     return render(request, 'topologies/new.html', context)
 
 
@@ -306,7 +327,7 @@ def create_config_set(request):
     c.save()
 
     for device in config["devices"]:
-        if device["type"] == "junos_vmx" or device["type"] == "junos_firefly":
+        if device["type"] == "junos_vmx" or device["type"] == "junos_vsrx":
             try:
                 device_config = junosUtils.get_config(device["ip"], device["password"])
 

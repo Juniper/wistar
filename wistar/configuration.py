@@ -107,11 +107,6 @@ vm_image_types = [
         "js": "draw2d.shape.node.generic",
     },
     {
-        "name": "junos_firefly",
-        "description": "Junos vSRX 1.0",
-        "js": "draw2d.shape.node.vsrx",
-    },
-    {
         "name": "junos_vsrx",
         "description": "Junos vSRX",
         "js": "draw2d.shape.node.vsrx",

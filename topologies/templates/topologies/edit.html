@@ -312,6 +312,12 @@
             return false;
         }
 
+        // if there is only 1 clone requested, let's allow the user to edit this topology if desired!
+        if (num_clones == 1) {
+            window.location="/topologies/clone/{{ topo.id }}";
+            return false;
+        }
+
         var url = "/ajax/multiCloneTopology/"
         var params = {
             'topologyId' : "{{ topo.id }}",
@@ -376,7 +382,7 @@
 
         domain = generateDomainNameFromLabel(label);
         // special case for firefly
-        if (figure.getType() == "junos_firefly") {
+        if (figure.getType() == "junos_vsrx") {
             url = "/ajax/preconfigFirefly/";
         } else if (figure.getType() == "linux") {
             url = "/ajax/preconfigLinuxDomain/";
@@ -421,7 +427,7 @@
         var figureId = jQuery('#selectedObject').val();
         var figure = canvas.getFigure(figureId);
 
-        if (figure.getType() == "junos_firefly") {
+        if (figure.getType() == "junos_vsrx") {
             console.log("no need to config interfaces on firefly");
             doc.css('cursor', '');
             return false;
@@ -1176,7 +1182,7 @@
         var legacyToolsDiv = jQuery("#junosIconEditorToolsLegacy");
         var toolsDiv = jQuery("#junosIconEditorTools");
 
-        if (instance.getType() == "junos_vmx") {
+        if (instance.getType() == "junos_vmx" || instance.getType() == "junos_vsrx") {
             legacyToolsDiv.css("display", "");
             toolsDiv.css("display", "none");
         } else {
@@ -1644,32 +1650,28 @@
                 </td>
               </tr>
             </table>
-            <table>
-              <th colspan="2">
-                 Instance Tools
-              </th>
-              <tr>
-                <td>
-
-                <td>
-
-                  <input type="button" onclick="javascript: getInstanceStartupState();"
-                         value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
-                    <br/>
-                    <br/>
-                 </td>
-                  <td>
-                  <input type="button" onclick="javascript: configureInstanceAccess();"
-                         value="Configure Access" title="Configures Management IP Address">
-                    <br/>
-                    <br/>
-                    <input type="button" onclick="javascript: loadScriptSelector();"
-                         value="Execute Script" title="Execute Script on instance">
-                    <br/>
-                    <br/>
-                </td>
-              </tr>
-            </table>
+              <table>
+                  <th colspan="2">
+                      Instance Tools
+                  </th>
+                  <tr>
+                      <td>
+                          <input type="button" onclick="javascript: getInstanceStartupState();"
+                                 value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                          <br/>
+                      </td>
+                      <td>
+                          <input type="button" onclick="javascript: configureInstanceAccess();"
+                                 value="Configure Access" title="Configures Management IP Address">
+                          <br/>
+                          <br/>
+                          <input type="button" onclick="javascript: loadScriptSelector();"
+                                 value="Execute Script" title="Execute Script on instance">
+                          <br/>
+                          <br/>
+                      </td>
+                  </tr>
+              </table>
           </div>
             <div id="genericIconEditor" style="display:none">
             <table>
@@ -2107,7 +2109,7 @@
                 <a href="#" onclick="javascript: showDebug();" style="text-decoration: none; color: #fff; border: 1px solid #eee;">.</a>
             </div>
             {% endif %}
-          <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
+            <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
             <div id="linuxAutomationOverlay" style="display: none">
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
                     <tr>

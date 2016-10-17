@@ -84,7 +84,7 @@
                 return false;
             }
         } else if (action == "suspend") {
-            if (! confirm("This will suspend this domain! THIS IS EXPERIEMENTAL!")) {
+            if (! confirm("This will suspend this domain! THIS IS EXPERIMENTAL!")) {
                 doc.css('cursor', '');
                 return false;
             }

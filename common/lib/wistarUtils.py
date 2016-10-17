@@ -175,45 +175,44 @@ def load_config_from_topology_json(topology_json, topology_id):
             logger.debug("Found a topology vm")
             device = dict()
 
-            device["name"] = "t" + str(topology_id) + "_" + user_data["name"]
-            device["label"] = user_data["name"]
-            device["imageId"] = user_data["image"]
+            device["name"] = "t" + str(topology_id) + "_" + user_data.get("name", "")
+            device["label"] = user_data.get("name", "")
+            device["imageId"] = user_data.get("image", "")
 
             try:
                 image = Image.objects.get(pk=device["imageId"])
-                image_name = image.name
             except ObjectDoesNotExist:
                 raise Exception("Not all images are present!")
 
             logger.debug(json_object)
 
-            device["ram"] = user_data["ram"]
-            device["cpu"] = user_data["cpu"]
-            device["interfacePrefix"] = user_data["interfacePrefix"]
-            device["configurationFile"] = user_data["configurationFile"]
-            device["slot_offset"] = user_data["pciSlotOffset"]
-            device["interfaceType"] = user_data["interfaceType"]
+            device["ram"] = user_data.get("ram", 1024)
+            device["cpu"] = user_data.get("cpu", 1)
+            device["interfacePrefix"] = user_data.get("interfacePrefix", "")
+            device["configurationFile"] = user_data.get("configurationFile", "")
+            device["slot_offset"] = user_data.get("pciSlotOffset", "")
+            device["interfaceType"] = user_data.get("interfaceType", "")
 
-            device["smbiosProduct"] = user_data["smbiosProductString"]
-            device["smbiosManufacturer"] = user_data["smbiosManufacturer"]
-            device["smbiosVersion"] = user_data["smbiosVersion"]
+            device["smbiosProduct"] = user_data.get("smbiosProductString", "")
+            device["smbiosManufacturer"] = user_data.get("smbiosManufacturer", "")
+            device["smbiosVersion"] = user_data.get("smbiosVersion", "")
 
-            device["secondaryDiskParams"] = user_data["secondaryDiskParams"]
-            device["tertiaryDiskParams"] = user_data["tertiaryDiskParams"]
+            device["secondaryDiskParams"] = user_data.get("secondaryDiskParams", [])
+            device["tertiaryDiskParams"] = user_data.get("tertiaryDiskParams", [])
 
-            device["managementInterface"] = user_data["mgmtInterface"]
+            device["managementInterface"] = user_data.get("mgmtInterface", "")
 
-            device["ip"] = user_data["ip"]
-            device["type"] = user_data["type"]
+            device["ip"] = user_data.get("ip", "")
+            device["type"] = user_data.get("type", "")
 
             device["user"] = "root"
             if "user" in user_data:
-                device["user"] = user_data["user"]
+                device["user"] = user_data.get("user", "")
 
-            device["password"] = user_data["password"]
+            device["password"] = user_data.get("password", "")
 
-            device["companionInterfaceMirror"] = user_data["companionInterfaceMirror"]
-            device["companionInterfaceMirrorOffset"] = user_data["companionInterfaceMirrorOffset"]
+            device["companionInterfaceMirror"] = user_data.get("companionInterfaceMirror", "")
+            device["companionInterfaceMirrorOffset"] = user_data.get("companionInterfaceMirrorOffset", "")
             device["mirroredInterfaces"] = []
 
             device["configScriptId"] = 0
@@ -222,17 +221,17 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["configDriveSupport"] = False
 
             if "configDriveSupport" in user_data:
-                device["configDriveSupport"] = user_data["configDriveSupport"]
+                device["configDriveSupport"] = user_data.get("configDriveSupport", "")
                 if "configDriveParams" in user_data:
-                    device["configDriveParams"] = user_data["configDriveParams"]
-                    device["configDriveParamsFile"] = user_data["configDriveParamsFile"]
+                    device["configDriveParams"] = user_data.get("configDriveParams", "")
+                    device["configDriveParamsFile"] = user_data.get("configDriveParamsFile", "")
                 else:
                     device["configDriveParams"] = dict()
 
             if "configScriptId" in user_data:
                 logger.debug("Found a configScript to use!")
-                device["configScriptId"] = user_data["configScriptId"]
-                device["configScriptParam"] = user_data["configScriptParam"]
+                device["configScriptId"] = user_data.get("configScriptId", "")
+                device["configScriptParam"] = user_data.get("configScriptParam", "")
 
             device["uuid"] = json_object["id"]
             device["interfaces"] = []
@@ -244,21 +243,21 @@ def load_config_from_topology_json(topology_json, topology_id):
             # use chassis name as the naming convention for all the bridges
             # we'll create networks as 'topology_id + _ + chassis_name + function
             # i.e. t1_vmx01_re and t1_vmx01_pfe
-            chassis_name = user_data["name"]
+            chassis_name = user_data.get("name", "")
             if "parentName" in user_data:
-                chassis_name = user_data["parentName"]
+                chassis_name = user_data.get("parentName", "")
 
             if "parent" in user_data:
-                device["parent"] = user_data["parent"]
+                device["parent"] = user_data.get("parent", "")
 
             logger.debug("Using chassis name of: %s" % chassis_name)
 
             # set this property for use later, we'll loop again after we have configured all the conections
             # to create the management interface at the end (i.e. for Linux hosts)
-            device["mgmtInterfaceIndex"] = user_data["mgmtInterfaceIndex"]
+            device["mgmtInterfaceIndex"] = user_data.get("mgmtInterfaceIndex", 0)
 
             # now let's create the interfaces declared so far
-            if user_data["mgmtInterfaceIndex"] != -1:
+            if device["mgmtInterfaceIndex"] != -1:
                 device_interface_wiring = dict()
 
                 # setup management interface
@@ -266,23 +265,23 @@ def load_config_from_topology_json(topology_json, topology_id):
                 mi = dict()
                 mi["mac"] = generate_next_mac(topology_id)
                 mi["bridge"] = "virbr0"
-                mi["type"] = user_data["mgmtInterfaceType"]
+                mi["type"] = user_data.get("mgmtInterfaceType", "virtio")
 
-                device_interface_wiring[user_data["mgmtInterfaceIndex"]] = mi
+                device_interface_wiring[device["mgmtInterfaceIndex"]] = mi
 
-                for dummy in user_data["dummyInterfaceList"]:
+                for dummy in user_data.get("dummyInterfaceList", []):
                     dm = dict()
                     dm["mac"] = generate_next_mac(topology_id)
                     dm["bridge"] = "t%s_d" % str(topology_id)
-                    dm["type"] = user_data["mgmtInterfaceType"]
+                    dm["type"] = user_data.get("mgmtInterfaceType", "")
 
                     device_interface_wiring[dummy] = dm
 
-                for companion in user_data["companionInterfaceList"]:
+                for companion in user_data.get("companionInterfaceList", []):
                     cm = dict()
                     cm["mac"] = generate_next_mac(topology_id)
                     cm["bridge"] = "t%s_%s_c" % (str(topology_id), chassis_name)
-                    cm["type"] = user_data["interfaceType"]
+                    cm["type"] = user_data.get("interfaceType", "virtio")
 
                     device_interface_wiring[companion] = cm
 
@@ -440,7 +439,7 @@ def load_config_from_topology_json(topology_json, topology_id):
             mi["mac"] = generate_next_mac(topology_id)
             mi["slot"] = "%#04x" % int(len(d["interfaces"]) + d["slot_offset"])
             mi["bridge"] = "virbr0"
-            mi["type"] = user_data["mgmtInterfaceType"]
+            mi["type"] = user_data.get("mgmtInterfaceType", "")
             d["interfaces"].append(mi)
 
     topology_config = dict()
@@ -599,6 +598,21 @@ def get_used_ips():
     all_ips_list = list(all_ips)
     all_ips_list.sort()
     return all_ips_list
+
+
+def get_used_ips_from_topology_json(json_string):
+    json_data = json.loads(json_string)
+    all_ips = []
+    for json_object in json_data:
+        if "userData" in json_object and "wistarVm" in json_object["userData"]:
+            ud = json_object["userData"]
+            ip = ud["ip"]
+            last_octet = ip.split('.')[-1]
+            all_ips.append(int(last_octet))
+
+    all_ips.sort()
+    return all_ips
+
 
 
 def get_next_ip(all_ips, floor):

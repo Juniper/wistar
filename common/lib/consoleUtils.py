@@ -56,7 +56,7 @@ def is_junos_device_at_prompt(dom):
                 logger.info("Domain is not configured!")
                 return False
             elif index == 1:
-                logger.debug("domain is at the login prompt")
+                # logger.debug("domain is at the login prompt")
                 return True
             # no timeout indicates we are at some sort of prompt!
             return True
