@@ -1,4 +1,5 @@
 import logging
+import re
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -66,6 +67,7 @@ def new(request):
 
 
 def create(request):
+    logger.debug('---- Create Image ----')
     image_form = ImageForm(request.POST, request.FILES)
     if image_form.is_valid():
         # if not osUtils.checkPath(image_form.cleaned_data['path']):
@@ -81,9 +83,15 @@ def create(request):
         image_name = request.POST["name"]
         full_path = orig_image.filePath.path
 
-        if image_type == "junos_vre" and ".img" in full_path:
+        if image_type == "junos_vre":
             logger.debug("Creating RIOT image for junos_vre")
-            new_image_path = full_path.replace('.img', '_riot.img')
+            # lets replace the last "." with "_riot."
+            if '.' in full_path:
+                new_image_path = re.sub(r"(.*)\.(.*)$", r"\1_riot.\2", full_path)
+            else:
+                # if there is no '.', let's just add one
+                new_image_path = full_path + "_riot.img"
+
             new_image_file_name = new_image_path.split('/')[-1]
             new_image_name = image_name + ' Riot PFE'
             if osUtils.copy_image_to_clone(full_path, new_image_path):
@@ -98,7 +106,7 @@ def create(request):
 
         return HttpResponseRedirect('/images')
     else:
-        logger.debug("UH OH")
+        logger.error("Could not save image for some reason!")
         context = {'image_form': image_form}
         return render(request, 'images/new.html', context)
 
@@ -182,9 +190,15 @@ def create_local(request):
 
     full_path = image.filePath.path
 
-    if image_type == "junos_vre" and ".img" in full_path:
+    if image_type == "junos_vre":
         logger.debug("Creating RIOT image for junos_vre")
-        new_image_path = full_path.replace('.img', '_riot.img')
+        # lets replace the last "." with "_riot."
+        if '.' in file_path:
+            new_image_path = re.sub(r"(.*)\.(.*)$", r"\1_riot.\2", file_path)
+        else:
+            # if there is no '.', let's just add one
+            new_image_path = file_path + "_riot.img"
+
         new_image_file_name = new_image_path.split('/')[-1]
         new_image_name = name + ' Riot PFE'
         if osUtils.copy_image_to_clone(full_path, new_image_path):
