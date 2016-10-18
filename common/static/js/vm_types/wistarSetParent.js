@@ -1,3 +1,17 @@
+wistarSetParentIPLocator = draw2d.layout.locator.Locator.extend({
+    init: function(parent)
+    {
+        this._super(parent);
+    },
+    relocate: function(index, target)
+    {
+        var parent = this.getParent();
+        var boundingBox = parent.getBoundingBox();
+        var targetBoundingBox = target.getBoundingBox();
+        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 50);
+    }
+});
+
 draw2d.shape.node.wistarSetParent = draw2d.shape.node.wistarVm.extend({
     NAME: "draw2d.shape.node.wistarSetParent",
     INTERFACE_PREFIX: "eth",
@@ -50,5 +64,18 @@ draw2d.shape.node.wistarSetParent = draw2d.shape.node.wistarVm.extend({
     setPersistentAttributes: function(memento) {
         this._super(memento);
         this.setChildId(memento.userData.child);
+    },
+    setIp: function(ip) {
+	    var ud = this.getUserData();
+	    ud["ip"] = ip;
+	    if (this.ipLabel == undefined) {
+		    this.ipLabel = new draw2d.shape.basic.Label("\n" + ip);
+	        this.ipLabel.setColor("#000");
+        	this.ipLabel.setFontColor("#000");
+        	this.ipLabel.setStroke(0);
+        	this.addFigure(this.ipLabel, new wistarSetParentIPLocator(this));
+	    } else {
+            this.ipLabel.text =  ip;
+        }
     }
 });

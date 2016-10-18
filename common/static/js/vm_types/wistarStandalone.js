@@ -19,7 +19,20 @@ BottomCenterLocator = draw2d.layout.locator.Locator.extend({
         var parent = this.getParent();
         var boundingBox = parent.getBoundingBox();
         var targetBoundingBox = target.getBoundingBox();
-        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 5);
+        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight());
+    }
+});
+IpLabelLocator = draw2d.layout.locator.Locator.extend({
+    init: function(parent)
+    {
+        this._super(parent);
+    },
+    relocate: function(index, target)
+    {
+        var parent = this.getParent();
+        var boundingBox = parent.getBoundingBox();
+        var targetBoundingBox = target.getBoundingBox();
+        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 4);
     }
 });
 BootStateLocator = draw2d.layout.locator.Locator.extend({
@@ -71,9 +84,9 @@ draw2d.shape.node.wistarStandalone = draw2d.shape.node.wistarVm.extend({
 	        this.ipLabel.setColor("#000");
         	this.ipLabel.setFontColor("#000");
         	this.ipLabel.setStroke(0);
-        	this.addFigure(this.ipLabel, new BottomCenterLocator(this));
+        	this.addFigure(this.ipLabel, new IpLabelLocator(this));
 	    } else {
-            this.ipLabel.text = "\n" + ip;
+            this.ipLabel.text = ip;
         }
     },
     setLabel: function(label) {

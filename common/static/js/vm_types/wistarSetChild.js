@@ -66,6 +66,10 @@ draw2d.shape.node.wistarSetChild = draw2d.shape.node.wistarStandalone.extend({
             this.label.text = label;
         }
     },
+    setIp: function(ip) {
+		var ud = this.getUserData();
+		ud["ip"] = ip;
+	},
     setPersistentAttributes: function(memento) {
         this._super(memento);
         this.setParentId(memento.userData.parent);
