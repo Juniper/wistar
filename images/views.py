@@ -194,10 +194,10 @@ def create_local(request):
         logger.debug("Creating RIOT image for junos_vre")
         # lets replace the last "." with "_riot."
         if '.' in file_path:
-            new_image_path = re.sub(r"(.*)\.(.*)$", r"\1_riot.\2", file_path)
+            new_image_path = re.sub(r"(.*)\.(.*)$", r"\1_riot.\2", full_path)
         else:
             # if there is no '.', let's just add one
-            new_image_path = file_path + "_riot.img"
+            new_image_path = full_path + "_riot.img"
 
         new_image_file_name = new_image_path.split('/')[-1]
         new_image_name = name + ' Riot PFE'
