@@ -22,6 +22,46 @@ def index(request):
     return HttpResponseRedirect('/topologies/')
 
 
+def get_topology_inventory(request):
+
+    inventory = dict()
+
+    if 'topology_name' not in request.POST:
+        logger.error("Invalid parameters in POST!")
+        return HttpResponse(json.dumps(inventory), content_type="application/json")
+
+    topology_name = request.POST['topology_name']
+
+    try:
+        topology = Topology.objects.get(name=topology_name)
+
+    except ObjectDoesNotExist:
+        logger.error("topology with name '%s' does not exist" % topology_name)
+        return HttpResponse(json.dumps(inventory), content_type="application/json")
+
+    try:
+        logger.debug("Got topology id: " + str(topology.id))
+
+        raw_json = json.loads(topology.json)
+        for json_object in raw_json:
+            if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                ud = json_object["userData"]
+
+                if "parentName" not in ud:
+                    # child VMs will have a parentName attribute
+                    # let's skip them for ansible purposes
+                    name = ud.get('name', 'no name')
+                    ip = ud.get('ip', '0.0.0.0')
+                    username = ud.get('username', 'root')
+                    inventory[name] = {"ansible_host": ip, "ansible_user": username}
+
+        return HttpResponse(json.dumps(inventory), content_type="application/json")
+
+    except Exception as ex:
+        logger.error(str(ex))
+        return HttpResponse(json.dumps(inventory), content_type="application/json")
+
+
 def get_topology_status(request):
     """
         get the topology id and status for the given topology_name

@@ -77,7 +77,7 @@ def export_topology(request, topo_id):
     info_data["description"] = topology.description
     json_data.append(info_data)
     response = HttpResponse(json.dumps(json_data), content_type="application/json")
-    response['Content-Disposition'] = 'attachment; filename=' + str(topology.name) + '.json'
+    response['Content-Disposition'] = 'attachment; filename=' + str(topology.name) + '.wistar.json'
     return response
 
 

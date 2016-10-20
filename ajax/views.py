@@ -446,7 +446,14 @@ def start_topology(request):
     iter_counter = 1
     for domain in domain_list:
         logger.debug("Starting domain " + domain["name"])
+        if libvirtUtils.is_domain_running(domain["name"]):
+            # skip already started domains
+            logger.debug("domain %s is already started" % domain["name"])
+            iter_counter += 1
+            continue
+
         if libvirtUtils.start_domain(domain["uuid"]):
+            # let's not sleep after the last domain has been started
             if iter_counter < num_domains:
                 time.sleep(180)
             iter_counter += 1

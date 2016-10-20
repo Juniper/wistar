@@ -139,7 +139,8 @@ def is_domain_running(domain_name):
 
         return False
 
-    except Exception:
+    except Exception as e:
+        logger.error(str(e))
         return False
 
 
