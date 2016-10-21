@@ -1,7 +1,7 @@
 <domain type='kvm'>
   <name>{{ device.name }}</name>
   <memory unit='MiB'>{{ device.ram }}</memory>
-  <currentMemory unit='KiB'>{{ device.ram }}</currentMemory>
+  <currentMemory unit='MiB'>{{ device.ram }}</currentMemory>
   <vcpu placement='static'>{{ device.cpu }}</vcpu>
   <os>
     <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
