@@ -150,7 +150,7 @@ def get_topology_status(request):
         return HttpResponse(json.dumps(context), content_type="application/json")
 
 
-def start_topology(request):
+def start_topology_old(request):
     """
         verify the topology exists and is started!
         required parameters: topology_name, id of which to clone, cloud_init data
@@ -376,3 +376,105 @@ def delete_topology(request):
     context["status"] = "deleted"
     context["message"] = "topology deleted"
     return HttpResponse(json.dumps(context), content_type="application/json")
+
+
+def import_topology_json(request):
+
+    json_string = request.body
+
+    # fixme - add some basic check to ensure we have the proper format here
+    try:
+        logger.debug("Cloning")
+        topology_json_string = wistarUtils.clone_topology(json_string)
+        topology_json = json.loads(topology_json_string)
+        for json_object in topology_json:
+            if json_object["type"] == "wistar.info":
+                name = json_object["name"]
+                description = json_object["description"]
+                break
+
+        logger.debug("Creating new topology with name: %s" % name)
+        t = Topology(name=name, description=description, json=topology_json_string)
+        t.save()
+
+        return apiUtils.return_json(True, "Topology Imported with id: %s" % t.id)
+
+    except Exception as e:
+        logger.error(e)
+        return apiUtils.return_json(False, "Topology Import Failed!")
+
+
+def check_topology_exists(request):
+    json_string = request.body
+    json_body = json.loads(json_string)
+
+    try:
+        if "name" in json_body[0]:
+            topology_name = json_body[0]["name"]
+            try:
+                # get the topology by name
+                topology = Topology.objects.get(name=topology_name)
+                return apiUtils.return_json(True, "Topology Already Exists with id: %s" % topology.id)
+
+            except Topology.DoesNotExist:
+                return apiUtils.return_json(False, 'Topology Does not Exist')
+
+        else:
+            return apiUtils.return_json(False, "Malformed input data")
+    except Exception as e:
+        logger.error(e)
+        return apiUtils.return_json(False, "Unknown Error checking topology!")
+
+
+def start_topology(request):
+    logger.debug("------ start_topology ----- ")
+    json_string = request.body
+    json_body = json.loads(json_string)
+
+    try:
+        if "name" in json_body[0]:
+            topology_name = json_body[0]["name"]
+            # get the topology by name
+            topology = Topology.objects.get(name=topology_name)
+
+            domain_list = libvirtUtils.get_domains_for_topology("t" + str(topology.id) + "_")
+
+            if len(domain_list) == 0:
+                # it has not yet been deployed!
+                logger.debug("not yet deployed!")
+
+                # let's parse the json and convert to simple lists and dicts
+                config = wistarUtils.load_config_from_topology_json(topology.json, topology.id)
+
+                if config is None:
+                    return apiUtils(False, "Could not load config for topology: %s" % topology.id)
+
+                logger.debug("Deploying to hypervisor now")
+
+                # FIXME - should this be pushed into another module?
+                av.inline_deploy_topology(config)
+
+            # now, topology should be deployed and ready to go!
+            network_list = libvirtUtils.get_networks_for_topology("t" + str(topology.id) + "_")
+            domain_list = libvirtUtils.get_domains_for_topology("t" + str(topology.id) + "_")
+
+            for network in network_list:
+                logger.debug("starting network: %s" % network["name"])
+                libvirtUtils.start_network(network["name"])
+
+            time.sleep(1)
+            for domain in domain_list:
+                # no sleep time? Just go ahead and melt the disks!
+                time.sleep(1)
+                logger.debug("starting domain: %s" % domain["uuid"])
+                libvirtUtils.start_domain(domain["uuid"])
+
+
+            return apiUtils.return_json(True, 'Topology started!')
+
+    except Topology.DoesNotExist:
+            return apiUtils.return_json(False, 'Topology Does not Exist')
+
+    except Exception as ex:
+        logger.debug(str(ex))
+        return apiUtils.return_json(False, 'Could not start topology!')

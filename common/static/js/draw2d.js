@@ -13702,7 +13702,7 @@ draw2d.Canvas = Class.extend(
         this.setScrollArea(document.body);
         this.canvasId = canvasId;
         this.html = jQuery("#"+canvasId);
-        this.html.css({"cursor":"default"});
+        // this.html.css({"cursor":"default"});
         if(typeof width!=="undefined"){
             this.initialWidth = width;
             this.initialHeight = height;

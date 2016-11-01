@@ -274,7 +274,16 @@
             var vpfe = eval("new " + icon.COMPANION_TYPE + "()" );
 
             vpfe_ip = nextIp();
-            vpfe.setup("Child", name, vpfe_ip, user, pw, vpfe_image);
+            vm_type_data = {};
+            for (v=0;v<vm_types.length;v++) {
+                vm_type = vm_types[v];
+                if (vm_type.js == icon.COMPANION_TYPE) {
+                    vpfe_type = vm_type.name
+                    break;
+                }
+            }
+
+            vpfe.setup(vpfe_type, name, vpfe_ip, user, pw, vpfe_image);
 
             vpfe.setCpu(vpfe_cpu);
             vpfe.setRam(vpfe_ram);

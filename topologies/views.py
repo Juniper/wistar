@@ -101,15 +101,16 @@ def import_topology(request):
             # we will import this topology and ensure that any assigned ips are unique for this environment
             currently_allocated_ips = wistarUtils.get_used_ips()
             next_ip_floor = 2
-
+            logger.debug("Iterating json objects in imported data")
             for json_object in json_data:
                 if "userData" in json_object and "wistarVm" in json_object["userData"]:
+                    logger.debug("Found one")
                     ud = json_object["userData"]
                     # check if we have this type of image
                     image_list = Image.objects.filter(type=ud["type"])
                     if len(image_list) == 0:
                         # nope, bail out and let the user know what happened!
-                        logger.debug("Could not find image of type " + ud["type"])
+                        logger.error("Could not find image of type " + ud["type"])
                         return error(request, 'Could not find a valid image of type ' + ud['type'] +
                                      '! Please upload an image of this type and try again')
 
@@ -120,7 +121,7 @@ def import_topology(request):
                     valid_ip = wistarUtils.get_next_ip(currently_allocated_ips, next_ip_floor)
                     next_ip_floor = valid_ip
 
-                    json_object["userData"]["ip"] = configuration.management_prefix + valid_ip
+                    json_object["userData"]["ip"] = configuration.management_prefix + str(valid_ip)
 
                 elif json_object["type"] == "wistar.info":
                     topology.name = json_object["name"]
@@ -140,7 +141,7 @@ def import_topology(request):
             context = {'form': form}
             return render(request, 'topologies/import.html', context)
     except Exception as e:
-        logger.error('Could nt parse imported data')
+        logger.error('Could not parse imported data!')
         logger.error(e)
         return error(request, 'Could not parse imported data')
 
@@ -272,7 +273,7 @@ def delete(request, topology_id):
 def error(request, message):
     logger.debug('---- topology error ----')
     logger.info('error is: %s' % message)
-    return render(request, 'error.html', {'error_message': message})
+    return render(request, 'error.html', {'error': message})
 
 
 def create(request):

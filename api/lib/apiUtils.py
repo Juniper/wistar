@@ -1,4 +1,6 @@
 from common.lib import libvirtUtils
+from django.http import HttpResponse
+import json
 
 
 def get_domain_status_for_topology(topology_id):
@@ -11,3 +13,10 @@ def get_domain_status_for_topology(topology_id):
             break
 
     return status
+
+
+def return_json(status, message):
+    return_val = dict()
+    return_val["status"] = status
+    return_val["message"] = message
+    return HttpResponse(json.dumps(return_val), content_type="application/json")

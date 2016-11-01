@@ -479,6 +479,22 @@ def clone_topology(topology_json):
                 logger.debug("new_ip is " + new_ip)
                 ud["ip"] = new_ip
 
+                # verify the correct image id and type - useful when importing from another source or wistar instance!
+                try:
+                    image = Image.objects.get(id=ud["image"])
+                    if image.type != ud["type"]:
+                        raise Image.DoesNotExist
+
+                except Image.DoesNotExist as dne:
+                    image_list = Image.objects.filter(type=ud["type"])
+                    if len(image_list) == 0:
+                        # nope, bail out and let the user know what happened!
+                        logger.error("Could not find image of type " + ud["type"])
+                    else:
+                        image = image_list[0]
+                        logger.debug("Updating image to corrected id of: %s " % str(image.id))
+                        json_object["userData"]["image"] = image.id
+
         return json.dumps(json_data)
 
     except Exception as e:

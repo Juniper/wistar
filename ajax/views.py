@@ -993,6 +993,10 @@ def launch_web_console(request):
             # Let's verify the vnc port hasn't changed. Could happen if topology is deleted and recreated with
             # same VM names. Rare but happens to me all the time!
             d = libvirtUtils.get_domain_by_name(domain)
+
+            if not libvirtUtils.is_domain_running(domain):
+                libvirtUtils.start_domain_by_name(domain)
+
             # now grab the configured vncport
             true_vnc_port = libvirtUtils.get_domain_vnc_port(d)
 

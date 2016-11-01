@@ -443,13 +443,30 @@ def get_dhcp_reservations():
     return entries
 
 
+def verify_dhcp_reservation(mac, ip):
+
+    dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
+
+    host_entries = get_dhcp_reservations()
+    for entry in host_entries:
+        (entry_mac, entry_ip) = entry.split(',')
+        if entry_ip == ip and entry_mac == mac:
+            logger.debug("management ip already reserved for this mac")
+            return True
+
+    with open(dhcp_hosts_file_path, 'a') as hosts_file:
+        hosts_file.write("%s,%s\n" % (mac, ip))
+
+    return True
+
+
 def reserve_management_ip_for_mac(mac, ip):
     """
     Open the libvirt dnsmasq dhcp-hosts file and add an entry for the mac / ip combo if it's
     not already there
     :param mac: mac address of the management interface
     :param ip: desired IP address - presumably this has already been vetted as not in use
-    :return: boolean
+    :return: boolean true if the configuration has changed!
     """
     dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
 

@@ -3,6 +3,7 @@ import logging
 
 import libvirt
 from lxml import etree
+from wistar import configuration
 
 logger = logging.getLogger(__name__)
 
@@ -491,9 +492,9 @@ def get_next_domain_vnc_port(offset=0):
         logger.debug("returning max+1+offset: " + str(next_port))
         return next_port
     else:
-        logger.debug("No vnc ports currently in use")
-        return int(5900) + offset
-
+        print "No vnc ports currently in use"
+        # return int(5900) + offset
+        return configuration.vnc_start_port + offset
 
 def get_image_for_domain(domain_id):
     """
