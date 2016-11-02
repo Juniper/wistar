@@ -43,12 +43,12 @@ def update(request):
             return HttpResponseRedirect('/scripts')
         else:
             return render(request, 'error.html', {
-                'error_message': "Invalid data in POST"
+                'error': "Invalid data in POST"
             })
 
     except KeyError:
         return render(request, 'error.html', {
-            'error_message': "Invalid data in POST"
+            'error': "Invalid data in POST"
         })
 
 
@@ -121,8 +121,8 @@ def edit_script(request, script_id):
 def update_script(request):
     required_fields = set(['id', 'name', 'description', 'script'])
     if not required_fields.issubset(request.POST):
-        return render(request, 'scripts/error.html', {
-            'error_message': "Invalid data in POST"
+        return render(request, 'error.html', {
+            'error': "Invalid data in POST"
         })
     try:
         if "id" in request.POST:
@@ -134,14 +134,14 @@ def update_script(request):
             script.save()
             return HttpResponseRedirect('/scripts')
         else:
-            return render(request, 'scripts/error.html', {
-                'error_message': "Invalid data in POST"
+            return render(request, 'error.html', {
+                'error': "Invalid data in POST"
             })
 
     except Exception as e:
         logger.debug(str(e))
-        return render(request, 'scripts/error.html', {
-            'error_message': 'Could not update script!'
+        return render(request, 'error.html', {
+            'error': 'Could not update script!'
         })
 
 

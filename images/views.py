@@ -167,49 +167,12 @@ def create_local(request):
     description = request.POST["description"]
     image_type = request.POST["type"]
 
-    if osUtils.check_path(file_path):
-        logger.debug("path exists")
-        if settings.MEDIA_ROOT not in file_path:
-            context = {'error': "Image must be in " + settings.MEDIA_ROOT}
-            return render(request, 'error.html', context)
-        else:
-            logger.debug("removing media_root")
-            file_path = file_path.replace(settings.MEDIA_ROOT + '/', '')
-            logger.debug(file_path)
-    else:
-        context = {'error': "Invalid image path"}
+    try:
+        imageUtils.create_local_image(name, description, file_path, image_type)
+
+    except Exception as e:
+        context = {'error': str(e)}
         return render(request, 'error.html', context)
-
-    logger.debug(file_path)
-    image = Image()
-    image.description = description
-    image.name = name
-    image.filePath = file_path
-    image.type = image_type
-    image.save()
-
-    full_path = image.filePath.path
-
-    if image_type == "junos_vre":
-        logger.debug("Creating RIOT image for junos_vre")
-        # lets replace the last "." with "_riot."
-        if '.' in file_path:
-            new_image_path = re.sub(r"(.*)\.(.*)$", r"\1_riot.\2", full_path)
-        else:
-            # if there is no '.', let's just add one
-            new_image_path = full_path + "_riot.img"
-
-        new_image_file_name = new_image_path.split('/')[-1]
-        new_image_name = name + ' Riot PFE'
-        if osUtils.copy_image_to_clone(full_path, new_image_path):
-            logger.debug("Copied from %s" % full_path)
-            logger.debug("Copied to %s" % new_image_path)
-            n_image = Image()
-            n_image.name = new_image_name
-            n_image.type = "junos_riot"
-            n_image.description = image.description + "\nRiot PFE"
-            n_image.filePath = "user_images/" + new_image_file_name
-            n_image.save()
 
     messages.info(request, "Image Created!")
     return HttpResponseRedirect('/images')
@@ -352,15 +315,8 @@ def glance_list(request):
 
 
 def delete(request, image_id):
-    image = get_object_or_404(Image, pk=image_id)
-    try:
-        image.filePath.delete()
-    except Exception as e:
-        logger.error(str(e))
-    finally:
-        image.delete()
-        messages.info(request, "Image deleted!")
-
+    imageUtils.delete_image_by_id(image_id)
+    messages.info(request, "Image deleted!")
     return HttpResponseRedirect('/images/')
 
 

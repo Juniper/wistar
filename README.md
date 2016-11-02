@@ -51,19 +51,10 @@ Wistar uses Linux bridges to connect VMs to each other and to any external netwo
         
         create the sql tables
         root@wistar-build:/opt/wistar# cd wistar-master/
-        root@wistar-build:/opt/wistar/wistar-master# ./manage.py syncdb
-        Creating tables ...
+        root@wistar-build:/opt/wistar/wistar-master# ./manage.py migrate
         --snip--
-        
-        You just installed Django's auth system, which means you don't have any superusers defined.
-        Would you like to create one now? (yes/no): no
-        Installing custom SQL ...
-        Installing indexes ...
-        Installed 0 object(s) from 0 fixture(s)
         root@wistar-build:/opt/wistar/wistar-master#
         
-        Answer ‘no’ when asked to create an admin user as this is not currently used.
-
 	For development you can use the built-in web server, or configure apache to start wistar for you
         Launch the built-in web server:
         root@wistar-build:/opt/wistar# cd wistar-master/

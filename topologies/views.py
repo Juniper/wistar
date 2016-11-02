@@ -298,7 +298,7 @@ def create(request):
     except KeyError:
         logger.error('Invalid data in POST')
         return render(request, 'error.html', {
-            'error_message': "Invalid data in POST"
+            'error': "Invalid data in POST"
         })
     else:
         # Always return an HttpResponseRedirect after successfully dealing # with POST data.

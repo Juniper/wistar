@@ -1,8 +1,10 @@
 import logging
 import openstackUtils
 import osUtils
+import re
 from images.models import Image
 from wistar import configuration
+from wistar import settings
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +169,6 @@ def get_glance_image_list():
 
     logger.debug('---- imageUtils get_glance_image_list ----')
 
-
     image_list = list()
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
@@ -177,3 +178,83 @@ def get_glance_image_list():
                 image_list.append(image_detail)
 
     return image_list
+
+
+def create_local_image(name, description, file_path, image_type):
+    if osUtils.check_path(file_path):
+        logger.debug("path exists")
+        if settings.MEDIA_ROOT not in file_path:
+            raise Exception("Image must in in path: %s" % settings.MEDIA_ROOT)
+
+        else:
+            logger.debug("removing media_root")
+            file_path = file_path.replace(settings.MEDIA_ROOT + '/', '')
+            logger.debug(file_path)
+    else:
+        raise Exception("Invalid image path")
+
+    try:
+        logger.debug(file_path)
+        image = Image()
+        image.description = description
+        image.name = name
+        image.filePath = file_path
+        image.type = image_type
+        image.save()
+
+        full_path = image.filePath.path
+
+        if image_type == "junos_vre":
+            logger.debug("Creating RIOT image for junos_vre")
+            # lets replace the last "." with "_riot."
+            if '.' in file_path:
+                new_image_path = re.sub(r"(.*)\.(.*)$", r"\1_riot.\2", full_path)
+            else:
+                # if there is no '.', let's just add one
+                new_image_path = full_path + "_riot.img"
+
+            new_image_file_name = new_image_path.split('/')[-1]
+            new_image_name = name + ' Riot PFE'
+            if osUtils.copy_image_to_clone(full_path, new_image_path):
+                logger.debug("Copied from %s" % full_path)
+                logger.debug("Copied to %s" % new_image_path)
+                n_image = Image()
+                n_image.name = new_image_name
+                n_image.type = "junos_riot"
+                n_image.description = image.description + "\nRiot PFE"
+                n_image.filePath = "user_images/" + new_image_file_name
+                n_image.save()
+
+        return image.id
+
+    except Exception as e:
+        logger.error("Caught Error in create_local_image")
+        logger.error(str(e))
+        raise
+
+
+def delete_image_by_id(image_id):
+
+    try:
+        image = Image.objects.get(pk=image_id)
+        delete_image(image)
+    except Image.DoesNotExist:
+        logger.error("Image does not exist!")
+
+
+def delete_image_by_name(image_name):
+
+    try:
+        image = Image.objects.get(name=image_name)
+        delete_image(image)
+    except Image.DoesNotExist:
+        logger.error("Image does not exist!")
+
+
+def delete_image(image):
+    try:
+        image.filePath.delete()
+    except Exception as e:
+        logger.error(str(e))
+    finally:
+        image.delete()

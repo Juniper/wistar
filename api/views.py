@@ -12,8 +12,10 @@ from common.lib import libvirtUtils
 from common.lib import linuxUtils
 from common.lib import osUtils
 from common.lib import wistarUtils
+from common.lib import imageUtils
 from scripts.models import Script
 from topologies.models import Topology
+from wistar import configuration
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,11 @@ def index(request):
 
 
 def get_topology_inventory(request):
+    """
+    FIXME - Should only accept JSON input, not url form-encoded
+    :param request:
+    :return:
+    """
 
     inventory = dict()
 
@@ -152,6 +159,7 @@ def get_topology_status(request):
 
 def start_topology_old(request):
     """
+        DEPRECATED
         verify the topology exists and is started!
         required parameters: topology_name, id of which to clone, cloud_init data
         returns json { "status": "running|unknown|powered off", "topology_id": "0" }
@@ -256,6 +264,7 @@ def start_topology_old(request):
 
 def configure_topology(request):
     """
+        DEPRECATED
         configures the topology with the correct access information!
         required parameters: topology_name, id of which to clone, cloud_init data
         returns json { "status": "running|unknown|powered off", "topology_id": "0" }
@@ -329,6 +338,11 @@ def configure_topology(request):
 
 
 def delete_topology(request):
+    """
+    DEPRECATED
+    :param request:
+    :return:
+    """
     context = {"status": "unknown"}
 
     required_fields = set(['topology_name'])
@@ -427,7 +441,7 @@ def check_topology_exists(request):
 
 
 def start_topology(request):
-    logger.debug("------ start_topology ----- ")
+    logger.debug("---- start_topology ---- ")
     json_string = request.body
     json_body = json.loads(json_string)
 
@@ -462,13 +476,12 @@ def start_topology(request):
                 logger.debug("starting network: %s" % network["name"])
                 libvirtUtils.start_network(network["name"])
 
-            time.sleep(1)
+            time.sleep(.5)
             for domain in domain_list:
                 # no sleep time? Just go ahead and melt the disks!
-                time.sleep(1)
+                time.sleep(.5)
                 logger.debug("starting domain: %s" % domain["uuid"])
                 libvirtUtils.start_domain(domain["uuid"])
-
 
             return apiUtils.return_json(True, 'Topology started!')
 
@@ -478,3 +491,76 @@ def start_topology(request):
     except Exception as ex:
         logger.debug(str(ex))
         return apiUtils.return_json(False, 'Could not start topology!')
+
+
+def check_image_exists(request):
+    logger.debug("---- check_image_exists ----")
+
+    json_string = request.body
+    json_body = json.loads(json_string)
+
+    try:
+        if "name" in json_body[0]:
+            image_name = json_body[0]["name"]
+            image_list = imageUtils.get_image_list()
+            found = False
+            image_id = 0
+            for image in image_list:
+                if "file" in image and image_name in image["file"]:
+                    image_id = image["id"]
+                    found = True
+                    break
+
+            if found:
+                return apiUtils.return_json(True, "Image was found with id: %s" % image_id)
+            else:
+                return apiUtils.return_json(False, "Image was not found!")
+
+        else:
+            return apiUtils.return_json(False, "Malformed input data")
+    except Exception as e:
+        logger.error(e)
+        return apiUtils.return_json(False, "Unknown Error checking image!")
+
+
+def create_local_image(request):
+    logger.debug("---- create_local_image ----")
+    json_string = request.body
+    json_body = json.loads(json_string)
+    logger.debug(json_string)
+    logger.debug(json_body)
+    required_fields = set(['name', 'description', 'image_type', 'file_name'])
+    if not required_fields.issubset(json_body[0]):
+        logger.error("Invalid parameters in json body")
+        return HttpResponse(status=500)
+
+    file_name = json_body[0]["file_name"]
+    name = json_body[0]["name"]
+    description = json_body[0]["description"]
+    image_type = json_body[0]["image_type"]
+
+    file_path = configuration.user_images_dir + "/" + file_name
+    try:
+        image_id = imageUtils.create_local_image(name, description, file_path, image_type)
+        return apiUtils.return_json(True, "Image Created with id: %s" % image_id)
+
+    except Exception as e:
+        return HttpResponse(status=500)
+        # return apiUtils.return_json(False, "Could not create local image!")
+
+
+def delete_image(request):
+    logger.debug("---- delete_image ----")
+    json_string = request.body
+    json_body = json.loads(json_string)
+    logger.debug(json_string)
+    logger.debug(json_body)
+    required_fields = set(['name',])
+    if not required_fields.issubset(json_body[0]):
+        logger.error("Invalid parameters in json body")
+        return HttpResponse(status=500)
+
+    name = json_body[0]["name"]
+
+    imageUtils.delete_image_by_name(name)
+    return apiUtils.return_json(True, "Image deleted")
