@@ -75,5 +75,11 @@ draw2d.shape.node.wistarSetChild = draw2d.shape.node.wistarStandalone.extend({
         this.setParentId(memento.userData.parent);
         this.setParentName(memento.userData.parentName);
 
-    }
+    },
+    // override default dc handler
+	onDoubleClick: function() {
+	    if (typeof topology_id != 'undefined') {
+		    launchWebConsole(generateDomainNameFromLabel(this.getParentName()));
+		}
+	}
 });
