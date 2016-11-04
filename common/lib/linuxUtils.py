@@ -19,7 +19,7 @@ def execute_cli(host, username, password, cli):
         stdin, stdout, stderr = client.exec_command(cli)
         err = stderr.read()
         if err != "":
-            return err
+            raise WistarException(err)
         else:
             return stdout.read()
     except SSHException as se:

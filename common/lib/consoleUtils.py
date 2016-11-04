@@ -139,14 +139,14 @@ def is_linux_device_at_prompt(dom):
     logger.debug("Getting boot up state of: " + str(dom))
     try:
         child = get_console(dom)
-        logger.debug("got child")
+        # logger.debug("got child")
         try:
             child.send("\r")
             child.send("\r")
-            logger.debug("sent enter enter")
+            # logger.debug("sent enter enter")
             index = child.expect(["error: failed to get domain", "[^\s]%", "[^\s]#", ".*login:",
                                  "error: operation failed", '.*assword:'])
-            logger.debug("Found prompt: " + child.before)
+            # logger.debug("Found prompt: " + child.before)
             if index == 0:
                 logger.debug("Domain is not configured!")
                 return False
@@ -175,7 +175,7 @@ def is_linux_device_at_prompt(dom):
             # logger.debug(str(child))
             return False
     except Exception as e:
-        logger.debug(str(e))
+        # logger.debug(str(e))
         logger.debug("console does not appear to be available")
         return False
 

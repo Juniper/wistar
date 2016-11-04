@@ -3,6 +3,7 @@ hostname: {{ config.hostname }}
 debug: True
 ssh_pwauth: True
 disable_root: False
+password: {{ config.password }}
 chpasswd: 
     list: |
         root:{{ config.password }}

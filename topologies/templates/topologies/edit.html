@@ -1380,7 +1380,7 @@
             jQuery('#connectionTargetIp').val(targetIp);
             jQuery('#connectionTargetType').val(targetPort.getParent().getType());
             jQuery('#connectionTargetPw').val(targetPort.getParent().getPassword());
-            jQuery('#connectionTargetIface').val(targetPortString + targetIndex);
+            jQuery('#connectionTargetIface').val(targetPortString + targetPortPosition);
             jQuery('#connectionTargetPortIp').val("");
             jQuery('#connectionTargetPortIp').prop("disabled", false);
         }
@@ -1412,7 +1412,7 @@
             jQuery('#connectionSourceIp').val(sourceIp);
             jQuery('#connectionSourceType').val(sourcePort.getParent().getType());
             jQuery('#connectionSourcePw').val(sourcePort.getParent().getPassword());
-            jQuery('#connectionSourceIface').val(sourcePortString + sourceIndex);
+            jQuery('#connectionSourceIface').val(sourcePortString + sourcePortPosition);
             jQuery('#connectionSourcePortIp').val("");
             jQuery('#connectionSourcePortIp').prop("disabled", false);
         }
