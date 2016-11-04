@@ -19,6 +19,7 @@ users:
         - {{ config.ssh_key }}
 runcmd:
     - sed -i'.orig' -e's/without-password/yes/' /etc/ssh/sshd_config
+    - sed -i'.orig' -e's/prohibit-password/yes/' /etc/ssh/sshd_config
     - service sshd restart
 
 

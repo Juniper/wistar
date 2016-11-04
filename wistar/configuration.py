@@ -72,6 +72,11 @@ vm_image_types = [
         "js": "draw2d.shape.node.linux",
     },
     {
+        "name": "ubuntu16",
+        "description": "Ubuntu 16",
+        "js": "draw2d.shape.node.ubuntu16",
+    },
+    {
         "name": "junos_vmx",
         "description": "Junos vMX Phase 1",
         "js": "draw2d.shape.node.vmx",

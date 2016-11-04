@@ -15,8 +15,12 @@ def get_domain_status_for_topology(topology_id):
     return status
 
 
-def return_json(status, message):
+def return_json(status, message, **kwargs):
     return_val = dict()
     return_val["status"] = status
     return_val["message"] = message
+
+    for k, v in kwargs.iteritems():
+        return_val[k] = v
+
     return HttpResponse(json.dumps(return_val), content_type="application/json")

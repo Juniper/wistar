@@ -1360,8 +1360,24 @@
         } else {
             var targetPortString = targetPort.getParent().getInterfacePrefix();
 
-            jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel() + " " + targetPortString + targetIndex);
-            jQuery('#connectionTargetIp').val(targetPort.getParent().getIp());
+            // FIXME - add an interface offset to increment
+            // for example Ubuntu 16.04 first interface is now ens3, so interfaceOffset would be 3
+            // first interface would be 3 + targetIndex  = ens3
+            // also need this due to linux now having first interface as the management interface, so offset would
+            // actually be ens + offset of 3 + 1 more for management = first interface in GUI is ens4
+            var targetPortPosition = targetIndex + targetPort.getParent().getInterfaceOffset();
+
+            jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel() + " " + targetPortString + targetPortPosition);
+
+            var targetIp = targetPort.getParent().getIp();
+
+            if (targetPort.getParent() instanceof draw2d.shape.node.wistarSetChild) {
+                var parentId = targetPort.getParent().getParentId();
+                var parentObject = canvas.getFigure(parentId);
+                targetIp = parentObject.getIp();
+            }
+
+            jQuery('#connectionTargetIp').val(targetIp);
             jQuery('#connectionTargetType').val(targetPort.getParent().getType());
             jQuery('#connectionTargetPw').val(targetPort.getParent().getPassword());
             jQuery('#connectionTargetIface').val(targetPortString + targetIndex);
@@ -1381,8 +1397,19 @@
         } else {
             var sourcePortString = sourcePort.getParent().getInterfacePrefix();
 
-            jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel() + " " + sourcePortString + sourceIndex);
-            jQuery('#connectionSourceIp').val(sourcePort.getParent().getIp());
+            var sourcePortPosition = sourceIndex + sourcePort.getParent().getInterfaceOffset();
+
+            jQuery('#connectionSourceDevice').html(sourcePort.getParent().getLabel() + " " + sourcePortString + sourcePortPosition);
+
+            var sourceIp = sourcePort.getParent().getIp();
+
+            if (sourcePort.getParent() instanceof draw2d.shape.node.wistarSetChild) {
+                var parentId = sourcePort.getParent().getParentId();
+                var parentObject = canvas.getFigure(parentId);
+                sourceIp = parentObject.getIp();
+            }
+
+            jQuery('#connectionSourceIp').val(sourceIp);
             jQuery('#connectionSourceType').val(sourcePort.getParent().getType());
             jQuery('#connectionSourcePw').val(sourcePort.getParent().getPassword());
             jQuery('#connectionSourceIface').val(sourcePortString + sourceIndex);
@@ -1391,6 +1418,7 @@
         }
 
         var connData = connection.getUserData();
+
         if (connData != null) {
             jQuery('#connectionSourcePortIp').val(connData["sourceIp"]);
             jQuery('#connectionTargetPortIp').val(connData["targetIp"]);

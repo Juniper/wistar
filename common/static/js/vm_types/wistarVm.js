@@ -20,6 +20,9 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	// this will configure the interface type in the libvirt domain configuration file
 	// example: virtio , e1000
 	INTERFACE_TYPE: "virtio",
+	// this will set the interface offset value. Some VMs do not start their interfaces at zero
+	// for example Ubuntu 16.04 commonly uses ens3 as the first interface. Offset in that case is 3
+	INTERFACE_OFFSET: 0,
 	// management interface prefix if different than normal interfaces
 	// i.e. fxp0 and ge-0/0/0 for vmx
 	MANAGEMENT_INTERFACE_PREFIX: "eth",
@@ -243,6 +246,9 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	},
 	getInterfacePrefix: function() {
 		return this.INTERFACE_PREFIX;
+	},
+	getInterfaceOffset: function() {
+		return this.INTERFACE_OFFSET;
 	},
 	// allow override in case of instance specific items required in string
 	getSmBiosProductString: function() {

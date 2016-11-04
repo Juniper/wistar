@@ -343,15 +343,17 @@ def delete_topology(request):
     :param request:
     :return:
     """
-    context = {"status": "unknown"}
 
-    required_fields = set(['topology_name'])
-    if not required_fields.issubset(request.POST):
-        context["status"] = "unknown"
-        context["message"] = "Invalid parameters in POST HERE"
-        return HttpResponse(json.dumps(context), content_type="application/json")
+    logger.debug("---- delete_topology ----")
+    json_string = request.body
+    json_body = json.loads(json_string)
 
-    topology_name = request.POST['topology_name']
+    required_fields = set(['name'])
+    if not required_fields.issubset(json_body[0]):
+        logger.error("Invalid parameters in json body")
+        return HttpResponse(status=500)
+
+    topology_name = json_body[0]["name"]
 
     should_reconfigure_dhcp = False
 
@@ -360,45 +362,46 @@ def delete_topology(request):
         topology = Topology.objects.get(name=topology_name)
 
     except ObjectDoesNotExist as odne:
-        context["status"] = "deleted"
-        context["message"] = "topology does not exist"
-        return HttpResponse(json.dumps(context), content_type="application/json")
+        return apiUtils.return_json(False, "Topology is already deleted or does not exist")
 
-    topology_prefix = "t%s_" % topology.id
-    network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
-    for network in network_list:
-        logger.debug("undefining network: " + network["name"])
-        libvirtUtils.undefine_network(network["name"])
+    try:
+        topology_prefix = "t%s_" % topology.id
+        network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
+        for network in network_list:
+            logger.debug("undefining network: " + network["name"])
+            libvirtUtils.undefine_network(network["name"])
 
-    domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
-    for domain in domain_list:
-        logger.debug("undefining domain: " + domain["name"])
-        source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
-        if libvirtUtils.undefine_domain(domain["uuid"]):
-            if source_file is not None:
-                osUtils.remove_instance(source_file)
+        domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
+        for domain in domain_list:
+            logger.debug("undefining domain: " + domain["name"])
+            source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
+            if libvirtUtils.undefine_domain(domain["uuid"]):
+                if source_file is not None:
+                    osUtils.remove_instance(source_file)
 
-        # remove reserved mac addresses for all domains in this topology
-        mac_address = libvirtUtils.get_management_interface_mac_for_domain(domain["name"])
-        if osUtils.release_management_ip_for_mac(mac_address):
-            should_reconfigure_dhcp = True
+            # remove reserved mac addresses for all domains in this topology
+            mac_address = libvirtUtils.get_management_interface_mac_for_domain(domain["name"])
+            if osUtils.release_management_ip_for_mac(mac_address):
+                should_reconfigure_dhcp = True
 
-    if should_reconfigure_dhcp:
-        osUtils.reload_dhcp_config()
+        if should_reconfigure_dhcp:
+            osUtils.reload_dhcp_config()
 
-    topology.delete()
-    context["status"] = "deleted"
-    context["message"] = "topology deleted"
-    return HttpResponse(json.dumps(context), content_type="application/json")
+        topology.delete()
+        return apiUtils.return_json(True, "Topology deleted!")
+
+    except Exception as e:
+        logger.error(str(e))
+        return HttpResponse(status=500)
 
 
 def import_topology_json(request):
 
+    logger.debug("---- import_topology_json ----")
     json_string = request.body
 
     # fixme - add some basic check to ensure we have the proper format here
     try:
-        logger.debug("Cloning")
         topology_json_string = wistarUtils.clone_topology(json_string)
         topology_json = json.loads(topology_json_string)
         for json_object in topology_json:
@@ -411,7 +414,7 @@ def import_topology_json(request):
         t = Topology(name=name, description=description, json=topology_json_string)
         t.save()
 
-        return apiUtils.return_json(True, "Topology Imported with id: %s" % t.id)
+        return apiUtils.return_json(True, "Topology Imported with id: %s" % t.id, topology_id=t.id)
 
     except Exception as e:
         logger.error(e)
@@ -419,6 +422,8 @@ def import_topology_json(request):
 
 
 def check_topology_exists(request):
+    logger.debug("---- check_topology_exists ----")
+
     json_string = request.body
     json_body = json.loads(json_string)
 
@@ -428,7 +433,8 @@ def check_topology_exists(request):
             try:
                 # get the topology by name
                 topology = Topology.objects.get(name=topology_name)
-                return apiUtils.return_json(True, "Topology Already Exists with id: %s" % topology.id)
+                return apiUtils.return_json(True, "Topology Already Exists with id: %s" % topology.id,
+                                            topology_id=topology.id)
 
             except Topology.DoesNotExist:
                 return apiUtils.return_json(False, 'Topology Does not Exist')
@@ -438,6 +444,34 @@ def check_topology_exists(request):
     except Exception as e:
         logger.error(e)
         return apiUtils.return_json(False, "Unknown Error checking topology!")
+
+
+def export_topology_json(request):
+
+    logger.debug('---- export_topology_json ----')
+    json_string = request.body
+    json_body = json.loads(json_string)
+
+    try:
+        if "name" in json_body[0]:
+            topology_name = json_body[0]["name"]
+            try:
+                # get the topology by name
+                topology = Topology.objects.get(name=topology_name)
+                json_data = json.loads(topology.json)
+                info_data = dict()
+                info_data["type"] = "wistar.info"
+                info_data["name"] = topology.name
+                info_data["description"] = topology.description
+                json_data.append(info_data)
+                return HttpResponse(json.dumps(json_data), content_type="application/json")
+
+            except Topology.DoesNotExist:
+                return HttpResponse(status=500)
+
+    except Exception as e:
+        logger.error(e)
+        return HttpResponse(status=500)
 
 
 def start_topology(request):
@@ -483,7 +517,7 @@ def start_topology(request):
                 logger.debug("starting domain: %s" % domain["uuid"])
                 libvirtUtils.start_domain(domain["uuid"])
 
-            return apiUtils.return_json(True, 'Topology started!')
+            return apiUtils.return_json(True, 'Topology started!', topology_id=topology.id)
 
     except Topology.DoesNotExist:
             return apiUtils.return_json(False, 'Topology Does not Exist')
@@ -512,7 +546,7 @@ def check_image_exists(request):
                     break
 
             if found:
-                return apiUtils.return_json(True, "Image was found with id: %s" % image_id)
+                return apiUtils.return_json(True, "Image was found with id: %s" % image_id, image_id=image_id)
             else:
                 return apiUtils.return_json(False, "Image was not found!")
 
@@ -542,7 +576,7 @@ def create_local_image(request):
     file_path = configuration.user_images_dir + "/" + file_name
     try:
         image_id = imageUtils.create_local_image(name, description, file_path, image_type)
-        return apiUtils.return_json(True, "Image Created with id: %s" % image_id)
+        return apiUtils.return_json(True, "Image Created with id: %s" % image_id, image_id=image_id)
 
     except Exception as e:
         return HttpResponse(status=500)
@@ -553,9 +587,8 @@ def delete_image(request):
     logger.debug("---- delete_image ----")
     json_string = request.body
     json_body = json.loads(json_string)
-    logger.debug(json_string)
-    logger.debug(json_body)
-    required_fields = set(['name',])
+
+    required_fields = set(['name'])
     if not required_fields.issubset(json_body[0]):
         logger.error("Invalid parameters in json body")
         return HttpResponse(status=500)
