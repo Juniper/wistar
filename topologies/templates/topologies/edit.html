@@ -980,7 +980,7 @@
         });
     }
 
-   function showJunosAutomationOverlay() {
+    function showJunosAutomationOverlay() {
         jQuery("#junosAutomationOverlay").addClass("screen-overlay");
         jQuery("#junosAutomationOverlay").css("display", "");
     }
@@ -1061,6 +1061,8 @@
         manuallyTogglePanel('jsonDebug', 'none');
         manuallyTogglePanel('junosIconEditor', 'none');
         manuallyTogglePanel('linuxIconEditor', 'none');
+        manuallyTogglePanel('genericIconEditor', 'none');
+        manuallyTogglePanel('figureEditor', 'none');
         manuallyTogglePanel('connectionEditor', 'none');
         manuallyTogglePanel('labelEditor', 'none');
     }
@@ -1071,12 +1073,17 @@
     }
 
     function showDebug() {
-        hideAllEditors();
-        manuallyTogglePanel('jsonDebug', '');
-        currentSelection = "debug";
-	    exportJson();
-	    jQuery('#debug').val("");
-	    jQuery('#debug').val(jQuery('#json').val());
+        if (currentSelection == "debug") {
+            manuallyTogglePanel('jsonDebug', 'none');
+            currentSelection = "";
+        } else {
+            hideAllEditors();
+            manuallyTogglePanel('jsonDebug', '');
+            currentSelection = "debug";
+            exportJson();
+            jQuery('#debug').val("");
+            jQuery('#debug').val(jQuery('#json').val());
+        }
     }
 
     function showConfigSetEditor() {
@@ -1318,9 +1325,61 @@
         l.setFontSize(jQuery('#labelFontSize').val());
     }
 
+    function loadFigureEditor(figureId) {
+        if (currentSelection !== "figureEditor") {
+            hideAllEditors();
+            manuallyTogglePanel('figureEditor', '');
+            currentSelection = "figureEditor";
+        }
+
+        jQuery('#selectedObject').val(figureId);
+        var instance = canvas.getFigure(figureId);
+
+
+        var figureColor = instance.getColor().hashString;
+        if (figureColor == null) {
+            figureColor = "none";
+        }
+        console.log(figureColor);
+        jQuery('#figureColor').val(figureColor);
+        jQuery('#figureStroke').val(instance.getStroke());
+        jQuery('#figureBackgroundColor').val(instance.getBackgroundColor().hashString);
+    }
+
+    function setFigureColor(newColor) {
+        console.log(newColor);
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        figure.setColor(newColor);
+    }
+
+    function setFigureStroke(newStroke) {
+        console.log(newStroke);
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        figure.setStroke(newStroke);
+    }
+
+    function setFigureBackgroundColor(newColor) {
+        console.log(newColor);
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        figure.setBackgroundColor(newColor);
+    }
+
+    function setFigureToBack() {
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        figure.toBack();
+    }
+
     // fixme - this will be broken for anything other than vmx
     function loadConnectionEditor(figureId) {
         var connection = canvas.getLine(figureId);
+
+        jQuery('#connectionColor').val(connection.getColor().hashString);
+        jQuery('#connectionStroke').val(connection.getStroke());
+
         var sourcePort = connection.getSource();
         var targetPort = connection.getTarget();
 
@@ -1446,6 +1505,20 @@
         console.log("saved info on connection Object");
     }
 
+    function setConnectionColor(newColor) {
+        console.log(newColor);
+        var connId = jQuery('#selectedConnection').val();
+        var connection = canvas.getLine(connId);
+        connection.setColor(newColor);
+    }
+
+    function setConnectionStroke(newStroke) {
+        console.log(newStroke);
+        var connId = jQuery('#selectedConnection').val();
+        var connection = canvas.getLine(connId);
+        connection.setStroke(newStroke);
+    }
+
     function addExternalCloud() {
         if (externalCloudAdded == false) {
             var c = new draw2d.shape.node.externalCloud();
@@ -1470,12 +1543,16 @@
 
     function addRectangle() {
             var r = new draw2d.shape.basic.Rectangle(175, 100);
-
             r.setBackgroundColor(null);
-            // r.toBack();
             canvas.addFigure(r, 400, 400);
             r.toBack();
+    }
 
+    function addCircle() {
+            var r = new draw2d.shape.basic.Circle();
+            r.setBackgroundColor(null);
+            canvas.addFigure(r, 300, 300);
+            r.toBack();
     }
 
     // are we editing an existing topology?
@@ -1490,7 +1567,7 @@
     jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
         // set default connection router here
-        draw2d.shape.basic.PolyLine.DEFAULT_ROUTER= new draw2d.layout.connection.FanConnectionRouter();
+        draw2d.shape.basic.PolyLine.DEFAULT_ROUTER = new draw2d.layout.connection.FanConnectionRouter();
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
         canvas.addSelectionListener(new topologySelectionListener());
@@ -1934,64 +2011,155 @@
               </tr>
             </table>
           </div>
-          <div id="connectionEditor" style="display: none;">
-            <table>
-              <th colspan="2">
-                 Edit Connection
-              </th>
-              <tr>
-                <td colspan="2">
-                  <input type="hidden" id="selectedConnection" value="0">
-                  <input type="hidden" id="connectionSourceIp" value="0">
-                  <input type="hidden" id="connectionSourceType" value="0">
-                  <input type="hidden" id="connectionTargetIp" value="0">
-                  <input type="hidden" id="connectionTargetType" value="0">
-                  <input type="hidden" id="connectionSourceIface" value="0">
-                  <input type="hidden" id="connectionTargetIface" value="0">
-                  <input type="hidden" id="connectionSourcePw" value="0">
-                  <input type="hidden" id="connectionTargetPw" value="0">
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Source Device:
-                </td>
-                <td>
-                  <div style="display: inline;" id="connectionSourceDevice"></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Source IP Address:
-                </td>
-                <td>
-                  <input type="text" onblur="javascript: incrementDestIP();"  id="connectionSourcePortIp">
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Target Device:
-                </td>
-                <td>
-                  <div style="display: inline;" id="connectionTargetDevice"></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Target IP Address:
-                </td>
-                <td>
-                  <input type="text" onblur="javascript: saveConnectionData();" id="connectionTargetPortIp">
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <input type="button" onclick="javascript: syncLinkData();" value="Sync IP Addresses"
-                         title="Push IP information to devices for this connection">
-                </td>
-              </tr>
-            </table>
-          </div>
+            <div id="figureEditor" style="display: none;">
+                <table>
+                    <th colspan="2">
+                        Edit Figure
+                    </th>
+                    <tr>
+                        <td>
+                            Line Color:
+                        </td>
+                        <td>
+                            <select id="figureColor" onchange="javascript: setFigureColor(this.value);">
+                                <option value="#000000">Black</option>
+                                <option value="#FF0000">Red</option>
+                                <option value="#FFA500">Orange</option>
+                                <option value="#FFFF00">Yellow</option>
+                                <option value="#80080">Purple</option>
+                                <option value="#00800">Green</option>
+                                <option value="#0000FF">Blue</option>
+                                <option value="#808080">Grey</option>
+                                <option value="none">None</option>
+                            </select>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            Line Stroke:
+                        </td>
+                        <td>
+                            <select id="figureStroke"
+                                    onchange="javascript: setFigureStroke(this.value);">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Background Color:
+                        </td>
+                        <td>
+                            <select id="figureBackgroundColor"
+                                    onchange="javascript: setFigureBackgroundColor(this.value);">
+                                <option value="#000000">Black</option>
+                                <option value="#FF0000">Red</option>
+                                <option value="#FFA500">Orange</option>
+                                <option value="#FFFF00">Yellow</option>
+                                <option value="#80080">Purple</option>
+                                <option value="#00800">Green</option>
+                                <option value="#0000FF">Blue</option>
+                                <option value="#808080">Grey</option>
+                                <option value="none">None</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Position:
+                        </td>
+                        <td>
+                            <input type="button" value="Move Backwards" onclick="javascript: setFigureToBack()"/>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="connectionEditor" style="display: none;">
+                <table>
+                    <th colspan="2">
+                        Edit Connection
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="hidden" id="selectedConnection" value="0">
+                            <input type="hidden" id="connectionSourceIp" value="0">
+                            <input type="hidden" id="connectionSourceType" value="0">
+                            <input type="hidden" id="connectionTargetIp" value="0">
+                            <input type="hidden" id="connectionTargetType" value="0">
+                            <input type="hidden" id="connectionSourceIface" value="0">
+                            <input type="hidden" id="connectionTargetIface" value="0">
+                            <input type="hidden" id="connectionSourcePw" value="0">
+                            <input type="hidden" id="connectionTargetPw" value="0">
+                            Connection UI:
+                        </td>
+                        <td>
+                            <select id="connectionStroke" onchange="javascript: setConnectionStroke(this.value);">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                            &nbsp;
+                            <select id="connectionColor" onchange="javascript: setConnectionColor(this.value);">
+                                <option value="#000000">Black</option>
+                                <option value="#FF0000">Red</option>
+                                <option value="#FFA500">Orange</option>
+                                <option value="#FFFF00">Yellow</option>
+                                <option value="#80080">Purple</option>
+                                <option value="#00800">Green</option>
+                                <option value="#0000FF">Blue</option>
+                                <option value="#808080">Grey</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Source Device:
+                        </td>
+                        <td>
+                            <div style="display: inline;" id="connectionSourceDevice"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Source IP Address:
+                        </td>
+                        <td>
+                            <input type="text" onblur="javascript: incrementDestIP();" id="connectionSourcePortIp">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Target Device:
+                        </td>
+                        <td>
+                            <div style="display: inline;" id="connectionTargetDevice"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Target IP Address:
+                        </td>
+                        <td>
+                            <input type="text" onblur="javascript: saveConnectionData();" id="connectionTargetPortIp">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="button" onclick="javascript: syncLinkData();" value="Sync IP Addresses"
+                                   title="Push IP information to devices for this connection">
+                        </td>
+                    </tr>
+                </table>
+            </div>
           <div id="jsonDebug" style="display: none;">
             <table>
               <th>
@@ -2012,22 +2180,22 @@
           </div>
           <div id="deploymentStatus"></div>
           {% if topo_id != None %}
-              <div id="automationTools">
-            <table>
-              <th>
-                 Automation Tools
-              </th>
-              <tr>
-                <td>
-                  <input type="button" name="showLinuxAutomationOverlay" id="showLinuxAutomationOverlay"
-                    value="Linux CLI Automation" onclick="javascript: showLinuxAutomationOverlay();"/>
-                    &nbsp;
-                    <input type="button" name="showJunosAutomationOverlay" id="showJunosAutomationOverlay"
-                    value="Junos CLI Automation" onclick="javascript: showJunosAutomationOverlay();"/>
-                </td>
-              </tr>
-            </table>
-          </div>
+            <div id="automationTools">
+                <table>
+                  <th>
+                     Automation Tools
+                  </th>
+                  <tr>
+                    <td>
+                      <input type="button" name="showLinuxAutomationOverlay" id="showLinuxAutomationOverlay"
+                        value="Linux CLI Automation" onclick="javascript: showLinuxAutomationOverlay();"/>
+                        &nbsp;
+                        <input type="button" name="showJunosAutomationOverlay" id="showJunosAutomationOverlay"
+                        value="Junos CLI Automation" onclick="javascript: showJunosAutomationOverlay();"/>
+                    </td>
+                  </tr>
+                </table>
+            </div>
           <div id="configSets">
             <form method="post" id="configSetForm" name="configSetForm" action="{% url 'topologies:createConfigSet' %}" method="POST">
             {% csrf_token %}
@@ -2096,22 +2264,22 @@
           </div>
           {% endif %}
         </td>
-        <td style="vertical-align: top; padding-left: 2px;">
-          <div id="gfx_holder" style="background-image: url({% static 'images/grid.png' %});
+        <td style="vertical-align: top; padding: 0px;">
+          <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
             background-repeat: repeat; 
             width:900px; 
             height:650px; 
             position:relative;
             cursor: inherit;
-            border: 1px solid #000">
+            ">
           </div>
             {% if topo_id != None %}
-            <div id="toolsMenu" style="width: 900px; margin-top: 10px; text-align: right">
+            <div id="toolsMenu" style="width: 900px; margin: 10px; text-align: right">
                 <!--
                 <input type="button" value="Refresh Bootup status" onclick="javascript: updateAllBootState();"/>
                 &nbsp; &nbsp;
                 -->
-                <input type="text" value="Add Note" id="newLabel" onclick="javascript: this.value = ''" style="width: 200px"/>
+                <input type="text" placeholder="New Note" id="newLabel" onclick="javascript: this.value = ''" style="width: 200px"/>
 
                 <select id="newLabelFontSize">
                     <option value="8">8</option>
@@ -2130,12 +2298,34 @@
                     <option value="48">48</option>
                 </select> &nbsp;
 
-                <input type="button" value="Add Label" onclick="javascript: addLabel()"/> &nbsp; &nbsp;
-
-                <input type="button" value="Delete Label" title="Delete Selected Label"
-                         onclick="javascript: deleteLabel()"/>
-                &nbsp; &nbsp;
+                <input type="button" value="Add Note"
+                       onclick="javascript: addLabel()"/>
+                &nbsp;
+                <!--
+                <input type="button" value="Delete Note"
+                       title="Delete Selected Note"
+                       onclick="javascript: deleteLabel()"/>
+                &nbsp;
+                -->
+                <input type="button" value="Add Rectangle"
+                       title="Draw a Rectangle on screen"
+                       onclick="javascript: addRectangle()"/>
+                &nbsp;
+                <input type="button" value="Add Circle"
+                       title="Draw a Circle on screen"
+                       onclick="javascript: addCircle()"/>
+                &nbsp;
+                <input type="button" value="Delete"
+                       title="Delete selected object"
+                       onclick="javascript: deleteSelectedObject()"/>
+                &nbsp;
+                <input type="button" value="Debug"
+                       title="Show Serialized JSON"
+                       onclick="javascript: showDebug()"/>
+                <!--
+                &nbsp;
                 <a href="#" onclick="javascript: showDebug();" style="text-decoration: none; color: #fff; border: 1px solid #eee;">.</a>
+                -->
             </div>
             {% endif %}
             <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>

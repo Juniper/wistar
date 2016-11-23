@@ -1,47 +1,71 @@
 <domain type='kvm'>
-  <name>{{ device.name }}</name>
-  <memory unit='MiB'>{{ device.ram }}</memory>
-  <currentMemory unit='MiB'>{{ device.ram }}</currentMemory>
-  <vcpu placement='static'>{{ device.cpu }}</vcpu>
-  <os>
-    <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
-    <boot dev='hd'/>
-  </os>
-  <features>
-    <acpi/>
-    <apic/>
-    <pae/>
-  </features>
-  <cpu mode='host-model'>
-    <model fallback='allow'/>
-    <feature policy='require' name='vmx'/>
-  </cpu>
+    <name>{{ device.name }}</name>
+    <memory unit='MiB'>{{ device.ram }}</memory>
+    <currentMemory unit='MiB'>{{ device.ram }}</currentMemory>
+    <vcpu placement='static'>{{ device.cpu }}</vcpu>
+    <os>
+        <type arch='x86_64' machine='{{ vm_env.pc_type }}'>hvm</type>
+        <boot dev='hd'/>
+    </os>
+    <features>
+        <acpi/>
+        <apic/>
+        <pae/>
+    </features>
+    <cpu mode='host-model'>
+        <model fallback='allow'/>
+        <!-- <feature policy='require' name='vmx'/> -->
+    </cpu>
     <clock offset='localtime'/>
-  <on_poweroff>destroy</on_poweroff>
-  <on_reboot>destroy</on_reboot>
-  <on_crash>destroy</on_crash>
-  <devices>
-    <emulator>{{ vm_env.emulator }}</emulator>
-    <disk type='file' device='disk'>
-    <driver name='qemu' type='qcow2' cache='{{ vm_env.cache }}' io='native'/>
-      <source file='{{ instancePath }}'/>
-      <target dev='hda' bus='ide'/>
-      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
-    </disk>
-    <controller type='ide' index='0'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
-    </controller>
-    <controller type='usb' index='0'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
-    </controller>
-{% for interface in device.interfaces %}
-    <interface type='bridge'>
-      <mac address='{{ interface.mac }}'/>
-      <source bridge='{{ interface.bridge }}'/>
-      <model type='{{ interface.type }}'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
-    </interface>
-{% endfor %}
+    <on_poweroff>destroy</on_poweroff>
+    <on_reboot>destroy</on_reboot>
+    <on_crash>destroy</on_crash>
+    <devices>
+        <emulator>{{ vm_env.emulator }}</emulator>
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='qcow2' cache='{{ vm_env.cache }}' io='native'/>
+            <source file='{{ instancePath }}'/>
+            <target dev='hda' bus='ide'/>
+            <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+        </disk>
+        {% if secondary_disk_path|length > 0 %}
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='{{ device.secondaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <source file='{{ secondary_disk_path }}'/>
+            {% if device.secondaryDiskParams.bus_type == "usb" %}
+            <target dev='sda' bus='{{ device.secondaryDiskParams.bus_type }}'/>
+            {% else %}
+            <target dev='hdb' bus='{{ device.secondaryDiskParams.bus_type }}'/>
+            <address type='drive' controller='0' bus='0' target='0' unit='1'/>
+            {% endif %}
+        </disk>
+        {% endif %}
+        {% if tertiary_disk_path|length > 0 %}
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='{{ device.tertiaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <source file='{{ tertiary_disk_path }}'/>
+            {% if device.tertiaryDiskParams.bus_type == "usb" %}
+            <target dev='sdb' bus='{{ device.tertiaryDiskParams.bus_type }}'/>
+            {% else %}
+            <target dev='hdc' bus='{{ device.tertiaryDiskParams.bus_type }}'/>
+            <address type='drive' controller='0' bus='0' target='0' unit='1'/>
+            {% endif %}
+        </disk>
+        {% endif %}
+        <controller type='ide' index='0'>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+        </controller>
+        <controller type='usb' index='0'>
+            <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+        </controller>
+        {% for interface in device.interfaces %}
+        <interface type='bridge'>
+            <mac address='{{ interface.mac }}'/>
+            <source bridge='{{ interface.bridge }}'/>
+            <model type='{{ interface.type }}'/>
+            <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
+        </interface>
+        {% endfor %}
         <serial type='pty'>
             <target port='0'/>
         </serial>
@@ -56,5 +80,5 @@
             <model type='cirrus' vram='4' heads='1'/>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
         </video>
-  </devices>
+    </devices>
 </domain>

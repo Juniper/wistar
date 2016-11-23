@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block title %}Wistar - Lab Rat - New Template{% endblock %}
 {% block scripts %}
-<script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+<script type="text/javascript" src="{% static " js/jquery-1.8.1.min.js" %}"></script>
     <script type="text/javascript">
     function validateForm() {
         var d = $('#id_description');
@@ -27,12 +27,20 @@
     </script>
 {% endblock %}
 {% block content %}
-<div style="width:700px; margin: auto; border: 1px solid #000; padding: 10px;">
+<div class="centered_box_75">
+
     <h2>Create Linux Script</h2>
-    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/scripts/createScript/">
-        {{ script_form }}
-        {% csrf_token %}
-        <input type="submit"/>
+    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
+          action="/scripts/createScript/">
+        <table>
+            {{ script_form.as_table }}
+            <tr>
+                <td colspan="2">
+                    {% csrf_token %}
+                    <input type="submit"/>
+                </td>
+            </tr>
+        </table>
     </form>
 </div>
 {% endblock %}

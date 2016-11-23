@@ -29,13 +29,24 @@
             }
         }
     }
-    </script>
+
+</script>
 {% endblock %}
 {% block content %}
-<h2>New Image</h2>
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/create/">
-    {{ image_form }}
-    {% csrf_token %}
-    <input type="submit"/>
-</form>
+<div class="centered_box_75">
+    <h2>New Image</h2>
+
+    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
+          action="/images/create/">
+        <table>
+            {{ image_form.as_table }}
+            <tr>
+                <td colspan="2">
+                    {% csrf_token %}
+                    <input type="submit"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
 {% endblock %}

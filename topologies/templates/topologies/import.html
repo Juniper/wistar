@@ -2,10 +2,18 @@
 {% load staticfiles %}
 {% block title %}Wistar - Lab Rat - Import Topology{% endblock %}
 {% block content %}
+<div class="centered_box_75">
 
-<h3>Import Topology</h3>
-<form enctype="multipart/form-data" method="POST">{% csrf_token %}
-{{ form }}
-<input type="submit" value="Import"/>
-</form>
-{% endblock %}
+    <h3>Import Topology</h3>
+    <form enctype="multipart/form-data" method="POST">
+        <table>
+            {{ form }}
+            <tr>
+                <td colspan="2">
+                    {% csrf_token %}
+                    <input type="submit" value="Import"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+    {% endblock %}

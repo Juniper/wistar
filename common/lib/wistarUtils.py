@@ -190,7 +190,7 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["cpu"] = user_data.get("cpu", 1)
             device["interfacePrefix"] = user_data.get("interfacePrefix", "")
             device["configurationFile"] = user_data.get("configurationFile", "")
-            device["slot_offset"] = user_data.get("pciSlotOffset", "")
+            device["slot_offset"] = int(user_data.get("pciSlotOffset", 3))
             device["interfaceType"] = user_data.get("interfaceType", "")
 
             device["smbiosProduct"] = user_data.get("smbiosProductString", "")
@@ -630,7 +630,6 @@ def get_used_ips_from_topology_json(json_string):
     return all_ips
 
 
-
 def get_next_ip(all_ips, floor):
     try:
 
@@ -662,7 +661,7 @@ def create_disk_instance(device, disk_params):
 
     if "type" in disk_params:
         if disk_params["type"] == "image" and "image_id" in disk_params:
-            logger.debug("Creating secondary Disk information")
+            logger.debug("Creating secondary/tertiary Disk information")
             image_id = disk_params["image_id"]
             disk_image = Image.objects.get(pk=image_id)
             disk_base_path = settings.MEDIA_ROOT + "/" + disk_image.filePath.url
@@ -710,18 +709,22 @@ def create_disk_instance(device, disk_params):
                     for k in params:
                         file_data += '%s="%s"\n' % (k, params[k])
 
+                    files[name] = file_data
+
                 # junos customization
                 # let's also inject a default config here as well if possible!
-                if "junos_vre" in device["type"]:
+                junos_types = ['junos_vre', 'junos_vsrx', 'junos_volive']
+                if device["type"] in junos_types:
+                    logger.debug("Creating Junos configuration template")
                     junos_config = osUtils.get_junos_default_config_template(device["name"],
                                                                              device["label"],
                                                                              device["password"],
-                                                                             device["ip"])
+                                                                             device["ip"],
+                                                                             device["managementInterface"])
 
                     if junos_config is not None:
                         files["/juniper.conf"] = junos_config
 
-                files[name] = file_data
                 disk_instance_path = osUtils.create_cloud_drive(device["name"], files)
                 if disk_instance_path is None:
                     disk_instance_path = ''

@@ -1,37 +1,60 @@
-
 {% extends "base.html" %}
+{% load staticfiles %}
+
 {% block title %}Wistar - Lab Rat - Home{% endblock %}
 {% block content %}
-<h2>Topologies</h2>
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
-<table>
-    <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Options</th>
-    </tr>
-    {% for topo in latest_topo_list %}
-    <tr>
-        <td><a href="{{ topo.id }}">{{ topo.name }}</a> </td>
-        <td>{{ topo.description }}</td>
-        <td>
-            <a href="delete/{{ topo.id }}">Delete</a>
-            &nbsp;
-            <a href="export/{{ topo.id }}">Export</a>
-            &nbsp;
-            <a href="#" onclick="javascript: redir('launch/{{ topo.id }}')">Launch</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="centered_box_75">
+    <h2>Topologies</h2>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Options</th>
+        </tr>
+        {% for topo in latest_topo_list %}
+        <tr>
+            <td><a href="{{ topo.id }}">{{ topo.name }}</a></td>
+            <td>{{ topo.description }}</td>
+            <td>
+                <div id="menu_{{ topo.id }}" style="position: absolute; margin-top: -6px;">
+                    <img src="{% static 'images/more.png' %}" width="12px" height="12px"/>&nbsp;
+                    <ul class="submenu">
+                        <li>
+                            <a href="{{ topo.id }}">View Details</a>
+                        </li>
+                        <li>
+                            <a href="delete/{{ topo.id }}">Delete</a>
+                        </li>
+                        <li>
+                            <a href="export/{{ topo.id }}">Export</a>
+                        </li>
+                        <li>
+                            <a href="launch/{{ topo.id }}">Launch</a>
+                        </li>
+                    </ul>
+                </div>
+                <script>
+                jQuery("#menu_{{ topo.id }}").hover(
+                    function() {
+                        $(this).children('.submenu').slideDown(150);
+                    },
+                    function() {
+                        $(this).children('.submenu').slideUp(150);
+                    }
+                );
 
-<a href="new">New Topology</a>
-&nbsp;
-<a href="import">Import Topology</a>
+                </script>
+
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 {% endblock %}

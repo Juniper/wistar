@@ -321,8 +321,12 @@ def create_config_set(request):
     description = request.POST["description"]
 
     topology = get_object_or_404(Topology, pk=topology_id)
-    # let's parse the json and convert to simple lists and dicts
-    config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
+
+    try:
+        # let's parse the json and convert to simple lists and dicts
+        config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
+    except Exception as e:
+        return render(request, 'ajax/ajaxError.html', {'error': str(e)})
 
     c = ConfigSet(name=name, description=description, topology=topology)
     c.save()
@@ -351,10 +355,9 @@ def launch(request, topology_id):
         logger.debug(ex)
         return render(request, 'error.html', {'error': "Topology not found!"})
 
-    # let's parse the json and convert to simple lists and dicts
-    config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
-
     try:
+        # let's parse the json and convert to simple lists and dicts
+        config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
         logger.debug("Deploying topology: %s" % topology_id)
         # this is a hack - inline deploy should be moved elsewhere
         # but the right structure isn't really there for a middle layer other

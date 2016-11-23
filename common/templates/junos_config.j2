@@ -31,7 +31,7 @@ system {
     }
 }
 interfaces {
-    fxp0 {
+    {{ config.mgmt_interface }} {
         unit 0 {
             family inet {
                 address {{ config.mgmt_ip }};

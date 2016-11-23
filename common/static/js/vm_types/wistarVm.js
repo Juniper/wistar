@@ -65,6 +65,13 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	DUMMY_INTERFACE_LIST: [],
 	// if the VM requires a secondary disk be attached, this will define the bus type in the libvirt XML
 	// can be ide, usb or any other option that libvirt supports
+	/*
+	    TERTIARY_DISK_PARAMS: {
+            "type": "config_drive",
+            "qemu_type": "raw",
+            "bus_type": "usb"
+    },
+    */
 	SECONDARY_DISK_PARAMS: "",
 	TERTIARY_DISK_PARAMS: "",
 	// set's the SMBIOS string in the libvirt XML

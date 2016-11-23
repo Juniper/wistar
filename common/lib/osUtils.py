@@ -226,7 +226,7 @@ def create_cloud_drive(domain_name, files=[]):
         os.system("umount /mnt")
 
 
-def get_junos_default_config_template(domain_name, host_name, password, ip):
+def get_junos_default_config_template(domain_name, host_name, password, ip, management_interface):
     try:
         # read template
         this_path = os.path.abspath(os.path.dirname(__file__))
@@ -249,6 +249,7 @@ def get_junos_default_config_template(domain_name, host_name, password, ip):
         config["ssh_key"] = configuration.ssh_key
         config["ssh_user"] = configuration.ssh_user
         config["password"] = password
+        config["mgmt_interface"] = management_interface
 
         template_data_string = template_data.render(config=config)
         logger.debug(template_data_string)

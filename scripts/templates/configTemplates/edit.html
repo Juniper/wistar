@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block title %}Wistar - Lab Rat - Edit Template{% endblock %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static "js/jquery-1.8.1.min.js" %}"></script>
+<script type="text/javascript" src="{% static " js/jquery-1.8.1.min.js" %}"></script>
     <script type="text/javascript">
     function validateForm() {
         var d = $('#id_description');
@@ -27,11 +27,20 @@
     </script>
 {% endblock %}
 {% block content %}
-<h2>Edit Template</h2>
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/scripts/update/">
-{% csrf_token %}
-{{ template_form }}
-<input type="hidden" name="id" value="{{ template.id }}"/>
-<input type="submit"/>
-</form>
+<div class="centered_box_75">
+    <h2>Edit Template</h2>
+    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
+          action="/scripts/update/">
+        {% csrf_token %}
+        <table>
+            {{ template_form.as_table }}
+            <input type="hidden" name="id" value="{{ template.id }}"/>
+            <tr>
+                <td>
+                    <input type="submit"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
 {% endblock %}

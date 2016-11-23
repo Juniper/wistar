@@ -730,7 +730,8 @@
     // also creates the instance array variable on page context
     function loadTopology() {
         var test = jQuery('#json').val();
-    	if (test != null) {
+    	if ((test != null) && (test != "")) {
+    	    console.log("test is :" + test + ":");
 		    // var jsonTxt = JSON.stringify(test, null, 2);
 		    var json = eval(test);
 		    reader = new draw2d.io.json.Reader();
@@ -752,52 +753,49 @@
 {% block content %}
     <table border="0">
         <tr>
-            <td id="new_topology_menu" colspan="2">
-                <table>
-                    <tr>
-                        <td>
+            <td id="newTopologyMenu" colspan="2">
+                <ul>
+                        <li>
                             <a href="#" onclick="javascript: showOverlay('#topology_save_form');">
                                 Save
                             </a>
-                        </td>
-                        <td>
+                        </li>
+                        <li>
                             <a href="#" onclick="javascript: showOverlay('#add_vm_form');">
                                 Add VM
                             </a>
-                        </td>
-                        <td>
+                        </li>
+                        <li>
                             <a href="#" onclick="javascript: showOverlay('#add_bridge_form');">
                                 Add Bridge
                             </a>
-                        </td>
-                        <td>
+                        </li>
+                        <li>
                             <a href="#" onclick="javascript: showOverlay('#add_label_form');">
                                 Add Label
                             </a>
-                        </td>
-                        <td>
+                        </li>
+                        <li>
                             <a href="#"  title="Remove selected Object from Topology"
                                onclick="javascript: deleteSelectedObject()">
                                 Delete Object
                             </a>
-                        </td>
-                    </tr>
-                </table>
+                        </li>
+
+                </ul>
             </td>
         </tr>
-      <tr>
-
-        <td style="vertical-align: top; padding-left: 2px;">
-          <div id="gfx_holder" style="background-image: url({% static 'images/grid.png' %});
-            background-repeat: repeat; 
-            width:1300px;
-            height:650px; 
-            position:relative; 
-            border: 1px solid #000">
-          </div>
-
-        </td>
-      </tr>
+        <tr>
+            <td style="vertical-align: top; padding-left: 2px; background-color: #fff;">
+                <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
+                background-repeat: repeat;
+                width:1300px;
+                height:650px;
+                position:relative;
+                ">
+                </div>
+            </td>
+        </tr>
     </table>
 
     <div id="topology_save_form" style="display:none">
@@ -805,7 +803,7 @@
             action="{% url 'topologies:create' %}" method="POST">
         <table>
             <tr>
-                <td colspan="2" style="text-align: right; border-bottom: 0px; padding:0px">
+                <td colspan="2" class="screen-overlay-menu">
                     <a href="#" onclick="javascript: hideOverlay('#topology_save_form')">X</a>
                 </td>
             </tr>
@@ -835,7 +833,7 @@
                 </td>
               </tr>
               <tr>
-                <td colspan="2">
+                <td colspan="2" style="border-bottom: 0px solid #fff">
 
                   <input type="button" name="submit_button" id="submit_button"
                     value="Save" onclick="javascript: saveTopology();"/>
@@ -848,7 +846,7 @@
     <div id="add_vm_form" style="display:none">
         <table>
             <tr>
-                <td colspan="2" style="text-align: right; border-bottom: 0px; padding:0px">
+                <td colspan="2" class="screen-overlay-menu">
                     <a href="#" onclick="javascript: hideOverlay('#add_vm_form')">X</a>
                 </td>
             </tr>
@@ -1033,7 +1031,7 @@
     <div id="add_bridge_form" style="display:none">
         <table>
             <tr>
-                <td colspan="2" style="text-align: right; border-bottom: 0px; padding:0px">
+                <td colspan="2" class="screen-overlay-menu">
                     <a href="#" onclick="javascript: hideOverlay('#add_bridge_form')">X</a>
                 </td>
             </tr>
@@ -1069,7 +1067,7 @@
     <div id="add_label_form" style="display:none;">
         <table>
             <tr>
-                <td colspan="2" style="text-align: right; border-bottom: 0px; padding:0px">
+                <td colspan="2" class="screen-overlay-menu">
                     <a href="#" onclick="javascript: hideOverlay('#add_label_form')">X</a>
                 </td>
             </tr>
@@ -1117,25 +1115,27 @@
         </table>
     </div>
     <div id="jsonDebug" style="display: none;">
-            <table>
-              <th>
-                 Debug Panel
-              </th>
- <tr>
-                <td colspan="2" style="text-align: right; border-bottom: 0px; padding:0px">
+        <table>
+            <tr>
+                <th>
+                    Debug Panel
+                </th>
+            </tr>
+            <tr>
+                <td colspan="2" class="screen-overlay-menu">
                     <a href="#" onclick="javascript: hideOverlay('#jsonDebug')">X</a>
                 </td>
-              <tr>
+            <tr>
                 <td>
-                  <textarea id="debug" cols="1" rows="5"></textarea>
+                    <textarea id="debug" cols="1" rows="5"></textarea>
                 </td>
-              </tr>
-                <tr>
-                    <td>
-                        <input type="button" onclick="javascript: updateDebug();" value="Update JSON"
-                         title="Manually modify JSON object">
-                    </td>
-                </tr>
-            </table>
-          </div>
+            </tr>
+            <tr>
+                <td>
+                    <input type="button" onclick="javascript: updateDebug();" value="Update JSON"
+                           title="Manually modify JSON object">
+                </td>
+            </tr>
+        </table>
+    </div>
 {% endblock %}

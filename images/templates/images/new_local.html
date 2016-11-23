@@ -24,18 +24,27 @@
             return false;
         }
     }
-    </script>
+
+
+</script>
 {% endblock %}
 {% block content %}
-<div class="centered_box">
+
+<div class="centered_box_75">
     <h2>New Local Image</h2>
     This allows you to upload an image to the wistar server via rsync or scp to the
     /opt/wistar/user_instances directory.
     <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
           action="/images/createLocal/">
-        {{ image_form }}
-        {% csrf_token %}
-        <input type="submit"/>
+        <table>
+            {{ image_form.as_table }}
+            <tr>
+                <td colspan="2">
+                    {% csrf_token %}
+                    <input type="submit"/>
+                </td>
+            </tr>
+        </table>
     </form>
 </div>
 {% endblock %}

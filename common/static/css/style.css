@@ -1,18 +1,8 @@
 @charset "utf-8";
 /**
  *
- * Generic CSS for Wistar 
- * a good bit borrowed from CakePHP
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * Generic CSS for Wistar
  *
- * Licensed under The MIT License
- * For full copyright and license information, please see the LICENSE.txt
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
 
 * {
@@ -24,8 +14,8 @@ html {
 }
 /** General Style Info **/
 body {
-	background: #c8c8c8;
-	color: #000;
+	background: #f4f4f4;
+	color: #445e88;
     font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size:70%;
 	margin: 0;
@@ -37,19 +27,20 @@ pre {
 }
 a {
 	color: #445e88;
-	text-decoration: underline;
-	font-weight: bold;
+	text-decoration: none;
+
 }
 a:hover {
-	color: #333;
-	text-decoration:none;
+	text-decoration: underline;
 }
 a img {
 	border:none;
+	vertical-align: middle;
 }
 h1, h2, h3, h4 {
 	font-weight: normal;
 	margin-bottom:0.5em;
+	padding-left: 10px;
 }
 h1 {
 	background:#fff;
@@ -58,22 +49,16 @@ h1 {
 }
 h2 {
 	/* background:#fff; */
-	color: orange;
+	color: #445e88;
     font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size: 190%;
 }
 h3 {
-	color: #2c6877;
+	color: #445e88;
     font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size: 165%;
 }
-h4 {
-	color: #993;
-	font-weight: normal;
-}
-ul, li {
-	margin: 0 12px;
-}
+
 p {
 	margin: 0 0 1em 0;
 }
@@ -85,67 +70,208 @@ p {
 
 #header{
 	/* padding: 10px 20px; */
-}
-#header table, #header_nenu table {
-	width: 100%;
-	margin-bottom: 0px;
-	/* padding: 5px; */
-}
-
-#header table tr td {
-	text-align: left;
+	background-color: #666;
+	border-bottom: 1px solid #333;
+	height: 69px;
+	line-height: 69px;
+	vertical-align: middle;
 	color: #333;
-	background-color: #c8c8c8;
-	border: 0px;
+	padding-right: 10px;
 }
 
-#header table tr td a {
-	color: #333;
+#header h3 {
+    display: inline;
+    color: #fff;
 }
 
-#header_menu table tr td {
-	text-align: center;
-	color: #333;
-	background-color: #c8c8c8;
-	border-top: 1px solid #ddd;
-	border-bottom: 0px;
+#hostLoad {
+    float: right;
 }
 
-#header_menu table {
-    margin: 0px;
+#hostLoad a {
+    color: #fff;
 }
 
-#header_menu table tr td a {
-	color: #333;
+#header_menu {
+    background-color: #666;
+    border-bottom: 1px solid #333;
+    font-weight: bold;
+    text-decoration: none;
+    vertical-align: middle;
+    line-height: 34px;
+}
+
+#header_menu > ul > li > a {
+    color: #fff;
+}
+
+#header_menu > ul {
+    list-style: none;
+    background-color: #666;
+
+}
+
+#header_menu > ul > li {
+    display: inline-block;
+    padding-left: 10px;
+    padding-right: 50px;
+    position: relative;
+    width: 150px;
+    color: #fff;
+}
+
+.header_submenu {
+    background: #eee;
+    border: 1px solid #ddd;
+    padding: 2px 0px 2px 2px;
+    list-style: none;
+    display: none;
+    position: absolute;
+    margin-left: 15px;
+    box-shadow: 5px 5px 5px #dddddd;
+    z-index: 9999;
+    color: #445e88;
+}
+
+.header_submenu li {
+    padding: 4px 20px 4px 4px;
+    margin: 0 5px;
 }
 
 #content{
-	background: #fff;
 	clear: both;
-	color: #333;
-	padding: 10px 20px 40px 20px;
+	padding: 0px 0px 40px 0px;
 	overflow: auto;
 }
+
 #footer {
 	clear: both;
 	padding: 6px 10px;
 }
-#header a, #footer a {
-	color: #fff;
+
+#content > a {
+    padding-left: 10px;
+    line-height: 35px;
 }
+.submenu {
+    background: #eee;
+    border: 1px solid #ddd;
+    padding: 2px 0px 2px 2px;
+    list-style: none;
+    display: none;
+    position: relative;
+    margin-left: 15px;
+    margin-top: -12px;
+    box-shadow: 5px 5px 5px #dddddd;
+    font-size: 110%;
+}
+
+.submenu li {
+    padding: 4px 20px 4px 4px;
+    margin: 0 5px;
+}
+
+.status_red {
+    background-color: red;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    vertical-align: middle;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    line-height: 25px;
+    color: white;
+}
+
+.status_green {
+    background-color: green;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    vertical-align: middle;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    line-height: 25px;
+    color: white;
+}
+
+.status_grey {
+    background-color: #ddd;
+    border: 1px solid #445e88;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    vertical-align: middle;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    line-height: 25px;
+}
+
+.status_grey:hover {
+    background-color: #eee;
+
+}
+
+.status_grey a:hover, .status_green a:hover, .status_red a:hover {
+    text-decoration: none;
+}
+
+.status_red:hover {
+    background-color: pink;
+    border: 1px solid red;
+}
+
+.status_green:hover {
+    width: 24px;
+    height: 24px;
+    background-color: yellowgreen;
+    border: 1px solid green;
+}
+
+.status_green a, .status_red a {
+    color: white;
+}
+
+#topoFormContainer table tr {
+    background: #fff;
+}
+
+#newTopologyMenu ul {
+    list-style: none;
+}
+
+#newTopologyMenu ul li {
+    display: inline;
+    padding-right: 150px;
+}
+
+/** notifications **/
+.messages {
+    margin-left: 25px;
+    color: orange;
+}
+
+
 /** Tables **/
+
 table {
-       border-right:0;
-       clear: both;
-       color: #445e88;
-       margin-bottom: 10px;
-       width: 100%;
+    width: 100%;
+    border-spacing: 0px;
+
 }
+
 th {
        /* border:0; */
-       border-bottom:2px solid #c8c8c8;
+       color: black;
+       border-bottom: 1px solid #ddd;
        text-align: left;
-       padding:6px;
+       height: 34px;
        padding-left: 10px;
 }
 th a {
@@ -160,11 +286,12 @@ th a.desc:after {
        content: ' ⇡';
 }
 table tr td {
-       padding: 5px;
+       /* padding: 5px; */
        padding-left: 10px;
        text-align: left;
        /* vertical-align: top; */
        border-bottom:1px solid #ddd;
+       height: 34px;
 }
 table tr:nth-child(even) {
        background: #f9f9f9;
@@ -307,29 +434,35 @@ input[type=text], textarea {
 	font-size: 100%;
     font-family: Verdana, Arial, Helvetica, sans-serif;
 	padding: 5px;
-	width:98%;
-	border: 1px solid #445e88;
+	width:95%;
+	border: 0px solid #ddd;
+	border-bottom: 1px solid #ddd;
+	background: #f9f9f9;
 }
 input[type=button],input[type=submit] {
 	font-size: 110%;
     font-family: Verdana, Arial, Helvetica, sans-serif;
 	padding: 5px;
-	border: 1px solid #445e88;
+	border: 1px solid #ddd;
 	background-color: #eee;
+	color: #445e88;
+}
+input[type=button]:hover,input[type=submit]:hover {
+    background-color: #ddd;
+    border-bottom: 1px solid #445e88;
+    color: #445e88;
 }
 input[type=file] {
 	/* clear: both; */
 	font-size: 110%;
     font-family: Verdana, Arial, Helvetica, sans-serif;
 	padding: 5px;
-	border: 1px solid #445e88;
+
 }
 select {
-	clear: both;
 	font-size: 110%;
-	vertical-align: text-bottom;
-	border: 1px solid #445e88;
-	background-color: #eee;
+	border: 1px solid #ddd;
+	color: #445e88;
 }
 select[multiple=multiple] {
 	width: 100%;
@@ -370,14 +503,24 @@ input[type=radio] {
 .screen-overlay table {
 	margin: auto;
 	width: 50%;
-	background-color: #eee;
+	background-color: #fff;
 	padding: 5px;
 	margin-top: 50px;
 	padding-bottom: 30px;
 }
 
 .screen-overlay table tr td {
-    background-color: #eee;
+    background-color: #fff;
+}
+
+.screen-overlay-menu {
+    text-align: right;
+    border-bottom: 0px;
+    padding:0px;
+    height: 10px;
+    vertical-align: top;
+    font-weight: bold;
+    margin: 0px;
 }
 
 .context-menu-list {
@@ -477,11 +620,33 @@ input[type=radio] {
 .centered_box {
     margin: auto;
     width: 50%;
-    background-color: #ffffff;
+    background-color: #fff;
     padding: 5px;
     margin-top: 50px
 }
 
 .centered_box td {
     vertical-align: middle;
+}
+
+.centered_box_75 {
+    margin: auto;
+    margin-bottom: 50px;
+    margin-top: 35px;
+    width: 75%;
+    background-color: #fff;
+    padding: 5px;
+    border: 1px solid #ddd;
+    box-shadow: 5px 5px 5px #dddddd;
+
+}
+
+.centered_box_75 td {
+    vertical-align: middle;
+    background-color: #fff;
+}
+
+.centered_box_75 th {
+    vertical-align: middle;
+    background-color: #fff;
 }

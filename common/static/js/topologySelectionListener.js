@@ -47,7 +47,7 @@ var topologySelectionListener = Class.extend({
 	            	});
 	            } else {
 	                console.log("click on unknown object " + figure.NAME);
-	                hideSelection();
+	                loadFigureEditor(figure.getId());
 	            }
 	        } else {
 	            hideSelection();

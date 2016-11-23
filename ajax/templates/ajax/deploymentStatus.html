@@ -34,39 +34,55 @@
             {{ d.state }}
         </td>
         <td style="white-space: nowrap;">
+            <div class="status_grey">
             <a href="#" onclick="javascript: manageDomain('undefine', '{{ d.uuid }}', '{{ topologyId }}');"
-               title="Delete Instance entirely!">
-                <img src="{% static 'images/undefine.png' %}" width="20px" height="20px"/></a>
+               title="Delete Instance">X</a>
+            </div>
+
+
             &nbsp;
             {% if topologyId == None %}
-            <a href="#" onclick="javascript: redir('/ajax/viewDomain/{{ d.uuid }}')" title="Dump details from Hypervisor in XML">
-                <img src="{% static 'images/detail.png' %}" width="20px" height="20px"/></a>
+            <div class="status_grey">
+            <a href="#" onclick="javascript: redir('/ajax/viewDomain/{{ d.uuid }}')"
+               title="Dump details from Hypervisor in XML">
+                &#128269;</a>
+            </div>
             &nbsp;
             {% if d.state != "running" %}
+            <div class="status_grey">
             <a href="#" onclick="javascript: redir('/images/createFromInstance/{{ d.uuid }}')"
                title="Clone Instance to new Image. A BlockPull MUST be done before a Clone">
                 CL</a>
+            </div>
             &nbsp;
             {% else %}
+            <div class="status_grey">
             <a href="#" onclick="javascript: redir('/images/blockPull/{{ d.uuid }}')"
                title="Perform a BlockPull. This MUST be done before a Clone">
                 BP</a>
+            </div>
             &nbsp;
             {% endif %}
             {% endif %}
             {% if d.state != "running" %}
+            <div class="status_red">
             <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}', '{{ topologyId }}');"
                title="Power on instance in Hypervisor">
-                <img src="{% static 'images/running.png' %}" width="20px" height="20px"/></a>
+                &#9661;</a>
+            </div>
             &nbsp;
             {% else %}
+            <div class="status_green">
             <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}', '{{ topologyId }}');"
                title="Power off instance in Hypervisor">
-                <img src="{% static 'images/stopped.png' %}" width="20px" height="20px"/></a>
+                &#10003;</a>
+            </div>
             &nbsp;
+            <div class="status_grey">
             <a href="#" onclick="javascript: manageDomain('suspend', '{{ d.uuid }}', '{{ topologyId }}');"
                title="Suspend instance in Hypervisor">
-                <img src="{% static 'images/suspended.png' %}" width="20px" height="20px"/></a>
+                S</a>
+            </div>
             &nbsp;
             <a href="#" onclick="javascript: launchWebConsole('{{ d.name }}');"
                title="Launch Console">
@@ -82,7 +98,7 @@
     </tr>
     {% if network_list|length == 0 %}
     <tr>
-        <td>
+        <td colspan="3">
             Virtual Networks not yet defined in hypervisor!
         </td>
     </tr>
@@ -97,24 +113,33 @@
             {{ n.state }}
         </td>
         <td>
+            <div class="status_grey">
             <a href="#" onclick="javascript: manageNetwork('undefine', '{{ n.name}}', '{{ topologyId }}');"
                title="Delete Network entirely">
-                <img src="{% static 'images/undefine.png' %}" width="20px" height="20px"/></a>
+                X</a>
+            </div>
             &nbsp;
             {% if topologyId == None %}
-            <a href="/ajax/viewNetwork/{{ n.name }}">
-                <img src="{% static 'images/detail.png' %}" width="20px" height="20px"/></a>
+            <div class="status_grey">
+                <a href="/ajax/viewNetwork/{{ n.name }}"
+                    title="View Network XML Details">
+                ?</a>
+            </div>
             &nbsp;
             {% endif %}
             {% if n.state != "running" %}
-            <a href="#" onclick="javascript: manageNetwork('start', '{{ n.name }}', '{{ topologyId }}');"
-               title="Power on network in Hypervisor">
-                <img src="{% static 'images/running.png' %}" width="20px" height="20px"/></a>
+            <div class="status_red">
+                <a href="#" onclick="javascript: manageNetwork('start', '{{ n.name }}', '{{ topologyId }}');"
+                    title="Power on network in Hypervisor">
+                &#9661;</a>
+             </div>
             &nbsp;
             {% else %}
-            <a href="#" onclick="javascript: manageNetwork('stop', '{{ n.name}}', '{{ topologyId }}');"
-               title="Power off network in Hypervisor">
-                <img src="{% static 'images/stopped.png' %}" width="20px" height="20px"/></a>
+             <div class="status_green">
+                <a href="#" onclick="javascript: manageNetwork('stop', '{{ n.name}}', '{{ topologyId }}');"
+                    title="Power off network in Hypervisor">
+                &#9651;</a>
+             </div>
             &nbsp;
             {% endif %}
         </td>
@@ -123,7 +148,7 @@
     {% endif %}
     {% if topologyId != None %}
     <tr>
-        <td colspan="4">
+        <td colspan="3">
             <input type="button" name="startButton" id="startButton"
                    value="Start Topology" onclick="javascript: startTopology();"/>
             &nbsp;
@@ -131,13 +156,13 @@
                    value="Pause Topology" onclick="javascript: pauseTopology();"/>
             &nbsp;
             <input type="button" name="refreshDSButton" id="refreshDSButton"
-                   value="Refresh Hypervisor Status"
+                   value="Refresh Status"
                    onclick="javascript: refreshDeploymentStatus('{{ topologyId }}');"/>
         </td>
     </tr>
     {% else %}
     <tr>
-        <td colspan="4">
+        <td colspan="3">
             <input type="button" name="refreshDSButton" id="refreshDSButton"
                    value="Refresh Hypervisor Status"
                    onclick="javascript: refreshDeploymentStatus('{{ topologyId }}');"/>

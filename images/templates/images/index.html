@@ -2,6 +2,8 @@
 {% block title %}Wistar - Lab Rat - Images{% endblock %}
 {% load staticfiles %}
 {% block content %}
+<div class="centered_box_75">
+
 <h2>Imported Disk Images</h2>
 <ul class="messages">
     {% for message in messages %}
@@ -16,40 +18,46 @@
     </tr>
     {% for image in image_list %}
     <tr>
-
         <td>
             <a href='{{ image.id }}'>{{ image.name }}</a>
-            </td>
+        </td>
         <td>
             {{ image.description }}
         </td>
-        <td>
-            <a href='edit/{{ image.id }}'>Edit</a>
-            &nbsp;
-            {% if global_config.deployment_backend = "kvm" %}
-            <a href="{% static image.file %}">Download</a>
-            &nbsp;
-            {% endif %}
-            <a href='delete/{{ image.id }}'>Delete</a>
+        <td style="width: 100px;">
+            <div id="menu_{{ image.id }}" style="position: absolute; margin-top: -6px;">
+                <img src="{% static 'images/more.png' %}" width="12px" height="12px"/>&nbsp;
+                <ul class="submenu">
+                    <li>
+                        <a href="{{ image.id }}">View Details</a>
+                    </li>
+                    <li>
+                        <a href="edit/{{ image.id }}">Edit</a>
+                    </li>
+                    <li>
+                        <a href="delete/{{ image.id }}">Delete</a>
+                    </li>
+                    {% if global_config.deployment_backend = "kvm" %}
+                    <li>
+                        <a href="{% static image.file %}">Download</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <script>
+                jQuery("#menu_{{ image.id }}").hover(
+                    function() {
+                        $(this).children('.submenu').slideDown(150);
+                    },
+                    function() {
+                        $(this).children('.submenu').slideUp(150);
+                    }
+                );
+            </script>
         </td>
-
     </tr>
     {% endfor %}
 </table>
 
-<a href='new/' title="Upload a new image file from your local machine">Upload new image</a> &nbsp;
-<a href='blank/' title="Create a blank image on the wistar server. Useful to install an OS from ISO for example">
-    Define blank image
-</a> &nbsp;
-<a href='local/' title="Create an image from a file that exists on the Wistar server.
-Useful if you need to copy a large file to the server first rather than upload via HTTP">
-    Define Local image
-</a>
-{% if global_config.deployment_backend = "openstack" %}
-&nbsp;
-<a href='glanceImages/' title="View and Import images from Glance">
-    Import Images from OpenStack Glance Service
-</a>
-{% endif %}
-
+</div>
 {% endblock %}

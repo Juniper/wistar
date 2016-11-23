@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block title %}Wistar - Lab Rat - Edit Image{% endblock %}
 {% block scripts %}
-    <script type="text/javascript">
+<script type="text/javascript">
     function validateForm() {
         var d = $('#id_description');
         var n = $('#id_name');
@@ -17,54 +17,23 @@
             return false;
         }
     }
-    </script>
+</script>
 {% endblock %}
 {% block content %}
-<h2>Edit Image</h2>
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/update/">
-    {{ image_form }}
-    <!--
-    <tr>
-        <th>
-            <label for="id_name">Name:</label>
-        </th>
-        <td>
-            <input id="id_name" maxlength="32" name="name" type="text" value="{{image.name}}"/>
-        </td>
-    </tr>
-    <tr>
-        <th>
-            <label for="id_type">Type:</label>
-        </th>
-        <td>
-            <select id="id_type" name="type">
-                <option value="junos_vmx" selected="selected">Junos vMX <= 14.1</option>
-                <option value="junos_vmx_p2">Junos vMX >= 14.2</option>
-                <option value="junos_firefly">Junos Firefly</option>
-                <option value="junos">Junos Other</option>
-                <option value="linux">Linux</option>
-                <option value="vpfe">Virtual PFE</option>
-                <option value="blank">Blank</option>
-                <option value="other">Other</option>
-            </select> Currently: {{ image.type }}
-        </td>
-    </tr>
-
-    <tr>
-        <th>
-            <label for="id_description">Description:</label>
-        </th>
-        <td>
-            <textarea cols="40" id="id_description" name="description" rows="10">{{image.description}}</textarea>
-        </td>
-    </tr>
-    <input type='hidden' name='image_id' value="{{image.id}}"/>
-    {% csrf_token %}
-    <input type="submit"/>
-    -->
-      <input type='hidden' name='image_id' value="{{image.id}}"/>
-    {% csrf_token %}
-    <input type="submit"/>
-
-</form>
+<div class="centered_box_75">
+    <h2>Edit Image</h2>
+    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
+          action="/images/update/">
+        <table>
+            {{ image_form.as_table }}
+            <tr>
+                <td colspan="2">
+                    <input type='hidden' name='image_id' value="{{image.id}}"/>
+                    {% csrf_token %}
+                    <input type="submit"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
 {% endblock %}

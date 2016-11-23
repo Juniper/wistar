@@ -2,8 +2,8 @@
 {% load staticfiles %}
 {% block title %}Wistar -  New Local Image{% endblock %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
-    <script type="text/javascript">
+<script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
+<script type="text/javascript">
     function validateForm() {
         var d = $('#id_description');
         var n = $('#id_name');
@@ -27,14 +27,25 @@
         var cleaned = size
         return true;
     }
-    </script>
+</script>
 {% endblock %}
 {% block content %}
-<h2>New Blank Image</h2>
-This allows you to create a new blank image. This could be useful if you wanted to install an OS from ISO for example.
-<form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();" action="/images/createBlank/">
-{{ image_form }}
-{% csrf_token %}
-<input type="submit"/>
-</form>
+<div class="centered_box_75">
+    <h2>New Blank Image</h2>
+    This allows you to create a new blank image. This could be useful if you wanted to install an OS from ISO for
+    example.
+
+    <form method="post" enctype="multipart/form-data" onsubmit="javascript: return validateForm();"
+          action="/images/createBlank/">
+        <table>
+            {{ image_form.as_table }}
+            <tr>
+                <td colspan="2">
+                    {% csrf_token %}
+                    <input type="submit"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
 {% endblock %}

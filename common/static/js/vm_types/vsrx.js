@@ -11,5 +11,11 @@ draw2d.shape.node.vsrx = draw2d.shape.node.wistarStandalone.extend({
     ICON_FILE: "/static/images/virtual_firewall.png",
     VCPU: 2,
     VRAM: 4096,
+    TERTIARY_DISK_PARAMS: {
+        "type": "config_drive",
+        "qemu_type": "raw",
+        "bus_type": "usb"
+    },
+    CONFIG_DRIVE_SUPPORT: true,
 
 });

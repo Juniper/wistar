@@ -14,6 +14,8 @@
 
 {% endblock %}
 {% block content %}
+<div class="centered_box_75">
+
 <h2>Hypervisor Status</h2>
 <ul class="messages">
     {% for message in messages %}
@@ -21,4 +23,5 @@
     {% endfor %}
 </ul>
 <div id="deploymentStatus"></div>
+    </div>
 {% endblock %}

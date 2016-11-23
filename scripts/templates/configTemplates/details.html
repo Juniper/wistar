@@ -1,43 +1,45 @@
-
 {% extends "base.html" %}
 {% block title %}Wistar - Lab Rat - Home{% endblock %}
 {% block content %}
-<table>
-    <tr>
-        <td>
-            Name
-        </td>
-        <td>
-          {{ template.name }}
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Description
-        </td>
-        <td>
-            {{ template.description }}
-        </td> 
-    </tr>
-    <tr>
-        <td>
-            Detail
-        </td>
-        <td>
+<div class="centered_box_75">
+    <h2>Script Details</h2>
+    <table>
+        <tr>
+            <td>
+                Name
+            </td>
+            <td>
+                {{ template.name }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description
+            </td>
+            <td>
+                {{ template.description }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Detail
+            </td>
+            <td>
             <pre>
 {{ template.template }}
             </pre>
-        </td> 
-    </tr>
-    <tr>
-        <td>
-            Options
-        </td>
-        <td>
-		    <a href='delete/{{ template.id }}'>Delete</a>
-            &nbsp;
-		    <a href='edit/{{ template.id }}'>Edit</a>
-	    </td>
-    </tr>
-</table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Options
+            </td>
+            <td>
+                <a href='delete/{{ template.id }}'>Delete</a>
+                &nbsp;
+                <a href='edit/{{ template.id }}'>Edit</a>
+            </td>
+        </tr>
+    </table>
+</div>
 {% endblock %}

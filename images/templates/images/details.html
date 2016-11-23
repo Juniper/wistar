@@ -1,9 +1,8 @@
-
 {% extends "base.html" %}
 {% block title %}Wistar - Lab Rat - Image Details{% endblock %}
 {% load staticfiles %}
 {% block scripts %}
-   <script type="text/javascript">
+<script type="text/javascript">
     function loadOpenstackGlanceDetails() {
 
         var url = '/images/glanceDetail';
@@ -26,71 +25,74 @@
     });
 
     {% endif %}
-   </script>
+
+</script>
 {% endblock %}
 {% block content %}
-<h2>Image Detail</h2>
-<table>
-    <tr>
-        <td>
-            Name
-        </td>
-        <td>
-          {{ image.name }}
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Description
-        </td>
-        <td>
-            {{ image.description }}
-        </td> 
-    </tr>
+<div class="centered_box_75">
+    <h2>Image Detail</h2>
+    <table>
         <tr>
-        <td>
-            VM type
-        </td>
-        <td>
-            {{ vm_type }}
-        </td>
-    </tr>
-    {% if global_config.deployment_backend = "kvm" %}
-    <tr>
-        <td>
-            Backing File Path
-        </td>
-        <td>
-            <a href="{% static image.filePath.url %}">{{ settings.MEDIA_ROOT }}/{{ image.filePath.url }}</a>
-        </td> 
-    </tr>
-    <tr>
-        <td>
-            Provision type
-        </td>
-        <td>
-            {% if state == True %}
-            Thinly Provisioned image
-            {% else %}
-            Standalone image
-            {% endif %}
-        </td>
-    </tr>
-     {% endif %}
-    <tr>
-        <td>
-            Options
-        </td>
-        <td>
-		    <a href='edit/{{ image.id }}'>Edit</a>
-            {% if global_config.deployment_backend = "kvm" %}
-            &nbsp;
-            <a href="{% static image.filePath.url %}">Download</a>
-            {% endif %}
-            &nbsp;
-		    <a href='delete/{{ image.id }}'>Delete</a>
-	    </td>
-    </tr>
-</table>
-<div id="glanceDetails"></div>
+            <td>
+                Name
+            </td>
+            <td>
+                {{ image.name }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Description
+            </td>
+            <td>
+                {{ image.description }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                VM type
+            </td>
+            <td>
+                {{ vm_type }}
+            </td>
+        </tr>
+        {% if global_config.deployment_backend = "kvm" %}
+        <tr>
+            <td>
+                Backing File Path
+            </td>
+            <td>
+                <a href="{% static image.filePath.url %}">{{ settings.MEDIA_ROOT }}/{{ image.filePath.url }}</a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Provision type
+            </td>
+            <td>
+                {% if state == True %}
+                Thinly Provisioned image
+                {% else %}
+                Standalone image
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td>
+                Options
+            </td>
+            <td>
+                <a href='edit/{{ image.id }}'>Edit</a>
+                {% if global_config.deployment_backend = "kvm" %}
+                &nbsp;
+                <a href="{% static image.filePath.url %}">Download</a>
+                {% endif %}
+                &nbsp;
+                <a href='delete/{{ image.id }}'>Delete</a>
+            </td>
+        </tr>
+    </table>
+    <div id="glanceDetails"></div>
+</div>
 {% endblock %}

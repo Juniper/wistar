@@ -3,52 +3,125 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
-    <title>{% block title %}Wistar Lab Rat{% endblock %}</title>
+    <title>{% block title %}Wistar - vLab{% endblock %}</title>
     <link href="{% static 'images/wistar.png' %}" rel="shortcut icon">
     <script type="text/javascript" src="{% static 'js/jquery-1.8.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
+
     <script type="text/javascript" src="{% static 'js/wistar_utils.js' %}"></script>
     {% block scripts %}{% endblock %}
 </head>
 <body>
 <div id="header">
-    <table>
-        <tr>
-            <td colspan="2"><img src="{% static 'images/juniper.png' %}" width="211" height="60" border="0"/></td>
-            <td colspan="2" style="text-align: right" id="hostLoad">
-                <a href="javascript: refreshHostLoad()">
-                    Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}
-                </a>
-            </td>
-        </tr>
-        </table>
+    <h3>Wistar - Virtual Lab Environment</h3>
+    <div id="hostLoad">
+        <a href="javascript: refreshHostLoad()">
+            Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}
+        </a>
     </div>
+</div>
 <div id="header_menu">
-    <table>
-        <tr>
-            <td>
-                <a href="/topologies/">Topologies</a>
-            </td>
+    <ul>
+            <li id="menu_topologies">
+                Topologies
+                &nbsp;
+                <ul class="header_submenu">
+                    <li>
+                        <a href="/topologies">View Topologies</a>
+                    </li>
+                    <li>
+                        <a href="/topologies/new">Create Topology</a>
+                    </li>
+                    <li>
+                        <a href="/topologies/import">Import Topology</a>
+                    </li>
+                </ul>
+                <script>
+                    jQuery("#menu_topologies").hover(
+                        function() {
+                            $(this).children('.header_submenu').slideDown(150);
+                        },
+                        function() {
+                            $(this).children('.header_submenu').slideUp(150);
+                        }
+                    );
+                </script>
+            </li>
             {% if global_config.deployment_backend == "kvm" %}
-            <td>
+            <li>
                 <a href="/ajax/manageHypervisor/">Manage Hypervisor</a>
-            </td>
+            </li>
             {% elif global_config.deployment_backend == "openstack" %}
-            <td>
+            <li>
                 <a href="javascript: window.open('http://{{ global_config.openstack_host }}/horizon/project/stacks')">Manage Openstack</a>
-            </td>
+            </li>
             {% endif %}
-            <td>
-                <a href="/images/">Images</a>
-            </td>
-            <td>
-                <a href="/scripts/">Scripts</a>
-            </td>
+            <li id="menu_images">
+                Images
+                &nbsp;
+                <ul class="header_submenu">
+                    <li>
+                        <a href="/images">View Images</a>
+                    </li>
+                    <li>
+                        <a href="/images/new">Upload Image</a>
+                    </li>
+                    <li>
+                        <a href="/images/blank">Create Blank Image</a>
+                    </li>
+                    <li>
+                        <a href="/images/local">Define Local Image</a>
+                    </li>
+                    {% if global_config.deployment_backend = "openstack" %}
+                    <li>
+                        <a href='glanceImages/' title="View and Import images from Glance">
+                            Import Images from OpenStack Glance Service
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <script>
+                    jQuery("#menu_images").hover(
+                        function() {
+                            $(this).children('.header_submenu').slideDown(150);
+                        },
+                        function() {
+                            $(this).children('.header_submenu').slideUp(150);
+                        }
+                    );
+                </script>
+            </li>
+            <li id="menu_scripts">
+                Templates
+                &nbsp;
+                <ul class="header_submenu">
+                    <li>
+                        <a href="/scripts">View Templates</a>
+                    </li>
+                    <li>
+                        <a href="/scripts/new">Create Template</a>
+                    </li>
+                    <li>
+                        <a href="/scripts/newScript">Create Script</a>
+                    </li>
+                </ul>
+                <script>
+                    jQuery("#menu_scripts").hover(
+                        function() {
+                            $(this).children('.header_submenu').slideDown(150);
+                        },
+                        function() {
+                            $(this).children('.header_submenu').slideUp(150);
+                        }
+                    );
+                </script>
+            </li>
         </tr>
-    </table>
+    </ul>
 </div>
 <div id="content">
     {% block content %}{% endblock %}
 </div>
-<div style="background: white; text-align: center">Version: 201611041315 <br/><br/></div>
+<div style="text-align: center">Version: 201611231114 <br/><br/></div>
 </body>
 </html>

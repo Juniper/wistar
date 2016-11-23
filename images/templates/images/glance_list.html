@@ -2,30 +2,35 @@
 {% block title %}Wistar - Lab Rat - Images{% endblock %}
 {% load staticfiles %}
 {% block content %}
-<h2>Glance Disk Images</h2>
-<table>
-    <tr>
-        <th>Name</th>
-        <th>Size</th>
-        <th>Options</th>
-    </tr>
-    {% for image in image_list %}
-    <tr>
-        <td>
-            <a href="javascript: window.open('http://{{ global_config.openstack_host }}/horizon/admin/images/{{ image.id }}/detail')">
-                {{ image.name }}
-            </a>
-        </td>
-        <td>
-            {{ image.description }}
-        </td>
-        <td>
-            <a href='importFromGlance/{{ image.id }}'>Import</a>
-            &nbsp;
-        </td>
+<div class="centered_box_75">
 
-    </tr>
-    {% endfor %}
-</table>
-<p>Importing images from Glance will create a DB entry and allow you associate an image 'type' from the Edit screen</p>
+    <h2>Glance Disk Images</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Options</th>
+        </tr>
+        {% for image in image_list %}
+        <tr>
+            <td>
+                <a href="javascript: window.open('http://{{ global_config.openstack_host }}/horizon/admin/images/{{ image.id }}/detail')">
+                    {{ image.name }}
+                </a>
+            </td>
+            <td>
+                {{ image.description }}
+            </td>
+            <td>
+                <a href='importFromGlance/{{ image.id }}'>Import</a>
+                &nbsp;
+            </td>
+
+        </tr>
+        {% endfor %}
+    </table>
+    <p>Importing images from Glance will create a DB entry and allow you associate an image 'type' from the Edit
+        screen
+    </p>
+</div>
 {% endblock %}
