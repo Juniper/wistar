@@ -241,8 +241,14 @@
     function addLabel() {
 
         var label = jQuery('#newLabel').val();
+
+        if (label == "") {
+            jQuery('#newLabel').val("Please add a Label!");
+            jQuery('#newLabel').focus();
+        }
+
         var labelSize = jQuery('#newLabelFontSize').val();
-        var l = new draw2d.shape.basic.Label(label);
+        var l = new draw2d.shape.basic.Label({ text: label });
         // l.setBackgroundColor();
         l.setFontColor("#000000");
         l.setFontSize(labelSize);
@@ -1045,7 +1051,7 @@
             if (figure instanceof draw2d.shape.node.externalCloud) {
                 externalCloudAdded = false;
             }
-            canvas.removeFigure(figure);
+            canvas.remove(figure);
             jQuery('#selectedObject').val("0");
         }
     }
@@ -1060,7 +1066,7 @@
         if (so != 0) {
             var figure = canvas.getFigure(so);
             if (figure instanceof draw2d.shape.basic.Label) {
-                canvas.removeFigure(figure);
+                canvas.remove(figure);
                 jQuery('#selectedObject').val("0");
             }
         }
@@ -1553,14 +1559,40 @@
     function addRectangle() {
             var r = new draw2d.shape.basic.Rectangle(175, 100);
             r.setBackgroundColor(null);
-            canvas.add(r, 400, 400);
+
+            iconCount += 1;
+
+            lastX += 0;
+            lastY += 100;
+
+            if (iconCount > iconWrapLimit) {
+                lastX = iconOffset;
+                lastY = 50;
+                iconCount = 1;
+                iconOffset += 110;
+            }
+
+            canvas.add(r, lastX, lastY);
             r.toBack();
     }
 
     function addCircle() {
             var r = new draw2d.shape.basic.Circle();
             r.setBackgroundColor(null);
-            canvas.add(r, 300, 300);
+
+            iconCount += 1;
+
+            lastX += 0;
+            lastY += 100;
+
+            if (iconCount > iconWrapLimit) {
+                lastX = iconOffset;
+                lastY = 50;
+                iconCount = 1;
+                iconOffset += 110;
+            }
+
+            canvas.add(r, lastX, lastY);
             r.toBack();
     }
 
@@ -2326,29 +2358,23 @@
             {% endif %}
         </td>
         <td style="vertical-align: top; padding: 0px;">
-            <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
-            background-repeat: repeat; 
-            width:900px; 
-            height:650px; 
-            position:relative;
-            cursor: inherit;
-            ">
-            </div>
-            {% if topo_id != None %}
-            <div id="toolsMenu" style="width: 900px; margin: 10px; text-align: right">
-                <!--
-                <input type="button" value="Refresh Bootup status" onclick="javascript: updateAllBootState();"/>
-                &nbsp; &nbsp;
-                -->
-                <input type="text" placeholder="New Note" id="newLabel" onclick="javascript: this.value = ''"
-                       style="width: 200px"/>
+            <div id="toolsMenu" style="width: 900px;
+                                        margin-right: 10px;
+                                        text-align: right;
+                                        height: 34px;
+                                        vertical-align: middle;
+                                        background-color: #fff;
+                                        border-bottom: 1px solid #ddd;
+                                        line-height: 34px;">
+
+                <input type="text" placeholder="New Note" id="newLabel" onclick="javascript: this.value = ''" style="width: 200px">
 
                 <select id="newLabelFontSize">
                     <option value="8">8</option>
                     <option value="10">10</option>
                     <option value="12">12</option>
                     <option value="14">14</option>
-                    <option value="16" selected>16</option>
+                    <option value="16" selected="">16</option>
                     <option value="18">18</option>
                     <option value="20">20</option>
                     <option value="22">22</option>
@@ -2360,8 +2386,7 @@
                     <option value="48">48</option>
                 </select> &nbsp;
 
-                <input type="button" value="Add Note"
-                       onclick="javascript: addLabel()"/>
+                <input type="button" value="Add Note" onclick="javascript: addLabel()">
                 &nbsp;
                 <!--
                 <input type="button" value="Delete Note"
@@ -2369,27 +2394,25 @@
                        onclick="javascript: deleteLabel()"/>
                 &nbsp;
                 -->
-                <input type="button" value="Add Rectangle"
-                       title="Draw a Rectangle on screen"
-                       onclick="javascript: addRectangle()"/>
+                <input type="button" value="Add Rectangle" title="Draw a Rectangle on screen" onclick="javascript: addRectangle()">
                 &nbsp;
-                <input type="button" value="Add Circle"
-                       title="Draw a Circle on screen"
-                       onclick="javascript: addCircle()"/>
+                <input type="button" value="Add Circle" title="Draw a Circle on screen" onclick="javascript: addCircle()">
                 &nbsp;
-                <input type="button" value="Delete"
-                       title="Delete selected object"
-                       onclick="javascript: deleteSelectedObject()"/>
+                <input type="button" value="Delete" title="Delete selected object" onclick="javascript: deleteSelectedObject()">
                 &nbsp;
-                <input type="button" value="Debug"
-                       title="Show Serialized JSON"
-                       onclick="javascript: showDebug()"/>
-                <!--
+                <input type="button" value="Debug" title="Show Serialized JSON" onclick="javascript: showDebug()">
                 &nbsp;
-                <a href="#" onclick="javascript: showDebug();" style="text-decoration: none; color: #fff; border: 1px solid #eee;">.</a>
-                -->
             </div>
-            {% endif %}
+            <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
+            background-repeat: repeat; 
+            width:900px; 
+            height:650px; 
+            position:relative;
+            cursor: inherit;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            ">
+            </div>
             <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
             <div id="linuxAutomationOverlay" style="display: none">
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
