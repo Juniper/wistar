@@ -234,8 +234,6 @@ def delete(request, topology_id):
     logger.debug('---- topology delete ----')
     topology_prefix = "t%s_" % topology_id
 
-    should_reconfigure_dhcp = False
-
     if configuration.deployment_backend == "kvm":
 
         network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
@@ -248,8 +246,7 @@ def delete(request, topology_id):
 
             # remove reserved mac addresses for all domains in this topology
             mac_address = libvirtUtils.get_management_interface_mac_for_domain(domain["name"])
-            if osUtils.release_management_ip_for_mac(mac_address):
-                should_reconfigure_dhcp = True
+            libvirtUtils.release_management_ip_for_mac(mac_address)
 
             logger.debug("undefine domain: " + domain["name"])
             source_file = libvirtUtils.get_image_for_domain(domain["uuid"])
@@ -261,9 +258,6 @@ def delete(request, topology_id):
 
         osUtils.remove_instances_for_topology(topology_prefix)
         osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
-
-        if should_reconfigure_dhcp:
-            osUtils.reload_dhcp_config()
 
     topology.delete()
     messages.info(request, 'Topology %s deleted' % topology.name)

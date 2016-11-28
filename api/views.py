@@ -381,11 +381,7 @@ def delete_topology(request):
 
             # remove reserved mac addresses for all domains in this topology
             mac_address = libvirtUtils.get_management_interface_mac_for_domain(domain["name"])
-            if osUtils.release_management_ip_for_mac(mac_address):
-                should_reconfigure_dhcp = True
-
-        if should_reconfigure_dhcp:
-            osUtils.reload_dhcp_config()
+            libvirtUtils.release_management_ip_for_mac(mac_address)
 
         topology.delete()
         return apiUtils.return_json(True, "Topology deleted!")

@@ -194,6 +194,10 @@
     	var ram = jQuery('#topoIconRam').val();
     	//var iconData = jQuery('#topoIconIcon').val();
 
+        if (image == 0) {
+            alert('Please select a valid image');
+            return false;
+        }
     	var scriptId = jQuery('#topoIconScriptSelect').val();
     	var scriptParam = jQuery('#topoIconScriptParam').val();
 
@@ -342,17 +346,17 @@
         l.setFontSize(labelSize);
         l.setStroke(0);
 
+        // simple algorithm to add icons to the screen without overlapping
+        lastX += 100;
+        lastY += 0;
         iconCount += 1;
 
-        lastX += 0;
-        lastY += 100;
-
         if (iconCount > iconWrapLimit) {
-    	    lastX = iconOffset;
-    	    lastY = 50;
+            lastX = 50;
+            lastY = iconOffset;
             iconCount = 1;
-    	    iconOffset += 110;
-    	}
+            iconOffset += 110;
+        }
         canvas.add(l, lastX, lastY);
     }
 
@@ -721,14 +725,36 @@
     function addRectangle() {
             var r = new draw2d.shape.basic.Rectangle(175, 100);
             r.setBackgroundColor(null);
-            canvas.add(r, 400, 400);
+            // simple algorithm to add icons to the screen without overlapping
+            lastX += 100;
+            lastY += 0;
+            iconCount += 1;
+
+            if (iconCount > iconWrapLimit) {
+                lastX = 50;
+                lastY = iconOffset;
+                iconCount = 1;
+                iconOffset += 110;
+            }
+            canvas.add(r, lastX, lastY);
             r.toBack();
     }
 
     function addCircle() {
             var r = new draw2d.shape.basic.Circle(175, 100);
             r.setBackgroundColor(null);
-            canvas.add(r, 400, 400);
+            // simple algorithm to add icons to the screen without overlapping
+            lastX += 100;
+            lastY += 0;
+            iconCount += 1;
+
+            if (iconCount > iconWrapLimit) {
+                lastX = 50;
+                lastY = iconOffset;
+                iconCount = 1;
+                iconOffset += 110;
+            }
+            canvas.add(r, lastX, lastY);
             r.toBack();
     }
 

@@ -496,6 +496,7 @@ def get_next_domain_vnc_port(offset=0):
         # return int(5900) + offset
         return configuration.vnc_start_port + offset
 
+
 def get_image_for_domain(domain_id):
     """
     :param domain_id: uuid of the domain
@@ -590,3 +591,50 @@ def get_management_interface_mac_for_domain(domain_name):
         return mac_address
     else:
         return None
+
+
+def reserve_management_ip_for_mac(mac, ip):
+    """
+    n.update(l.VIR_NETWORK_UPDATE_COMMAND_DELETE,  l.VIR_NETWORK_SECTION_IP_DHCP_HOST, -1,
+...  "<host mac='52:54:00:00:52:02' ip='192.168.122.87'/>", l.VIR_NETWORK_UPDATE_AFFECT_CONFIG | l.VIR_NETWORK_UPDATE_AFFECT_LIVE)
+    :param mac: mac address to reserve
+    :param ip: ip address to map to the mac address
+    :return: boolean on success / fail
+    """
+    try:
+        management_network = get_network_by_name("default")
+        xml = "<host mac='{0}' ip='{1}'/>".format(mac, ip)
+        management_network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
+                                  libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
+                                  -1,
+                                  xml,
+                                  libvirt.VIR_NETWORK_UPDATE_AFFECT_CONFIG | libvirt.VIR_NETWORK_UPDATE_AFFECT_LIVE
+                                  )
+        return True
+
+    except libvirt.libvirtError as e:
+        logger.error(e)
+        return False
+
+
+def release_management_ip_for_mac(mac):
+    """
+    Removes all management network reservations for the given mac address
+    :param mac: mac of which to remove
+    :return: boolean on success / fail
+    """
+
+    try:
+        management_network = get_network_by_name("default")
+        xml = "<host mac='{0}'/>".format(mac)
+        management_network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_DELETE,
+                                  libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
+                                  -1,
+                                  xml,
+                                  libvirt.VIR_NETWORK_UPDATE_AFFECT_CONFIG | libvirt.VIR_NETWORK_UPDATE_AFFECT_LIVE
+                                  )
+        return True
+
+    except libvirt.libvirtError as e:
+        logger.error(e)
+        return False
