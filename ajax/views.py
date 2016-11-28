@@ -872,8 +872,6 @@ def inline_deploy_topology(config):
         # if we're not on Linux, then let's try to use vbox instead
         domain_xml_path = "ajax/vbox/"
 
-    should_reconfigure_dhcp = False
-
     for device in config["devices"]:
         try:
             if not libvirtUtils.domain_exists(device["name"]):
@@ -942,16 +940,11 @@ def inline_deploy_topology(config):
 
             logger.debug("Reserving IP with dnsmasq")
             management_mac = libvirtUtils.get_management_interface_mac_for_domain(device["name"])
-            if osUtils.reserve_management_ip_for_mac(management_mac, device["ip"]):
-                should_reconfigure_dhcp = True
+            libvirtUtils.reserve_management_ip_for_mac(management_mac, device["ip"])
 
         except Exception as ex:
             logger.debug("Raising exception")
             raise Exception(str(ex))
-
-    # finally, let's reload our dhcp config
-    if should_reconfigure_dhcp:
-        osUtils.reload_dhcp_config()
 
 
 def launch_web_console(request):

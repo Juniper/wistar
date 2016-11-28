@@ -463,6 +463,7 @@ def verify_dhcp_reservation(mac, ip):
 
 def reserve_management_ip_for_mac(mac, ip):
     """
+    DEPRECATED - use libvirtUtils.reserve_management_ip_for_mac instead
     Open the libvirt dnsmasq dhcp-hosts file and add an entry for the mac / ip combo if it's
     not already there
     :param mac: mac address of the management interface
@@ -495,6 +496,7 @@ def reserve_management_ip_for_mac(mac, ip):
 
 def release_management_ip_for_mac(mac):
     """
+    DEPRECATED - use libvirtUtils.release_management_ip_for_mac instead
     Open the libvirt dnsmasq dhcp-hosts file and remove an entry for the mac / ip combo if it's
     not already there
     :param mac: mac address of the management interface

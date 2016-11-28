@@ -20570,7 +20570,7 @@ draw2d.Canvas = Class.extend(
         this.setScrollArea(document.body);
         this.canvasId = canvasId;
         this.html = $("#"+canvasId);
-        this.html.css({"cursor":"default"});
+        this.html.css({"cursor":"inherit"});
         if($.isNumeric(width) && $.isNumeric(height)){
             this.initialWidth  = width;
             this.initialHeight = height;
