@@ -1,47 +1,55 @@
-
 {% extends "base.html" %}
 {% block title %}Wistar - Lab Rat - Edit Topology {% endblock %}
 {% load staticfiles %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/raphael.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery-ui-1.8.23.custom.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.layout.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.autoresize.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery-touch_punch.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.contextmenu.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/rgbcolor.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/canvg.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/Class.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/json2.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
 
-    <script type="text/javascript" src="{% static 'js/vm_types/wistarVm.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/wistarStandalone.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/wistarSetParent.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/wistarSetChild.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/patched_raphael.js' %}"></script>
 
-    <script type="text/javascript" src="{% static 'js/vm_types/generic.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/linux.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/space.js' %}"></script>
+<!--  <script type="text/javascript" src="{% static 'js/jquery.layout.js' %}"></script> -->
+<script type="text/javascript" src="{% static 'js/jquery.autoresize.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/jquery-touch_punch.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/jquery.contextmenu.js' %}"></script>
 
-    <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/vriot.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/rgbcolor.js' %}"></script>
 
-    <script type="text/javascript" src="{% static 'js/vm_types/vpfe.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/vqfxRe.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/vm_types/vqfxCosim.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/patched_canvg.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/patched_Class.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/json2.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'js/pathfinding-browser.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/StackBlur.js' %}"></script>
 
 
-    <script type="text/javascript" src="{% static 'js/vm_types/cloud.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
 
-    <script type="text/javascript" src="{% static 'js/vm_types/wistarLegacy.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/wistarVm.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/wistarStandalone.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/wistarSetParent.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/wistarSetChild.js' %}"></script>
 
-    <script type="text/javascript" src="{% static 'js/topologySelectionListener.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/generic.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/linux.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/space.js' %}"></script>
 
-    <script type="text/javascript">
+<script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/vriot.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'js/vm_types/vpfe.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/vqfxRe.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/vqfxCosim.js' %}"></script>
+
+
+<script type="text/javascript" src="{% static 'js/vm_types/cloud.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'js/vm_types/wistarLegacy.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'js/topologySelectionListener.js' %}"></script>
+
+<script type="text/javascript">
     var canvas;
     var lastX = 50;
     var lastY = -50;
@@ -80,7 +88,8 @@
     	if (test != null) {
 		    // var jsonTxt = JSON.stringify(test, null, 2);
 		    var json = eval(test);
-		    reader = new draw2d.io.json.Reader();
+		    console.log(json);
+		    var reader = new draw2d.io.json.Reader();
 		    reader.unmarshal(canvas, json);
 		    for(i=0;i<json.length;i++) {
 		        console.log(json[i]);
@@ -251,7 +260,7 @@
     	    iconOffset += 110;
     	}
 
-        canvas.addFigure(l, lastX, lastY);
+        canvas.add(l, lastX, lastY);
     }
 
     // export topology as JSON and stuff it back in the
@@ -1524,7 +1533,7 @@
             var c = new draw2d.shape.node.externalCloud();
             c.width = 100;
             c.height = 100;
-            canvas.addFigure(c, 385, 15);
+            canvas.add(c, 385, 15);
             externalCloudAdded = true;
         } else {
             alert("You may only add one external connection!");
@@ -1538,20 +1547,20 @@
         var c = new draw2d.shape.node.internalCloud(label);
         c.width = 100;
         c.height = 100;
-        canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
+        canvas.add(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
     }
 
     function addRectangle() {
             var r = new draw2d.shape.basic.Rectangle(175, 100);
             r.setBackgroundColor(null);
-            canvas.addFigure(r, 400, 400);
+            canvas.add(r, 400, 400);
             r.toBack();
     }
 
     function addCircle() {
             var r = new draw2d.shape.basic.Circle();
             r.setBackgroundColor(null);
-            canvas.addFigure(r, 300, 300);
+            canvas.add(r, 300, 300);
             r.toBack();
     }
 
@@ -1567,10 +1576,37 @@
     jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
         // set default connection router here
-        draw2d.shape.basic.PolyLine.DEFAULT_ROUTER = new draw2d.layout.connection.FanConnectionRouter();
+
+        var createConnection=function(){
+           // return my special kind of connection
+           var con = new draw2d.Connection({
+             stroke: 3,
+             radius: 2,
+             color: "#445e88",
+             router: new draw2d.layout.connection.FanConnectionRouter()
+           });
+
+           return con;
+        };
+
+        // install a custom connection create policy
+        //
+        canvas.installEditPolicy(  new draw2d.policy.connection.DragConnectionCreatePolicy({
+               createConnection: createConnection
+        }));
+
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
-        canvas.addSelectionListener(new topologySelectionListener());
+
+        canvas.installEditPolicy(new draw2d.policy.canvas.SnapToCenterEditPolicy());
+
+        //canvas.addSelectionListener(new topologySelectionListener());
+        var tsl = new topologySelectionListener();
+        canvas.on("select", function(emitter,event) {
+            if (event.figure != null) {
+                tsl.onSelectionChanged(event.figure);
+            }
+        });
         {% if topo.name != None %}
             loadTopology();
             {% if topo.id != 0 %}
@@ -1581,436 +1617,456 @@
             {% endif %}
         {% endif %}
     });
-    </script>
+
+</script>
 {% endblock %}
 {% block content %}
-    <table border="0">
-      <tr>
+<table border="0">
+    <tr>
         <td id="topoFormContainer" style="vertical-align: top; width: 450px; padding: 0px;">
-          <form method="post" id="topoForm" name="topoForm" 
-            action="{% url 'topologies:create' %}" method="POST">
-            {% csrf_token %}
-            <table>
-            {% if topo_id != None %}
-             <tbody id="topoEditorForm" style="display: none">
-            {% else %}
-             <tbody id="topoEditorForm">
-            {% endif %}
-              <tr>
-                <td>
-                  Name
-                </td>
-                <td>
-                  <input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
-                  <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
-                  <input type="hidden" id="selectedObject" value="0">
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Description
-                </td>
-                <td>
-                  <textarea rows="3" id="description" name="description">{{ topo.description }}</textarea>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  {% if topo_id != None %}
-                  &nbsp;
-                  <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
-                  <input type="button" name="submit_button" id="update_submit_button"
-                    value="Update" onclick="javascript: updateTopology();"/>
-                  {% else %}
-                  <input type="button" name="submit_button" id="submit_button" 
-                    value="Save" onclick="javascript: saveTopology();"/>
-                  {% endif %}
-                  <!--
-                  <input type="button" name="debugButton" id="debugButton" 
-                    value="Debug" onclick="javascript: showDebug();"/>
-                  -->
-                </td>
-              </tr>
-             </tbody>
-
-             <tbody id="topoInfo">
-
-              <tr>
-                <th colspan="2">
-                  Topology Details
-                </th>
-              </tr>
-              <tr>
-                <td>
-                  Name:
-                </td>
-                <td>
-                  {{ topo.name }}
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Description:
-                </td>
-                <td>
-                  {{ topo.description }}
-                </td>
-              </tr>
-                <tr>
-                    <td colspan="2">
-                        <input type="button" name="showTopoEditorButton" id="showTopoEditorButton"
-                               value="Edit" onclick="javascript: showTopoEditor();"/>
-                        &nbsp;
-                        <input type="button"  id="update_topo_button"
-                               value="Update" onclick="javascript: updateTopology();"/>
-                        &nbsp;
-                        <input type="button" name="delete_button" id="delete_button"
-                               value="Delete" onclick="javascript: deleteTopology();"/>
-                        &nbsp;
-                        <input type="button" name="multi_clone_button" id="multi_clone_button"
-                               value="Clone" onclick="javascript: multiCloneTopology();"/>
-                        &nbsp;
-                    </td>
-                </tr>
-             </tbody>
-            </table>
-          </form>
-
-          <div id="linuxIconEditor" style="display:none">
-              <table>
-                  <th colspan="2">
-                      Instance Details
-                  </th>
-                  <tr>
-                      <td>
-                          Name
-                      </td>
-                      <td>
-                          <input type="text" disabled="true" name="linuxIconName" id="linuxIconName" value=""/>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          IP Address
-                      </td>
-                      <td>
-                          <input type="text" disabled="true" title="management address" name="linuxIconIp" id="linuxIconIp" value=""/>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          Authentication
-                      </td>
-                      <td>
-                          <input type="text" disabled="true" style="width: 75px;"
-                                 name="linuxIconUser" id="linuxIconUser" value=""/>
-                          &nbsp;
-                          <input type="text" disabled="true"  style="width: 75px;"
-                                 name="linuxIconPass" id="linuxIconPass" value=""/>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          VM Params
-                      </td>
-                      <td>
-                          vCPU: <div id="linuxIconCpu" style="display: inline"></div>
-                          &nbsp;
-                          vRAM: <div id="linuxIconRam" style="display: inline"></div>
-                      </td>
-                  </tr>
-                  <tr>
-                      <td>
-                          Base Image
-                      </td>
-                      <td>
-                          <div id="linuxIconImage"></div>
-                      </td>
-                  </tr>
-
-                  <tr>
-                      <td>
-                          Cloud-Init / CDROM
-                      </td>
-                      <td>
-                          <input type="button" onclick="javascript: loadIsoManager();" value="Manage Attached ISO">
-                      </td>
-                  </tr>
-              </table>
-            <table>
-              <th colspan="2">
-                 Execute cli
-              </th>
-              <tr>
-                <td>
-                  <input type="text" id="linuxCli" value="cat /proc/loadavg"/>
-                </td>
-                <td>
-                  <input type="button" onclick="javascript: executeLinuxCli();" value="Go">
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <textarea id="linuxCliOutput" rows="1"></textarea>
-                </td>
-              </tr>
-            </table>
-              <table>
-                  <th colspan="2">
-                      Instance Tools
-                  </th>
-                  <tr>
-                      <td>
-                          <input type="button" onclick="javascript: getInstanceStartupState();"
-                                 value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
-                          <br/>
-                      </td>
-                      <td>
-                          <input type="button" onclick="javascript: configureInstanceAccess();"
-                                 value="Configure Access" title="Configures Management IP Address">
-                          <br/>
-                          <br/>
-                          <input type="button" onclick="javascript: loadScriptSelector();"
-                                 value="Execute Script" title="Execute Script on instance">
-                          <br/>
-                          <br/>
-                      </td>
-                  </tr>
-              </table>
-          </div>
-            <div id="genericIconEditor" style="display:none">
-            <table>
-              <th colspan="2">
-                 Instance Details
-              </th>
-              <tr>
-                <td>
-                   Name
-                </td>
-                <td>
-                  <input type="text" disabled="true" name="genericIconName" id="genericIconName" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                   IP Address
-                </td>
-                <td>
-                  <input type="text" disabled="true" title="management address" name="genericIconIp" id="genericIconIp" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                   Authentication
-                </td>
-                <td>
-                    <input type="text" disabled="true" style="width: 75px;"
-                        name="genericIconUser" id="genericIconUser" value=""/>
-                    &nbsp;
-                    <input type="text" disabled="true" style="width: 75px;"
-                        name="genericIconPass" id="genericIconPass" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                 VM Params
-                </td>
-                <td>
-                  vCPU: <div id="genericIconCpu" style="display: inline"></div>
-                  &nbsp;
-                  vRAM: <div id="genericIconRam" style="display: inline"></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Base Image
-                </td>
-                <td>
-                  <div id="genericIconImage"></div>
-                </td>
-              </tr>
-            </table>
-            <table>
-              <th colspan="2">
-                Attach ISO file
-              </th>
-              <tr>
-                <td>
-                    <input type="button" onclick="javascript: loadIsoManager();" value="Manage Attached ISO">
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div id="junosIconEditor" style="display:none">
-            <table>
-              <th colspan="2">
-                 Instance Details
-              </th>
-              <tr>
-                <td>
-                   Name
-                </td>
-                <td>
-                  <input type="text" disabled="true" name="junosIconName"
-                         id="junosIconName" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                   IP Address
-                </td>
-                <td>
-                  <input type="text" disabled="true" title="management address"
-                         name="junosIconIp" id="junosIconIp" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                   Authentication
-                </td>
-                <td>
-                    <input type="text" disabled="true" style="width: 75px;"
-                        name="junosIconUser" id="junosIconUser" value=""/>
-                    &nbsp;
-                    <input type="text" disabled="true" style="width: 75px;"
-                        name="junosIconPass" id="junosIconPass" value=""/>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                   VM Params
-                </td>
-                <td>
-                  vCPU: <div id="junosIconCpu" style="display: inline"></div>
-                  &nbsp;
-                  vRAM: <div id="junosIconRam" style="display: inline"></div>
-                </td>   
-              </tr>
-              <tr>
-                <td>
-                  Base Image
-                </td>
-                <td>
-                  <div id="junosIconImage"></div>
-                </td>   
-              </tr>
-              <tr>
-                <td>
-                  Neighbors
-                </td>
-                <td>
-                  <div id="junosIconNeighbors"></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Bootup Status
-                </td>
-                <td>
-                  <div id="junosIconStatus" style="display: inline"></div> <a href="#" onclick="javascript: return getInstanceStartupState()">?</a>
-                </td>
-              </tr>
-            </table>
-            <table>
-                <tbody id="junosIconEditorToolsLegacy" style="display:none">
-                <th colspan="2">
-                    vMX Phase 1 Tools
-                </th>
+            <form method="post" id="topoForm" name="topoForm"
+                  action="{% url 'topologies:create' %}" method="POST">
+                {% csrf_token %}
+                <table>
+                    {% if topo_id != None %}
+                    <tbody id="topoEditorForm" style="display: none">
+                    {% else %}
+                    <tbody id="topoEditorForm">
+                    {% endif %}
                     <tr>
                         <td>
-                            <input type="button" onclick="javascript: configureInstanceAccess();" value="Configure Access" title="Configures SSH + Netconf">
+                            Name
                         </td>
-
                         <td>
-                            <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
+                            <input type="text" size="30" maxsize="30" name="name" id="name" value="{{ topo.name }}"/>
+                            <input type="hidden" name="json" id="json" value="{{ topo.json }}"/>
+                            <input type="hidden" id="selectedObject" value="0">
                         </td>
                     </tr>
                     <tr>
                         <td>
-                            <input type="button" onclick="javascript: configureJunosInterfaces();" value="Configure Interfaces" title="Configures ge-0/0/X interfaces with the required MAC addresses">
+                            Description
                         </td>
                         <td>
-                            <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                            <textarea rows="3" id="description" name="description">{{ topo.description }}</textarea>
                         </td>
                     </tr>
-                </tbody>
-                <tbody id="junosIconEditorTools">
+                    <tr>
+                        <td colspan="2">
+                            {% if topo_id != None %}
+                            &nbsp;
+                            <input type="hidden" name="id" id="topoId" value="{{ topo.id}}"/>
+                            <input type="button" name="submit_button" id="update_submit_button"
+                                   value="Update" onclick="javascript: updateTopology();"/>
+                            {% else %}
+                            <input type="button" name="submit_button" id="submit_button"
+                                   value="Save" onclick="javascript: saveTopology();"/>
+                            {% endif %}
+                            <!--
+                            <input type="button" name="debugButton" id="debugButton"
+                              value="Debug" onclick="javascript: showDebug();"/>
+                            -->
+                        </td>
+                    </tr>
+                    </tbody>
+
+                    <tbody id="topoInfo">
+
+                    <tr>
+                        <th colspan="2">
+                            Topology Details
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>
+                            Name:
+                        </td>
+                        <td>
+                            {{ topo.name }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Description:
+                        </td>
+                        <td>
+                            {{ topo.description }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="button" name="showTopoEditorButton" id="showTopoEditorButton"
+                                   value="Edit" onclick="javascript: showTopoEditor();"/>
+                            &nbsp;
+                            <input type="button" id="update_topo_button"
+                                   value="Update" onclick="javascript: updateTopology();"/>
+                            &nbsp;
+                            <input type="button" name="delete_button" id="delete_button"
+                                   value="Delete" onclick="javascript: deleteTopology();"/>
+                            &nbsp;
+                            <input type="button" name="multi_clone_button" id="multi_clone_button"
+                                   value="Clone" onclick="javascript: multiCloneTopology();"/>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </form>
+
+            <div id="linuxIconEditor" style="display:none">
+                <table>
+                    <th colspan="2">
+                        Instance Details
+                    </th>
+                    <tr>
+                        <td>
+                            Name
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" name="linuxIconName" id="linuxIconName" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            IP Address
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" title="management address" name="linuxIconIp"
+                                   id="linuxIconIp" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Authentication
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" style="width: 75px;"
+                                   name="linuxIconUser" id="linuxIconUser" value=""/>
+                            &nbsp;
+                            <input type="text" disabled="true" style="width: 75px;"
+                                   name="linuxIconPass" id="linuxIconPass" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            VM Params
+                        </td>
+                        <td>
+                            vCPU:
+                            <div id="linuxIconCpu" style="display: inline"></div>
+                            &nbsp;
+                            vRAM:
+                            <div id="linuxIconRam" style="display: inline"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Base Image
+                        </td>
+                        <td>
+                            <div id="linuxIconImage"></div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            Cloud-Init / CDROM
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: loadIsoManager();" value="Manage Attached ISO">
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <th colspan="2">
+                        Execute cli
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="text" id="linuxCli" value="cat /proc/loadavg"/>
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: executeLinuxCli();" value="Go">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <textarea id="linuxCliOutput" rows="1"></textarea>
+                        </td>
+                    </tr>
+                </table>
+                <table>
                     <th colspan="2">
                         Instance Tools
                     </th>
                     <tr>
                         <td>
-                            <input type="button" onclick="javascript: loadConfigTemplates();" value="Apply Configuration" title="Push a configuration to this device"/>
+                            <input type="button" onclick="javascript: getInstanceStartupState();"
+                                   value="Refresh Boot State"
+                                   title="Determines if the instance is fully booted and ready">
+                            <br/>
                         </td>
                         <td>
-                            <input type="button" onclick="javascript: getInstanceStartupState();" value="Refresh Boot State" title="Determines if the instance is fully booted and ready">
+                            <input type="button" onclick="javascript: configureInstanceAccess();"
+                                   value="Configure Access" title="Configures Management IP Address">
+                            <br/>
+                            <br/>
+                            <input type="button" onclick="javascript: loadScriptSelector();"
+                                   value="Execute Script" title="Execute Script on instance">
+                            <br/>
+                            <br/>
                         </td>
                     </tr>
-                </tbody>
-            </table>
-            <table>
-              <th colspan="2">
-                 Execute cli
-              </th>
-              <tr>
-                <td>
-                  <input type="text" id="cli" value="show interface terse"/>
-                </td>
-                <td>
-                  <input type="button" onclick="javascript: executeCli();" value="Go">
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <textarea id="cliOutput" rows="1"></textarea>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div id="labelEditor" style="display: none;">
-            <table>
-              <th colspan="2">
-                 Edit Label
-              </th>
-              <tr>
-                <td>
-                  <input type="hidden" id="selectedLabel" value="0">
-                  Text: 
-                </td>
-                <td>
-                  <input type="text" id="labelText" value="na">
-               </td>
-             </tr>
-             <tr>
-               <td>
-                Size:
-                </td>
-                <td>
-                  <select id="labelFontSize">
-                    <option value="8">8</option>
-                    <option value="10" selected>10</option>
-                    <option value="12">12</option>
-                    <option value="14">14</option>
-                    <option value="16">16</option>
-                    <option value="18">18</option>
-                    <option value="20">20</option>
-                    <option value="22">22</option>
-                    <option value="24">24</option>
-                    <option value="26">26</option>
-                    <option value="28">28</option>
-                    <option value="30">30</option>
-                    <option value="40">40</option>
-                    <option value="48">48</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <input type="button" value="Update" onclick="javascript: updateLabel();"/>
-                </td>
-              </tr>
-            </table>
-          </div>
+                </table>
+            </div>
+            <div id="genericIconEditor" style="display:none">
+                <table>
+                    <th colspan="2">
+                        Instance Details
+                    </th>
+                    <tr>
+                        <td>
+                            Name
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" name="genericIconName" id="genericIconName" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            IP Address
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" title="management address" name="genericIconIp"
+                                   id="genericIconIp" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Authentication
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" style="width: 75px;"
+                                   name="genericIconUser" id="genericIconUser" value=""/>
+                            &nbsp;
+                            <input type="text" disabled="true" style="width: 75px;"
+                                   name="genericIconPass" id="genericIconPass" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            VM Params
+                        </td>
+                        <td>
+                            vCPU:
+                            <div id="genericIconCpu" style="display: inline"></div>
+                            &nbsp;
+                            vRAM:
+                            <div id="genericIconRam" style="display: inline"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Base Image
+                        </td>
+                        <td>
+                            <div id="genericIconImage"></div>
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <th colspan="2">
+                        Attach ISO file
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: loadIsoManager();" value="Manage Attached ISO">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="junosIconEditor" style="display:none">
+                <table>
+                    <th colspan="2">
+                        Instance Details
+                    </th>
+                    <tr>
+                        <td>
+                            Name
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" name="junosIconName"
+                                   id="junosIconName" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            IP Address
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" title="management address"
+                                   name="junosIconIp" id="junosIconIp" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Authentication
+                        </td>
+                        <td>
+                            <input type="text" disabled="true" style="width: 75px;"
+                                   name="junosIconUser" id="junosIconUser" value=""/>
+                            &nbsp;
+                            <input type="text" disabled="true" style="width: 75px;"
+                                   name="junosIconPass" id="junosIconPass" value=""/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            VM Params
+                        </td>
+                        <td>
+                            vCPU:
+                            <div id="junosIconCpu" style="display: inline"></div>
+                            &nbsp;
+                            vRAM:
+                            <div id="junosIconRam" style="display: inline"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Base Image
+                        </td>
+                        <td>
+                            <div id="junosIconImage"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Neighbors
+                        </td>
+                        <td>
+                            <div id="junosIconNeighbors"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Bootup Status
+                        </td>
+                        <td>
+                            <div id="junosIconStatus" style="display: inline"></div>
+                            <a href="#" onclick="javascript: return getInstanceStartupState()">?</a>
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tbody id="junosIconEditorToolsLegacy" style="display:none">
+                    <th colspan="2">
+                        vMX Phase 1 Tools
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: configureInstanceAccess();"
+                                   value="Configure Access" title="Configures SSH + Netconf">
+                        </td>
+
+                        <td>
+                            <input type="button" onclick="javascript: loadConfigTemplates();"
+                                   value="Apply Configuration" title="Push a configuration to this device"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: configureJunosInterfaces();"
+                                   value="Configure Interfaces"
+                                   title="Configures ge-0/0/X interfaces with the required MAC addresses">
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: getInstanceStartupState();"
+                                   value="Refresh Boot State"
+                                   title="Determines if the instance is fully booted and ready">
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tbody id="junosIconEditorTools">
+                    <th colspan="2">
+                        Instance Tools
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: loadConfigTemplates();"
+                                   value="Apply Configuration" title="Push a configuration to this device"/>
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: getInstanceStartupState();"
+                                   value="Refresh Boot State"
+                                   title="Determines if the instance is fully booted and ready">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <table>
+                    <th colspan="2">
+                        Execute cli
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="text" id="cli" value="show interface terse"/>
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: executeCli();" value="Go">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <textarea id="cliOutput" rows="1"></textarea>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="labelEditor" style="display: none;">
+                <table>
+                    <th colspan="2">
+                        Edit Label
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="hidden" id="selectedLabel" value="0">
+                            Text:
+                        </td>
+                        <td>
+                            <input type="text" id="labelText" value="na">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Size:
+                        </td>
+                        <td>
+                            <select id="labelFontSize">
+                                <option value="8">8</option>
+                                <option value="10" selected>10</option>
+                                <option value="12">12</option>
+                                <option value="14">14</option>
+                                <option value="16">16</option>
+                                <option value="18">18</option>
+                                <option value="20">20</option>
+                                <option value="22">22</option>
+                                <option value="24">24</option>
+                                <option value="26">26</option>
+                                <option value="28">28</option>
+                                <option value="30">30</option>
+                                <option value="40">40</option>
+                                <option value="48">48</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="button" value="Update" onclick="javascript: updateLabel();"/>
+                        </td>
+                    </tr>
+                </table>
+            </div>
             <div id="figureEditor" style="display: none;">
                 <table>
                     <th colspan="2">
@@ -2029,6 +2085,7 @@
                                 <option value="#80080">Purple</option>
                                 <option value="#00800">Green</option>
                                 <option value="#0000FF">Blue</option>
+                                <option value="#445E88">Dark Blue</option>
                                 <option value="#808080">Grey</option>
                                 <option value="none">None</option>
                             </select>
@@ -2066,6 +2123,7 @@
                                 <option value="#80080">Purple</option>
                                 <option value="#00800">Green</option>
                                 <option value="#0000FF">Blue</option>
+                                <option value="#445E88">Dark Blue</option>
                                 <option value="#808080">Grey</option>
                                 <option value="none">None</option>
                             </select>
@@ -2116,6 +2174,7 @@
                                 <option value="#80080">Purple</option>
                                 <option value="#00800">Green</option>
                                 <option value="#0000FF">Blue</option>
+                                <option value="#445E88">Dark Blue</option>
                                 <option value="#808080">Grey</option>
                             </select>
                         </td>
@@ -2160,126 +2219,129 @@
                     </tr>
                 </table>
             </div>
-          <div id="jsonDebug" style="display: none;">
-            <table>
-              <th>
-                 Debug Panel
-              </th>
-              <tr>
-                <td>
-                  <textarea id="debug" cols="1" rows="5"></textarea>
-                </td>
-              </tr>
-                <tr>
-                    <td>
-                        <input type="button" onclick="javascript: updateDebug();" value="Update JSON"
-                         title="Manually modify JSON object">
-                    </td>
-                </tr>
-            </table>
-          </div>
-          <div id="deploymentStatus"></div>
-          {% if topo_id != None %}
-            <div id="automationTools">
+            <div id="jsonDebug" style="display: none;">
                 <table>
-                  <th>
-                     Automation Tools
-                  </th>
-                  <tr>
-                    <td>
-                      <input type="button" name="showLinuxAutomationOverlay" id="showLinuxAutomationOverlay"
-                        value="Linux CLI Automation" onclick="javascript: showLinuxAutomationOverlay();"/>
-                        &nbsp;
-                        <input type="button" name="showJunosAutomationOverlay" id="showJunosAutomationOverlay"
-                        value="Junos CLI Automation" onclick="javascript: showJunosAutomationOverlay();"/>
-                    </td>
-                  </tr>
+                    <th>
+                        Debug Panel
+                    </th>
+                    <tr>
+                        <td>
+                            <textarea id="debug" cols="1" rows="5"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="button" onclick="javascript: updateDebug();" value="Update JSON"
+                                   title="Manually modify JSON object">
+                        </td>
+                    </tr>
                 </table>
             </div>
-          <div id="configSets">
-            <form method="post" id="configSetForm" name="configSetForm" action="{% url 'topologies:createConfigSet' %}" method="POST">
-            {% csrf_token %}
-            <table>
-              <tbody id="configSetCreateForm" style="display: none">
-              <tr>
-                <th colspan="3">
-                  Config Sets
-                </th>
-              </tr>
-              <tr>
-                <td>
-                  Name
-                </td>
-                <td colspan="2">
-                  <input type="text" size="30" maxsize="30" name="name" id="configSetName" value="New Config Set"/>
-                  <!-- <input type="hidden" id="selectedObject" value="0"> -->
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Description
-                </td>
-                <td colspan="2">
-                  <textarea rows="3" id="configSetDescription" name="description">Base Config</textarea>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="3">
-                  <input type="hidden" name="topoId" id="configSetTopoId" value="{{ topo.id}}"/>
-                  <input type="button" name="configSet_create_button" id="configSet_create_button"
-                    value="Save" onclick="javascript: createConfigSet();"/>
-                </td>
-              </tr>
-              </tbody>
-              <tbody>
-              <tr>
-                <th colspan="3"> Saved Config Sets </th>
-              </tr>
-              {% for c in configSets %}
-              <tr>
-                <td>
-                  {{ c.name }}
-                </td>
-                <td>
-                  {{ c.description}}
-                </td>
-                <td>
-                  <a href="#" onclick="javascript: pushConfigSet({{ c.id }})">Push</a>
-                  &nbsp;
-                  <a href="#" onclick="javascript: deleteConfigSet({{ c.id }})">Delete</a>
-                </td>
-              </tr>
-              {% endfor %}
-              </tbody>
-              <tbody id="configSetCreateRow">
-                <tr>
-                  <td colspan="3">
-                    <input type="button" name="configSet_editor_button" id="configSet_editor_button"
-                    value="Create" onclick="javascript: showConfigSetEditor();"/>
-                  </td>
-                 </tr>
-              </tbody>
-            </table>
-            </form>
-          </div>
-          {% endif %}
+            <div id="deploymentStatus"></div>
+            {% if topo_id != None %}
+            <div id="automationTools">
+                <table>
+                    <th>
+                        Automation Tools
+                    </th>
+                    <tr>
+                        <td>
+                            <input type="button" name="showLinuxAutomationOverlay" id="showLinuxAutomationOverlay"
+                                   value="Linux CLI Automation" onclick="javascript: showLinuxAutomationOverlay();"/>
+                            &nbsp;
+                            <input type="button" name="showJunosAutomationOverlay" id="showJunosAutomationOverlay"
+                                   value="Junos CLI Automation" onclick="javascript: showJunosAutomationOverlay();"/>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="configSets">
+                <form method="post" id="configSetForm" name="configSetForm"
+                      action="{% url 'topologies:createConfigSet' %}" method="POST">
+                    {% csrf_token %}
+                    <table>
+                        <tbody id="configSetCreateForm" style="display: none">
+                        <tr>
+                            <th colspan="3">
+                                Config Sets
+                            </th>
+                        </tr>
+                        <tr>
+                            <td>
+                                Name
+                            </td>
+                            <td colspan="2">
+                                <input type="text" size="30" maxsize="30" name="name" id="configSetName"
+                                       value="New Config Set"/>
+                                <!-- <input type="hidden" id="selectedObject" value="0"> -->
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Description
+                            </td>
+                            <td colspan="2">
+                                <textarea rows="3" id="configSetDescription" name="description">Base Config</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                <input type="hidden" name="topoId" id="configSetTopoId" value="{{ topo.id}}"/>
+                                <input type="button" name="configSet_create_button" id="configSet_create_button"
+                                       value="Save" onclick="javascript: createConfigSet();"/>
+                            </td>
+                        </tr>
+                        </tbody>
+                        <tbody>
+                        <tr>
+                            <th colspan="3"> Saved Config Sets</th>
+                        </tr>
+                        {% for c in configSets %}
+                        <tr>
+                            <td>
+                                {{ c.name }}
+                            </td>
+                            <td>
+                                {{ c.description}}
+                            </td>
+                            <td>
+                                <a href="#" onclick="javascript: pushConfigSet({{ c.id }})">Push</a>
+                                &nbsp;
+                                <a href="#" onclick="javascript: deleteConfigSet({{ c.id }})">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                        <tbody id="configSetCreateRow">
+                        <tr>
+                            <td colspan="3">
+                                <input type="button" name="configSet_editor_button" id="configSet_editor_button"
+                                       value="Create" onclick="javascript: showConfigSetEditor();"/>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+            {% endif %}
         </td>
         <td style="vertical-align: top; padding: 0px;">
-          <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
+            <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
             background-repeat: repeat; 
             width:900px; 
             height:650px; 
             position:relative;
             cursor: inherit;
             ">
-          </div>
+            </div>
             {% if topo_id != None %}
             <div id="toolsMenu" style="width: 900px; margin: 10px; text-align: right">
                 <!--
                 <input type="button" value="Refresh Bootup status" onclick="javascript: updateAllBootState();"/>
                 &nbsp; &nbsp;
                 -->
-                <input type="text" placeholder="New Note" id="newLabel" onclick="javascript: this.value = ''" style="width: 200px"/>
+                <input type="text" placeholder="New Note" id="newLabel" onclick="javascript: this.value = ''"
+                       style="width: 200px"/>
 
                 <select id="newLabelFontSize">
                     <option value="8">8</option>
@@ -2332,17 +2394,20 @@
             <div id="linuxAutomationOverlay" style="display: none">
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
                     <tr>
-                        <td colspan="2" style="text-align: right"><a href="#" onclick="javascript: closeLinuxAutomationOverlay()">Close</a></td>
+                        <td colspan="2" style="text-align: right"><a href="#"
+                                                                     onclick="javascript: closeLinuxAutomationOverlay()">Close</a>
+                        </td>
                     </tr>
                     <tr>
                         <th colspan="2">Execute cli on all linux instances</th>
                     </tr>
-                   <tr>
+                    <tr>
                         <td>
                             <input type="text" id="linuxAutomationCli" value="ip addr sh"/>
                         </td>
-                       <td style="width: 10%; text-align: right">
-                           <input type="button" onclick="javascript: executeLinuxAutomation();" value="Execute" title="Executes the CLI on all Linux instances">
+                        <td style="width: 10%; text-align: right">
+                            <input type="button" onclick="javascript: executeLinuxAutomation();" value="Execute"
+                                   title="Executes the CLI on all Linux instances">
                         </td>
                     </tr>
                     <tr>
@@ -2355,17 +2420,20 @@
             <div id="junosAutomationOverlay" style="display: none">
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
                     <tr>
-                        <td colspan="2" style="text-align: right"><a href="#" onclick="javascript: closeJunosAutomationOverlay()">Close</a></td>
+                        <td colspan="2" style="text-align: right"><a href="#"
+                                                                     onclick="javascript: closeJunosAutomationOverlay()">Close</a>
+                        </td>
                     </tr>
                     <tr>
                         <th colspan="2">Execute cli on all Junos instances</th>
                     </tr>
-                   <tr>
+                    <tr>
                         <td>
                             <input type="text" id="junosAutomationCli" value="show interfaces terse"/>
                         </td>
-                       <td style="width: 10%; text-align: right">
-                           <input type="button" onclick="javascript: executeJunosAutomation();" value="Execute" title="Executes the CLI on all Junos instances">
+                        <td style="width: 10%; text-align: right">
+                            <input type="button" onclick="javascript: executeJunosAutomation();" value="Execute"
+                                   title="Executes the CLI on all Junos instances">
                         </td>
                     </tr>
                     <tr>
@@ -2376,6 +2444,6 @@
                 </table>
             </div>
         </td>
-      </tr>
-    </table>
+    </tr>
+</table>
 {% endblock %}

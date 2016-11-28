@@ -107,7 +107,7 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	*/
 
 	init: function() {
-		this._super(this.ICON_FILE, this.ICON_WIDTH, this.ICON_HEIGHT);
+		this._super({ path: this.ICON_FILE, width: this.ICON_WIDTH, height: this.ICON_HEIGHT });
 	},
 	setup: function(type, label, ip, user, pw, image) {
 		this.setIp(ip);

@@ -3,18 +3,24 @@
 {% block title %}Wistar - Lab Rat - Edit Topology {% endblock %}
 {% load staticfiles %}
 {% block scripts %}
-    <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/raphael.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery-ui-1.8.23.custom.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.layout.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
+    <!--  <script type="text/javascript" src="{% static 'js/jquery.layout.js' %}"></script> -->
     <script type="text/javascript" src="{% static 'js/jquery.autoresize.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/jquery-touch_punch.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/jquery.contextmenu.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/patched_raphael.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/rgbcolor.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/canvg.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/Class.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/patched_canvg.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/patched_Class.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/json2.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/pathfinding-browser.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/StackBlur.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/shifty.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/draw2d.js' %}"></script>
+    <!-- <script type="text/javascript" src="{% static 'js/draw2d_core.js' %}"></script> -->
 
     <script type="text/javascript" src="{% static 'js/vm_types/wistarVm.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/wistarStandalone.js' %}"></script>
@@ -295,13 +301,13 @@
                 vpfe.setParentId(icon.getId());
                 icon.setChildId(vpfe.getId());
 
-                canvas.addFigure(vpfe, lastX, lastY + 15);
+                canvas.add(vpfe, lastX, lastY + 15);
             } else {
                 alert("Companion Doesn't appear to be a valid companion image type!");
                 return false;
             }
 
-            canvas.addFigure(icon, lastX, lastY);
+            canvas.add(icon, lastX, lastY);
 
             figures = new draw2d.util.ArrayList([icon, vpfe]);
             var cg = new draw2d.command.CommandGroup(canvas, figures);
@@ -311,7 +317,7 @@
             vpfe.getPorts().first().toFront();
 
 	    } else {
-	        canvas.addFigure(icon, lastX, lastY);
+	        canvas.add(icon, lastX, lastY);
 	    }
 
         // let's try to increment everything nicely
@@ -330,7 +336,7 @@
 
         var label = jQuery('#newLabel').val();
         var labelSize = jQuery('#newLabelFontSize').val();
-        var l = new draw2d.shape.basic.Label(label);
+        var l = new draw2d.shape.basic.Label({ text: label });
         // l.setBackgroundColor();
         l.setFontColor("#000000");
         l.setFontSize(labelSize);
@@ -347,7 +353,7 @@
             iconCount = 1;
     	    iconOffset += 110;
     	}
-        canvas.addFigure(l, lastX, lastY);
+        canvas.add(l, lastX, lastY);
     }
 
     // export topology as JSON and stuff it back in the
@@ -357,7 +363,7 @@
 
     	var writer = new draw2d.io.json.Writer();
 
-        var jsonTxt = writer.marshal(canvas, function(json) {
+        writer.marshal(canvas, function(json) {
             // convert the json object into string representation
             var jsonTxt = JSON.stringify(json, null, 2);
             // insert the json string into a DIV for preview or post
@@ -565,10 +571,11 @@
             if (figure == null) {
                 // this is a connection, not a VM or cloud icon
                 figure  = canvas.getLine(so);
+                canvas.remove(figure);
             } else {
                 // remove all connections, if any
                 var connections = figure.getConnections();
-                connections.each(function(i,v) { canvas.removeFigure(v) });
+                connections.each(function(i,v) { canvas.remove(v) });
 
                 // remove all members of composite groups
                 if (figure.NAME == "draw2d.shape.composite.Group") {
@@ -579,14 +586,14 @@
 
                         var connections = child.getConnections();
 
-                        connections.each(function(i,v) { canvas.removeFigure(v) });
+                        connections.each(function(i,v) { canvas.remove(v) });
 
                         figure.unassignFigure(child);
-                        canvas.removeFigure(child);
+                        canvas.remove(child);
                     };
                 }
                 // remove this entirely!
-                canvas.removeFigure(figure);
+                canvas.remove(figure);
             }
             // reset our selected value!
             jQuery('#selectedObject').val("0");
@@ -604,7 +611,7 @@
         if (so != 0) {
             var figure = canvas.getFigure(so);
             if (figure.NAME == "draw2d.shape.basic.Label") {
-                canvas.removeFigure(figure);
+                canvas.remove(figure);
                 jQuery('#selectedObject').val("0");
             }
         }
@@ -639,8 +646,12 @@
     function setSelectedObject(objectId) {
         console.log("setting s to: " + objectId);
         s = canvas.getFigure(objectId);
+        if (s == null) {
+            s = canvas.getLine(objectId);
+        }
         jQuery('#selectedObject').val(objectId);
-        selectedObject = canvas.getFigure(objectId);
+        selectedObject = s;
+
     }
 
     function manuallyTogglePanel(el, v) {
@@ -691,7 +702,7 @@
         var c = new draw2d.shape.node.externalCloud(label);
         c.width = 100;
         c.height = 100;
-        canvas.addFigure(c, 385 + (externalCloudCounter * 60), 15 + (externalCloudCounter * 50));
+        canvas.add(c, 385 + (externalCloudCounter * 60), 15 + (externalCloudCounter * 50));
 
         hideOverlay('#add_bridge_form');
     }
@@ -702,7 +713,7 @@
         var c = new draw2d.shape.node.internalCloud(label);
         c.width = 100;
         c.height = 100;
-        canvas.addFigure(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
+        canvas.add(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
 
         hideOverlay('#add_bridge_form');
     }
@@ -710,14 +721,14 @@
     function addRectangle() {
             var r = new draw2d.shape.basic.Rectangle(175, 100);
             r.setBackgroundColor(null);
-            canvas.addFigure(r, 400, 400);
+            canvas.add(r, 400, 400);
             r.toBack();
     }
 
     function addCircle() {
             var r = new draw2d.shape.basic.Circle(175, 100);
             r.setBackgroundColor(null);
-            canvas.addFigure(r, 400, 400);
+            canvas.add(r, 400, 400);
             r.toBack();
     }
 
@@ -742,10 +753,39 @@
     jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
         // set default connection router here
-        draw2d.shape.basic.PolyLine.DEFAULT_ROUTER= new draw2d.layout.connection.FanConnectionRouter();
+
+        var createConnection = function(v){
+           // return customized connection
+
+           var connection = new draw2d.Connection({
+             stroke: 3,
+             radius: 10,
+             color: "#445E88",
+             router: new draw2d.layout.connection.VertexRouter(),
+           });
+           return connection;
+        };
+
+        // install a custom connection create policy
+        //
+        canvas.installEditPolicy(  new draw2d.policy.connection.DragConnectionCreatePolicy({
+               createConnection: createConnection
+        }));
+
+
 	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
-        canvas.addSelectionListener(new topologySelectionListener());
+
+        canvas.installEditPolicy(new draw2d.policy.canvas.SnapToCenterEditPolicy());
+
+
+        //canvas.addSelectionListener(new topologySelectionListener());
+        var tsl = new topologySelectionListener();
+        canvas.on("select", function(emitter,event) {
+            if (event.figure != null) {
+                tsl.onSelectionChanged(event.figure);
+            }
+        });
         loadTopology();
     });
     </script>

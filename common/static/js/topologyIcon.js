@@ -20,7 +20,7 @@ BottomCenterLocator = draw2d.layout.locator.Locator.extend({
     },
     relocate: function(index, target)
     {
-        var parent = this.getParent();
+        var parent = target.getParent();
         var boundingBox = parent.getBoundingBox();
         var targetBoundingBox = target.getBoundingBox();
         target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 5);
@@ -31,7 +31,7 @@ BootStateLocator = draw2d.layout.locator.Locator.extend({
         this._super(parent);
     },
     relocate: function(index, target) {
-        var node = this.getParent()
+        var node = target.getParent()
         var x = node.getWidth() - 11;
         var y = 3;
         target.setPosition(x, y);
@@ -65,7 +65,7 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
             this.bootStateIcon = new draw2d.shape.basic.Circle();
             this.bootStateIcon.setBackgroundColor("#FF0000");
             this.bootStateIcon.setDimension(8, 8);
-            this.addFigure(this.bootStateIcon, new BootStateLocator(this));
+            this.add(this.bootStateIcon, new BootStateLocator(this));
         }
         if (state == "up") {
             this.bootStateIcon.setBackgroundColor("#00FF00");
@@ -128,11 +128,11 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
 	    var ud = this.getUserData();
 	    ud["ip"] = ip;
 	    if (this.ipLabel == undefined) {
-		    this.ipLabel = new draw2d.shape.basic.Label("\n" + ip);
+		    this.ipLabel = new draw2d.shape.basic.Label({text: "\n" + ip });
 	        this.ipLabel.setColor("#000");
         	this.ipLabel.setFontColor("#000");
         	this.ipLabel.setStroke(0);
-        	this.addFigure(this.ipLabel, new BottomCenterLocator(this));
+        	this.add(this.ipLabel, new BottomCenterLocator(this));
 	    } else {
             this.ipLabel.text = "\n" + ip;
         }
@@ -159,11 +159,11 @@ draw2d.shape.node.topologyIcon = draw2d.shape.basic.Image.extend({
     	var ud = this.getUserData();
     	ud["label"] = label;
         if (this.label == undefined) {
-    	    this.label = new draw2d.shape.basic.Label(label);
+    	    this.label = new draw2d.shape.basic.Label({text: label });
             this.label.setColor("#0d0d0d");
             this.label.setFontColor("#0d0d0d");
             this.label.setStroke(0);
-            this.addFigure(this.label, new BottomCenterLocator(this));
+            this.add(this.label, new BottomCenterLocator(this));
         } else {
             this.label.text = label;
         }

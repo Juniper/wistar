@@ -8,6 +8,7 @@ system {
             class super-user;
             authentication {
                 ssh-rsa "{{ config.ssh_key }}"; ## SECRET-DATA
+                plain-text-password-value "{{ config.password }}"; ## SECRET-DATA
             }
         }
     }

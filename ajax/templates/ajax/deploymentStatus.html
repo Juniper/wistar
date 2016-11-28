@@ -65,9 +65,8 @@
             {% endif %}
             {% endif %}
             {% if d.state != "running" %}
-            <div class="status_red">
-            <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}', '{{ topologyId }}');"
-               title="Power on instance in Hypervisor">
+            <div class="status_red" title="Power on instance in Hypervisor">
+            <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}', '{{ topologyId }}');">
                 &#9661;</a>
             </div>
             &nbsp;

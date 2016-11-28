@@ -1,4 +1,5 @@
 externalCloudPortLocator = draw2d.layout.locator.PortLocator.extend({
+    NAME: "externalCloudPortLocator",
     init: function() {
         this._super();
     },
@@ -10,13 +11,14 @@ externalCloudPortLocator = draw2d.layout.locator.PortLocator.extend({
     }
 });
 externalCloudLabelLocator = draw2d.layout.locator.Locator.extend({
+    NAME: "externalCloudLabelLocator",
     init: function(parent)
     {
         this._super(parent);
     },
     relocate: function(index, target)
     {
-        var parent = this.getParent();
+        var parent = target.getParent();
         var boundingBox = parent.getBoundingBox();
         var targetBoundingBox = target.getBoundingBox();
         target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() - 45);
@@ -39,11 +41,11 @@ draw2d.shape.node.externalCloud = draw2d.shape.icon.Cloud2.extend({
     setLabel: function(label) {
         var ud = this.getUserData();
         ud["label"] = label;
-        l = new draw2d.shape.basic.Label(label);
+        l = new draw2d.shape.basic.Label({ text: label });
         l.setColor("#000");
         l.setFontColor("#000");
         l.setStroke(0);
-        this.addFigure(l, new externalCloudLabelLocator(this)); 
+        this.add(l, new externalCloudLabelLocator(this), 1);
     },
     getLabel: function() {
         return this.getUserData()["label"]

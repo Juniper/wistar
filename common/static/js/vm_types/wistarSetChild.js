@@ -57,11 +57,11 @@ draw2d.shape.node.wistarSetChild = draw2d.shape.node.wistarStandalone.extend({
             label = this.getParentName();
         }
         if (this.label == undefined) {
-    	    this.label = new draw2d.shape.basic.Label(label);
+    	    this.label = new draw2d.shape.basic.Label({text: label });
             this.label.setColor("#0d0d0d");
             this.label.setFontColor("#0d0d0d");
             this.label.setStroke(0);
-            this.addFigure(this.label, new BottomCenterLocator(this));
+            this.add(this.label, new BottomCenterLocator(this));
         } else {
             this.label.text = label;
         }
