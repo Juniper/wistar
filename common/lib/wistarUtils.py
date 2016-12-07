@@ -713,8 +713,7 @@ def create_disk_instance(device, disk_params):
 
                 # junos customization
                 # let's also inject a default config here as well if possible!
-                junos_types = ['junos_vre', 'junos_vsrx', 'junos_volive']
-                if device["type"] in junos_types:
+                if "junos" in device["type"]:
                     logger.debug("Creating Junos configuration template")
                     junos_config = osUtils.get_junos_default_config_template(device["name"],
                                                                              device["label"],

@@ -34,6 +34,30 @@
             <target dev='hda' bus='ide'/>
             <address type='drive' controller='0' bus='0' target='0' unit='0'/>
         </disk>
+        {% if secondary_disk_path|length > 0 %}
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='{{ device.secondaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <source file='{{ secondary_disk_path }}'/>
+            {% if device.secondaryDiskParams.bus_type == "usb" %}
+            <target dev='sda' bus='{{ device.secondaryDiskParams.bus_type }}'/>
+            {% else %}
+            <target dev='hdb' bus='{{ device.secondaryDiskParams.bus_type }}'/>
+            <address type='drive' controller='0' bus='0' target='0' unit='1'/>
+            {% endif %}
+        </disk>
+        {% endif %}
+        {% if tertiary_disk_path|length > 0 %}
+        <disk type='file' device='disk'>
+            <driver name='qemu' type='{{ device.tertiaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <source file='{{ tertiary_disk_path }}'/>
+            {% if device.tertiaryDiskParams.bus_type == "usb" %}
+            <target dev='sdb' bus='{{ device.tertiaryDiskParams.bus_type }}'/>
+            {% else %}
+            <target dev='hdc' bus='{{ device.tertiaryDiskParams.bus_type }}'/>
+            <address type='drive' controller='0' bus='0' target='0' unit='1'/>
+            {% endif %}
+        </disk>
+        {% endif %}
         <controller type='ide' index='0'>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
         </controller>

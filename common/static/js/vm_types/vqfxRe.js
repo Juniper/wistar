@@ -15,4 +15,10 @@ draw2d.shape.node.vqfxRe = draw2d.shape.node.wistarSetParent.extend({
     COMPANION_NAME_FILTER: "Cosim|qfx.*pfe|QFX.*PFE|qfx.*PFE",
     VCPU: 2,
     VRAM: 2048,
+    TERTIARY_DISK_PARAMS: {
+        "type": "config_drive",
+        "qemu_type": "raw",
+        "bus_type": "usb"
+    },
+    CONFIG_DRIVE_SUPPORT: true,
 });
