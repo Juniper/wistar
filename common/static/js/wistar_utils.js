@@ -252,3 +252,48 @@
         input_object.value = first_pass;
     }
     
+    function deleteSelectedObject() {
+
+        // grab the selected object id
+        // this is always kept in a hidden form field for easy retrieval
+        var so = jQuery('#selectedObject').val();
+
+        // make sure it's not blank!
+        if (so != 0) {
+            var figure = canvas.getFigure(so);
+            if (figure == null) {
+                console.log('deleting line');
+                figure  = canvas.getLine(so);
+            }
+            if (figure instanceof draw2d.shape.node.externalCloud) {
+                externalCloudAdded = false;
+            }
+
+            if (figure.getComposite() != null) {
+                var c = figure.getComposite();
+                var assignedFigures = c.getAssignedFigures();
+	            assignedFigures.each(function(i, z) {
+	                var command = new draw2d.command.CommandDelete(z);
+			        canvas.getCommandStack().execute(command);
+	            });
+	            var command = new draw2d.command.CommandDelete(c);
+			    canvas.getCommandStack().execute(command);
+
+            } else if(figure instanceof draw2d.shape.composite.Group) {
+                var assignedFigures = figure.getAssignedFigures();
+	            assignedFigures.each(function(i, z) {
+	                var command = new draw2d.command.CommandDelete(z);
+			        canvas.getCommandStack().execute(command);
+	            });
+	            var command = new draw2d.command.CommandDelete(figure);
+			    canvas.getCommandStack().execute(command);
+
+            } else {
+                var command = new draw2d.command.CommandDelete(figure);
+			    canvas.getCommandStack().execute(command);
+            }
+            // reset our selected value!
+            jQuery('#selectedObject').val("0");
+            hideAllEditors();
+        }
+    }

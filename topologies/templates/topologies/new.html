@@ -563,48 +563,6 @@
     /* UI related function */
     var currentSelection = "None";
 
-    function deleteSelectedObject() {
-
-        // grab the selected object id
-        // this is always kept in a hidden form field for easy retrieval
-        var so = jQuery('#selectedObject').val();
-
-        // make sure it's not blank!
-        if (so != 0) {
-            var figure = canvas.getFigure(so);
-            if (figure == null) {
-                // this is a connection, not a VM or cloud icon
-                figure  = canvas.getLine(so);
-                canvas.remove(figure);
-            } else {
-                // remove all connections, if any
-                var connections = figure.getConnections();
-                connections.each(function(i,v) { canvas.remove(v) });
-
-                // remove all members of composite groups
-                if (figure.NAME == "draw2d.shape.composite.Group") {
-                    console.log("removing composite group!");
-
-                    while(figure.getAssignedFigures().size > 0) {
-                        var child = figure.getAssignedFigures().first();
-
-                        var connections = child.getConnections();
-
-                        connections.each(function(i,v) { canvas.remove(v) });
-
-                        figure.unassignFigure(child);
-                        canvas.remove(child);
-                    };
-                }
-                // remove this entirely!
-                canvas.remove(figure);
-            }
-            // reset our selected value!
-            jQuery('#selectedObject').val("0");
-            hideAllEditors();
-        }
-    }
-
     function deleteLabel() {
 
         // grab the selected object id

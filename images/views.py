@@ -67,9 +67,15 @@ def new(request):
 
 
 def create(request):
-    logger.debug('---- Create Image ----')
-    image_form = ImageForm(request.POST, request.FILES)
-    if image_form.is_valid():
+    try:
+        logger.debug('---- Create Image ----')
+        image_form = ImageForm(request.POST, request.FILES)
+        if not image_form.is_valid():
+            logger.error("Could not save image for some reason!")
+            context = {'image_form': image_form}
+            return render(request, 'images/new.html', context)
+
+
         # if not osUtils.checkPath(image_form.cleaned_data['path']):
         # logger.debug("PATH DOESN'T EXIST")
         # context = {'error' : "PATH DOESNT EXIST"}
@@ -82,6 +88,20 @@ def create(request):
         image_type = request.POST["type"]
         image_name = request.POST["name"]
         full_path = orig_image.filePath.path
+
+        if re.match(".*\.vmdk$", full_path):
+            # we need to convert this for KVM based deployments!
+            converted_image_path = re.sub("\.vmdk$", ".qcow2", full_path)
+            converted_image_file_name = converted_image_path.split('/')[-1]
+            if osUtils.convert_vmdk_to_qcow2(full_path, converted_image_path):
+                logger.info("Converted vmdk image to qcow2!")
+                orig_image.filePath = "user_images/%s" % converted_image_file_name
+                orig_image.save()
+
+                logger.debug("Removing original vmdk")
+                osUtils.remove_instance(full_path)
+            else:
+                logger.error("Could not convert vmdk!")
 
         if image_type == "junos_vre":
             logger.debug("Creating RIOT image for junos_vre")
@@ -105,10 +125,12 @@ def create(request):
                 image.save()
 
         return HttpResponseRedirect('/images')
-    else:
-        logger.error("Could not save image for some reason!")
-        context = {'image_form': image_form}
-        return render(request, 'images/new.html', context)
+
+    except Exception as e:
+        logger.error(e)
+        messages.info(request, "Could not create image!")
+        return HttpResponseRedirect('/images/')
+
 
 
 def blank(request):

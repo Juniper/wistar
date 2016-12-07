@@ -81,6 +81,14 @@
 
     var selectedObject;
 
+    var updateBootInterval = 0;
+
+    function clearUpdateBootInterval() {
+        console.log("Turning off boot status checking");
+        clearInterval(updateBootInterval);
+
+    }
+
     // loads initial topology from json stored in the 'json' div
     // also creates the instance array variable on page context
     function loadTopology() {
@@ -1035,27 +1043,6 @@
     /* UI related function */
     var currentSelection = "None";
 
-    function deleteSelectedObject() {
-
-        // grab the selected object id
-        // this is always kept in a hidden form field for easy retrieval
-        var so = jQuery('#selectedObject').val();
-
-        // make sure it's not blank!
-        if (so != 0) {
-            var figure = canvas.getFigure(so);
-            if (figure == null) {
-                console.log('deleting line');
-                figure  = canvas.getLine(so);
-            }
-            if (figure instanceof draw2d.shape.node.externalCloud) {
-                externalCloudAdded = false;
-            }
-            canvas.remove(figure);
-            jQuery('#selectedObject').val("0");
-        }
-    }
-
     function deleteLabel() {
 
         // grab the selected object id
@@ -1118,9 +1105,20 @@
 
     function setSelectedObject(objectId) {
         console.log("setting s to: " + objectId);
-        s = canvas.getFigure(objectId);
         jQuery('#selectedObject').val(objectId);
-        selectedObject = canvas.getFigure(objectId);
+
+        // set to s for simple console debugging
+        s = canvas.getFigure(objectId);
+        console.log(s);
+        if (s == null) {
+            // this is a connection or line
+            console.log("setting s to a connection");
+            s = canvas.getLine(objectId)
+            console.log(s);
+        } else {
+            s = canvas.getFigure(objectId);
+        }
+        selectedObject = s;
     }
 
     function manuallyTogglePanel(el, v) {
@@ -1390,6 +1388,7 @@
 
     // fixme - this will be broken for anything other than vmx
     function loadConnectionEditor(figureId) {
+
         var connection = canvas.getLine(figureId);
 
         jQuery('#connectionColor').val(connection.getColor().hashString);
@@ -1404,23 +1403,20 @@
         var sourceIndex = 0;
         var targetIndex = 0;
 
-        for(s=0;s<sourceConns.size;s++) {
-            sc = sourceConns.get(s);
-            console.log(sc.id);
-            if(sc.id == figureId) {
-                sourceIndex = s;
-                break;
+        sourceConns.each(function(i,c) {
+            if(c.id == figureId) {
+                sourceIndex = i;
+                return;
             }
-        }
+        });
 
-        for(t=0;t<targetConns.size;t++) {
-            tc = targetConns.get(t);
-            console.log(tc.id);
-            if(tc.id == figureId) {
-                targetIndex = t;
-                break;
+        targetConns.each(function(i,c) {
+            if(c.id == figureId) {
+                targetIndex = i;
+                return;
             }
-        }
+        });
+
         // do the right thing if we are connected to an external Bridge
         // FIXME - redundant check - internal extends external, so this is really just to be verbose
         if (targetPort.getParent()  instanceof draw2d.shape.node.externalCloud ||
@@ -1439,6 +1435,8 @@
             // first interface would be 3 + targetIndex  = ens3
             // also need this due to linux now having first interface as the management interface, so offset would
             // actually be ens + offset of 3 + 1 more for management = first interface in GUI is ens4
+            console.log(targetIndex);
+            console.log(targetPort.getParent().getInterfaceOffset());
             var targetPortPosition = targetIndex + targetPort.getParent().getInterfaceOffset();
 
             jQuery('#connectionTargetDevice').html(targetPort.getParent().getLabel() + " " + targetPortString + targetPortPosition);
@@ -1645,7 +1643,7 @@
                 refreshDeploymentStatus( {{ topo.id }} );
                 updateAllBootState();
                 // let's continue to check boot up state every 30 seconds
-                setInterval(updateAllBootState, 30000);
+                updateBootInterval = setInterval(updateAllBootState, 30000);
             {% endif %}
         {% endif %}
     });

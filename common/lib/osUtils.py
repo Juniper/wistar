@@ -103,6 +103,16 @@ def create_thin_provision_instance(image, instance):
         return False
 
 
+def convert_vmdk_to_qcow2(image_path, new_image_path):
+
+    rv = os.system("qemu-img convert -f vmdk -O qcow2 %s %s" % (image_path, new_image_path))
+
+    if rv == 0:
+        return True
+    else:
+        return False
+
+
 # creates a new blank image
 # useful for installing from ISO files
 def create_blank_image(filename, size):
