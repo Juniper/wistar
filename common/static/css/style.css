@@ -459,6 +459,10 @@ input[type=file] {
 	padding: 5px;
 
 }
+
+input[type=color] {
+    vertical-align: middle;
+}
 select {
 	font-size: 110%;
 	border: 1px solid #ddd;

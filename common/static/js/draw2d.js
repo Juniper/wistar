@@ -52124,7 +52124,6 @@ draw2d.io.json.Reader = draw2d.io.Reader.extend({
                 var o = _this.createFigureFromType(element.type);
                 var source= null;
                 var target=null;
-                console.log(element);
                 for(i in element){
                     console.log(i);
 

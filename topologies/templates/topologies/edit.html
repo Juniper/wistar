@@ -1174,8 +1174,8 @@
 
         jQuery('#junosIconNeighbors').html("");
 
-        for (c=0;c<connections.size;c++) {
-            var connection = connections.get(c);
+
+        connections.each(function(c, connection) {
 
             var sourcePort = connection.getSource();
             var targetPort = connection.getTarget();
@@ -1192,7 +1192,8 @@
 
             jQuery('#junosIconNeighbors').html(jQuery('#junosIconNeighbors').html() + neighbor + "<br/>");
 
-        }
+        });
+
         if (currentSelection !== "junosIconEditor") {
             hideAllEditors();
             manuallyTogglePanel('junosIconEditor', '');
@@ -2107,6 +2108,7 @@
                             Line Color:
                         </td>
                         <td>
+                            <!--
                             <select id="figureColor" onchange="javascript: setFigureColor(this.value);">
                                 <option value="#000000">Black</option>
                                 <option value="#FF0000">Red</option>
@@ -2119,6 +2121,9 @@
                                 <option value="#808080">Grey</option>
                                 <option value="none">None</option>
                             </select>
+                            -->
+                            <input type="color" id="figureColor" value="#445E88"
+                                   onchange="javascript: setFigureColor(this.value);">
                         </td>
                     </tr>
 
@@ -2144,6 +2149,7 @@
                             Background Color:
                         </td>
                         <td>
+                            <!--
                             <select id="figureBackgroundColor"
                                     onchange="javascript: setFigureBackgroundColor(this.value);">
                                 <option value="#000000">Black</option>
@@ -2157,6 +2163,9 @@
                                 <option value="#808080">Grey</option>
                                 <option value="none">None</option>
                             </select>
+                            -->
+                            <input type="color" id="figureBackgroundColor" value="#445E88"
+                                   onchange="javascript: setFigureBackgroundColor(this.value);">
                         </td>
                     </tr>
                     <tr>
@@ -2187,7 +2196,7 @@
                             <input type="hidden" id="connectionTargetPw" value="0">
                             Connection UI:
                         </td>
-                        <td>
+                        <td style="line-height: 34px;">
                             <select id="connectionStroke" onchange="javascript: setConnectionStroke(this.value);">
                                 <option value="1">1</option>
                                 <option value="2">2</option>
@@ -2196,7 +2205,8 @@
                                 <option value="5">5</option>
                             </select>
                             &nbsp;
-                            <select id="connectionColor" onchange="javascript: setConnectionColor(this.value);">
+                            <!--
+                            <select id="connectionColorOld" onchange="javascript: setConnectionColor(this.value);">
                                 <option value="#000000">Black</option>
                                 <option value="#FF0000">Red</option>
                                 <option value="#FFA500">Orange</option>
@@ -2207,7 +2217,12 @@
                                 <option value="#445E88">Dark Blue</option>
                                 <option value="#808080">Grey</option>
                             </select>
+                            &nbsp;
+                            -->
+                            <input type="color" id="connectionColor" value="#445E88"
+                                   onchange="javascript: setConnectionColor(this.value);">
                         </td>
+
                     </tr>
                     <tr>
                         <td>

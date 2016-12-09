@@ -118,7 +118,21 @@ To begin, browse to the 'Images' page and upload a qcow2 based image.
 
 Now, browse to Topologies to create and deploy a new network!
 
-Send questions to nembery@juniper.net / nembery@gmail.com
+Send questions to nembery@juniper.net
 
 Happy Hacking!
+
+# Contributions
+Wistar was written by Nathan Embery (nembery@juniper.net) with contributions from:
+- Subrata Mazumdar
+- Justin Adrian
+- Jeff Loughridge
+- Wayne Chan
+
+# Getting help
+Send questions to the Wistar Slack channel at:
+
+https://wistar-vtm.slack.com/
+
+
 

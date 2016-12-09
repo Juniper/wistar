@@ -1,13 +1,32 @@
-#!/usr/bin/python
+#
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# Copyright (c) 2015 Juniper Networks, Inc.
+# All rights reserved.
+#
+# Use is subject to license terms.
+#
+# Licensed under the Apache License, Version 2.0 (the ?License?); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Demonstration contrail REST API library
 # nembery@juniper.net
-import urllib2
-import urllib
-import platform
+
 import json
-import time
-import netaddr
 import mmap
+import platform
+import time
+import urllib
+import urllib2
+
+import netaddr
 
 
 class ContrailClient:
@@ -408,7 +427,7 @@ class ContrailClient:
         virtual_networks = self.get_json(virtual_networks_url)
         for virtual_network in virtual_networks["virtual-networks"]:
             if virtual_network["fq_name"][1] == project_name and \
-                    virtual_network["fq_name"][2] == virtual_network_name:
+                            virtual_network["fq_name"][2] == virtual_network_name:
                 return str(virtual_network["uuid"])
 
         return "ERROR"
@@ -418,7 +437,7 @@ class ContrailClient:
         network_policys = self.get_json(network_policys_url)
         for network_policy in network_policys["network-policys"]:
             if network_policy["fq_name"][1] == project_name and \
-                    network_policy["fq_name"][2] == network_policy_name:
+                            network_policy["fq_name"][2] == network_policy_name:
                 return str(network_policy["uuid"])
 
         return "ERROR"
