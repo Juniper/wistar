@@ -237,6 +237,9 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["configScriptId"] = 0
             device["configScriptParam"] = 0
 
+            if "cloudInitSupport" in user_data:
+                device["cloudInitSupport"] = user_data.get("cloudInitSupport", False)
+
             device["configDriveSupport"] = False
 
             if "configDriveSupport" in user_data:

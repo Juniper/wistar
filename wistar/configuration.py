@@ -74,8 +74,7 @@ seeds_dir = "/opt/wistar/seeds/"
 ssh_user = "wistar"
 # this key will be added to cloud-init enabled hosts in the user-data file
 # by default this is a dummy key! Replace this with your own key generated from 'ssh-keygen'
-ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCo33zCWVdSnQm2fDAZm9WsKH5W4ejMx8eaM7LssGjqefUlIu5LsNzbMUIxMT6eaXdlAwzw0jZfrI4fDj5nmBP2p2BCGYAFODpAKLJGr/cJZj4J+jbx3zxnW/eQ3PUkpu3ncWZj58hynOWDFWChMUV5nimbr5kVlFS5vhuvpZQUT9NMKo3NXuH8a3bkqh32hWS2eXE+FPy9vvcE3CoydgdPR+Z6T5Qqf0xCZ5Fzu7mMvB7BiVaj//KHI4xo/EE6vxKAMXwZ0YeaB1LyheEV66+DCcd5a/744LXxqfdA0yp38g68DBE6LK2jRWIPyTDSxWfW2lFe2M2XsUx0TDSKSLLb dummykey@REPLACEME"
-
+ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDgjgNd0Lej/1Rpcc9GEEoVV0RVbNW8TPvUzJzOTNZ76aoe83QZnUI5jXJLLg44j/J/vlUyFKEoPQokpezAUBtIyiglhPC0XN3Yxox82vtQxHItQenc8GAYvo6s8kvbDW0FX4xSfo9p3/nUlGrrCPYGrRCUaji76Xk4TQNW6aUVJYp3ReboZhy+3HO/BoljopMoKZF5OxAWhgJZ/+h+ADeoMw68V+sW/t/10yt84GEQ3TBNtSM5wSUh8u+YoPG13Kz36HsMa7gZbp8AABMSrvUys494IOyeQEJUV96bn1V1vyaVMxv/hI0/ektz56R4rwcIVw3V0NXholEPmBXDhWW3 wistar@dummykey"
 # Registered VM Image types
 # this list will register the javascript VM configuration settings in
 # common/static/js/vm_types

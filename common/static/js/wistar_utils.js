@@ -297,3 +297,15 @@
             hideAllEditors();
         }
     }
+
+    function increaseZoom() {
+        var current_zoom = canvas.getZoom();
+        var new_zoom = current_zoom - 0.1;
+        canvas.setZoom(new_zoom);
+    }
+
+    function decreaseZoom() {
+        var current_zoom = canvas.getZoom();
+        var new_zoom = current_zoom + 0.1;
+        canvas.setZoom(new_zoom);
+    }

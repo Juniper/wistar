@@ -149,10 +149,19 @@ def import_topology(request):
             topology.json = json.dumps(json_data)
 
             image_list = Image.objects.all().order_by('name')
+            image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
             script_list = Script.objects.all().order_by('name')
             vm_types = configuration.vm_image_types
             vm_types_string = json.dumps(vm_types)
-            context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string}
+
+            context = {'image_list': image_list,
+                       'image_list_json': image_list_json,
+                       'allocated_ips': currently_allocated_ips,
+                       'script_list': script_list,
+                       'vm_types': vm_types_string,
+                       'topo': topology
+                       }
+
             return render(request, 'topologies/new.html', context)
 
         else:

@@ -1700,9 +1700,7 @@
                         </td>
                     </tr>
                     </tbody>
-
                     <tbody id="topoInfo">
-
                     <tr>
                         <th colspan="2">
                             Topology Details
@@ -2371,7 +2369,7 @@
             {% endif %}
         </td>
         <td style="vertical-align: top; padding: 0px;">
-            <div id="toolsMenu" style="width: 900px;
+            <div id="toolsMenu" style="min-width: 900px;
                                         margin-right: 10px;
                                         text-align: right;
                                         height: 34px;
@@ -2380,7 +2378,8 @@
                                         border-bottom: 1px solid #ddd;
                                         line-height: 34px;">
 
-                <input type="text" placeholder="New Note" id="newLabel" onclick="javascript: this.value = ''" style="width: 200px">
+                <input type="text" placeholder="New Note" id="newLabel"
+                       onclick="javascript: this.value = ''" style="width: 200px">
 
                 <select id="newLabelFontSize">
                     <option value="8">8</option>
@@ -2407,30 +2406,55 @@
                        onclick="javascript: deleteLabel()"/>
                 &nbsp;
                 -->
-                <input type="button" value="Add Rectangle" title="Draw a Rectangle on screen" onclick="javascript: addRectangle()">
+                <input type="button" value="Add Rectangle"
+                       title="Draw a Rectangle on screen"
+                       onclick="javascript: addRectangle()">
                 &nbsp;
-                <input type="button" value="Add Circle" title="Draw a Circle on screen" onclick="javascript: addCircle()">
+                <input type="button" value="Add Circle"
+                       title="Draw a Circle on screen" onclick="javascript: addCircle()">
                 &nbsp;
-                <input type="button" value="Delete" title="Delete selected object" onclick="javascript: deleteSelectedObject()">
+                <input type="button" value="Delete"
+                       title="Delete selected object" onclick="javascript: deleteSelectedObject()">
                 &nbsp;
-                <input type="button" value="Debug" title="Show Serialized JSON" onclick="javascript: showDebug()">
+                <input type="button" value="Zoom In"
+                       title="Make Topology Larger" onclick="javascript: increaseZoom()">
+                &nbsp;
+                <input type="button" value="Zoom Out"
+                       title="make Topology Smaller" onclick="javascript: decreaseZoom()">
                 &nbsp;
             </div>
             <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
-            background-repeat: repeat; 
-            width:900px; 
-            height:650px; 
-            position:relative;
-            border-left: 1px solid #ddd;
-            border-right: 1px solid #ddd;
+                background-repeat: repeat;
+                min-width:900px;
+                min-height:664px;
+                position:relative;
+                border-left: 1px solid #ddd;
+                border-right: 1px solid #ddd;
             ">
+            </div>
+            <div id="extendedToolsMenu" style="min-width: 900px;
+                                        margin-right: 10px;
+                                        text-align: right;
+                                        height: 34px;
+                                        vertical-align: middle;
+                                        background-color: #fff;
+                                        border: 1px solid #ddd;
+                                        line-height: 34px;">
+                <input type="button" value="Re-Deploy" title="Redeploy the Topology"
+                       onclick="javascript: deployTopology()">
+                &nbsp;
+                <input type="button" value="Debug" title="Show Serialized JSON" onclick="javascript: showDebug()">
+                &nbsp;
             </div>
             <div id="jsonLayout" style="display: none;">{{ topology.json }}</div>
             <div id="linuxAutomationOverlay" style="display: none">
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
                     <tr>
-                        <td colspan="2" style="text-align: right"><a href="#"
-                                                                     onclick="javascript: closeLinuxAutomationOverlay()">Close</a>
+                        <td colspan="2" style="text-align: right">
+                            <a href="#"
+                               onclick="javascript: closeLinuxAutomationOverlay()">
+                                Close
+                            </a>
                         </td>
                     </tr>
                     <tr>
@@ -2455,8 +2479,10 @@
             <div id="junosAutomationOverlay" style="display: none">
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
                     <tr>
-                        <td colspan="2" style="text-align: right"><a href="#"
-                                                                     onclick="javascript: closeJunosAutomationOverlay()">Close</a>
+                        <td colspan="2" style="text-align: right">
+                            <a href="#" onclick="javascript: closeJunosAutomationOverlay()">
+                                Close
+                            </a>
                         </td>
                     </tr>
                     <tr>

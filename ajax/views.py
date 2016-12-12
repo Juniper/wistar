@@ -919,7 +919,7 @@ def inline_deploy_topology(config):
                     tertiary_disk = wistarUtils.create_disk_instance(device, device["tertiaryDiskParams"])
 
                 cloud_init_path = ''
-                if image.type == "linux":
+                if device["cloudInitSupport"]:
                     # grab the last interface
                     management_interface = device["managementInterface"]
                     # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!

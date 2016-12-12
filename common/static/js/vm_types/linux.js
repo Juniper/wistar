@@ -1,9 +1,9 @@
 draw2d.shape.node.linux = draw2d.shape.node.wistarStandalone.extend({
     NAME: "draw2d.shape.node.linux",
-    INTERFACE_PREFIX: "ens",
+    INTERFACE_PREFIX: "eth",
     // useful for interface naming in the GUI and via automation actions
-    INTERFACE_OFFSET: 4,
-    MANAGEMENT_INTERFACE_PREFIX: "ens",
+    INTERFACE_OFFSET: 1,
+    MANAGEMENT_INTERFACE_PREFIX: "eth",
     // only useful to determine which NIC posistion
     MANAGEMENT_INTERFACE_INDEX: 0,
     DOMAIN_CONFIGURATION_FILE: "domain.xml",
