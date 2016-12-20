@@ -54,10 +54,16 @@
 <li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
 </ul>
 <p>Wistar is a tool to manage network topologies of multiple virtual machines via a drag and drop interfaces.
-These VMS can then be deployed to multiple backends. Currently implemented deployment back-ends (in order of maturity):
-- ** KVM
-- ** Openstack
-- ** VirtualBox (deprecated)</p>
+These VMS can then be deployed to multiple backends.</p>
+<dl class="docutils">
+<dt>Currently implemented deployment back-ends (in order of maturity):</dt>
+<dd><ul class="first last simple">
+<li>KVM</li>
+<li>Openstack</li>
+<li>VirtualBox (deprecated)</li>
+</ul>
+</dd>
+</dl>
 <img alt="_images/screenshot.png" src="_images/screenshot.png" />
 <p>Wistar uses technologies like cloud-init and config-drive where possible to simplify the process
 of deploying new virtual machines. It can use your existing SSH keys to provision
@@ -68,14 +74,14 @@ vCPU is required. Some VMs, such as the Juniper vQFX, require multiple VMs to be
 Wistar encapsulates this information and treats multi-VM instances as a single instance with the correct inter-VM
 &#8216;wiring&#8217; in place.</p>
 <p>Once a topology is created, Wistar will serialize the canvas into a JSON object and store it in a database. This
-JSON object can then be serialized to HEAT templates for deployment to openstack, or pushed directly to KVM via libvirt.</p>
+JSON object can then be serialized to HEAT for deployment to openstack, or pushed directly to KVM via libvirt.</p>
 <p>More detailed information can be found <a class="reference external" href="https://github.com/Juniper/wistar/blob/master/README.md">here</a>. User specific configuration information can be configured in the
 wistar/configuration.py file.</p>
 <p>This documentation is a work in progress. Feel free to offer suggestions!</p>
 <div class="section" id="how-to-report-feedback-participate-in-the-project">
 <h2>How to report feedback / participate in the project<a class="headerlink" href="#how-to-report-feedback-participate-in-the-project" title="Permalink to this headline">¶</a></h2>
 <p>For any issues please open an issue on <a class="reference external" href="https://github.com/Juniper/wistar/issues">Github</a>.
-For comments, suggestions or questions please use our <a href="#id1"><span class="problematic" id="id2">Slack__</span></a> Channel.</p>
+For comments, suggestions or questions please use our <a class="reference external" href="https://wistar-vtm.slack.com/">Slack</a> Channel.</p>
 <dl class="docutils">
 <dt>To participate, please:</dt>
 <dd><ul class="first last simple">

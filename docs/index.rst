@@ -22,10 +22,12 @@ Indices and tables
 .. _here: https://github.com/Juniper/wistar/blob/master/README.md
 
 Wistar is a tool to manage network topologies of multiple virtual machines via a drag and drop interfaces.
-These VMS can then be deployed to multiple backends. Currently implemented deployment back-ends (in order of maturity):
-- ** KVM
-- ** Openstack
-- ** VirtualBox (deprecated)
+These VMS can then be deployed to multiple backends.
+
+Currently implemented deployment back-ends (in order of maturity):
+ - KVM
+ - Openstack
+ - VirtualBox (deprecated)
 
 .. image:: screenshot.png
 
@@ -39,7 +41,7 @@ Wistar encapsulates this information and treats multi-VM instances as a single i
 'wiring' in place.
 
 Once a topology is created, Wistar will serialize the canvas into a JSON object and store it in a database. This
-JSON object can then be serialized to HEAT templates for deployment to openstack, or pushed directly to KVM via libvirt.
+JSON object can then be serialized to HEAT for deployment to openstack, or pushed directly to KVM via libvirt.
 
 More detailed information can be found here_. User specific configuration information can be configured in the
 wistar/configuration.py file.
@@ -53,7 +55,7 @@ How to report feedback / participate in the project
 .. _Slack: https://wistar-vtm.slack.com/
 
 For any issues please open an issue on Github_.
-For comments, suggestions or questions please use our Slack__ Channel.
+For comments, suggestions or questions please use our Slack_ Channel.
 
 To participate, please:
  - Fork the project
