@@ -163,14 +163,14 @@
                 if (! isNaN(lastInt)) {
                     return name.substring(0, name.length -1) + (lastInt + 1);
                 } else {
-                    return name;
+                    return name + "2";
                 }
             }
         } else {
             if (! isNaN(lastInt)) {
                 return name.substring(0, name.length -1) + (lastInt + 1);
             } else {
-                return name;
+                return name + "2";
             }
         }
     }
@@ -204,19 +204,11 @@
     	var vpfe_image = jQuery('#topoIconImageVFPCSelect').val();
 
         // enforce names always end with a digit
-        console.log(name);
         var last = name.substr(-1);
-        console.log(last);
         var lastInt = parseInt(last);
-        console.log(lastInt);
-        if (isNaN(lastInt)) {
-            alert('Name must end in a digit');
-            if (name.length > 6) {
+
+        if (name.length > 6) {
                 name = name.slice(0,6);
-            }
-            jQuery('#topoIconName').val(name + "1");
-            jQuery('#topoIconName').focus();
-            return false;
         }
 
         if (name == "") {

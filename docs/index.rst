@@ -1,0 +1,49 @@
+
+
+Wistar Documentation
+=====================
+
+.. _here: https://github.com/Juniper/wistar/blob/master/README.md
+
+Wistar is a tool to manage network topologies of multiple virtual machines via a drag and drop interfaces.
+These VMS can then be deployed to multiple backends. Currently implemented deployment back-ends (in order of maturity):
+- ** KVM
+- ** Openstack
+- ** VirtualBox (deprecated)
+
+.. image:: screenshot.png
+
+Wistar uses technologies like cloud-init and config-drive where possible to simplify the process
+of deploying new virtual machines. It can use your existing SSH keys to provision
+new instances with a known user account. VM's are modeled as javascript objects which encapsulate
+all management aspects of that VM type. For example, there is a Linux type that specifies things like the
+interface naming prefix == "eth". Another type models a Junos Space image, which gives hints about how much RAM and
+vCPU is required. Some VMs, such as the Juniper vQFX, require multiple VMs to be 'wired' together in a particular way.
+Wistar encapsulates this information and treats multi-VM instances as a single instance with the correct inter-VM
+'wiring' in place.
+
+Once a topology is created, Wistar will serialize the canvas into a JSON object and store it in a database. This
+JSON object can then be serialized to HEAT templates for deployment to openstack, or pushed directly to KVM via libvirt.
+
+More detailed information can be found here_. User specific configuration information can be configured in the
+wistar/configuration.py file.
+
+This documentation is a work in progress. Feel free to offer suggestions!
+
+How to report feedback / participate in the project
+---------------------------------------------------
+
+.. _Github: https://github.com/Juniper/wistar/issues
+.. _Slack: https://wistar-vtm.slack.com/
+
+For any issues please open an issue on Github_.
+For comments, suggestions or questions please use our Slack__ Channel.
+
+To participate, please:
+ - Fork the project
+ - Send us a pull request
+
+.. NOTE::
+  if you are planning significant changes, please start a discussion first.
+
+**Contributions are more than Welcome**
