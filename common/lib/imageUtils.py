@@ -223,6 +223,20 @@ def create_local_image(name, description, file_path, image_type):
 
         full_path = image.filePath.path
 
+        if re.match(".*\.vmdk$", full_path):
+            # we need to convert this for KVM based deployments!
+            converted_image_path = re.sub("\.vmdk$", ".qcow2", full_path)
+            converted_image_file_name = converted_image_path.split('/')[-1]
+            if osUtils.convert_vmdk_to_qcow2(full_path, converted_image_path):
+                logger.info("Converted vmdk image to qcow2!")
+                image.filePath = "user_images/%s" % converted_image_file_name
+                image.save()
+
+                logger.debug("Removing original vmdk")
+                osUtils.remove_instance(full_path)
+            else:
+                logger.error("Could not convert vmdk!")
+
         if image_type == "junos_vre":
             logger.debug("Creating RIOT image for junos_vre")
             # lets replace the last "." with "_riot."

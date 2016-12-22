@@ -151,7 +151,6 @@ def create(request):
         return HttpResponseRedirect('/images/')
 
 
-
 def blank(request):
     image_form = ImageBlankForm()
     context = {'image_form': image_form}

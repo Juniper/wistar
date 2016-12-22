@@ -123,7 +123,7 @@ Double click on any icon that has a green status indicator to open the console.
 
 .. image:: screenshots/vqfx_console.png
 
-You can see here that vqfx1 is already booted and is ready for configuration! You'll note here tha the hostname has
+You can see here that vqfx1 is already booted and is ready for configuration! You'll note here that the hostname has
 already been set via config-drive. Wistar will generate a default configuration that consists of the hostname,
 management ip information, default routes, user names and SSH keys as appropriate. This may be customized via the
 common/templates/junos_config.j2 jinja2 template.

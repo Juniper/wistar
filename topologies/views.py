@@ -100,7 +100,6 @@ def export_topology(request, topo_id):
     return response
 
 
-@csrf_exempt
 def import_topology(request):
     logger.debug('---- topology import ----')
     try:
