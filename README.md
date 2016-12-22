@@ -3,6 +3,9 @@ wistar
 
 Wistar is a tool to help manage complex topologies of Virtual Machines and appliances. By default, Wistar is used to simplify the process of creating networks of VMs on KVM, however, other deployment methods such as Openstack are being developed.
 
+
+![screenshot](docs/screenshots/screenshot.png "Wistar uses drag and drop to create topologies of networks")
+
 Your (virtual) CPU must expose the virtualization hooks. You can check with a simple grep.
 
 `egrep ‘(vmx|svm)’ /proc/cpuinfo`
