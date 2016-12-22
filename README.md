@@ -134,5 +134,9 @@ Send questions to the Wistar Slack channel at:
 
 https://wistar-vtm.slack.com/
 
+More information may also be available here as well:
+
+http://wistar.readthedocs.io/en/latest/
+
 
 
