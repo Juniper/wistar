@@ -1,0 +1,59 @@
+---
+# example playbook that uses the wistar api to check the existance of a topolgy
+# and import one from the templates directory if needed
+# outputs a new exported topology in the playbooks directory
+# this new exported topology will have the correct ip addresses and image ids
+# necessary for this environment
+
+- name: Check Topology Exists
+  uri:
+    url: http://localhost:{{ wistar_port }}/api/checkTopology/
+    body:
+      - name: "{{ topology_name }}"
+    body_format: json
+    return_content: yes
+  register: topology_exists
+
+- name: Debug output
+  debug: msg="topo is {{ topology_exists['json']['message'] }}"
+
+- name: Debug output status
+  debug: msg="topo is {{ topology_exists['json']['status'] }}"
+  when: "{{ topology_exists['json']['status']}} == False"
+
+- name: Import topology to Wistar
+  uri:
+    url: http://localhost:{{ wistar_port }}/api/importTopology/
+    body: "{{ lookup('file', 'templates/topology.wistar.json') }}"
+    body_format: json
+    return_content: yes
+  when: "{{ topology_exists['json']['status']}} == False"
+  register: topology_created
+
+- name: Debug topology creation message
+  debug: msg="{{ topology_created }}"
+
+- name: Export Wistar topology
+  uri:
+    url: http://localhost:{{ wistar_port }}/api/exportTopology/
+    body:
+      - name: "{{ topology_name }}"
+    body_format: json
+    return_content: yes
+  register: topology_json
+  tags: export_wistar
+
+- name: Save Wistar topology
+  copy:
+    dest: "{{ playbook_dir }}/jedi_playground.wistar.json"
+    content: "{{ topology_json['content'] }}"
+  tags: export_wistar
+  become: true
+
+- name: Build hosts file
+  lineinfile: "dest=/etc/hosts regexp='.*{{ item['userData']['name'] }}$' line='{{ item['userData']['ip'] }}    {{ item['userData']['name'] }}' state=present"
+  when: item["userData"]["wistarVm"] is defined
+  with_items: '{{ topology_json["content"] }}'
+  tags:
+    - export_wistar
+  become: true

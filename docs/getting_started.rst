@@ -17,9 +17,9 @@ for the following:
 - Ubuntu 16.04 cloudimg
 - Ubuntu 14.04 cloudimg
 - Generic Linux (cloud-init enabled)
-- Juniper vMX
-- Juniper vSRX
-- Juniper vQFX
+- Juniper vMX 15.1 (16.1+ not yet supported)
+- Juniper vSRX 15.1
+- Juniper vQFX 15.1
 - Juniper Junos Space
 
 Any other virtual machine can be used with the 'Other' type. Wistar supports the following image formats:
