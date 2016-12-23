@@ -29,6 +29,8 @@
 
     <script type="text/javascript" src="{% static 'js/vm_types/generic.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/linux.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/ubuntu16.js' %}"></script>
+
     <script type="text/javascript" src="{% static 'js/vm_types/space.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
@@ -204,11 +206,19 @@
     	var vpfe_image = jQuery('#topoIconImageVFPCSelect').val();
 
         // enforce names always end with a digit
+        console.log(name);
         var last = name.substr(-1);
+        console.log(last);
         var lastInt = parseInt(last);
-
-        if (name.length > 6) {
+        console.log(lastInt);
+        if (isNaN(lastInt)) {
+            alert('Name must end in a digit');
+            if (name.length > 6) {
                 name = name.slice(0,6);
+            }
+            jQuery('#topoIconName').val(name + "1");
+            jQuery('#topoIconName').focus();
+            return false;
         }
 
         if (name == "") {
