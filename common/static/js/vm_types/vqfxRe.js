@@ -12,7 +12,7 @@ draw2d.shape.node.vqfxRe = draw2d.shape.node.wistarSetParent.extend({
     DUMMY_INTERFACE_LIST: ["2"],
     COMPANION_TYPE: "draw2d.shape.node.vqfxCosim",
     COMPANION_INTERFACE_LIST: ["1"],
-    COMPANION_NAME_FILTER: "Cosim|qfx.*pfe|QFX.*PFE|qfx.*PFE",
+    COMPANION_NAME_FILTER: "Cosim|COSIM|qfx.*pfe|QFX.*PFE|qfx.*PFE",
     VCPU: 2,
     VRAM: 2048,
     TERTIARY_DISK_PARAMS: {

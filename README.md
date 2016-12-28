@@ -146,6 +146,8 @@ Send questions to the Wistar Slack channel at:
 
 https://wistar-vtm.slack.com/
 
+Visit this page: https://wistar.herokuapp.com/ to generate an invite.
+
 More information may also be available here as well:
 
 http://wistar.readthedocs.io/en/latest/

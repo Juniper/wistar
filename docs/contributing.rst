@@ -3,7 +3,7 @@ Contributing to Wistar
 
 
 .. _Github: https://github.com/Juniper/wistar/issues
-.. _Slack: https://wistar-vtm.slack.com/
+.. _Slack: https://wistar.herokuapp.com/
 
 How to report feedback / participate in the project
 ---------------------------------------------------
