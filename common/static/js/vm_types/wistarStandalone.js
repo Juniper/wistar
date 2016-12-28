@@ -4,9 +4,6 @@ topologyIconPortLocator = draw2d.layout.locator.PortLocator.extend({
         this._super();
     },
     relocate: function(index, figure) {
-        console.log("RELOCATING");
-        console.log(figure);
-        console.log(index);
         var node = figure.getParent();
         var x = node.getWidth() / 2;
         var y = node.getHeight() / 2;
@@ -60,7 +57,6 @@ draw2d.shape.node.wistarStandalone = draw2d.shape.node.wistarVm.extend({
     NAME: "draw2d.shape.node.wistarStandalone",
 
     init: function() {
-        console.log("inside init");
 	    this._super();
     	var tpl = new topologyIconPortLocator();
     	this.createPort("hybrid", tpl);
@@ -102,7 +98,6 @@ draw2d.shape.node.wistarStandalone = draw2d.shape.node.wistarVm.extend({
         }
     },
     setLabel: function(label) {
-        console.log("SET LABEL On STANDALONE " + label);
         this.setName(label);
         if (this.label == undefined) {
     	    this.label = new draw2d.shape.basic.Label({ text: label });

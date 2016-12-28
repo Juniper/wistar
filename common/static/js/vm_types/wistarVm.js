@@ -315,4 +315,10 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 		    launchWebConsole(generateDomainNameFromLabel(this.getName()));
 		}
 	},
+	toFront: function() {
+	    return;
+	},
+	toBack: function(){
+	    return;
+	}
 });

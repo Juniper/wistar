@@ -99,11 +99,9 @@
     	if (test != null) {
 		    // var jsonTxt = JSON.stringify(test, null, 2);
 		    var json = eval(test);
-		    console.log(json);
 		    var reader = new draw2d.io.json.Reader();
 		    reader.unmarshal(canvas, json);
 		    for(i=0;i<json.length;i++) {
-		        console.log(json[i]);
 		        if (! json[i].hasOwnProperty("userData")) {
 		            continue;
 		        }

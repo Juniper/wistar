@@ -23287,8 +23287,7 @@ draw2d.Figure = Class.extend({
      */
      toFront: function(figure)
      {
-         // HACK - we don't care about ordering in Wistar
-         return;
+         console.log("figure tofront");
          // ensure that the z-oder is still correct if the figure is assigned
          // to a StrongComposite
          //
@@ -23352,9 +23351,8 @@ draw2d.Figure = Class.extend({
       */
      toBack: function(figure )
      {
-         // HACK - we don't care about this in Wistar
-         return;
-
+         console.log("figure toBack");
+         console.log(this.NAME);
          // it is not allowed that a figure is behind an assigned composite
          //
          if(this.composite instanceof draw2d.shape.composite.StrongComposite){
@@ -23367,9 +23365,12 @@ draw2d.Figure = Class.extend({
              var lines = this.canvas.getLines();
              if(figures.remove(this)!==null){
                  figures.insertElementAt(this,0);
-             }else if(lines.remove(this)!==null){
-                 lines.insertElementAt(this,0);
              }
+             //else if(lines.remove(this)!==null){
+               //  lines.insertElementAt(this,0);
+                 //console.log("HERE");
+                 //lines.add(this);
+             //}
              if(typeof figure !=="undefined"){
                  this.getShapeElement().insertBefore(figure.getShapeElement());
              }
@@ -26800,8 +26801,8 @@ draw2d.SetFigure = draw2d.shape.basic.Rectangle.extend({
      */
     toFront: function(figure)
     {
-        return;
-        ////////////////////////////////////////////////////////////////////
+        console.log("setFigure tofront");
+        /////////////////////////////////////////////////////////////////////
         // NOTE: the code has a complete different order of draw2d.Figure. 
         //       we must respect the svgNodes here
         ////////////////////////////////////////////////////////////////////
@@ -26899,7 +26900,6 @@ draw2d.SetFigure = draw2d.shape.basic.Rectangle.extend({
      */
     toBack: function(figure)
     {
-        return;
         // it is not allowed that a figure is behind the assigned composite
         //
         if(this.composite instanceof draw2d.shape.composite.StrongComposite){
@@ -52132,8 +52132,6 @@ draw2d.io.json.Reader = draw2d.io.Reader.extend({
                 var source= null;
                 var target=null;
                 for(i in element){
-                    console.log(i);
-
                     var val = element[i];
                     if(i === "source"){
                         node = canvas.getFigure(val.node);
