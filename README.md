@@ -116,9 +116,19 @@ If not, use the following command to add the user to the group.
 root@wistar-build:~# usermod -a -G libvirtd www-data
 ```
 
-To begin, browse to the 'Images' page and upload a qcow2 based image.
 
-Now, browse to Topologies to create and deploy a new network!
+Quick Start for VMWare based deployments:
+-----
+A Packer based project to automatically build OVF images for VMWare
+can be found here: https://github.com/nembery/wistar_packer
+
+
+Uploading Images and deploying your first topology:
+-----
+
+To begin, browse to the 'Images' page and upload a qcow2 or vmdk based image.
+
+Next, browse to Topologies to create and deploy a new network!
 
 Send questions to nembery@juniper.net
 

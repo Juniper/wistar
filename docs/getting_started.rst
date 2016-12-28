@@ -4,9 +4,10 @@ Getting Started with Wistar
 
 .. _here: https://github.com/Juniper/wistar/blob/master/README.md
 .. _vQFX: http://www.juniper.net/us/en/dm/free-vqfx-trial/
+.. _project: https://github.com/nembery/wistar_packer
 
 Before you begin, you'll need to install Wistar. Instructions for doing this on an Ubuntu system or VM can be
-found here_.
+found here_. An automated installation using Packer can be found in this project_.
 
 Supported Virtual Machine image types
 -------------------------------------
