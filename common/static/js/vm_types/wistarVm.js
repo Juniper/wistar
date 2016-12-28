@@ -96,7 +96,7 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	// used in heat templates
 	CONFIG_DRIVE_SUPPORT: false,
 	// list of parameters to pass to cloud drive
-	CONFIG_DRIVE_PARAMS: {},
+	CONFIG_DRIVE_PARAMS: [],
 	// in kvm write cofig-drive-params to this file!
 	CONFIG_DRIVE_PARAMS_FILE: "",
 	// default username

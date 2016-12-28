@@ -8,7 +8,7 @@ Getting Started with Wistar
 Before you begin, you'll need to install Wistar. Instructions for doing this on an Ubuntu system or VM can be
 found here_.
 
-Supported Virtual Machine Image types
+Supported Virtual Machine image types
 -------------------------------------
 
 Once you have a Wistar instance up and running, you'll need to upload a couple of images. Wistar has full support

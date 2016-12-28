@@ -1,0 +1,54 @@
+system {
+    host-name {{ config.host_name }};
+    root-authentication {
+        plain-text-password-value "{{ config.password }}"; ## SECRET-DATA
+    }
+    login {
+        user {{ config.ssh_user }} {
+            class super-user;
+            authentication {
+                ssh-rsa "{{ config.ssh_key }}"; ## SECRET-DATA
+                plain-text-password-value "{{ config.password }}"; ## SECRET-DATA
+            }
+        }
+    }
+    services {
+        ssh;
+        netconf {
+            ssh;
+        }
+    }
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any notice;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+}
+interfaces {
+    {{ config.mgmt_interface }} {
+        unit 0 {
+            family inet {
+                address {{ config.mgmt_ip }};
+            }
+        }
+    }
+    em1 {
+        unit 0 {
+            family inet {
+                address 169.254.0.2/24
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop {{ config.mgmt_gateway }};
+    }
+}

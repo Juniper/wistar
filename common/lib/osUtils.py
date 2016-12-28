@@ -206,7 +206,7 @@ def remove_instances_for_topology(topology_id_prefix):
             os.remove(full_path)
 
 
-def create_cloud_drive(domain_name, files=[]):
+def create_config_drive(domain_name, files=[]):
     try:
         seed_dir = configuration.seeds_dir + domain_name
         seed_img_name = seed_dir + "/config-drive.img"
@@ -253,6 +253,61 @@ def create_cloud_drive(domain_name, files=[]):
 
     finally:
         os.system("umount /mnt")
+
+
+def compile_config_drive_params_template(template_name, domain_name, host_name, password, ip, management_interface):
+    """
+
+    :param template_name: name of a template to compile - must exist in the common/templates directory
+    :param domain_name: name of the domain to which this template will be attached
+    :param host_name: hostname to use in generated templates (if needed)
+    :param password: user password to use if needed
+    :param ip: management ip address to use in generated template
+    :param management_interface: management interface name to use (eth0, fxp0, em0, etc)
+    :return: compiled template as String or None on error
+    """
+    logger.debug("Compiling template %s" % template_name)
+    try:
+        # read template
+        this_path = os.path.abspath(os.path.dirname(__file__))
+        template_path = os.path.abspath(os.path.join(this_path, "../templates/%s" % template_name))
+
+        template = open(template_path)
+        template_string = template.read()
+        template.close()
+
+        env = Environment()
+        template_data = env.from_string(template_string)
+
+        ip_network = IPNetwork(configuration.management_subnet)
+
+        config = dict()
+        config["domain_name"] = domain_name
+        config["host_name"] = host_name
+        config["mgmt_ip"] = ip + "/" + str(ip_network.prefixlen)
+        config["mgmt_gateway"] = configuration.management_gateway
+        config["ssh_key"] = configuration.ssh_key
+        config["ssh_user"] = configuration.ssh_user
+        config["password"] = password
+        config["mgmt_interface"] = management_interface
+
+        template_data_string = template_data.render(config=config)
+        logger.debug(template_data_string)
+
+        seed_dir = configuration.seeds_dir + domain_name
+
+        if not check_path(seed_dir):
+            os.mkdir(seed_dir)
+
+        return template_data_string
+
+    except OSError as oe:
+        logger.error("Could not open template file with name: %s" % template_name)
+        logger.info(str(oe))
+        return None
+    except Exception as e:
+        logger.debug("Caught exception in create_cloud_init_img " + str(e))
+        return None
 
 
 def get_junos_default_config_template(domain_name, host_name, password, ip, management_interface):

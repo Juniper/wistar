@@ -21,4 +21,10 @@ draw2d.shape.node.vqfxRe = draw2d.shape.node.wistarSetParent.extend({
         "bus_type": "usb"
     },
     CONFIG_DRIVE_SUPPORT: true,
+    CONFIG_DRIVE_PARAMS: [
+        {
+            "template": "junos_vqfx_config.j2",
+            "destination": "/juniper.conf"
+        }
+    ]
 });

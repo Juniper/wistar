@@ -25,23 +25,11 @@ draw2d.shape.node.vriot = draw2d.shape.node.wistarSetChild.extend({
         "qemu_type": "raw",
         "bus_type": "ide"
     },
-
     CONFIG_DRIVE_SUPPORT: true,
-    CONFIG_DRIVE_PARAMS_FILE: "/boot/loader.conf",
-    CONFIG_DRIVE_PARAMS: {
-        "hw.pci.link.0x60.irq": 10,
-        "hw.ata.ata_dma": 1,
-        "hw.ata.atapi_dma": 1,
-        "vm_chassis_i2cid": "161",
-        "vm_i2cid": "0xBAA",
-        "vm_instance": 0,
-        "vm_is_virtual": 1,
-        "vm_ore_present": 0,
-        "vm_retype": "RE-VMX",
-        "vmtype": 1,
-        "vm_chassisname": "vMX",
-        "vm_chassname": "vMX",
-        "console": "vidconsole,comconsole"
-    }
-
+    CONFIG_DRIVE_PARAMS: [
+        {
+            "template":  "vriot_boot_loader.j2",
+            "destination": "/boot/loader.conf"
+        }
+    ]
 });

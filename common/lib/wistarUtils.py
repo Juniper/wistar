@@ -248,7 +248,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     device["configDriveParams"] = user_data.get("configDriveParams", "")
                     device["configDriveParamsFile"] = user_data.get("configDriveParamsFile", "")
                 else:
-                    device["configDriveParams"] = dict()
+                    device["configDriveParams"] = list()
 
             if "configScriptId" in user_data:
                 logger.debug("Found a configScript to use!")
@@ -720,33 +720,57 @@ def create_disk_instance(device, disk_params):
 
                 # keep a dict of files with format: filename: filecontents
                 files = dict()
+                params = device["configDriveParams"]
                 if "configDriveParamsFile" in device and device["configDriveParamsFile"]:
-                    params = device["configDriveParams"]
-                    name = device["configDriveParamsFile"]
-                    file_data = ""
-                    # config drive params are usually a dict - to make json serialization easier
-                    # for our purposes here, let's just make a file with a single key: value per line
-                    # note, we can add a serialization format to the vm_type.js if needed here
-                    # only currently used for /boot/loader.conf in vmx and riot
-                    for k in params:
-                        file_data += '%s="%s"\n' % (k, params[k])
+                    logger.debug("Using inline config_drive format")
+                    # behavior change 12-28-2016 - allow passing a list of templates and destinations
+                    # instead of defining the params directly on the device object
+                    # if the configDriveParams is a dict, then this is an older topology, leave this code here
+                    # to still support them - otherwise fall through to the isinstance check for list type for
+                    # newer style configuration
+                    if isinstance(params, dict):
+                        name = device["configDriveParamsFile"]
+                        file_data = ""
+                        # config drive params are usually a dict - to make json serialization easier
+                        # for our purposes here, let's just make a file with a single key: value per line
+                        # note, we can add a serialization format to the vm_type.js if needed here
+                        # only currently used for /boot/loader.conf in vmx and riot
+                        for k in params:
+                            file_data += '%s="%s"\n' % (k, params[k])
 
-                    files[name] = file_data
+                        files[name] = file_data
 
-                # junos customization
-                # let's also inject a default config here as well if possible!
-                if "junos" in device["type"]:
-                    logger.debug("Creating Junos configuration template")
-                    junos_config = osUtils.get_junos_default_config_template(device["name"],
-                                                                             device["label"],
-                                                                             device["password"],
-                                                                             device["ip"],
-                                                                             device["managementInterface"])
+                        # junos customization
+                        # let's also inject a default config here as well if possible!
+                        if "junos" in device["type"]:
+                            logger.debug("Creating Junos configuration template")
+                            junos_config = osUtils.get_junos_default_config_template(device["name"],
+                                                                                     device["label"],
+                                                                                     device["password"],
+                                                                                     device["ip"],
+                                                                                     device["managementInterface"])
 
-                    if junos_config is not None:
-                        files["/juniper.conf"] = junos_config
+                            if junos_config is not None:
+                                files["/juniper.conf"] = junos_config
 
-                disk_instance_path = osUtils.create_cloud_drive(device["name"], files)
+                # check for new (12-28-2016) style config drive params definition
+                if isinstance(params, list):
+                    logger.debug("params is a list")
+                    for p in params:
+                        if "template" in p and "destination" in p:
+                            file_data = None
+                            file_data = osUtils.compile_config_drive_params_template(
+                                p["template"],
+                                device["name"],
+                                device["label"],
+                                device["password"],
+                                device["ip"],
+                                device["managementInterface"]
+                            )
+                            if file_data is not None:
+                                files[p["destination"]] = file_data
+
+                disk_instance_path = osUtils.create_config_drive(device["name"], files)
                 if disk_instance_path is None:
                     disk_instance_path = ''
 
