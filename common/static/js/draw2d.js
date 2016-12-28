@@ -23287,6 +23287,8 @@ draw2d.Figure = Class.extend({
      */
      toFront: function(figure)
      {
+         // HACK - we don't care about ordering in Wistar
+         return;
          // ensure that the z-oder is still correct if the figure is assigned
          // to a StrongComposite
          //
@@ -23350,6 +23352,9 @@ draw2d.Figure = Class.extend({
       */
      toBack: function(figure )
      {
+         // HACK - we don't care about this in Wistar
+         return;
+
          // it is not allowed that a figure is behind an assigned composite
          //
          if(this.composite instanceof draw2d.shape.composite.StrongComposite){
@@ -26795,6 +26800,7 @@ draw2d.SetFigure = draw2d.shape.basic.Rectangle.extend({
      */
     toFront: function(figure)
     {
+        return;
         ////////////////////////////////////////////////////////////////////
         // NOTE: the code has a complete different order of draw2d.Figure. 
         //       we must respect the svgNodes here
@@ -26893,6 +26899,7 @@ draw2d.SetFigure = draw2d.shape.basic.Rectangle.extend({
      */
     toBack: function(figure)
     {
+        return;
         // it is not allowed that a figure is behind the assigned composite
         //
         if(this.composite instanceof draw2d.shape.composite.StrongComposite){

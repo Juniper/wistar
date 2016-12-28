@@ -201,6 +201,9 @@
         domain = generateDomainNameFromLabel(label);
         console.log(domain)
         var figure = canvas.getFigure(id);
+        if (figure == null) {
+            return;
+        }
         var type = figure.getType();
 
         if (updateBootCounter % 3 && figure.getBootState() == "up") {
