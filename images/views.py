@@ -122,7 +122,7 @@ def create(request):
             else:
                 logger.error("Could not convert vmdk!")
 
-        if image_type == "junos_vre" and "jinstall64-vmx-15.1" in image_name:
+        if image_type == "junos_vre" and "jinstall64-vmx-15.1" in full_path:
             logger.debug("Creating RIOT image for Junos vMX 15.1")
             # lets replace the last "." with "_riot."
             if '.' in full_path:
