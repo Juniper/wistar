@@ -122,8 +122,8 @@ def create(request):
             else:
                 logger.error("Could not convert vmdk!")
 
-        if image_type == "junos_vre":
-            logger.debug("Creating RIOT image for junos_vre")
+        if image_type == "junos_vre" and "15.1" in image_name:
+            logger.debug("Creating RIOT image for Junos vMX 15.1")
             # lets replace the last "." with "_riot."
             if '.' in full_path:
                 new_image_path = re.sub(r"(.*)\.(.*)$", r"\1_riot.\2", full_path)

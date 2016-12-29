@@ -23351,8 +23351,6 @@ draw2d.Figure = Class.extend({
       */
      toBack: function(figure )
      {
-         console.log("figure toBack");
-         console.log(this.NAME);
          // it is not allowed that a figure is behind an assigned composite
          //
          if(this.composite instanceof draw2d.shape.composite.StrongComposite){
