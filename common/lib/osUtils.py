@@ -207,12 +207,31 @@ def remove_instances_for_topology(topology_id_prefix):
 
 
 def create_config_drive(domain_name, files=[]):
+    """
+    Create config drive disk image for the given domain.
+        - Creates a temporary mount location in the seeds directory
+        - Creates a directory in the seeds location for this domain
+        - Creates a raw disk image in the domains seed directory
+        - Mounts the disk image
+        - Formats as msdos (FIXME - this should be configurable to allow for ISO format)
+        - Creates the approporate directory structure
+        - Writes all files in the files list
+    :param domain_name: name of the domain for this config drive
+    :param files: list of dicts indexed by filename, value is the contents of the file to be written
+    :return: full path to the completed config-drive.img file for this domain
+    """
+
+    mnt_dir = configuration.seeds_dir + "mnt"
+
     try:
         seed_dir = configuration.seeds_dir + domain_name
         seed_img_name = seed_dir + "/config-drive.img"
 
         if not check_path(seed_dir):
             os.mkdir(seed_dir)
+
+        if not check_path(mnt_dir):
+            os.mkdir(mnt_dir)
 
         if check_path(seed_img_name):
             logger.debug("seed.img already created!")
@@ -224,7 +243,7 @@ def create_config_drive(domain_name, files=[]):
         if not os.system("mkdosfs %s" % seed_img_name) == 0:
             raise Exception("Could not create config-drive filesystem")
 
-        if not os.system("mount %s /mnt" % seed_img_name) == 0:
+        if not os.system("mount %s %s" % (seed_img_name, mnt_dir)) == 0:
             raise Exception("Could not mount config-drive filesystem")
 
         for name in files:
@@ -232,17 +251,17 @@ def create_config_drive(domain_name, files=[]):
             if '/' in name:
                 # we need to create a directory structure here!
                 directory = os.path.dirname(name)
-                if not os.system("mkdir -p /mnt%s" % directory) == 0:
+                if not os.system("mkdir -p %s%s" % (mnt_dir, directory)) == 0:
                     raise Exception("Could not create confg-drive directory structure")
             else:
                 # ensure a leading / just in case!
                 name = "/" + name
 
             logger.debug("writing file: %s" % name)
-            with open("/mnt%s" % name, "w") as mdf:
+            with open("%s%s" % (mnt_dir, name), "w") as mdf:
                 mdf.write(files[name])
 
-        os.system("cd /mnt && tar -cvf vmm-config.tar .")
+        os.system("cd %s && tar -cvf vmm-config.tar ." % mnt_dir)
 
         return seed_img_name
 
@@ -252,7 +271,7 @@ def create_config_drive(domain_name, files=[]):
         return None
 
     finally:
-        os.system("umount /mnt")
+        os.system("umount %s" % mnt_dir)
 
 
 def compile_config_drive_params_template(template_name, domain_name, host_name, password, ip, management_interface):
