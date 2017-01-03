@@ -222,6 +222,7 @@ def create_config_drive(domain_name, files=[]):
     """
 
     mnt_dir = configuration.seeds_dir + "mnt"
+    staging_dir = configuration.seeds_dir + "staging"
 
     try:
         seed_dir = configuration.seeds_dir + domain_name
@@ -233,6 +234,9 @@ def create_config_drive(domain_name, files=[]):
         if not check_path(mnt_dir):
             os.mkdir(mnt_dir)
 
+        if not check_path(staging_dir):
+            os.mkdir(staging_dir)
+
         if check_path(seed_img_name):
             logger.debug("seed.img already created!")
             return seed_img_name
@@ -243,35 +247,42 @@ def create_config_drive(domain_name, files=[]):
         if not os.system("mkdosfs %s" % seed_img_name) == 0:
             raise Exception("Could not create config-drive filesystem")
 
-        if not os.system("mount %s %s" % (seed_img_name, mnt_dir)) == 0:
-            raise Exception("Could not mount config-drive filesystem")
-
         for name in files:
 
             if '/' in name:
                 # we need to create a directory structure here!
                 directory = os.path.dirname(name)
-                if not os.system("mkdir -p %s%s" % (mnt_dir, directory)) == 0:
+                if not os.system("mkdir -p %s%s" % (staging_dir, directory)) == 0:
                     raise Exception("Could not create confg-drive directory structure")
             else:
                 # ensure a leading / just in case!
                 name = "/" + name
 
             logger.debug("writing file: %s" % name)
-            with open("%s%s" % (mnt_dir, name), "w") as mdf:
+            with open("%s%s" % (staging_dir, name), "w") as mdf:
                 mdf.write(files[name])
 
-        os.system("cd %s && tar -cvf vmm-config.tar ." % mnt_dir)
+        os.system("cd %s && tar -cvf vmm-config.tar ." % staging_dir)
 
+        # copy files using mcopy (requires mtools to be installed)
+        if not os.system("mcopy -s -i %s %s/* ::/" % (seed_img_name, staging_dir)) == 0:
+            # if mcopy fails, try mounting the drive (requires root)
+            if not os.system("mount %s %s" % (seed_img_name, mnt_dir)) == 0:
+                raise Exception("Could not mount config-drive filesystem")
+            if not os.system("cp -r %s/* %s" % (staging_dir, mnt_dir)) == 0:
+                raise Exception("Could not copy files to config-drive")
+            os.system("umount %s" % mnt_dir)
+
+        # cleanup staging directory
+        if not os.system("rm -r %s" % staging_dir) == 0:
+            raise Exception("Could not clear staging directory")
+	
         return seed_img_name
 
     except Exception as e:
         logger.debug("Could not create_cloud_drive!!!")
         logger.debug(str(e))
         return None
-
-    finally:
-        os.system("umount %s" % mnt_dir)
 
 
 def compile_config_drive_params_template(template_name, domain_name, host_name, password, ip, management_interface):
