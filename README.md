@@ -18,7 +18,7 @@ To get started, you need a server running Ubuntu 14.04 (or some similar flavor) 
 
 Install the required Ubuntu packages-
 ```
-root@wistar-build:~# apt-get install python-pip python-dev build-essential qemu-kvm libz-dev libvirt-bin socat python-pexpect python-libvirt libxml2-dev libxslt1-dev unzip bridge-utils genisoimage python-netaddr libffi-dev libssl-dev python-markupsafe libxml2-dev libxslt1-dev git
+root@wistar-build:~# apt-get install python-pip python-dev build-essential qemu-kvm libz-dev libvirt-bin socat python-pexpect python-libvirt libxml2-dev libxslt1-dev unzip bridge-utils genisoimage python-netaddr libffi-dev libssl-dev python-markupsafe libxml2-dev libxslt1-dev git mtools
 ```
 
 Install Python packages-
@@ -140,16 +140,20 @@ Wistar was written by Nathan Embery (nembery@juniper.net) with contributions fro
 - Justin Adrian
 - Jeff Loughridge
 - Wayne Chan
+- Robin Gilijamse 
+- Matt Dinham
 
 # Getting help
 Send questions to the Wistar Slack channel at:
 
 https://wistar-vtm.slack.com/
 
+To sign up for the Slack channel, visit our heroku app here:
+https://wistar.herokuapp.com/
+
 Visit this page: https://wistar.herokuapp.com/ to generate an invite.
 
-More information may also be available here as well:
-
+The most detailed, up to date, documentation should be available here:
 http://wistar.readthedocs.io/en/latest/
 
 

@@ -7,6 +7,7 @@ draw2d.shape.node.vre = draw2d.shape.node.wistarSetParent.extend({
     ICON_FILE: "/static/images/vre.png",
 
     INTERFACE_PREFIX: "ge-0/0/",
+    INTERFACE_TYPE: "e1000",
     MANAGEMENT_INTERFACE_PREFIX: "fxp",
     MANAGEMENT_INTERFACE_INDEX: 0,
     MANAGEMENT_INTERFACE_TYPE: "e1000",

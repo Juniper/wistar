@@ -2,6 +2,7 @@ draw2d.shape.node.linux = draw2d.shape.node.wistarStandalone.extend({
     NAME: "draw2d.shape.node.linux",
     INTERFACE_PREFIX: "eth",
     // useful for interface naming in the GUI and via automation actions
+    // i.e. if management interface is eth0, then first usable interface for connections is 0 + 1 == eth1
     INTERFACE_OFFSET: 1,
     MANAGEMENT_INTERFACE_PREFIX: "eth",
     // only useful to determine which NIC posistion

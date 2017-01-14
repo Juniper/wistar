@@ -17,5 +17,10 @@ draw2d.shape.node.vsrx = draw2d.shape.node.wistarStandalone.extend({
         "bus_type": "usb"
     },
     CONFIG_DRIVE_SUPPORT: true,
-
+    CONFIG_DRIVE_PARAMS: [
+        {
+            "template": "junos_config.j2",
+            "destination": "/juniper.conf"
+        }
+    ]
 });

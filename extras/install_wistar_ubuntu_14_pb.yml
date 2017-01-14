@@ -67,6 +67,7 @@
       - python-netaddr
       - python-markupsafe
       - python-setuptools
+      - mtools
 
   - name: Install Django
     pip:

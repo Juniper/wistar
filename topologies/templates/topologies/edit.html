@@ -92,6 +92,17 @@
 
     }
 
+    function toggleBootInterval() {
+        if (updateBootInterval === 0) {
+            updateBootInterval = setInterval(updateAllBootState, 30000);
+            alert("Turning ON boot up status checks");
+        } else {
+            clearInterval(updateBootInterval);
+            updateBootInterval = 0;
+            alert("Turning OFF boot up status checks");
+        }
+    }
+
     // loads initial topology from json stored in the 'json' div
     // also creates the instance array variable on page context
     function loadTopology() {
@@ -1160,14 +1171,12 @@
 
         if (instance.getBootState() == "up") {
             bootupStatus = "Ready";
-
         }
 
         if (instance instanceof draw2d.shape.node.wistarSetParent) {
             var vpfe_id = instance.getChildId();
             var vpfe = canvas.getFigure(vpfe_id);
             port = vpfe.getPorts().get(0);
-
         } else {
             port = instance.getPorts().get(0);
         }
@@ -1280,7 +1289,6 @@
         post.fail(function() {
             alert('Could not perform request!');
         });
-
     }
 
     function loadIsoManager() {
@@ -1322,7 +1330,6 @@
         instance.setPassword(jQuery('#junosIconPass').val());
 
         instance.repaint();
-
     }
 
     function loadLabelEditor(figureId) {
@@ -1352,7 +1359,6 @@
 
         jQuery('#selectedObject').val(figureId);
         var instance = canvas.getFigure(figureId);
-
 
         var figureColor = instance.getColor().hashString;
         if (figureColor == null) {
@@ -2446,6 +2452,9 @@
                                         line-height: 34px;">
                 <input type="button" value="Re-Deploy" title="Redeploy the Topology"
                        onclick="javascript: deployTopology()">
+                &nbsp;
+                <input type="button" value="Toggle Boot Check" title="Toggle automated boot up status check"
+                       onclick="javascript: toggleBootInterval()">
                 &nbsp;
                 <input type="button" value="Debug" title="Show Serialized JSON" onclick="javascript: showDebug()">
                 &nbsp;

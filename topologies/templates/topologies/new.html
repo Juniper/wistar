@@ -97,7 +97,6 @@
                 alert("IP Address " + ip + " is already in use!");
             }
         };
-
         jQuery.post(url, params, success);
     }
 
@@ -131,7 +130,6 @@
                 ipBox.val(octets.join('.'));
             }
         };
-
         jQuery.get(url, success);
     }
 
@@ -185,24 +183,24 @@
 
     // add icon to the topology with the indicated values
     function addIcon() {
-    	var ip = nextIp();
-    	var user = jQuery('#topoIconUser').val();
-    	var pw = jQuery('#topoIconPass').val();
-    	var name = jQuery('#topoIconName').val();
-    	var type = jQuery('#topoIconType').val();
-    	var image = jQuery('#topoIconImage').val();
-    	var cpu = jQuery('#topoIconCpu').val();
-    	var ram = jQuery('#topoIconRam').val();
-    	//var iconData = jQuery('#topoIconIcon').val();
+        var ip = nextIp();
+        var user = jQuery('#topoIconUser').val();
+        var pw = jQuery('#topoIconPass').val();
+        var name = jQuery('#topoIconName').val();
+        var type = jQuery('#topoIconType').val();
+        var image = jQuery('#topoIconImage').val();
+        var cpu = jQuery('#topoIconCpu').val();
+        var ram = jQuery('#topoIconRam').val();
+        //var iconData = jQuery('#topoIconIcon').val();
 
         if (image == 0) {
             alert('Please select a valid image');
             return false;
         }
-    	var scriptId = jQuery('#topoIconScriptSelect').val();
-    	var scriptParam = jQuery('#topoIconScriptParam').val();
+        var scriptId = jQuery('#topoIconScriptSelect').val();
+        var scriptParam = jQuery('#topoIconScriptParam').val();
 
-    	var vpfe_image = jQuery('#topoIconImageVFPCSelect').val();
+        var vpfe_image = jQuery('#topoIconImageVFPCSelect').val();
 
         // enforce names always end with a digit
         var last = name.substr(-1);
@@ -239,56 +237,56 @@
         // Should the user have selected a companion image?
         if (icon.getCompanionType() != "") {
             // yes, did they?
-        	if (vpfe_image == 0) {
-        	    // uh-oh!
+            if (vpfe_image == 0) {
+                // uh-oh!
                 alert('Please select a Companion Image before continuing!');
                 return false;
             }
         }
 
         // simple algorithm to add icons to the screen without overlapping
-    	lastX += 100;
-    	lastY += 0;
-    	vmxCount += 1;
-    	iconCount += 1;
+        lastX += 100;
+        lastY += 0;
+        vmxCount += 1;
+        iconCount += 1;
 
-    	if (iconCount > iconWrapLimit) {
-    	    lastX = 50;
-    	    lastY = iconOffset;
-    	    iconCount = 1;
-    	    iconOffset += 110;
-    	}
+        if (iconCount > iconWrapLimit) {
+            lastX = 50;
+            lastY = iconOffset;
+            iconCount = 1;
+            iconOffset += 110;
+        }
 
         icon.setup(type, name, ip, user, pw, image);
 
         icon.setCpu(cpu);
         icon.setRam(ram);
 
-	    if (icon.getSecondaryDiskParams() != "") {
-	        var params = icon.getSecondaryDiskParams();
-	        var type = params["type"];
-	        if (type == "image") {
+        if (icon.getSecondaryDiskParams() != "") {
+            var params = icon.getSecondaryDiskParams();
+            var type = params["type"];
+            if (type == "image") {
                 params["image_id"] = jQuery('#topoIconSecondaryDisk').val();
                 icon.setSecondaryDiskParams(params);
             }
-	    }
+        }
 
-	    if (icon.getCompanionType() != "") {
+        if (icon.getCompanionType() != "") {
 
-	        var vpfe_cpu = jQuery('#topoIconVFPCCpu').val();
-    	    var vpfe_ram = jQuery('#topoIconVFPCRam').val();
+            var vpfe_cpu = jQuery('#topoIconVFPCCpu').val();
+            var vpfe_ram = jQuery('#topoIconVFPCRam').val();
+            var vpfe_js = jQuery('#topoIconVFPCJs').val();
+            var vpfe_type = jQuery('#topoIconVFPCType').val();
 
-            var vpfe = eval("new " + icon.COMPANION_TYPE + "()" );
+            // attempt to load vpfe as the selected image_id type
+            // otherwise, use the default companion_type
+            if (vpfe_js == '') {
+                vpfe_js = icon.COMPANION_TYPE;
+            }
+
+            var vpfe = eval("new " + vpfe_js + "()" );
 
             vpfe_ip = nextIp();
-            vm_type_data = {};
-            for (v=0;v<vm_types.length;v++) {
-                vm_type = vm_types[v];
-                if (vm_type.js == icon.COMPANION_TYPE) {
-                    vpfe_type = vm_type.name
-                    break;
-                }
-            }
 
             vpfe.setup(vpfe_type, name, vpfe_ip, user, pw, vpfe_image);
 
@@ -317,20 +315,20 @@
             // work around, ports are being drawn as hidden until they are clicked!
             vpfe.getPorts().first().toFront();
 
-	    } else {
-	        canvas.add(icon, lastX, lastY);
-	    }
+        } else {
+            canvas.add(icon, lastX, lastY);
+        }
 
         // let's try to increment everything nicely
-    	// jQuery('#topoIconIp').val(incrementIconIp(ip));
-    	jQuery('#topoIconName').val(incrementIconName(name));
+        // jQuery('#topoIconIp').val(incrementIconIp(ip));
+        jQuery('#topoIconName').val(incrementIconName(name));
 
-    	jQuery('#topoIconScriptSelect').val(0);
-    	jQuery('#topoIconScriptParam').val(0);
+        jQuery('#topoIconScriptSelect').val(0);
+        jQuery('#topoIconScriptParam').val(0);
 
-    	// jQuery('#topoIconImageVFPCSelect').val(0);
+        // jQuery('#topoIconImageVFPCSelect').val(0);
 
-    	return true;
+        return true;
     }
 
     function addLabel() {
@@ -362,7 +360,7 @@
     function exportJson() {
         // Create a JSON writer and convert it into a JSON-String representation.
 
-    	var writer = new draw2d.io.json.Writer();
+        var writer = new draw2d.io.json.Writer();
 
         writer.marshal(canvas, function(json) {
             // convert the json object into string representation
@@ -376,20 +374,20 @@
     // export and submit form
     function updateTopology() {
         alert('You may need to redeploy this topology after this update!');
-	    exportJson();
-	    jQuery('#topoForm').submit();
+        exportJson();
+        jQuery('#topoForm').submit();
     }
 
     // export and submit form
     function updateDebug() {
-	    jQuery('#json').val(jQuery('#debug').val());
-	    jQuery('#topoForm').submit();
+        jQuery('#json').val(jQuery('#debug').val());
+        jQuery('#topoForm').submit();
     }
 
     // export and submit form
     function saveTopology() {
-	    exportJson();
-	    jQuery('#topoForm').submit();
+        exportJson();
+        jQuery('#topoForm').submit();
     }
 
     // simple validation against Junos password rules
@@ -470,13 +468,14 @@
     }
 
     function filterCompanionSelect(filter_string, select_name) {
+        var filter_regex = RegExp(filter_string, 'i');
         var companion_select = jQuery('#' + select_name);
         companion_select.empty();
         companion_select.append('<option value="0">None</option>');
         for (index in images) {
             var image_name = images[index]["fields"]["name"];
             var image_id = images[index]["pk"];
-            if (image_name.match(filter_string)) {
+            if (image_name.match(filter_regex)) {
                 companion_select.append('<option value="' + image_id + '">' + image_name + '</option>');
             }
         }
@@ -490,11 +489,12 @@
 
             if(images[i]["pk"] == companion_image) {
                 companion_type = images[i]["fields"]["type"];
-                console.log('found it');
                 console.log(companion_type);
                 break;
             }
         }
+        // set the companion type here to be used later
+        jQuery('#topoIconVFPCType').val(companion_type);
 
         for (v=0;v<vm_types.length;v++) {
             vm_type = vm_types[v];
@@ -502,11 +502,11 @@
             if (vm_type.name == companion_type) {
                 console.log('found it');
                 var companion = eval("new " + vm_type.js + "()");
-                var cpu = companion.VCPU;
-                var ram = companion.VRAM;
-                console.log(cpu);
-                jQuery('#topoIconVFPCCpu').val(cpu);
-                jQuery('#topoIconVFPCRam').val(ram);
+
+                jQuery('#topoIconVFPCCpu').val(companion.VCPU);
+                jQuery('#topoIconVFPCRam').val(companion.VRAM);
+                jQuery('#topoIconVFPCJs').val(companion.NAME);
+
                 break;
             }
         }
@@ -591,9 +591,9 @@
 
     function showDebug() {
         currentSelection = "debug";
-	    exportJson();
-	    jQuery('#debug').val("");
-	    jQuery('#debug').val(jQuery('#json').val());
+        exportJson();
+        jQuery('#debug').val("");
+        jQuery('#debug').val(jQuery('#json').val());
         showOverlay('#jsonDebug');
     }
 
@@ -722,14 +722,14 @@
     // also creates the instance array variable on page context
     function loadTopology() {
         var test = jQuery('#json').val();
-    	if ((test != null) && (test != "")) {
-    	    console.log("test is :" + test + ":");
-		    // var jsonTxt = JSON.stringify(test, null, 2);
-		    var json = eval(test);
-		    reader = new draw2d.io.json.Reader();
-		    reader.unmarshal(canvas, json);
-		}
-	}
+        if ((test != null) && (test != "")) {
+            console.log("test is :" + test + ":");
+            // var jsonTxt = JSON.stringify(test, null, 2);
+            var json = eval(test);
+            reader = new draw2d.io.json.Reader();
+            reader.unmarshal(canvas, json);
+        }
+    }
 
     jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
@@ -754,7 +754,7 @@
         }));
 
 
-	    canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
+        canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
 
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToCenterEditPolicy());
@@ -1018,6 +1018,8 @@
                         <option value="8192" selected>8192</option>
                         <option value="16384">16384</option>
                     </select> MB
+                    <input type="hidden" id="topoIconVFPCJs" value=""/>
+                    <input type="hidden" id="topoIconVFPCType" value=""/>
                 </td>
             </tr>
             </tbody>
@@ -1067,7 +1069,7 @@
                 </td>
                 <td>
                     <input type="text" style="width: 150px;" id="externalCloudName" value="{{ external_bridge }}"/>
-		    &nbsp;
+            &nbsp;
                     <input type="button" value="Add External Bridge" title="Add Existing Bridge"
                            onclick="javascript: addExternalCloud()"/>
                 </td>
