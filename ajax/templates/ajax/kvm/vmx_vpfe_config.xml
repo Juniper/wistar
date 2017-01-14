@@ -47,7 +47,7 @@
     <interface type='bridge'>
       <mac address='{{ interface.mac }}'/>
       <source bridge='{{ interface.bridge }}'/>
-      <model type='virtio'/>
+      <model type='{{ interface.type }}'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
     </interface>
     {% endfor %}
@@ -55,7 +55,7 @@
     <interface type='bridge'>
       <mac address='{{ interface.mac }}'/>
       <source bridge='{{ interface.bridge }}'/>
-      <model type='virtio'/>
+      <model type='{{ interface.type }}'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
     </interface>
     {% endfor %}
