@@ -326,9 +326,17 @@ def undefine_domain(domain_id):
     try:
         domain = get_domain_by_uuid(domain_id)
 
+        # check if the domain has been paused!
         if domain.hasManagedSaveImage(0):
-            logger.debug("Removing saved state for domain " + domain.name())
+            logger.info("Removing saved state for domain " + domain.name())
             domain.managedSaveRemove(0)
+
+        if domain.hasCurrentSnapshot():
+            logger.info("Removing snapshots for domain " + domain.name())
+            snapshots = domain.snapshotListNames()
+            for s in snapshots:
+                snap = domain.snapshotLookupByName(s)
+                snap.delete()
 
         if domain.info()[0] == 1:
             domain.destroy()

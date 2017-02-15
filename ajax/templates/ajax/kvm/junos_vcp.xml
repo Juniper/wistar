@@ -38,7 +38,7 @@
         </disk>
         {% if secondary_disk_path|length > 0 %}
         <disk type='file' device='disk'>
-            <driver name='qemu' type='{{ device.secondaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <driver name='qemu' type='{{ device.secondaryDiskParams.qemu_type }}' cache='{{ vm_env.cache }}' io='{{ vm_env.io }}'/>
             <source file='{{ secondary_disk_path }}'/>
             <target dev='hdb' bus='{{ device.secondaryDiskParams.bus_type }}'/>
             <address type='drive' controller='0' bus='0' target='0' unit='1'/>
@@ -46,7 +46,7 @@
         {% endif %}
         {% if tertiary_disk_path|length > 0 %}
         <disk type='file' device='disk'>
-            <driver name='qemu' type='{{ device.tertiaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <driver name='qemu' type='{{ device.tertiaryDiskParams.qemu_type }}' cache='{{ vm_env.cache }}' io='{{ vm_env.io }}'/>
             <source file='{{ tertiary_disk_path }}'/>
             <target dev='hdc' bus='{{ device.tertiaryDiskParams.bus_type }}'/>
             <address type='drive' controller='0' bus='1' target='0' unit='0'/>

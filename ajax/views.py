@@ -254,6 +254,7 @@ def get_junos_startup_state(request):
     response_data = dict()
     response_data["console"] = False
     response_data["power"] = False
+    response_data["network"] = False
 
     required_fields = set(['name'])
     if not required_fields.issubset(request.POST):
@@ -263,9 +264,14 @@ def get_junos_startup_state(request):
     if configuration.deployment_backend == "kvm" and libvirtUtils.is_domain_running(name):
         # topologies/edit will fire multiple calls at once
         # let's just put a bit of a breather between each one
-        time.sleep(random.randint(0, 10) * .10)
         response_data["power"] = True
-        response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
+        if "ip" in request.POST:
+            # this instance is auto-configured, so we can just check for IP here
+            response_data["network"] = osUtils.check_ip(request.POST["ip"])
+        else:
+            time.sleep(random.randint(0, 10) * .10)
+
+            response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
 
     elif configuration.deployment_backend == "openstack":
 
@@ -280,6 +286,7 @@ def get_linux_startup_state(request):
     response_data = dict()
     response_data["console"] = False
     response_data["power"] = False
+    response_data["network"] = False
 
     required_fields = set(['name'])
     if not required_fields.issubset(request.POST):
@@ -296,7 +303,11 @@ def get_linux_startup_state(request):
         if libvirtUtils.is_domain_running(name):
             time.sleep(random.randint(0, 10) * .10)
             response_data["power"] = True
-            response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
+            if "ip" in request.POST:
+                # this instance is auto-configured, so we can just check for IP here
+                response_data["network"] = osUtils.check_ip(request.POST["ip"])
+            else:
+                response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
@@ -603,9 +614,14 @@ def check_ip(request):
 
 
 def get_available_ip(request):
-    # just grab the next available IP
-    logger.debug("getting IPS")
-    all_used_ips = wistarUtils.get_used_ips()
+    # just grab the next available IP that is not currently
+    # reserved via DHCP. This only get's called from topologies/new.html
+    # when we've allocated all the IPs to various topologies
+    # this allows new topologies to be built with overlapping
+    # IP addresses. This makes the attempt to use 'old' ips that
+    # are at least not still in use.
+    logger.info("getting ips that are currently reserved via DHCP")
+    all_used_ips = wistarUtils.get_dhcp_reserved_ips()
     logger.debug(all_used_ips)
     next_ip = wistarUtils.get_next_ip(all_used_ips, 2)
     logger.debug(next_ip)
@@ -880,7 +896,9 @@ def inline_deploy_topology(config):
     # possible values for 'cache' are 'none' (default) and 'writethrough'. Use writethrough if you want to
     # mount the instances directory on a glusterFs or tmpfs volume. This might make sense if you have tons of RAM
     # and want to alleviate IO issues. If in doubt, leave it as 'none'
-    vm_env["cache"] = "none"
+    vm_env["cache"] = configuration.filesystem_cache_mode
+    vm_env["io"] = configuration.filesystem_io_mode
+
     if osUtils.check_is_linux() and osUtils.check_is_ubuntu():
         vm_env["emulator"] = "/usr/bin/kvm-spice"
         vm_env["pcType"] = "pc"
@@ -1114,10 +1132,15 @@ def execute_linux_automation(request):
         result_string += "==================================="
 
         for device in config["devices"]:
-            if device["type"] == "linux":
+            if device["type"] == "linux" or "ubuntu" in device["type"]:
                 logger.debug("running automation cmd on " + device["ip"])
                 # host, username, password, cli
-                output = linuxUtils.execute_cli(device["ip"], device["user"], device["password"], cli)
+                try:
+                    output = linuxUtils.execute_cli(device["ip"], device["user"], device["password"], cli)
+                except Exception as e:
+                    logger.info("Could not execute linux cli on host: %s" % device["ip"])
+                    output = str(e)
+
                 logger.debug("got output: " + output)
                 result_string += "\n\n"
                 result_string += "Instance: " + device["label"] + "\n"
@@ -1154,8 +1177,11 @@ def execute_junos_automation(request):
         result_string += "==================================="
 
         for device in config["devices"]:
-            if "junos" in device["type"]:
+            logger.debug("Child status is: " + str(device["isChild"]))
+            # only execute cli commands on parent VMs (REs in this case)
+            if "junos" in device["type"] and device["isChild"] is False:
                 logger.debug("running automation cmd on " + device["ip"])
+
                 # host, username, password, cli
                 output = junosUtils.execute_cli(device["ip"], device["user"], device["password"], cli)
                 logger.debug("got output: " + output)

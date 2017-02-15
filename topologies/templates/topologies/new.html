@@ -72,6 +72,7 @@
     var images = $.parseJSON('{{ image_list_json|safe }}');
 
     var allocated_ips = $.parseJSON('{{ allocated_ips|safe }}');
+    var dhcp_reservations = $.parseJSON('{{ dhcp_reservations|safe }}');
 
     // check if an IP address is currently available
     function checkIp() {
@@ -104,19 +105,13 @@
     // FIXME - does not try to wrap around subnets
     // FIXME - always assume KVM default subnet
     // FIXME - doesn't account for IPs used in this topology already!
-    function nextIpOLD() {
-        alert(allocated_ips);
-        var ipBox = jQuery('#topoIconIp');
-        var ip = ipBox.val();
+    function next_unreserved_ip() {
 
-        var octets = ip.split('.');
+        default_octets = '{{ global_config.management_prefix }}'.split('.');
+        d = default_octets;
+        octets = [d[0], d[1], d[2], ''];
 
-        // a little magic number safety
-        if (octets.length != 4) {
-            default_octets = '{{ configuration.management_prefix }}'.split('.');
-            d = default_octets;
-            octets = [d[0], d[1], d[2], ''];
-        }
+        console.log(octets);
 
         var url = "/ajax/nextIp/";
 
@@ -124,16 +119,20 @@
             data = eval(response);
 
             if (data["result"] == false) {
-                console.log("ip is not currently pingable");
+                console.log('No more IPs allowed!');
+                return null;
             } else {
+                console.log(data);
                 octets[3] = data["result"];
-                ipBox.val(octets.join('.'));
+                console.log(octets);
+                return octets.join('.');
             }
         };
         jQuery.get(url, success);
     }
 
     var ip_floor = 2;
+    var dhcp_floor = ip_floor;
 
     function nextIp() {
 
@@ -143,6 +142,16 @@
                 return '{{ global_config.management_prefix }}' + i;
             } else {
                 console.log(i + ' is taken');
+            }
+        }
+        alert("Out of usable IP addresses! You should probably delete some old topologies! \
+        Returning overlapping non reserved IP address");
+        for(i=dhcp_floor;i<255;i++) {
+            if ($.inArray(i, dhcp_reservations) < 0) {
+                dhcp_floor = i + 1;
+                return '{{ global_config.management_prefix }}' + i;
+            } else {
+                console.log(i + ' is currently reserved!');
             }
         }
     }
@@ -184,6 +193,11 @@
     // add icon to the topology with the indicated values
     function addIcon() {
         var ip = nextIp();
+
+        if (ip == null) {
+            return;
+        }
+
         var user = jQuery('#topoIconUser').val();
         var pw = jQuery('#topoIconPass').val();
         var name = jQuery('#topoIconName').val();
@@ -353,6 +367,7 @@
             iconOffset += 110;
         }
         canvas.add(l, lastX, lastY);
+        hideOverlay("#add_label_form");
     }
 
     // export topology as JSON and stuff it back in the
@@ -582,6 +597,7 @@
         manuallyTogglePanel('linuxIconEditor', 'none');
         manuallyTogglePanel('connectionEditor', 'none');
         manuallyTogglePanel('labelEditor', 'none');
+        manuallyTogglePanel('figureEditor', 'none');
     }
 
     function hideSelection() {
@@ -713,6 +729,35 @@
             r.toBack();
     }
 
+    function loadFigureEditor(figureId) {
+        var isConnection = false;
+
+        if (currentSelection !== "figureEditor") {
+            hideAllEditors();
+            manuallyTogglePanel('figureEditor', '');
+            currentSelection = "figureEditor";
+        }
+
+        jQuery('#selectedObject').val(figureId);
+        var instance = canvas.getFigure(figureId);
+        if (instance == null) {
+            console.log('getting line');
+            instance = canvas.getLine(figureId);
+            isConnection = true;
+        }
+
+        var figureColor = instance.getColor().hashString;
+        if (figureColor == null) {
+            figureColor = "none";
+        }
+        console.log(figureColor);
+        jQuery('#figureColor').val(figureColor);
+        jQuery('#figureStroke').val(instance.getStroke());
+        if (isConnection == false) {
+            jQuery('#figureBackgroundColor').val(instance.getBackgroundColor().hashString);
+        }
+    }
+
     // are we editing an existing topology?
     function isNewTopology() {
         return true;
@@ -753,12 +798,10 @@
                createConnection: createConnection
         }));
 
-
         canvas.installEditPolicy(new draw2d.policy.canvas.FadeoutDecorationPolicy());
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToGeometryEditPolicy(10));
 
         canvas.installEditPolicy(new draw2d.policy.canvas.SnapToCenterEditPolicy());
-
 
         //canvas.addSelectionListener(new topologySelectionListener());
         var tsl = new topologySelectionListener();
@@ -773,6 +816,7 @@
 {% endblock %}
 {% block content %}
     <table border="0">
+        <tbody>
         <tr>
             <td id="newTopologyMenu" colspan="2">
                 <ul>
@@ -791,10 +835,35 @@
                                 Add Bridge
                             </a>
                         </li>
-                        <li>
-                            <a href="#" onclick="javascript: showOverlay('#add_label_form');">
-                                Add Label
-                            </a>
+                        <li id="drawing_tools">
+                            Drawing Tools
+                            <ul class="header_submenu">
+                                <li>
+                                    <a href="#" onclick="javascript: showOverlay('#add_label_form');">
+                                        Add Label
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" onclick="javascript: addCircle();">
+                                        Add Circle
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" onclick="javascript: addRectangle();">
+                                        Add Rectangle
+                                    </a>
+                                </li>
+                            </ul>
+                            <script>
+                                jQuery("#drawing_tools").hover(
+                                    function() {
+                                        $(this).children('.header_submenu').slideDown(150);
+                                    },
+                                    function() {
+                                        $(this).children('.header_submenu').slideUp(150);
+                                    }
+                                );
+                            </script>
                         </li>
                         <li>
                             <a href="#"  title="Remove selected Object from Topology"
@@ -802,10 +871,47 @@
                                 Delete Object
                             </a>
                         </li>
-
                 </ul>
             </td>
         </tr>
+        </tbody>
+        <tbody  id="figureEditor" style="display: none;">
+            <tr>
+                <td>
+                    <ul>
+                        <li>
+                            Line Color:
+                            &nbsp;
+                            <input type="color" id="figureColor" value="#445E88"
+                               onchange="javascript: setFigureColor(this.value);"/>
+                        </li>
+                        <li>
+                            Stoke:
+                            &nbsp;
+                            <select id="figureStroke"
+                                    onchange="javascript: setFigureStroke(this.value);">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                   f             <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                        </li>
+                        <li>
+                           Background Color:
+                           &nbsp;
+                            <input type="color" id="figureBackgroundColor" value="#445E88"
+                                   onchange="javascript: setFigureBackgroundColor(this.value);"/>
+                        </li>
+                        <li>
+                            <a href="#" onclick="javascript: hideSelection()">X</a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+
         <tr>
             <td style="vertical-align: top; padding-left: 2px; background-color: #fff;">
                 <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});

@@ -19,20 +19,38 @@
 
 # some basic configuration parameters for wistar
 
-# images director
-user_images_dir = "/opt/wistar/user_images"
-
-
 # shortcut to fill in default instance password in 'New VM' screen
 # Make sure this meets the complexity requirements for your VMs!
 # i.e. for junos you need 3 of these 4: upper / lower / special / number
 default_instance_password = 'Clouds123'
+
+# user that will be configured via cloud-init - override this to your username if desired!
+ssh_user = "wistar"
+# this key will be added to cloud-init enabled hosts in the user-data file
+# by default this is a dummy key! Replace this with your own key generated from 'ssh-keygen'
+ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDgjgNd0Lej/1Rpcc9GEEoVV0RVbNW8TPvUzJzOTNZ76aoe83QZnUI5jXJLLg44j/J/vlUyFKEoPQokpezAUBtIyiglhPC0XN3Yxox82vtQxHItQenc8GAYvo6s8kvbDW0FX4xSfo9p3/nUlGrrCPYGrRCUaji76Xk4TQNW6aUVJYp3ReboZhy+3HO/BoljopMoKZF5OxAWhgJZ/+h+ADeoMw68V+sW/t/10yt84GEQ3TBNtSM5wSUh8u+YoPG13Kz36HsMa7gZbp8AABMSrvUys494IOyeQEJUV96bn1V1vyaVMxv/hI0/ektz56R4rwcIVw3V0NXholEPmBXDhWW3 wistar@dummykey"
+# Registered VM Image types
+# this list will register the javascript VM configuration settings in
+# common/static/js/vm_types
+
+# images director
+user_images_dir = "/opt/wistar/user_images"
 
 # deployment backend to use!
 # defaults to kvm
 # options are 'openstack', 'vagrant', 'virtualbox'
 deployment_backend = 'kvm'
 # deployment_backend = 'openstack'
+
+# KVM configuration
+# cache mode, controls the cache mode:
+# https://www.suse.com/documentation/sles11/book_kvm/data/sect1_1_chapter_book_kvm.html
+# some filesystems do not support cache='none'
+# valid options are 'none', 'writeback', 'writethrough', 'unsafe', 'directsync'
+# it's possible there is some performance gain with 'none' and 'native' but this is not supported on all platforms!
+filesystem_cache_mode = 'writethrough'
+# io mode can be 'native' or 'threads'
+filesystem_io_mode = 'threads'
 
 # Openstack configuration
 # show openstack options even if not the primary deployment option
@@ -70,14 +88,7 @@ management_gateway = '192.168.122.1'
 # wistar cloud init seeds director / temp directory
 seeds_dir = "/opt/wistar/seeds/"
 
-# user that will be configured via cloud-init - override this to your username if desired!
-ssh_user = "wistar"
-# this key will be added to cloud-init enabled hosts in the user-data file
-# by default this is a dummy key! Replace this with your own key generated from 'ssh-keygen'
-ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDgjgNd0Lej/1Rpcc9GEEoVV0RVbNW8TPvUzJzOTNZ76aoe83QZnUI5jXJLLg44j/J/vlUyFKEoPQokpezAUBtIyiglhPC0XN3Yxox82vtQxHItQenc8GAYvo6s8kvbDW0FX4xSfo9p3/nUlGrrCPYGrRCUaji76Xk4TQNW6aUVJYp3ReboZhy+3HO/BoljopMoKZF5OxAWhgJZ/+h+ADeoMw68V+sW/t/10yt84GEQ3TBNtSM5wSUh8u+YoPG13Kz36HsMa7gZbp8AABMSrvUys494IOyeQEJUV96bn1V1vyaVMxv/hI0/ektz56R4rwcIVw3V0NXholEPmBXDhWW3 wistar@dummykey"
-# Registered VM Image types
-# this list will register the javascript VM configuration settings in
-# common/static/js/vm_types
+
 vm_image_types = [
     {
         "name": "blank",

@@ -20,6 +20,7 @@
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 
@@ -259,6 +260,18 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["interfaces"] = []
 
             device["vncPort"] = libvirtUtils.get_next_domain_vnc_port(device_index)
+
+            # is this a child VM?
+            # children will *always* have a parent attribute set in their userdata
+            parent_id = user_data.get("parent", "")
+            logger.debug("Found parent_id of: %s for device: %s" % (parent_id, device["name"]))
+            if parent_id == "":
+                logger.debug("setting isChild to False")
+                device["isChild"] = False
+            else:
+                logger.debug("setting isChild to True")
+
+                device["isChild"] = True
 
             device_index += 1
 
@@ -602,10 +615,11 @@ def get_used_ips():
     :return: list of used ips
     """
 
-    all_ips = set()
+    all_ips = list()
 
     topologies = Topology.objects.all()
 
+    ip_pattern = '\d+\.\d+\.\d+\.\d+'
     for topology in topologies:
         json_data = json.loads(topology.json)
         for json_object in json_data:
@@ -613,8 +627,30 @@ def get_used_ips():
             if "userData" in json_object and json_object["userData"] is not None and "ip" in json_object["userData"]:
                 ud = json_object["userData"]
                 ip = ud["ip"]
+                if re.match(ip_pattern, ip) is None:
+                    logger.info('Found an invalid IP on topology: %s' % topology.id)
+                    logger.info("Invalid IP is %s" % ip)
+                    logger.info(type(ip))
+                    continue
+
                 last_octet = ip.split('.')[-1]
-                all_ips.add(int(last_octet))
+                logger.debug(topology.id)
+                logger.info("'%s'" % ip)
+                logger.info(last_octet)
+                all_ips.append(int(last_octet))
+
+    dhcp_leases = get_dhcp_reserved_ips()
+    all_ips.extend(dhcp_leases)
+
+    logger.debug("sorting and returning all_ips")
+    all_ips.sort()
+    return all_ips
+
+
+def get_dhcp_reserved_ips():
+    # pull current ips out of dhcp reservations and leases files
+    # return as a single list
+    all_ips = list()
 
     # let's also grab current dhcp leases as well
     dhcp_leases = osUtils.get_dhcp_leases()
@@ -622,7 +658,7 @@ def get_used_ips():
         ip = str(lease["ip-address"])
         logger.debug("adding active lease %s" % ip)
         last_octet = ip.split('.')[-1]
-        all_ips.add(int(last_octet))
+        all_ips.append(int(last_octet))
 
     # let's also grab current dhcp reservations
     dhcp_leases = osUtils.get_dhcp_reservations()
@@ -630,12 +666,9 @@ def get_used_ips():
         ip = str(lease["ip-address"])
         logger.debug("adding active reservation %s" % ip)
         last_octet = ip.split('.')[-1]
-        all_ips.add(int(last_octet))
+        all_ips.append(int(last_octet))
 
-    logger.debug("sorting and returning all_ips")
-    all_ips_list = list(all_ips)
-    all_ips_list.sort()
-    return all_ips_list
+    return all_ips
 
 
 def get_used_ips_from_topology_json(json_string):

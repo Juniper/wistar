@@ -72,6 +72,7 @@ def new(request):
     image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
 
     currently_allocated_ips = wistarUtils.get_used_ips()
+    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
 
     if configuration.deployment_backend == "openstack":
         external_bridge = configuration.openstack_external_network
@@ -82,6 +83,7 @@ def new(request):
                'image_list_json': image_list_json,
                'external_bridge': external_bridge,
                'allocated_ips': currently_allocated_ips,
+               'dhcp_reservations': dhcp_reservations
                }
     return render(request, 'topologies/new.html', context)
 

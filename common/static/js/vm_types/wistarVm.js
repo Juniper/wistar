@@ -320,5 +320,12 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 	},
 	toBack: function(){
 	    return;
-	}
+	},
+	isAutoConfigured: function() {
+	    if (this.CONFIG_DRIVE_SUPPORT || this.CLOUD_INIT_SUPPORT) {
+	        return true;
+	    } else {
+	        return false;
+	    }
+	},
 });

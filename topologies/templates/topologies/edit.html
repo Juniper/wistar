@@ -137,6 +137,11 @@
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
             var figure = canvas.getFigure(instance["id"]);
+            var ud = figure.getUserData()
+            if ("parent" in ud) {
+                console.log("skipping check on child instance");
+                continue;
+            }
             if (instance["type"].includes('junos') || figure instanceof draw2d.shape.node.linux) {
                 updateBootState(instance["id"], instance["name"]);
             } else {
@@ -229,12 +234,20 @@
             'name' : domain
         };
 
+        if (figure.isAutoConfigured()) {
+            params['ip'] = figure.getIp();
+        }
+
         var success = function(response) {
             data = eval(response);
             var state = "down";
+
             if (data["power"] == false) {
                 // domain isn't running ...
                 state = "down";
+            } else if (data["network"] == true) {
+                console.log('network is up');
+                state = "up";
             } else {
                 // domain is running, but do we have console?
                 if(data["console"]) {
@@ -1370,32 +1383,7 @@
         jQuery('#figureBackgroundColor').val(instance.getBackgroundColor().hashString);
     }
 
-    function setFigureColor(newColor) {
-        console.log(newColor);
-        var figureId = jQuery('#selectedObject').val();
-        var figure = canvas.getFigure(figureId);
-        figure.setColor(newColor);
-    }
 
-    function setFigureStroke(newStroke) {
-        console.log(newStroke);
-        var figureId = jQuery('#selectedObject').val();
-        var figure = canvas.getFigure(figureId);
-        figure.setStroke(newStroke);
-    }
-
-    function setFigureBackgroundColor(newColor) {
-        console.log(newColor);
-        var figureId = jQuery('#selectedObject').val();
-        var figure = canvas.getFigure(figureId);
-        figure.setBackgroundColor(newColor);
-    }
-
-    function setFigureToBack() {
-        var figureId = jQuery('#selectedObject').val();
-        var figure = canvas.getFigure(figureId);
-        figure.toBack();
-    }
 
     // fixme - this will be broken for anything other than vmx
     function loadConnectionEditor(figureId) {
@@ -2465,8 +2453,9 @@
                     <tr>
                         <td colspan="2" style="text-align: right">
                             <a href="#"
-                               onclick="javascript: closeLinuxAutomationOverlay()">
-                                Close
+                               onclick="javascript: closeLinuxAutomationOverlay()"
+                                title="Close">
+                                X
                             </a>
                         </td>
                     </tr>
@@ -2493,8 +2482,9 @@
                 <table style="margin: auto; width: 50%; background-color: #ffffff; padding: 5px; margin-top: 50px">
                     <tr>
                         <td colspan="2" style="text-align: right">
-                            <a href="#" onclick="javascript: closeJunosAutomationOverlay()">
-                                Close
+                            <a href="#" onclick="javascript: closeJunosAutomationOverlay()"
+                            title="Close">
+                                X
                             </a>
                         </td>
                     </tr>

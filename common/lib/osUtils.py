@@ -80,7 +80,7 @@ def check_ip(ip_address):
 
     rv = os.system("ping -c 1 -q %s " % ip_address)
     if rv == 0:
-        logger.debug("IP Exists and is pingable")
+        # logger.debug("IP Exists and is pingable")
         return True
     else:
         return False

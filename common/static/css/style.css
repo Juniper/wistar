@@ -247,11 +247,32 @@ p {
     list-style: none;
 }
 
-#newTopologyMenu ul li {
-    display: inline;
+#newTopologyMenu > ul > li {
+    display: inline-block;
     padding-right: 150px;
+    position: relative;
 }
 
+#figureEditor ul {
+    list-style: none;
+}
+
+#figureEditor ul li {
+    display: inline-block;
+    padding-right: 150px;
+    position: relative;
+}
+
+/*
+#header_menu > ul > li {
+    display: inline-block;
+    padding-left: 10px;
+    padding-right: 50px;
+    position: relative;
+    width: 150px;
+    color: #fff;
+}
+*/
 /** notifications **/
 .messages {
     margin-left: 25px;

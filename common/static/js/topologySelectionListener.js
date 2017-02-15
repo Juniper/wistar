@@ -49,9 +49,32 @@ var topologySelectionListener = Class.extend({
 	                console.log("click on unknown object " + figure.NAME);
 	                loadFigureEditor(figure.getId());
 	            }
+
 	        } else {
-	            hideSelection();
+	            // new topology allow changing colors on some things!
+	            /*
+	            if ((figure instanceof draw2d.Connection) ||
+                    (figure instanceof draw2d.shape.basic.Circle) ||
+                    (figure instanceof draw2d.shape.basic.Rectangle))
+                    */
+                    if ((figure instanceof draw2d.Connection) ||
+                     (figure instanceof draw2d.shape.basic.Circle) ||
+                    (figure instanceof draw2d.shape.basic.Rectangle))
+	            {
+	                if (figure instanceof draw2d.shape.composite.Group) {
+	                    // let's not allow editing of multi-VM
+	                    hideSelection();
+	                } else {
+	                    loadFigureEditor(figure.getId());
+	                }
+	            } else {
+	                console.log('hiding');
+	                hideSelection();
+	            }
 	        }
-        }
+        } else {
+            alert('here');
+	        hideSelection();
+	    }
     }
 });

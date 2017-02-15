@@ -23,14 +23,14 @@
     <devices>
         <emulator>{{ vm_env.emulator }}</emulator>
         <disk type='file' device='disk'>
-            <driver name='qemu' type='qcow2' cache='{{ vm_env.cache }}' io='native'/>
+            <driver name='qemu' type='qcow2' cache='{{ vm_env.cache }}' io='{{ vm_env.io }}'/>
             <source file='{{ instancePath }}'/>
             <target dev='hda' bus='ide'/>
             <address type='drive' controller='0' bus='0' target='0' unit='0'/>
         </disk>
         {% if secondary_disk_path|length > 0 %}
         <disk type='file' device='disk'>
-            <driver name='qemu' type='{{ device.secondaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <driver name='qemu' type='{{ device.secondaryDiskParams.qemu_type }}' cache='{{ vm_env.cache }}' io='{{ vm_env.io }}'/>
             <source file='{{ secondary_disk_path }}'/>
             {% if device.secondaryDiskParams.bus_type == "usb" %}
             <target dev='sda' bus='{{ device.secondaryDiskParams.bus_type }}'/>
@@ -42,7 +42,7 @@
         {% endif %}
         {% if tertiary_disk_path|length > 0 %}
         <disk type='file' device='disk'>
-            <driver name='qemu' type='{{ device.tertiaryDiskParams.qemu_type }}' cache='none' io='native'/>
+            <driver name='qemu' type='{{ device.tertiaryDiskParams.qemu_type }}' cache='{{ vm_env.cache }}' io='{{ vm_env.io }}'/>
             <source file='{{ tertiary_disk_path }}'/>
             {% if device.tertiaryDiskParams.bus_type == "usb" %}
             <target dev='sdb' bus='{{ device.tertiaryDiskParams.bus_type }}'/>

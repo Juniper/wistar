@@ -3,6 +3,8 @@ draw2d.shape.node.vpfe = draw2d.shape.node.wistarSetChild.extend({
     VCPU: 3,
     VRAM: 8192,
     INTERFACE_PREFIX: "ge-0/0/",
+    INTERFACE_TYPE: "virtio",
+    MANAGEMENT_INTERFACE_TYPE: "virtio",
     MANAGEMENT_INTERFACE_PREFIX: "fxp",
     MANAGEMENT_INTERFACE_INDEX: 0,
     DOMAIN_CONFIGURATION_FILE: "vmx_vpfe_config.xml",

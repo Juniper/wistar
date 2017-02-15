@@ -309,3 +309,39 @@
         var new_zoom = current_zoom + 0.1;
         canvas.setZoom(new_zoom);
     }
+
+    function setFigureColor(newColor) {
+        console.log(newColor);
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        if (figure == null) {
+            figure = canvas.getLine(figureId);
+        }
+        figure.setColor(newColor);
+    }
+
+    function setFigureStroke(newStroke) {
+        console.log(newStroke);
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        if (figure == null) {
+            figure = canvas.getLine(figureId);
+        }
+        figure.setStroke(newStroke);
+    }
+
+    function setFigureBackgroundColor(newColor) {
+        console.log(newColor);
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        if (figure == null) {
+            return;
+        }
+        figure.setBackgroundColor(newColor);
+    }
+
+    function setFigureToBack() {
+        var figureId = jQuery('#selectedObject').val();
+        var figure = canvas.getFigure(figureId);
+        figure.toBack();
+    }
