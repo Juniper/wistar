@@ -382,7 +382,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     interface["bridge_preexists"] = False
 
                     if target_uuid in internal_bridges:
-                        bridge_name = "t" + str(topology_id) + "_private_br" + str(internal_bridges.index(target_uuid))
+                        bridge_name = "t" + str(topology_id) + "_p_br" + str(internal_bridges.index(target_uuid))
                         interface["bridge"] = bridge_name
                     elif target_uuid in external_bridges.keys():
                         bridge_name = external_bridges[target_uuid]
@@ -420,7 +420,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     interface["mac"] = generate_next_mac(topology_id)
 
                     if source_uuid in internal_bridges:
-                        bridge_name = "t" + str(topology_id) + "_private_br" + str(internal_bridges.index(source_uuid))
+                        bridge_name = "t" + str(topology_id) + "_p_br" + str(internal_bridges.index(source_uuid))
                         interface["bridge"] = bridge_name
                     if source_uuid in external_bridges.keys():
                         bridge_name = external_bridges[source_uuid]
@@ -621,7 +621,13 @@ def get_used_ips():
 
     ip_pattern = '\d+\.\d+\.\d+\.\d+'
     for topology in topologies:
-        json_data = json.loads(topology.json)
+        try:
+            json_data = json.loads(topology.json)
+        except ValueError as ve:
+            logger.error(ve)
+            logger.error("Could not parse saved topology with id: %s" % topology.id)
+            continue
+
         for json_object in json_data:
 
             if "userData" in json_object and json_object["userData"] is not None and "ip" in json_object["userData"]:

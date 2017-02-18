@@ -329,8 +329,16 @@
     }
 
     // export and submit form
+
     function updateDebug() {
-	    jQuery('#json').val(jQuery('#debug').val());
+        var j = jQuery('#debug').val()
+        try {
+            JSON.parse(j);
+        } catch (e) {
+            alert('Refusing to save invalid JSON!');
+            return false;
+        }
+	    jQuery('#json').val(j);
 	    jQuery('#topoForm').submit();
     }
 

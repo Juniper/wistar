@@ -192,6 +192,9 @@ def clone(request, topo_id):
     # also grab all the ips from the currently cloned topology
     currently_allocated_ips = wistarUtils.get_used_ips()
     cloned_ips = wistarUtils.get_used_ips_from_topology_json(topology.json)
+
+    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+
     currently_allocated_ips += cloned_ips
 
     currently_allocated_ips.sort()
@@ -205,6 +208,7 @@ def clone(request, topo_id):
                'image_list_json': image_list_json,
                'external_bridge': external_bridge,
                'allocated_ips': currently_allocated_ips,
+               'dhcp_reservations': dhcp_reservations,
                'topo': topology
                }
 

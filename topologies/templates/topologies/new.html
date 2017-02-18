@@ -390,6 +390,11 @@
     function updateTopology() {
         alert('You may need to redeploy this topology after this update!');
         exportJson();
+        var j = jQuery("#json").val();
+        if (j == "[]") {
+            alert('Refusing to update blank topology!');
+            return;
+        }
         jQuery('#topoForm').submit();
     }
 
@@ -402,6 +407,11 @@
     // export and submit form
     function saveTopology() {
         exportJson();
+        var j = jQuery("#json").val();
+        if (j == "[]") {
+            alert('Refusing to save blank topology!');
+            return;
+        }
         jQuery('#topoForm').submit();
     }
 
