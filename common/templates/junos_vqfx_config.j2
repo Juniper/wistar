@@ -13,7 +13,9 @@ system {
         }
     }
     services {
-        ssh;
+        ssh {
+            root-login allow;
+        }
         netconf {
             ssh;
         }

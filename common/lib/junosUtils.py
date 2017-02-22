@@ -109,6 +109,7 @@ def set_interface_ip_address(device_ip, pw, name, interface_ip):
 
 # log into each device, get the list of em interfaces
 # create the corresponding ge-0/0/X interfaces
+# only necessary for legacy phase 1 images
 # then netconf in and configure them with appropriate mac appropriately
 def config_junos_interfaces(ip, user, pw):
     interfaces = {}
