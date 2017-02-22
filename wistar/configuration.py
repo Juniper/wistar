@@ -136,6 +136,11 @@ vm_image_types = [
         "js": "draw2d.shape.node.vriot",
     },
     {
+        "name": "junos_vrr",
+        "description": "Junos Virtual Route Reflector",
+        "js": "draw2d.shape.node.vrr",
+    },
+    {
         "name": "junos_vqfx_cosim",
         "description": "Junos vQFX PFE",
         "js": "draw2d.shape.node.vqfxCosim",
