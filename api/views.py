@@ -478,6 +478,7 @@ def export_topology_json(request):
                 info_data["type"] = "wistar.info"
                 info_data["name"] = topology.name
                 info_data["description"] = topology.description
+                info_data["topology_id"] = topology.id
                 json_data.append(info_data)
                 return HttpResponse(json.dumps(json_data), content_type="application/json")
 

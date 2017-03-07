@@ -1,40 +1,11 @@
-#
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-#
-# Copyright (c) 2015 Juniper Networks, Inc.
-# All rights reserved.
-#
-# Use is subject to license terms.
-#
-# Licensed under the Apache License, Version 2.0 (the ?License?); you may not
-# use this file except in compliance with the License. You may obtain a copy of
-# the License at http://www.apache.org/licenses/LICENSE-2.0.
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
 # some basic configuration parameters for wistar
-
-# shortcut to fill in default instance password in 'New VM' screen
-# Make sure this meets the complexity requirements for your VMs!
-# i.e. for junos you need 3 of these 4: upper / lower / special / number
-default_instance_password = 'Clouds123'
-
-# user that will be configured via cloud-init - override this to your username if desired!
-ssh_user = "wistar"
-# this key will be added to cloud-init enabled hosts in the user-data file
-# by default this is a dummy key! Replace this with your own key generated from 'ssh-keygen'
-ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDgjgNd0Lej/1Rpcc9GEEoVV0RVbNW8TPvUzJzOTNZ76aoe83QZnUI5jXJLLg44j/J/vlUyFKEoPQokpezAUBtIyiglhPC0XN3Yxox82vtQxHItQenc8GAYvo6s8kvbDW0FX4xSfo9p3/nUlGrrCPYGrRCUaji76Xk4TQNW6aUVJYp3ReboZhy+3HO/BoljopMoKZF5OxAWhgJZ/+h+ADeoMw68V+sW/t/10yt84GEQ3TBNtSM5wSUh8u+YoPG13Kz36HsMa7gZbp8AABMSrvUys494IOyeQEJUV96bn1V1vyaVMxv/hI0/ektz56R4rwcIVw3V0NXholEPmBXDhWW3 wistar@dummykey"
-# Registered VM Image types
-# this list will register the javascript VM configuration settings in
-# common/static/js/vm_types
 
 # images director
 user_images_dir = "/opt/wistar/user_images"
+
+
+# shortcut to fill in default instance password in 'New VM' screen
+default_instance_password = 'Clouds123'
 
 # deployment backend to use!
 # defaults to kvm
@@ -47,7 +18,7 @@ deployment_backend = 'kvm'
 # https://www.suse.com/documentation/sles11/book_kvm/data/sect1_1_chapter_book_kvm.html
 # some filesystems do not support cache='none'
 # valid options are 'none', 'writeback', 'writethrough', 'unsafe', 'directsync'
-# it's possible there is some performance gain with 'none' and 'native' but this is not supported on all platforms!
+# it's possible there is some performance gain with 'none' and 'native'
 filesystem_cache_mode = 'writethrough'
 # io mode can be 'native' or 'threads'
 filesystem_io_mode = 'threads'
@@ -55,11 +26,11 @@ filesystem_io_mode = 'threads'
 # Openstack configuration
 # show openstack options even if not the primary deployment option
 # i.e. upload to glance is available but still deploy locally to kvm
-use_openstack = False
+use_openstack = True
 # authentication parameters
-openstack_host = '10.10.10.10'
+openstack_host = '10.0.1.129'
 openstack_user = 'admin'
-openstack_password = 'SECRET'
+openstack_password = 'secret'
 
 # project under which to place all topologies/stacks
 openstack_project = 'admin'
@@ -72,12 +43,7 @@ openstack_external_network = 'public-br-eth0'
 virtual_box_host_only_net_name = 'vboxnet0'
 
 # default external bridge name
-kvm_external_bridge = "br0"
-
-# Define the starting port number for VM's VNC
-# This is needed if the system is using port 5900 or subsequent ports
-# that may conflict qemu's assignemnt
-vnc_start_port = 6000
+kvm_external_bridge = "brq75d9e11e-28"
 
 # VM management network prefix
 # this should match your Openstack mgmt_network subnet or the config of virbr0 when using KVM
@@ -88,7 +54,12 @@ management_gateway = '192.168.122.1'
 # wistar cloud init seeds director / temp directory
 seeds_dir = "/opt/wistar/seeds/"
 
-
+ssh_user = "nembery"
+# this key will be added to cloud-init enabled hosts in the user-data file
+ssh_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCT2doVdV0R6XaijW3KzjN+h7MWajkb+RAtlEhxPUwvnn2aWmi8tFrhjN4AfRZ3bXlnEKQIfQ4Rnztew6rq7UXyTYaiCi0lOLuf5lq80VKvP3XJDqBz0yMd/CBU/dqQii0NlJY+Y0qTCVkhVIldJWbby1AL+w4nWwwMFDXg/quyRSQuNULsMar7QA1N+nxrkNc5IFzCRbzqQ8og+8RASnKzFelRKNrkq7vrQxk6nWXHA/4BYXwrVZIvI4kTlG7b5FYzxOldcLkXfbC0whgxUbWhl1iCL3YcWLkDKUljNxiYOrUixzQrm235dgNUX4QX0xlctTbDbdvyrm/PcoFal5lJ nembery@feynman"
+# Registered VM Image types
+# this list will register the javascript VM configuration settings in
+# common/static/js/vm_types
 vm_image_types = [
     {
         "name": "blank",
@@ -121,16 +92,6 @@ vm_image_types = [
         "js": "draw2d.shape.node.vpfe",
     },
     {
-        "name": "junos_vpfe_haswell",
-        "description": "Junos vMX vFPC (Haswell)",
-        "js": "draw2d.shape.node.vpfe_haswell",
-    },
-    {
-        "name": "junos_vqfx_re",
-        "description": "Junos vQFX RE",
-        "js": "draw2d.shape.node.vqfxRe",
-    },
-    {
         "name": "junos_riot",
         "description": "Junos vMX RIOT",
         "js": "draw2d.shape.node.vriot",
@@ -139,6 +100,16 @@ vm_image_types = [
         "name": "junos_vrr",
         "description": "Junos Virtual Route Reflector",
         "js": "draw2d.shape.node.vrr",
+    },
+    {
+        "name": "junos_vpfe_haswell",
+        "description": "Junos vMX vFPC (Haswell)",
+        "js": "draw2d.shape.node.vpfe_haswell",
+    },
+    {
+        "name": "junos_vqfx_re",
+        "description": "Junos vQFX RE",
+        "js": "draw2d.shape.node.vqfxRe",
     },
     {
         "name": "junos_vqfx_cosim",

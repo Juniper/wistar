@@ -21,6 +21,7 @@ for the following:
 - Juniper vMX 15.1 (16.1+ not yet supported)
 - Juniper vSRX 15.1
 - Juniper vQFX 15.1
+- Juniper vRR
 - Juniper Junos Space
 
 Any other virtual machine can be used with the 'Other' type. Wistar supports the following image formats:

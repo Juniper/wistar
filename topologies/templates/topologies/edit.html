@@ -1616,16 +1616,16 @@
         window.canvas = new draw2d.Canvas("gfx_holder", true);
         // set default connection router here
 
-        var createConnection=function(){
-           // return my special kind of connection
-           var con = new draw2d.Connection({
-             stroke: 3,
-             radius: 2,
-             color: "#445e88",
-             router: new draw2d.layout.connection.FanConnectionRouter()
-           });
+       var createConnection = function(v){
+           // return customized connection
 
-           return con;
+           var connection = new draw2d.Connection({
+             stroke: 3,
+             radius: 10,
+             color: "#445E88",
+             router: new draw2d.layout.connection.VertexRouter(),
+           });
+           return connection;
         };
 
         // install a custom connection create policy
