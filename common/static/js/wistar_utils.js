@@ -215,8 +215,8 @@
         var input_string = input_object.value;
 
         //  remove all non alpha numeric
-        var first_pass = input_string.replace(/[^a-zA-Z0-9_\ ]/g, "");
-        var second_pass = first_pass.replace(/\s+/g, "_");
+        var first_pass = input_string.replace(/[^a-zA-Z0-9\-\ ]/g, "");
+        var second_pass = first_pass.replace(/\s+/g, "-");
         var third_pass = second_pass.replace(/\s+$/, "");
         input_object.value = third_pass;
     }
@@ -227,7 +227,7 @@
 
         //  remove all non alpha numeric
         var first_pass = input_string.replace(/[^a-zA-Z0-9_\ \.\\\#\-_\/]/g, "");
-        var second_pass = first_pass.replace(/\./g, "_");
+        var second_pass = first_pass.replace(/\./g, "-");
         input_object.value = second_pass;
     }
 
@@ -237,7 +237,7 @@
 
         //  remove all non alpha numeric
         var first_pass = input_string.replace(/[^a-zA-Z0-9_\ \.\\\#\-_\/]/g, "");
-        var second_pass = first_pass.replace(/\./g, "_");
+        var second_pass = first_pass.replace(/\./g, "-");
         var third_pass = second_pass.replace(/^([0-9])/, 'z$1')
         input_object.value = third_pass;
     }

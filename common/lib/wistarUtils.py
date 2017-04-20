@@ -188,6 +188,7 @@ def load_config_from_topology_json(topology_json, topology_id):
     internal_bridges = []
 
     device_index = 0
+    chassis_name_to_index = dict()
 
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
@@ -221,6 +222,8 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["tertiaryDiskParams"] = user_data.get("tertiaryDiskParams", [])
 
             device["managementInterface"] = user_data.get("mgmtInterface", "")
+
+            device["resizeImage"] = user_data.get("resize", 0);
 
             device["ip"] = user_data.get("ip", "")
             device["type"] = user_data.get("type", "")
@@ -273,11 +276,9 @@ def load_config_from_topology_json(topology_json, topology_id):
 
                 device["isChild"] = True
 
-            device_index += 1
-
             # use chassis name as the naming convention for all the bridges
             # we'll create networks as 'topology_id + _ + chassis_name + function
-            # i.e. t1_vmx01_re and t1_vmx01_pfe
+            # i.e. t1_vmx01_c and t1_vmx01_c
             chassis_name = user_data.get("name", "")
             if "parentName" in user_data:
                 chassis_name = user_data.get("parentName", "")
@@ -286,6 +287,12 @@ def load_config_from_topology_json(topology_json, topology_id):
                 device["parent"] = user_data.get("parent", "")
 
             logger.debug("Using chassis name of: %s" % chassis_name)
+
+            if chassis_name in chassis_name_to_index:
+                chassis_id = chassis_name_to_index[chassis_name]
+            else:
+                chassis_id = device_index
+                chassis_name_to_index[chassis_name] = chassis_id
 
             # set this property for use later, we'll loop again after we have configured all the conections
             # to create the management interface at the end (i.e. for Linux hosts)
@@ -315,7 +322,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                 for companion in user_data.get("companionInterfaceList", []):
                     cm = dict()
                     cm["mac"] = generate_next_mac(topology_id)
-                    cm["bridge"] = "t%s_%s_c" % (str(topology_id), chassis_name)
+                    cm["bridge"] = "t%s_%s_c" % (str(topology_id), chassis_id)
                     cm["type"] = user_data.get("interfaceType", "virtio")
 
                     device_interface_wiring[companion] = cm
@@ -345,6 +352,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                         nn["mac"] = generate_next_mac(topology_id)
                         networks.append(nn)
 
+            device_index += 1
             devices.append(device)
 
         # this object is not a VM, let's check if it's a cloud/bridge object

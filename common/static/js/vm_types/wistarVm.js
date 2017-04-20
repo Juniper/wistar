@@ -125,6 +125,10 @@ draw2d.shape.node.wistarVm = draw2d.shape.basic.Image.extend({
 			return this.userData;
 		}
 	},
+	setUserDataKey: function(k, v){
+	    var ud = this.getUserData();
+		ud[k] = v;
+	},
 	getType: function() {
 		if (this.getUserData()["type"] != undefined) {
 			return this.getUserData()["type"];

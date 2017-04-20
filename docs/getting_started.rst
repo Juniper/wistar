@@ -58,7 +58,9 @@ the image type of "Junos vQFX RE". Select the vqfx10k-re-15.1X53-D60.vmdk image.
 
 .. image:: screenshots/upload_vqfx_pfe.png
 
-Once successful, upload the vQFX PFE image in the same manner. Use the 'Junos vQFX PFE' image type.
+Once successful, upload the vQFX PFE image in the same manner. Use the 'Junos vQFX PFE' image type. Also, you must
+ensure the name you choose for the pfe image includes the 'pfe' string so Wistar will correctly populate the vpfe
+list for the vqfx-re image.
 
 .. image:: screenshots/image_list.png
 

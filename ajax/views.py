@@ -927,8 +927,15 @@ def inline_deploy_topology(config):
                 tertiary_disk = ""
 
                 if not osUtils.check_path(instance_path):
-                    if not osUtils.create_thin_provision_instance(image_base_path, device["name"]):
-                        raise Exception("Could not create image instance for image: " + image_base_path)
+                    if device["resizeImage"] > 0:
+                        if not osUtils.create_thick_provision_instance(image_base_path,
+                                                                       device["name"],
+                                                                       device["resizeImage"]):
+                            raise Exception("Could not resize image instance for image: " + device["name"])
+
+                    else:
+                        if not osUtils.create_thin_provision_instance(image_base_path, device["name"]):
+                            raise Exception("Could not create image instance for image: " + image_base_path)
 
                 if "type" in device["secondaryDiskParams"]:
                     secondary_disk = wistarUtils.create_disk_instance(device, device["secondaryDiskParams"])

@@ -12,6 +12,7 @@ Welcome to Wistar's documentation!
 
    about
    getting_started
+   tips_and_tricks
    contributing
 
 .. image:: screenshots/screenshot.png

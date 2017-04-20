@@ -122,6 +122,24 @@ def create_thin_provision_instance(image, instance):
         return False
 
 
+# creates a thinly provisioned instance of the given image
+# *If on KVM, otherwise, clone the full hd for virtualbox
+def create_thick_provision_instance(image, instance, resize):
+    instance_file = get_instance_path_from_image(image, instance)
+
+    logger.debug(image)
+    logger.debug(instance_file)
+    logger.debug(resize)
+
+    shutil.copy(image, instance_file)
+    logger.debug("copied and ready to go")
+    rv = os.system("qemu-img resize '" + instance_file + "' +" + resize + "G")
+    if rv == 0:
+        return True
+    else:
+        return False
+
+
 def convert_vmdk_to_qcow2(image_path, new_image_path):
 
     rv = os.system("qemu-img convert -f vmdk -O qcow2 %s %s" % (image_path, new_image_path))
