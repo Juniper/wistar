@@ -262,8 +262,15 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["uuid"] = json_object["id"]
             device["interfaces"] = []
 
-            device["vncPort"] = libvirtUtils.get_next_domain_vnc_port(device_index)
+            # determine next available VNC port that has not currently been assigned
+            next_vnc_port = libvirtUtils.get_next_domain_vnc_port(device_index)
 
+            # verify that this port is not actually in use by another process
+            while osUtils.check_port_open(next_vnc_port):
+                device_index += 1
+                next_vnc_port = libvirtUtils.get_next_domain_vnc_port(device_index)
+
+            device["vncPort"] = next_vnc_port
             # is this a child VM?
             # children will *always* have a parent attribute set in their userdata
             parent_id = user_data.get("parent", "")

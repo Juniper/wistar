@@ -21,6 +21,7 @@ import json
 import logging
 import os
 import platform
+import socket
 import shutil
 import subprocess
 
@@ -294,7 +295,7 @@ def create_config_drive(domain_name, files=[]):
         # cleanup staging directory
         if not os.system("rm -r %s" % staging_dir) == 0:
             raise Exception("Could not clear staging directory")
-	
+
         return seed_img_name
 
     except Exception as e:
@@ -675,4 +676,16 @@ def reload_dhcp_config():
     if rt == 0:
         return True
     else:
+        return False
+
+
+def check_port_open(port_number):
+    s = socket.socket()
+
+    try:
+        s.connect(('127.0.0.1', int(port_number)))
+        logger.info("port %s is taken by another process!" % port_number)
+        return True
+    except socket.error:
+        logger.info("port %s is available" % port_number)
         return False
