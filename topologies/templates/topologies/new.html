@@ -190,6 +190,12 @@
         if (rv == true) {
             hideOverlay('#add_vm_form');
         }
+        // zero out all optional params as well, so they don't sneak in any other image types where they would
+        // normally be hidden and zero anyway
+        jQuery('#topoIconScriptSelect').val(0);
+        jQuery('#topoIconScriptParam').val(0);
+        jQuery('#topoIconResize').val(0);
+
     }
 
     // add icon to the topology with the indicated values
@@ -344,15 +350,7 @@
         }
 
         // let's try to increment everything nicely
-        // jQuery('#topoIconIp').val(incrementIconIp(ip));
         jQuery('#topoIconName').val(incrementIconName(name));
-
-        jQuery('#topoIconScriptSelect').val(0);
-        jQuery('#topoIconScriptParam').val(0);
-
-        jQuery('#topoIconResize').val(0);
-
-        // jQuery('#topoIconImageVFPCSelect').val(0);
 
         return true;
     }
@@ -458,7 +456,11 @@
         jQuery('#addInstanceTbodyResize').css("display", "none");
         jQuery('#addInstanceTbodyVFPC').css("display", "none");
         jQuery('#addInstanceTbodySecondaryDisk').css("display", "none");
-        //jQuery('#addInstanceTbodyTertiaryDisk').css("display", "none");
+
+        // let's also zero out a couple of optional params
+        jQuery('#topoIconScriptSelect').val(0);
+        jQuery('#topoIconScriptParam').val(0);
+        jQuery('#topoIconResize').val(0);
 
         for (v=0;v<vm_types.length;v++) {
             vm_type = vm_types[v];

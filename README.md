@@ -5,6 +5,10 @@ Wistar is a tool to help create and share complex topologies of Virtual Machines
 
 ![screenshot](docs/screenshots/screenshot.png "Wistar uses drag and drop to create topologies of networks")
 
+
+The most detailed, up to date, documentation can be found here:
+http://wistar.readthedocs.io/en/latest/
+
 Your (virtual) CPU must expose the virtualization hooks. You can check with a simple grep.
 
 `egrep ‘(vmx|svm)’ /proc/cpuinfo`
@@ -62,7 +66,7 @@ root@wistar-build:~# mkdir -p /opt/wistar/media
 Clone the GitHub repo.
 
 ```      
-root@wistar-build:/opt/wistar# git clone https://github.com/nembery/wistar.git
+root@wistar-build:/opt/wistar# git clone https://github.com/juniper/wistar.git
 ```
 
 Creat the SQL tables.
