@@ -39,8 +39,8 @@ user_images_dir = "/opt/wistar/user_images"
 # deployment backend to use!
 # defaults to kvm
 # options are 'openstack', 'vagrant', 'virtualbox'
-# deployment_backend = 'kvm'
-deployment_backend = 'openstack'
+deployment_backend = 'kvm'
+# deployment_backend = 'openstack'
 
 # KVM configuration
 # cache mode, controls the cache mode:
@@ -55,17 +55,17 @@ filesystem_io_mode = 'threads'
 # Openstack configuration
 # show openstack options even if not the primary deployment option
 # i.e. upload to glance is available but still deploy locally to kvm
-use_openstack = True
+use_openstack = False
 # authentication parameters
-openstack_host = '10.13.142.25'
+openstack_host = '10.10.10.10'
 openstack_user = 'admin'
-openstack_password = 'vlab123'
+openstack_password = 'SECRET'
 
 # project under which to place all topologies/stacks
 openstack_project = 'admin'
 
-openstack_mgmt_network = 'VN-1'
-openstack_external_network = 'ext-net'
+openstack_mgmt_network = 'wistar_mgmt'
+openstack_external_network = 'public-br-eth0'
 
 # Parameters for use with the VirtualBox deployment backend
 # Host only network name in VirtualBox
@@ -81,9 +81,9 @@ vnc_start_port = 6000
 
 # VM management network prefix
 # this should match your Openstack mgmt_network subnet or the config of virbr0 when using KVM
-management_subnet = '172.16.0.0/24'
-management_prefix = '172.16.0.'
-management_gateway = '172.16.0.1'
+management_subnet = '192.168.122.0/24'
+management_prefix = '192.168.122.'
+management_gateway = '192.168.122.1'
 
 # wistar cloud init seeds director / temp directory
 seeds_dir = "/opt/wistar/seeds/"
