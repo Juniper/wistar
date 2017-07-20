@@ -28,6 +28,8 @@ from django.core.exceptions import ObjectDoesNotExist
 
 import libvirtUtils
 import osUtils
+import imageUtils
+import openstackUtils
 from images.models import Image
 from topologies.models import Topology
 from wistar import configuration
@@ -98,21 +100,51 @@ def get_heat_json_from_topology_config(config):
         template["resources"][network["name"]] = nr
         template["resources"][network["name"] + "_subnet"] = nrs
 
+    # cache the image_details here to avoid multiple REST calls for details about an image type
+    # as many topologies have lots of the same types of images around
+    image_details_dict = dict()
+    if openstackUtils.connect_to_openstack():
+        flavors = openstackUtils.get_nova_flavors(configuration.openstack_project)
+        logger.debug(flavors)
+    else:
+        flavors = {"m1.large": "something"}
+
     for device in config["devices"]:
+
+        if device["imageId"] in image_details_dict:
+            image_details = image_details_dict[device["imageId"]]
+        else:
+            image_details = imageUtils.get_image_detail(device["imageId"])
+            image_details_dict[device["imageId"]] = image_details
+
+        image_name = image_details["name"]
+        if "disk" in image_details:
+            image_disk = image_details["disk"]
+        else:
+            image_disk = 20
 
         # determine openstack flavor here
         device_ram = int(device["ram"])
+        device_cpu = int(device["cpu"])
 
-        if device_ram >= 16384:
-            flavor = "m1.xlarge"
-        elif device_ram >= 8192:
-            flavor = "m1.large"
-        elif device_ram >= 4096:
-            flavor = "m1.medium"
-        elif device_ram >= 1024:
-            flavor = "m1.small"
-        else:
-            flavor = "m1.tiny"
+        flavor_detail = openstackUtils.get_minimum_flavor_for_specs(configuration.openstack_project,
+                                                                    device_cpu,
+                                                                    device_ram,
+                                                                    image_disk
+                                                                    )
+
+        flavor = flavor_detail["name"]
+
+        # if device_ram >= 16384:
+        #     flavor = "m1.xlarge"
+        # elif device_ram >= 8192:
+        #     flavor = "m1.large"
+        # elif device_ram >= 4096:
+        #     flavor = "m1.medium"
+        # elif device_ram >= 1024:
+        #     flavor = "m1.small"
+        # else:
+        #     flavor = "m1.tiny"
 
         dr = dict()
         dr["type"] = "OS::Nova::Server"
@@ -127,16 +159,32 @@ def get_heat_json_from_topology_config(config):
             index += 1
             dr["properties"]["networks"].append(port)
 
-        image = Image.objects.get(pk=device["imageId"])
-        image_name = image.name
         dr["properties"]["image"] = image_name
         dr["properties"]["name"] = device["name"]
 
         if device["configDriveSupport"]:
             dr["properties"]["config_drive"] = True
-            metadata = device["configDriveParams"]
+            dr["properties"]["user_data_format"] = "RAW"
+            metadata = dict()
             metadata["hostname"] = device["name"]
+            metadata["console"] = "vidconsole"
             dr["properties"]["metadata"] = metadata
+            
+            # let's check all the configDriveParams and look for a junos config
+            # FIXME - this may need tweaked if we need to include config drive cloud-init support for other platforms
+            # right now we just need to ingore /boot/loader.conf
+            for cfp in device["configDriveParams"]:
+                if "destination" in cfp and cfp["destination"] == "/juniper.conf":
+                    template_name = cfp["template"]
+                    personality_string = osUtils.compile_config_drive_params_template(template_name,
+                                                                                      device["name"],
+                                                                                      device["label"],
+                                                                                      device["password"],
+                                                                                      device["ip"],
+                                                                                      device["managementInterface"])
+
+                    dr["properties"]["personality"] = dict()
+                    dr["properties"]["personality"] = {"/config/juniper.conf": personality_string}
 
         template["resources"][device["name"]] = dr
 

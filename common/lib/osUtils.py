@@ -299,7 +299,7 @@ def create_config_drive(domain_name, files=[]):
         return seed_img_name
 
     except Exception as e:
-        logger.debug("Could not create_cloud_drive!!!")
+        logger.debug("Could not create_config_drive!!!")
         logger.debug(str(e))
         return None
 
@@ -355,7 +355,7 @@ def compile_config_drive_params_template(template_name, domain_name, host_name, 
         logger.info(str(oe))
         return None
     except Exception as e:
-        logger.debug("Caught exception in create_cloud_init_img " + str(e))
+        logger.debug("Caught exception in compile_config_drive_params_template " + str(e))
         return None
 
 
@@ -395,7 +395,7 @@ def get_junos_default_config_template(domain_name, host_name, password, ip, mana
         return template_data_string
 
     except Exception as e:
-        logger.debug("Caught exception in create_cloud_init_img " + str(e))
+        logger.debug("Caught exception in get_junos_default_config_template " + str(e))
         return None
 
 

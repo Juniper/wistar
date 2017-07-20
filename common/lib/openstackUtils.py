@@ -342,14 +342,95 @@ def delete_stack(stack_name):
         return do_delete(url)
 
 
-def get_nova_flavors():
+def get_nova_flavors(project_name):
     """
-    Returns flavors from Nova in JSON encoded string
+    Returns flavors for a specific project from Nova in JSON encoded string
     :return: JSON encoded string
     """
     logger.debug("--- get_nova_flavors ---")
-    url = create_nova_url('/flavors')
+    project_id = get_project_id(project_name)
+    url = create_nova_url("/" + project_id + '/flavors/detail')
     return do_get(url)
+
+
+def get_minimum_flavor_for_specs(project_name, cpu, ram, disk):
+
+    logger.debug("checking: " + str(cpu) + " " + str(ram) + " " + str(disk))
+    flavors = get_nova_flavors(project_name)
+    flavors_object = json.loads(flavors)
+    cpu_candidates = list()
+    ram_candidates = list()
+    disk_candidates = list()
+
+    if "flavors" in flavors_object:
+        logger.debug("checking flavors")
+
+        # first, let's see if we have an exact match!
+        for f in flavors_object["flavors"]:
+            logger.debug("check flavors")
+            logger.debug("checking flavor: " + f["name"])
+            if f["vcpus"] == cpu and f["ram"] == ram and f["disk"] == disk:
+                return f
+
+        logger.debug("not exact match yet")
+        # we don't have an exact match yet!
+        for f in flavors_object["flavors"]:
+            logger.debug(str(f["vcpus"]) + " " + str(cpu))
+            if "vcpus" in f and f["vcpus"] >= int(cpu):
+                cpu_candidates.append(f)
+
+        logger.debug("got cpu candidates: " + str(len(cpu_candidates)))
+
+        for f in cpu_candidates:
+            if "ram" in f and f["ram"] >= ram:
+                ram_candidates.append(f)
+
+        logger.debug("got ram candidates: " + str(len(ram_candidates)))
+
+        for f in ram_candidates:
+            if "disk" in f and f["disk"] >= disk:
+                disk_candidates.append(f)
+
+        logger.debug("got disk candidates: " + str(len(disk_candidates)))
+
+        if len(disk_candidates) == 0:
+            # uh-oh, just return the largest and hope for the best!
+            return "m1.xlarge"
+        elif len(disk_candidates) == 1:
+            return disk_candidates[0]
+        else:
+            # we have more than one candidate left
+            # let's find the smallest flavor left!
+            cpu_low = 99
+            disk_low = 999
+            ram_low = 9999
+            for f in disk_candidates:
+                if f["vcpus"] < cpu_low:
+                    cpu_low = f["vcpus"]
+                if f["ram"] < ram_low:
+                    ram_low = f["ram"]
+                if f["disk"] < disk_low:
+                    disk_low = f["disk"]
+
+            for f in disk_candidates:
+                if f["vcpus"] == cpu_low and f["ram"] == ram_low and f["disk"] == disk_low:
+                    # found the lowest available
+                    logger.debug("return lowest across all axis")
+                    return f
+            for f in disk_candidates:
+                if f["vcpus"] == cpu_low and f["ram"] == ram_low:
+                    # lowest available along ram and cpu axis
+                    logger.debug("return lowest across cpu and ram")
+                    return f
+            for f in disk_candidates:
+                if f["vcpus"] == cpu:
+                    logger.debug("return lowest cpu only")
+                    logger.debug(f)
+                    return f
+
+            # should not arrive here :-/
+            logger.debug("got to the impossible")
+            return disk_candidates[0]
 
 
 def create_stack(stack_name, template_string):

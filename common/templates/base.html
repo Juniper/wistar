@@ -53,7 +53,7 @@
             </li>
             {% elif global_config.deployment_backend == "openstack" %}
             <li>
-                <a href="javascript: window.open('http://{{ global_config.openstack_host }}/horizon/project/stacks')">Manage Openstack</a>
+                <a href="javascript: window.open('http://{{ global_config.openstack_host }}/dashboard/project/stacks')">Manage Openstack</a>
             </li>
             {% endif %}
             <li id="menu_images">
@@ -74,8 +74,8 @@
                     </li>
                     {% if global_config.deployment_backend = "openstack" %}
                     <li>
-                        <a href='glanceImages/' title="View and Import images from Glance">
-                            Import Images from OpenStack Glance Service
+                        <a href='/images/glanceImages/' title="View and Import images from Glance">
+                            Import from Glance
                         </a>
                     </li>
                     {% endif %}
