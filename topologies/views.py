@@ -34,6 +34,8 @@ from common.lib import junosUtils
 from common.lib import libvirtUtils
 from common.lib import osUtils
 from common.lib import wistarUtils
+from common.lib import openstackUtils
+
 from images.models import Image
 from scripts.models import Script
 from topologies.forms import ImportForm
@@ -267,6 +269,8 @@ def delete(request, topology_id):
     logger.debug('---- topology delete ----')
     topology_prefix = "t%s_" % topology_id
 
+    topology = get_object_or_404(Topology, pk=topology_id)
+
     if configuration.deployment_backend == "kvm":
 
         network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
@@ -287,10 +291,15 @@ def delete(request, topology_id):
                 if source_file is not None:
                     osUtils.remove_instance(source_file)
 
-        topology = get_object_or_404(Topology, pk=topology_id)
+
 
         osUtils.remove_instances_for_topology(topology_prefix)
         osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
+
+    elif configuration.deployment_backend == "openstack":
+        stack_name = topology.name.replace(' ', '_')
+        if openstackUtils.connect_to_openstack():
+            logger.debug(openstackUtils.delete_stack(stack_name))
 
     topology.delete()
     messages.info(request, 'Topology %s deleted' % topology.name)
