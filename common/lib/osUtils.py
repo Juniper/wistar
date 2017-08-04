@@ -342,7 +342,6 @@ def compile_config_drive_params_template(template_name, domain_name, host_name, 
 
         template_data_string = template_data.render(config=config)
         logger.debug(template_data_string)
-
         seed_dir = configuration.seeds_dir + domain_name
 
         if not check_path(seed_dir):

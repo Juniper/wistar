@@ -174,6 +174,23 @@ def get_heat_json_from_topology_config(config):
             # FIXME - this may need tweaked if we need to include config drive cloud-init support for other platforms
             # right now we just need to ingore /boot/loader.conf
             for cfp in device["configDriveParams"]:
+                if "destination" in cfp and cfp["destination"] == "/boot/loader.conf":
+                    template_name = cfp["template"]
+                    try:
+                        loader_string = osUtils.compile_config_drive_params_template(template_name,
+                                                                                     device["name"],
+                                                                                     device["label"],
+                                                                                     device["password"],
+                                                                                     device["ip"],
+                                                                                     device["managementInterface"])
+                    except Exception as e:
+                        print e
+
+                    for l in str(loader_string).split('\n'):
+                        left, right = l.split('=')
+                        if left not in metadata:
+                            metadata[left] = right.replace('"', '')
+
                 if "destination" in cfp and cfp["destination"] == "/juniper.conf":
                     template_name = cfp["template"]
                     personality_string = osUtils.compile_config_drive_params_template(template_name,
