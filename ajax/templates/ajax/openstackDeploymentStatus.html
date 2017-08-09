@@ -1,7 +1,7 @@
 {% load staticfiles %}
 <table>
     <tr>
-        <th colspan="3"> Stack Status</th>
+        <th colspan="3">Stack Status</th>
     </tr>
     {% if stack == None %}
     <tr>
@@ -42,19 +42,20 @@
             {% if resource.resource_type == "OS::Nova::Server" %}
             <tr>
 
-                <td>
+                <td colspan="2">
                      <a title="View in Horizon"
                         href="#"
                         onclick="javascript: window.open('http://{{ openstack_host }}/dashboard/project/instances/{{ resource.physical_resource_id }}')">
                         {{ resource.resource_name }}
                      </a>
                 </td>
-                <td>
-                    Status
-                </td>
-                <td style="white-space: nowrap;">
+                <td style="white-space: nowrap; text-align: right; padding-right: 10px">
                         {% if resource.resource_status == "CREATE_COMPLETE" %}
-                        <img src="{% static 'images/running.png' %}" width="20px" height="20px"/>&nbsp;
+                        <!-- <img src="{% static 'images/running.png' %}" width="20px" height="20px"/>&nbsp; -->
+			<div class="status_green">
+            			<a href="#"> &#10003;</a>
+            		</div>
+            		&nbsp;
                         <a href="#"
                             onclick="javascript: window.open('http://{{ openstack_host }}/dashboard/project/instances/{{ resource.physical_resource_id }}/?tab=instance_details__console');"
                             title="Launch Console"
@@ -80,28 +81,26 @@
         </tr>
     -->
         <tr>
-            <td>
-                Options
-            </td>
-            <td>
-                <a href="#"
-                   onclick="javascript: window.open('http://{{ openstack_host }}/dashboard/project/stacks/stack/{{ stack.id }}/')">
-                    View in Horizon
-                </a>
-                &nbsp;
-                <a href="#" onclick="javascript: redir('/ajax/deleteStack/{{ topology_id }}')">
-                    Delete Stack
-                </a>
-                 &nbsp;
-                <a href="#" onclick="javascript: redir('/topologies/exportHeat/{{ topology_id }}')">
-                    Debug HEAT
-                </a>
-            </td>
+            <th colspan="3">
+                Manage Stack
+            </th>
         </tr>
         <tr>
-            <td colspan="4">
+            <td colspan="3">
                 <input type="button" name="refreshDSButton" id="refreshDSButton"
-                       value="Refresh OpenStack Status"
+                       value="View in Openstack"
+                       onclick="jjavascript: window.open('http://{{ openstack_host }}/dashboard/project/stacks/stack/{{ stack.id }}/')"/>
+                &nbsp;
+                <input type="button" name="refreshDSButton" id="refreshDSButton"
+                       value="Delete"
+                       onclick="javascript: redir('/ajax/deleteStack/{{ topology_id }}')"/>
+                 &nbsp;
+                <input type="button" name="refreshDSButton" id="refreshDSButton"
+                       value="View HEAT"
+                       onclick="javascript: redir('/topologies/exportHeat/{{ topology_id }}')"/>
+                &nbsp;
+                <input type="button" name="refreshDSButton" id="refreshDSButton"
+                       value="Refresh"
                        onclick="javascript: refreshDeploymentStatus('{{ topology_id }}');"/>
             </td>
         </tr>

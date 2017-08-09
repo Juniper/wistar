@@ -12,9 +12,9 @@ draw2d.shape.node.vre_171 = draw2d.shape.node.wistarSetParent.extend({
     MANAGEMENT_INTERFACE_INDEX: 0,
     MANAGEMENT_INTERFACE_TYPE: "virtio",
     DOMAIN_CONFIGURATION_FILE: "junos_vcp.xml",
-    DUMMY_INTERFACE_LIST: ["1"],
+    DUMMY_INTERFACE_LIST: ["2"],
     COMPANION_TYPE: "draw2d.shape.node.vriot",
-    COMPANION_INTERFACE_LIST: ["2"],
+    COMPANION_INTERFACE_LIST: ["1"],
     COMPANION_NAME_FILTER: "FPC|PFE|FP|pfe|fpc|fp|riot|RIOT",
 
     SECONDARY_DISK_PARAMS: {
