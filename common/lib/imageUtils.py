@@ -202,7 +202,38 @@ def get_glance_image_list():
     return image_list
 
 
+def image_exists(image_name):
+    """
+    Determine if an image exists with this name
+    :param image_name: name of the image
+    :return: Boolean True if image exists
+    """
+    image_list = get_image_list()
+    for image in image_list:
+        if "name" in image and image_name in image["name"]:
+            return True
+
+    return False
+
+
 def create_local_image(name, description, file_path, image_type):
+    """
+    Register a local (server-side) image with Wistar
+    :param name: name of the image
+    :param description: Description of the image
+    :param file_path: full path to the where the file exists on the server
+    :param image_type: The wistar type of the image, this type must already be registered in Wistar
+    :return: The local id of the image
+    """
+    if image_exists(name):
+        logger.info('Image with this name already exists!')
+        try:
+            existing_image = Image.objects.get(name=name)
+            return existing_image.id
+        except Image.DoesNotExist:
+            logger.error('Image already exists but we cannot get it locally!')
+            pass
+
     if osUtils.check_path(file_path):
         logger.debug("path exists")
         if settings.MEDIA_ROOT not in file_path:

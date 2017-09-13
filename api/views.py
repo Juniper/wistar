@@ -467,27 +467,26 @@ def export_topology_json(request):
     json_string = request.body
     json_body = json.loads(json_string)
 
-    try:
-        if "name" in json_body[0]:
-            topology_name = json_body[0]["name"]
-            try:
-                # get the topology by name
-                topology = Topology.objects.get(name=topology_name)
-                json_data = json.loads(topology.json)
-                info_data = dict()
-                info_data["type"] = "wistar.info"
-                info_data["name"] = topology.name
-                info_data["description"] = topology.description
-                info_data["topology_id"] = topology.id
-                json_data.append(info_data)
-                return HttpResponse(json.dumps(json_data), content_type="application/json")
+    if "name" in json_body[0]:
+        topology_name = json_body[0]["name"]
+        try:
+            # get the topology by name
+            topology = Topology.objects.get(name=topology_name)
+            json_data = json.loads(topology.json)
+            info_data = dict()
+            info_data["type"] = "wistar.info"
+            info_data["name"] = topology.name
+            info_data["description"] = topology.description
+            info_data["topology_id"] = topology.id
+            json_data.append(info_data)
+            return HttpResponse(json.dumps(json_data), content_type="application/json")
 
-            except Topology.DoesNotExist:
-                return HttpResponse(status=500)
-
-    except Exception as e:
-        logger.error(e)
-        return HttpResponse(status=500)
+        except Topology.DoesNotExist:
+            logger.error('Topology with name: %s does not exist' % topology_name)
+            return HttpResponse(status=500)
+        except ValueError:
+            logger.error('Could not parse JSON object from saved topology!')
+            return HttpResponse(status=500)
 
 
 def start_topology(request):
@@ -544,6 +543,13 @@ def start_topology(request):
 
 
 def check_image_exists(request):
+    """
+    Checks if an image already exists in Wistar
+
+    :param request: JSON payload that contains a single object with the following properties: name
+    :return: a JSON object with at least the following properties: status (boolean), message, and other properties
+        may also return an HTTP Status of 500 in case of exceptions
+    """
     logger.debug("---- check_image_exists ----")
 
     json_string = request.body
@@ -574,6 +580,15 @@ def check_image_exists(request):
 
 
 def create_local_image(request):
+    """
+    Creates an image from a file on the local filesystem. You should upload the image to the server first, then call
+    this to register that image with Wistar!
+
+    :param request: JSON payload that contains a single object with the following properties:
+        name, description, image_type, and file_name
+    :return: a JSON object with at least the following properties: status (boolean), message, and other properties
+        may also return an HTTP Status of 500 in case of exceptions
+    """
     logger.debug("---- create_local_image ----")
     json_string = request.body
     json_body = json.loads(json_string)
@@ -592,7 +607,7 @@ def create_local_image(request):
     file_path = configuration.user_images_dir + "/" + file_name
     try:
         image_id = imageUtils.create_local_image(name, description, file_path, image_type)
-        return apiUtils.return_json(True, "Image Created with id: %s" % image_id, image_id=image_id)
+        return apiUtils.return_json(True, "Image Exists with id: %s" % image_id, image_id=image_id)
 
     except Exception as e:
         return HttpResponse(status=500)
@@ -600,6 +615,12 @@ def create_local_image(request):
 
 
 def delete_image(request):
+    """
+    Deletes an image from Wistar
+
+    :param request: JSON payload that contains a single object with the following properties:  name
+    :return: a JSON object with at least the following properties: status (boolean) and message
+    """
     logger.debug("---- delete_image ----")
     json_string = request.body
     json_body = json.loads(json_string)

@@ -169,11 +169,26 @@ def get_heat_json_from_topology_config(config):
             metadata["hostname"] = device["name"]
             metadata["console"] = "vidconsole"
             dr["properties"]["metadata"] = metadata
-            
+
             # let's check all the configDriveParams and look for a junos config
             # FIXME - this may need tweaked if we need to include config drive cloud-init support for other platforms
             # right now we just need to ingore /boot/loader.conf
             for cfp in device["configDriveParams"]:
+
+                if "destination" in cfp and cfp["destination"] == "/boot/loader.conf":
+                    template_name = cfp["template"]
+                    loader_string = osUtils.compile_config_drive_params_template(template_name,
+                                                                                 device["name"],
+                                                                                 device["label"],
+                                                                                 device["password"],
+                                                                                 device["ip"],
+                                                                                 device["managementInterface"])
+
+                    for l in loader_string:
+                        left, right = l.split('=')
+                        if left not in metadata:
+                            metadata[left] = right
+
                 if "destination" in cfp and cfp["destination"] == "/juniper.conf":
                     template_name = cfp["template"]
                     personality_string = osUtils.compile_config_drive_params_template(template_name,

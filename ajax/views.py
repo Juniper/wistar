@@ -928,6 +928,7 @@ def inline_deploy_topology(config):
 
                 if not osUtils.check_path(instance_path):
                     if device["resizeImage"] > 0:
+                        logger.debug('resizing image')
                         if not osUtils.create_thick_provision_instance(image_base_path,
                                                                        device["name"],
                                                                        device["resizeImage"]):

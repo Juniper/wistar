@@ -291,8 +291,6 @@ def delete(request, topology_id):
                 if source_file is not None:
                     osUtils.remove_instance(source_file)
 
-
-
         osUtils.remove_instances_for_topology(topology_prefix)
         osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
 
