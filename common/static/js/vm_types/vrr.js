@@ -11,8 +11,8 @@ draw2d.shape.node.vrr = draw2d.shape.node.wistarStandalone.extend({
     INTERFACE_OFFSET: 1,
     DUMMY_INTERFACE_LIST: [],
     ICON_WIDTH: 50,
-    ICON_HEIGHT: 50,
-    ICON_FILE: "/static/images/vmx.png",
+    ICON_HEIGHT: 15,
+    ICON_FILE: "/static/images/vre.png",
 
     SECONDARY_DISK_PARAMS: {
         "type": "blank",

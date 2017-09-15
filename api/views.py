@@ -416,14 +416,27 @@ def import_topology_json(request):
     json_string = request.body
 
     # fixme - add some basic check to ensure we have the proper format here
+
+    topology_json_string = wistarUtils.clone_topology(json_string)
+    if topology_json_string is None:
+        return apiUtils.return_json(False, "Topology Import Failed!")
+
     try:
-        topology_json_string = wistarUtils.clone_topology(json_string)
         topology_json = json.loads(topology_json_string)
+    except ValueError as ve:
+        logger.error('Could not parse topology json from Clone!')
+        return apiUtils.return_json(False, "Topology Import Failed!")
+
+    try:
         for json_object in topology_json:
             if json_object["type"] == "wistar.info":
                 name = json_object["name"]
                 description = json_object["description"]
                 break
+
+        if Topology.objects.filter(name=name).exists():
+            logger.info('Not importing existing topology with this name!')
+            return apiUtils.return_json(True, "Topology Exists with name: %s" % name)
 
         logger.debug("Creating new topology with name: %s" % name)
         t = Topology(name=name, description=description, json=topology_json_string)
@@ -591,13 +604,17 @@ def create_local_image(request):
     """
     logger.debug("---- create_local_image ----")
     json_string = request.body
-    json_body = json.loads(json_string)
-    logger.debug(json_string)
+    try:
+        json_body = json.loads(json_string)
+    except ValueError as ve:
+        logger.error('Could not parse json payload!')
+        return apiUtils.return_json(False, "Could not parse json payload!")
+
     logger.debug(json_body)
     required_fields = set(['name', 'description', 'image_type', 'file_name'])
     if not required_fields.issubset(json_body[0]):
         logger.error("Invalid parameters in json body")
-        return HttpResponse(status=500)
+        return apiUtils.return_json(False, "Invalid parameters in json payload")
 
     file_name = json_body[0]["file_name"]
     name = json_body[0]["name"]
@@ -610,7 +627,8 @@ def create_local_image(request):
         return apiUtils.return_json(True, "Image Exists with id: %s" % image_id, image_id=image_id)
 
     except Exception as e:
-        return HttpResponse(status=500)
+        logger.error(str(e))
+        return apiUtils.return_json(False, "Unknown exception in create_local_image")
         # return apiUtils.return_json(False, "Could not create local image!")
 
 

@@ -573,13 +573,11 @@ def clone_topology(topology_json):
     """
     try:
         json_data = json.loads(topology_json)
+    except ValueError as ve:
+        logger.error('Could not parse topology JSON for clone!')
+        return None
 
-        wistar_vm_counter = 0
-
-        for json_object in json_data:
-            if "userData" in json_object and "wistarVm" in json_object["userData"]:
-                wistar_vm_counter += 1
-
+    try:
         all_used_ips = get_used_ips()
         floor_ip = 2
 
