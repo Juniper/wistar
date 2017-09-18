@@ -503,13 +503,28 @@ def export_topology_json(request):
 def start_topology(request):
     logger.debug("---- start_topology ---- ")
     json_string = request.body
-    json_body = json.loads(json_string)
+
+    try:
+        json_body = json.loads(json_string)
+    except ValueError:
+        return apiUtils(False, "Could not load json payload")
 
     try:
         if "name" in json_body[0]:
             topology_name = json_body[0]["name"]
+
+            # do we have a specified delay between starting domains?
+            if 'start_delay' in json_body[0]:
+                delay = int(json_body[0]['start_delay'])
+            else:
+                delay = 0.5
+
             # get the topology by name
-            topology = Topology.objects.get(name=topology_name)
+            try:
+                topology = Topology.objects.get(name=topology_name)
+            except ObjectDoesNotExist:
+                logger.error('Could not find topology with name: %s' % topology_name)
+                return apiUtils(False, "Could not find topology with name: %s" % topology_name)
 
             domain_list = libvirtUtils.get_domains_for_topology("t" + str(topology.id) + "_")
 
@@ -536,17 +551,14 @@ def start_topology(request):
                 logger.debug("starting network: %s" % network["name"])
                 libvirtUtils.start_network(network["name"])
 
-            time.sleep(.5)
+            time.sleep(delay)
             for domain in domain_list:
                 # no sleep time? Just go ahead and melt the disks!
-                time.sleep(.5)
+                time.sleep(delay)
                 logger.debug("starting domain: %s" % domain["uuid"])
                 libvirtUtils.start_domain(domain["uuid"])
 
             return apiUtils.return_json(True, 'Topology started!', topology_id=topology.id)
-
-    except Topology.DoesNotExist:
-            return apiUtils.return_json(False, 'Topology Does not Exist')
 
     except Exception as ex:
         logger.debug(str(ex))
