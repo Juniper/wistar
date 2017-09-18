@@ -25,6 +25,7 @@
 default_instance_password = 'Clouds123'
 
 # user that will be configured via cloud-init - override this to your username if desired!
+# Note this cannot be 'root'
 ssh_user = "wistar"
 # this key will be added to cloud-init enabled hosts in the user-data file
 # by default this is a dummy key! Replace this with your own key generated from 'ssh-keygen'

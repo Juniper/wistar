@@ -336,6 +336,11 @@ def compile_config_drive_params_template(template_name, domain_name, host_name, 
         config["mgmt_ip"] = ip + "/" + str(ip_network.prefixlen)
         config["mgmt_gateway"] = configuration.management_gateway
         config["ssh_key"] = configuration.ssh_key
+
+        # do not allow 'root' user as the default ssh_user as this causes Junos configuration errors
+        if configuration.ssh_user == 'root':
+            configuration.ssh_user = 'wistar'
+
         config["ssh_user"] = configuration.ssh_user
         config["password"] = password
         config["mgmt_interface"] = management_interface
@@ -380,6 +385,11 @@ def get_junos_default_config_template(domain_name, host_name, password, ip, mana
         config["mgmt_ip"] = ip + "/" + str(ip_network.prefixlen)
         config["mgmt_gateway"] = configuration.management_gateway
         config["ssh_key"] = configuration.ssh_key
+
+        # do not allow 'root' user as the default ssh_user as this causes Junos configuration errors
+        if configuration.ssh_user == 'root':
+            configuration.ssh_user = 'wistar'
+
         config["ssh_user"] = configuration.ssh_user
         config["password"] = password
         config["mgmt_interface"] = management_interface

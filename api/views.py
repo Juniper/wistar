@@ -374,13 +374,11 @@ def delete_topology(request):
 
     topology_name = json_body[0]["name"]
 
-    should_reconfigure_dhcp = False
-
     try:
         # get the topology by name
         topology = Topology.objects.get(name=topology_name)
 
-    except ObjectDoesNotExist as odne:
+    except ObjectDoesNotExist:
         return apiUtils.return_json(False, "Topology is already deleted or does not exist")
 
     try:

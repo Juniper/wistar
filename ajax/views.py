@@ -953,13 +953,17 @@ def inline_deploy_topology(config):
                     # domain_name, host_name, mgmt_ip, mgmt_interface
                     script_string = ""
                     script_param = ""
+
                     if device["configScriptId"] != 0:
                         logger.debug("Passing script data!")
-                        script = Script.objects.get(pk=int(device["configScriptId"]))
-                        script_string = script.script
-                        script_param = device["configScriptParam"]
-                        logger.debug(script_string)
-                        logger.debug(script_param)
+                        try:
+                            script = Script.objects.get(pk=int(device["configScriptId"]))
+                            script_string = script.script
+                            script_param = device["configScriptParam"]
+                            logger.debug(script_string)
+                            logger.debug(script_param)
+                        except ObjectDoesNotExist:
+                            logger.info('config script was specified but was not found!')
 
                     logger.debug("Creating cloud init path for linux image")
                     cloud_init_path = osUtils.create_cloud_init_img(device["name"], device["label"],

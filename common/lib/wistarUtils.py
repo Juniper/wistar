@@ -32,6 +32,7 @@ import imageUtils
 import openstackUtils
 from images.models import Image
 from topologies.models import Topology
+from scripts.models import Script
 from wistar import configuration
 from wistar import settings
 
@@ -605,6 +606,13 @@ def clone_topology(topology_json):
                         image = image_list[0]
                         logger.debug("Updating image to corrected id of: %s " % str(image.id))
                         json_object["userData"]["image"] = image.id
+
+                # do not import configuration script information if the id does not exist here
+                # for non-local clone operations, this could pose a problem
+                if "configScriptId" in ud:
+                    if not Script.objects.filter(id=ud['configScriptId']).exists():
+                        logger.info('Could not find desired script during clone')
+                        json_object['userData']['configScriptId'] = 0
 
         return json.dumps(json_data)
 
