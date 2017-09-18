@@ -554,9 +554,10 @@ def start_topology(request):
             time.sleep(delay)
             for domain in domain_list:
                 # no sleep time? Just go ahead and melt the disks!
-                time.sleep(delay)
-                logger.debug("starting domain: %s" % domain["uuid"])
-                libvirtUtils.start_domain(domain["uuid"])
+                if domain["state"] != 'running':
+                    logger.debug("starting domain: %s" % domain["uuid"])
+                    libvirtUtils.start_domain(domain["uuid"])
+                    time.sleep(delay)
 
             return apiUtils.return_json(True, 'Topology started!', topology_id=topology.id)
 
