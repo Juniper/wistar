@@ -9,11 +9,14 @@
   become: true
 
   tasks:
+  - name: Update all packages to the latest version
+    apt:
+      upgrade: dist
+      update_cache: yes
   - name: Install Junos-eznc dependancies
     apt:
       name: "{{ item }}"
       state: present
-      update_cache: true
     with_items:
       - build-essential
       - libxml2-dev
@@ -102,13 +105,45 @@
       repo: https://github.com/Juniper/wistar.git
       depth: 1
       dest: /opt/wistar/wistar-app/
-
-  - name: Set up Wistar to run at boot (HACK)
-    lineinfile:
-      create: no
-      dest: /etc/rc.local
-      insertbefore: exit 0
-      line: /opt/wistar/wistar-app/manage.py runserver 0.0.0.0:80 >>/var/log/wistar-stdout.log 2>&1 &
-
+ 
   - name: Create Wistar tables
     command: /opt/wistar/wistar-app/manage.py migrate
+
+  - name: install apache2
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - apache2
+      - libapache2-mod-wsgi
+
+  - name: enable the Apache2 module "wsgi"
+    apache2_module:
+      state: present
+      name: wsgi
+    notify: restart apache
+
+  - name: set permissions on wistar dir
+    file:
+      path: /opt/wistar
+      owner: www-data
+      group: www-data
+      state: directory
+      recurse: yes
+
+  - name: set permissions on wistar logfile
+    file:
+      path: /var/log/wistar.log
+      owner: www-data
+      group: www-data
+      state: file
+
+  - name: copy wistar config file to apache
+    copy:
+      src: 999-wistar.conf
+      dest: /etc/apache2/sites-enabled/999-wistar.conf
+    notify: restart apache
+
+  handlers:
+    - name: restart apache
+      service: name=apache2 state=restarted
