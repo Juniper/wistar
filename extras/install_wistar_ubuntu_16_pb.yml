@@ -144,6 +144,12 @@
       dest: /etc/apache2/sites-enabled/999-wistar.conf
     notify: restart apache
 
+  - name: add www-data to libvirt users
+    user:
+      name: www-data
+      groups: libvirtd
+      append: yes
+
   handlers:
     - name: restart apache
       service: name=apache2 state=restarted
