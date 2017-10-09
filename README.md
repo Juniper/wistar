@@ -66,10 +66,10 @@ root@wistar-build:~# mkdir -p /opt/wistar/media
 Clone the GitHub repo.
 
 ```      
-root@wistar-build:/opt/wistar# git clone https://github.com/juniper/wistar.git
+root@wistar-build:/opt/wistar# git clone https://github.com/juniper/wistar.git wistar-master
 ```
 
-Creat the SQL tables.
+Create the SQL tables.
 
 ```
 root@wistar-build:/opt/wistar# cd wistar-master/
@@ -87,9 +87,9 @@ Alternatively, you can configure a more robust web server such as Apache or ngin
 
 Here is how you can configure apache for use with wistar.
  ```
-root@wistar-build:~# apt-get install libapache2-mod-wsgi
+root@wistar-build:~# apt-get install apache2 libapache2-mod-wsgi
 root@wistar-build:~# cat /etc/apache2/sites-enabled/999-wistar.conf
-Define wistar_path /opt/wistar
+Define wistar_path /opt/wistar/wistar-master
 Listen 8080
 <VirtualHost *:8080>
 	WSGIScriptAlias / ${wistar_path}/wistar/wsgi.py
@@ -108,6 +108,13 @@ Listen 8080
 		</Files>
 	</Directory>
 </VirtualHost>
+```
+
+Grant the apache user permissions to the wistar directory and the apache/wistar log files:
+```
+root@wistar-build:~# chown -R www-data:www-data /opt/wistar
+root@wistar-build:~# chown -R www-data:www-data /var/log/apache2/wistar.log
+root@wistar-build:~# chown -R www-data:www-data /var/log/apache2/wistar_access.log
 ```
 
 Also, ensure the apache user is in the libvirtd group.
