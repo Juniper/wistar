@@ -141,7 +141,13 @@
   - name: copy wistar config file to apache
     copy:
       src: 999-wistar.conf
+      dest: /etc/apache2/sites-available/999-wistar.conf
+
+  - name: enable wistar site in apache
+    copy:
+      src: /etc/apache2/sites-available/999-wistar.conf
       dest: /etc/apache2/sites-enabled/999-wistar.conf
+      state: link
     notify: restart apache
 
   - name: add www-data to libvirt users
