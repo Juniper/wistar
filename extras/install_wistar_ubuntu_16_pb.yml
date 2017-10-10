@@ -132,9 +132,16 @@
       state: directory
       recurse: yes
 
-  - name: set permissions on wistar logfile
+  - name: set permissions on wistar errorlog
     file:
-      path: /var/log/wistar.log
+      path: /var/log/apache2/wistar.log
+      owner: www-data
+      group: www-data
+      state: file
+
+  - name: set permissions on wistar accesslog
+    file:
+      path: /var/log/apache2/wistar_access.log
       owner: www-data
       group: www-data
       state: file
