@@ -13,6 +13,7 @@
     apt:
       upgrade: dist
       update_cache: yes
+
   - name: Install Junos-eznc dependancies
     apt:
       name: "{{ item }}"
@@ -85,7 +86,7 @@
       state: directory
   - name: Create Wistar directory structure 3
     file:
-      path: /opt/wistar/wistar-app
+      path: /opt/wistar/wistar-master
       state: directory
   - name: Create Wistar directory structure 4
     file:
@@ -104,10 +105,10 @@
     git:
       repo: https://github.com/Juniper/wistar.git
       depth: 1
-      dest: /opt/wistar/wistar-app/
+      dest: /opt/wistar/wistar-master/
  
   - name: Create Wistar tables
-    command: /opt/wistar/wistar-app/manage.py migrate
+    command: /opt/wistar/wistar-master/manage.py migrate
 
   - name: install apache2
     apt:
