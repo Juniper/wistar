@@ -9,8 +9,10 @@
   become: true
 
   tasks:
-  - name: Update apt 1
-    apt: update_cache=yes
+  - name: Update all packages to the latest version
+    apt:
+      upgrade: dist
+      update_cache: yes
 
   - name: Install python-software-properties
     apt: name=python-software-properties state=present
@@ -90,7 +92,7 @@
       state: directory
   - name: Create Wistar directory structure 3
     file:
-      path: /opt/wistar/wistar-app
+      path: /opt/wistar/wistar-master
       state: directory
   - name: Create Wistar directory structure 4
     file:
@@ -109,15 +111,65 @@
     git:
       repo: https://github.com/Juniper/wistar.git
       depth: 1
-      dest: /opt/wistar/wistar-app/
-
-  - name: Set up Wistar to run at boot (HACK)
-    lineinfile:
-      create: no
-      dest: /etc/rc.local
-      insertbefore: exit 0
-      line: /opt/wistar/wistar-app/manage.py runserver 0.0.0.0:80 >>/var/log/wistar-stdout.log 2>&1 &
+      dest: /opt/wistar/wistar-master/
 
   - name: Create Wistar tables
-    command: /opt/wistar/wistar-app/manage.py migrate
+    command: /opt/wistar/wistar-master/manage.py migrate
 
+  - name: install apache2
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - apache2
+      - libapache2-mod-wsgi
+
+  - name: enable the Apache2 module "wsgi"
+    apache2_module:
+      state: present
+      name: wsgi
+    notify: restart apache
+
+  - name: set permissions on wistar dir
+    file:
+      path: /opt/wistar
+      owner: www-data
+      group: www-data
+      state: directory
+      recurse: yes
+
+  - name: set permissions on wistar errorlog
+    file:
+      path: /var/log/apache2/wistar.log
+      owner: www-data
+      group: www-data
+      state: file
+
+  - name: set permissions on wistar accesslog
+    file:
+      path: /var/log/apache2/wistar_access.log
+      owner: www-data
+      group: www-data
+      state: file
+
+  - name: copy wistar config file to apache
+    copy:
+      src: 999-wistar.conf
+      dest: /etc/apache2/sites-available/999-wistar.conf
+
+  - name: enable wistar site in apache
+    copy:
+      src: /etc/apache2/sites-available/999-wistar.conf
+      dest: /etc/apache2/sites-enabled/999-wistar.conf
+      state: link
+    notify: restart apache
+
+  - name: add www-data to libvirt users
+    user:
+      name: www-data
+      groups: libvirtd
+      append: yes
+
+  handlers:
+    - name: restart apache
+      service: name=apache2 state=restarted
