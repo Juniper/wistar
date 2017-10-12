@@ -132,19 +132,26 @@
       state: directory
       recurse: yes
 
+  - name: set permissions on wistar log
+    file:
+      path: /var/log/wistar.log
+      owner: www-data
+      group: www-data
+      state: touch
+
   - name: set permissions on wistar errorlog
     file:
       path: /var/log/apache2/wistar.log
       owner: www-data
       group: www-data
-      state: file
+      state: touch
 
   - name: set permissions on wistar accesslog
     file:
       path: /var/log/apache2/wistar_access.log
       owner: www-data
       group: www-data
-      state: file
+      state: touch
 
   - name: copy wistar config file to apache
     copy:
@@ -152,7 +159,7 @@
       dest: /etc/apache2/sites-available/999-wistar.conf
 
   - name: enable wistar site in apache
-    copy:
+    file:
       src: /etc/apache2/sites-available/999-wistar.conf
       dest: /etc/apache2/sites-enabled/999-wistar.conf
       state: link
