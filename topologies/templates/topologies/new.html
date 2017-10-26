@@ -67,6 +67,9 @@
     var internalCloudCounter = 0;
     var externalCloudCounter = 0;
 
+    var internalCloudInitialOffset = 0;
+    var externalCloudInitialOffset = 0;
+
     var selectedObject;
 
     var vm_types = $.parseJSON('{{ vm_types|safe }}');
@@ -712,13 +715,21 @@
     }
 
     function addInternalCloud() {
-        internalCloudCounter = internalCloudCounter + 1;
+        if (internalCloudCounter >= 8) {
+            internalCloudInitialOffset += 200;
+            if(internalCloudInitialOffset >= 800) {
+                internalCloudInitialOffset = 100;
+            }
+            internalCloudCounter = 0;
+        }
+
         var label = jQuery('#internalCloudName').val();
         var c = new draw2d.shape.node.internalCloud(label);
         c.width = 100;
         c.height = 100;
-        canvas.add(c, 405 + (internalCloudCounter * 60), 15 + (internalCloudCounter * 50));
-
+        console.log((internalCloudCounter * 60));
+        canvas.add(c, internalCloudInitialOffset + (internalCloudCounter * 80), (internalCloudCounter * 80));
+        internalCloudCounter = internalCloudCounter + 1;
         hideOverlay('#add_bridge_form');
     }
 
