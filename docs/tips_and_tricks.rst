@@ -4,7 +4,7 @@ Tips and Tricks
 .. _docs: https://cloudinit.readthedocs.io/en/latest/
 .. _vmx: https://webdownload.juniper.net/swdl/dl/secure/site/1/record/60759.html
 .. _vQFX: http://www.juniper.net/us/en/dm/free-vqfx-trial/
-.. _ubuntu: https://cloud-images.ubuntu.com/releases/16.04/release/ubuntu-16.04-server-cloudimg-amd64.tar.gz
+.. _ubuntu: https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
 
 
 Essential Images
@@ -19,7 +19,7 @@ vQFX. Download the latest free trail vQFX from here: vQFX_
 vSRX 15.1. Any version of vSRX 15.1 has been known to work. Note, you need to ensure your kernel version matches the vSRX requirements.
 
 Ubuntu 16.04. Use the ubuntu 16.04 cloud-img for a linux instance that is fully configured via cloud-init on boot up. Choose the ubuntu16 image type when uploading to wistar.
-Download can be found here: ubuntu_
+Download can be found here: ubuntu_.
 
 SSH Key based authentication
 ----------------------------
