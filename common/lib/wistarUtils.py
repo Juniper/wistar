@@ -99,7 +99,6 @@ def get_heat_json_from_topology_config(config):
         template["resources"][network["name"] + "_subnet"] = nrs
 
     for device in config["devices"]:
-
         # determine openstack flavor here
         device_ram = int(device["ram"])
 
@@ -135,7 +134,7 @@ def get_heat_json_from_topology_config(config):
         if device["configDriveSupport"]:
             dr["properties"]["config_drive"] = True
             metadata = device["configDriveParams"]
-            metadata["hostname"] = device["name"]
+            metadata[0]["hostname"] = device["name"]
             dr["properties"]["metadata"] = metadata
 
         template["resources"][device["name"]] = dr
