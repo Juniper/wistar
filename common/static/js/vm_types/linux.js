@@ -5,13 +5,14 @@ draw2d.shape.node.linux = draw2d.shape.node.wistarStandalone.extend({
     // i.e. if management interface is eth0, then first usable interface for connections is 0 + 1 == eth1
     INTERFACE_OFFSET: 1,
     MANAGEMENT_INTERFACE_PREFIX: "eth",
-    // only useful to determine which NIC posistion
+    // only useful to determine which NIC position
     MANAGEMENT_INTERFACE_INDEX: 0,
     DOMAIN_CONFIGURATION_FILE: "domain.xml",
     ICON_WIDTH: 30,
     ICON_HEIGHT: 50,
     ICON_FILE: "/static/images/server.png",
     CLOUD_INIT_SUPPORT: true,
+    RESIZE_SUPPORT: true,
 
     getConfigScriptId: function() {
         if (this.getUserData()["configScriptId"] != undefined) {
