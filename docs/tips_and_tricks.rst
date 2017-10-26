@@ -16,7 +16,7 @@ vMX 15.1F6.9: Download can be found here: vmx_. Choose the vMX for x86 Package a
 
 vQFX. Download the latest free trail vQFX from here: vQFX_
 
-vSRX 15.1. Any version of vSRX 15.1 has been known to work. Note, you need to ensure your kernel version matches the vSRX requirements.
+vSRX 15.1. Any version of vSRX 15.1 has been known to work. Note, you need to ensure your kernel version matches the vSRX requirements. Latest tested version is vSRX 15.1_X49-D60.7.
 
 Ubuntu 16.04. Use the ubuntu 16.04 cloud-img for a linux instance that is fully configured via cloud-init on boot up. Choose the ubuntu16 image type when uploading to wistar.
 Download can be found here: ubuntu_.
@@ -69,3 +69,10 @@ I.E. if the topology to be loaded contains ubuntu16, vmx, and vqfx images, you w
 wistar instance before you can import this topology.
 
 Finally, there is also an 'install_wistar_ubuntu_16_pb.yml' playbook that can be used to install Wistar on Ubuntu 16.
+
+Proxy Ports
+------------
+As of version 20171029, wistar has built-in proxy support. To access instances running on your Wistar server, you
+can now create a proxy process to proxy a port on the wistar server to the port on an internal instance. To use this
+feature, click on an instance from the topologies/edit screen, and click on the 'Manage Port Proxies' button.
+The 'Local Port' will be opened on the wistar host, and will proxy all packets to the selected instance to the 'Remote Port'.

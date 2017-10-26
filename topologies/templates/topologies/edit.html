@@ -1612,6 +1612,106 @@
         {% endif %}
     }
 
+    function proxy_ip(remote_ip) {
+        console.log(proxy_ip);
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        if (remote_ip == undefined) {
+            console.log('looking up ip');
+            remote_ip = s.getIp();
+        }
+        var url = '/proxy/ip/';
+        var params = {
+            'remote_ip' : remote_ip
+        };
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#overlayPanel').empty().append(content);
+            showOverlay('#overlayPanel');
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
+    function launch_proxy() {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        // s is always set to the currently selected object on the canvas
+        if ('getIp' in s) {
+            remote_ip = s.getIp();
+        } else {
+            console.log('Could not launch proxy');
+            alert('Could not launch proxy');
+            doc.css('cursor', '');
+        }
+
+        var url = '/proxy/launch/';
+
+        var remote_port = jQuery('#proxyRemotePort').val();
+        var local_port = jQuery('#proxyLocalPort').val();
+
+        var params = {
+            'remote_ip' : remote_ip,
+            'remote_port': remote_port,
+            'local_port': local_port
+        };
+        console.log(params);
+
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#overlayPanel').empty().append(content);
+            showOverlay('#overlayPanel');
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
+    function terminate_proxy(proxy_id) {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        var url = '/proxy/terminate/';
+
+        var params = {
+            'proxy_id' : proxy_id
+        };
+        console.log(params);
+
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#overlayPanel').empty().append(content);
+            showOverlay('#overlayPanel');
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
+    function showOverlay(overlay_id) {
+        var sf = jQuery(overlay_id);
+        sf.addClass("screen-overlay");
+        sf.css("display", "");
+    }
+
+    function hideOverlay(overlay_id) {
+        var sf = jQuery(overlay_id);
+        sf.removeClass("screen-overlay");
+        sf.css("display", "none");
+    }
+
     jQuery( window ).load(function() {
         window.canvas = new draw2d.Canvas("gfx_holder", true);
         // set default connection router here
@@ -1913,11 +2013,14 @@
                 </table>
                 <table>
                     <th colspan="2">
-                        Attach ISO file
+                        Instance Tools
                     </th>
                     <tr>
                         <td>
                             <input type="button" onclick="javascript: loadIsoManager();" value="Manage Attached ISO">
+                        </td>
+                        <td>
+                            <input type="button" onclick="javascript: proxy_ip();" value="Manage Port Proxies">
                         </td>
                     </tr>
                 </table>
@@ -2520,4 +2623,18 @@
         </td>
     </tr>
 </table>
+<div id="overlayPanel" style="display: none;">
+        <table>
+            <tr>
+                <td colspan="2" class="screen-overlay-menu">
+                    <a href="#" onclick="javascript: hideOverlay('#overlayPanel')">X</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Debug
+                </td>
+            </tr>
+        </table>
+</div>
 {% endblock %}

@@ -1,0 +1,84 @@
+{% load staticfiles %}
+<script type="text/javascript">
+    function validate_port(input_object) {
+        var input_string = input_object.value;
+
+        //  remove all non alpha numeric
+        var p = input_string.replace(/[^0-9]/g, "");
+        if (p.length > 5) {
+            p = p.substring(0,5);
+        }
+
+        // verify p is under the max allowed ports (normally anyway)
+        var pi = parseInt(p);
+
+        if (isNaN(pi)) {
+            pi = 11024;
+        }
+
+        if (pi != undefined) {
+            // don't allow ports higher than 65535, but lower than 1024
+            if (pi >= 65535) {
+                pi = pi - 64510;
+            }
+
+            p = String(pi);
+        }
+
+        input_object.value = p;
+    }
+</script>
+<table>
+    <tr>
+        <td colspan="3" class="screen-overlay-menu">
+            <a href="#" onclick="javascript: hideOverlay('#overlayPanel')">X</a>
+        </td>
+    </tr>
+    <tr>
+        <th colspan="3">Active Proxies for {{ remote_ip }}</th>
+    </tr>
+    <tr>
+        <td>Local Port</td>
+        <td>Remote Port</td>
+        <td>Options</td>
+    </tr>
+    {% for p in proxies %}
+    <tr>
+        <td>
+            {{ p.local_port }}
+        </td>
+        <td>
+            {{ p.remote_port }}
+        </td>
+        <td>
+            <a href="#" onclick="javascript: terminate_proxy({{ p.pid }})" title="Terminate Proxy">X</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<table>
+    <tr>
+        <th colspan="2">
+            Launch New Proxy
+        </th>
+    </tr>
+    <tr>
+        <td>Local Port:</td>
+        <td>
+            <input type="text" size="4" maxsize="5" onchange="javascript: validate_port(this)" id="proxyLocalPort"/>
+        </td>
+    </tr>
+    <tr>
+        <td>Remote Port:</td>
+        <td>
+            <input type="text" size="4" maxsize="5" onchange="javascript: validate_port(this)" id="proxyRemotePort"/>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <input type="button" value="Create Proxy Process" onclick="javascript: launch_proxy()"
+            title="Opens a port on the Wistar Server that proxies through to the management ip and desired port of the selected Instance"
+            >
+        </td>
+    </tr>
+</table>

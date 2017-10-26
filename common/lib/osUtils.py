@@ -21,6 +21,7 @@ import json
 import logging
 import os
 import platform
+import re
 import socket
 import shutil
 import subprocess
@@ -679,7 +680,7 @@ def reload_dhcp_config():
         return False
 
 
-def check_port_open(port_number):
+def check_port_in_use(port_number):
     s = socket.socket()
 
     try:
@@ -689,3 +690,59 @@ def check_port_open(port_number):
     except socket.error:
         logger.info("port %s is available" % port_number)
         return False
+
+
+def get_used_ports():
+    """
+    Shell out to get all TCP ports that are in the listening state
+    useful to determining an open port to use for proxy configurations
+    :return:
+    """
+    cmd = "netstat -plant 2>/dev/null| awk '{ print $4 }' | cut -d':' -f2  | egrep '^[0-9]' | sort -un"
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    (o, e) = p.communicate()
+    return o
+
+
+def get_active_proxies():
+    cmd = "ps -ef | grep wistar_proxy | grep -v grep"
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    (o, e) = p.communicate()
+
+    pattern = '^.+?\s+([0-9]+).+local-port=(.*?) .+remote-ip=(.*?) .+remote-port=(.*)'
+    r = re.compile(pattern)
+    proxies = list()
+
+    for l in o.split('\n'):
+        m = r.match(l)
+        if m:
+            proxy_config = dict()
+            proxy_config['pid'] = m.group(1)
+            proxy_config['local_port'] = m.group(2)
+            proxy_config['remote_ip'] = m.group(3)
+            proxy_config['remote_port'] = m.group(4)
+            proxies.append(proxy_config)
+
+    return proxies
+
+
+def kill_pid(pid):
+    """
+    kills the selected pid
+    :param pid:
+    :return:
+    """
+
+    try:
+        ints_only_please = int(pid)
+    except ValueError:
+        logger.warn('Bad input to kill_pid, ints only please!')
+        return
+
+    cmd = "kill %s" % ints_only_please
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    (o, e) = p.communicate()
+    return o

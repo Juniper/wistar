@@ -17,17 +17,13 @@
 # limitations under the License.
 #
 
-from django.conf.urls import include, url
+from django.conf.urls import url
 
-import views
+from proxy import views
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
-    url(r'^topologies/', include('topologies.urls', namespace="topologies")),
-    url(r'^images/', include('images.urls', namespace="images")),
-    url(r'^ajax/', include('ajax.urls', namespace="ajax")),
-    url(r'^webConsole/', include('webConsole.urls', namespace="webConsole")),
-    url(r'^scripts/', include('scripts.urls', namespace="scripts")),
-    url(r'^api/', include('api.urls', namespace="api")),
-    url(r'^proxy/', include('proxy.urls', namespace="proxy")),
+    url(r'^ip/$', views.proxies_for_ip, name='proxies_for_ip'),
+    url(r'^launch/$', views.launch_proxy, name='launch_proxy'),
+    url(r'^terminate/$', views.terminate_proxy, name='terminate_proxy'),
 ]

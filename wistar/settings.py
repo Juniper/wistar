@@ -55,6 +55,7 @@ INSTALLED_APPS = (
     'common',
     'ajax',
     'webConsole',
+    'proxy',
 )
 
 MIDDLEWARE_CLASSES = (

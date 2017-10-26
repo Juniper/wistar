@@ -265,7 +265,7 @@ def load_config_from_topology_json(topology_json, topology_id):
             next_vnc_port = libvirtUtils.get_next_domain_vnc_port(device_index)
 
             # verify that this port is not actually in use by another process
-            while osUtils.check_port_open(next_vnc_port):
+            while osUtils.check_port_in_use(next_vnc_port):
                 device_index += 1
                 next_vnc_port = libvirtUtils.get_next_domain_vnc_port(device_index)
 
@@ -566,6 +566,32 @@ def launch_web_socket(vnc_port, web_socket_port, server):
     web_socket_path = os.path.abspath(ws)
 
     cmd = "%s %s:%s %s:%s --idle-timeout=120 &" % (web_socket_path, server, vnc_port, server, web_socket_port)
+
+    logger.debug(cmd)
+
+    proc = subprocess.Popen(cmd, shell=True, close_fds=True)
+    time.sleep(1)
+    return proc.pid
+
+
+def launch_proxy(local_port, remote_port, remote_ip):
+    """
+    Launch a new wistar_proxy process to enable access to internal VMs / containers
+    :param local_port: port on the wistar server to listen on
+    :param remote_port: port on the far side to proxy towards
+    :param remote_ip: ip address to proxy towards
+    :return: process id of the spawned process
+    """
+
+    path = os.path.abspath(os.path.dirname(__file__))
+    ws = os.path.join(path, "../../proxy/bin/wistar_proxy.py")
+
+    wistar_proxy_path = os.path.abspath(ws)
+
+    cmd = "/usr/bin/env python %s --local-port=%s --remote-ip=%s --remote-port=%s &" % (wistar_proxy_path,
+                                                                    local_port,
+                                                                    remote_ip,
+                                                                    remote_port)
 
     logger.debug(cmd)
 
