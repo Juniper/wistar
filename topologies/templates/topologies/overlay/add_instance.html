@@ -1,0 +1,189 @@
+<script type="text/javascript">
+    var vm_types = $.parseJSON('{{ vm_types|safe }}');
+    var images = $.parseJSON('{{ image_list_json|safe }}');
+    var allocated_ips = $.parseJSON('{{ allocated_ips|safe }}');
+    var dhcp_reservations = $.parseJSON('{{ dhcp_reservations|safe }}');
+
+</script>
+<table>
+    <tbody>
+    <tr>
+        <td colspan="2" class="screen-overlay-menu">
+            <a href="#" onclick="javascript: hideOverlay('#overlayPanel')">X</a>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <h2>Add VM</h2>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Authentication
+        </td>
+        <td>
+            <input type="text" size="15" maxsize="15" style="width: 75px;"
+                   name="topoIconUser" id="topoIconUser" value="root" title="Username"/>
+            &nbsp;
+            <input type="text" size="15" maxsize="15" style="width: 75px;"
+                   name="topoIconPass" id="topoIconPass" value="{{ global_config.default_instance_password }}"
+                   onblur="javascript: checkPass(this.value);" title="Password"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Instance Name
+        </td>
+        <td>
+            <input type="text" size="15" maxlength="32" name="topoIconName" id="topoIconName" value=""
+                   onblur="javascript: clean_string_no_space(this);"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Base Image
+        </td>
+        <td>
+            <select name="topoIconImageSelect" id="topoIconImageSelect" onchange="javascript: setImageType();">
+                <option value="0">Choose Image</option>
+                <!-- not a better way to do this? -->
+                {% for i in image_list %}
+                <option value="{{ i.id }}:{{i.type}}">{{ i.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+    </tr>
+    </tbody>
+    <tbody id="addInstanceTbodyAdvanced">
+    <tr>
+        <td>
+            Machine Properties
+        </td>
+        <td>
+            vCPU:
+            <select name="topoIconCpu" id="topoIconCpu">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+            </select>
+            vRAM:
+            <select name="topoIconRam" id="topoIconRam">
+                <option value="512">512</option>
+                <option value="768">768</option>
+                <option value="1024">1024</option>
+                <option value="2048" selected>2048</option>
+                <option value="4096">4096</option>
+                <option value="8192">8192</option>
+                <option value="16384">16384</option>
+            </select> MB
+        </td>
+    </tr>
+    </tbody>
+    <tbody id="addInstanceTbodyResize" style="display: none">
+    <tr>
+        <td>
+            Thick Provision and resize with:
+        </td>
+        <td>
+            <input type="text" size="3" name="topoIconResize" id="topoIconResize" value="0"
+                   onblur="javascript: numeric_only(this);"
+                   style="width: 100px;"
+                   title="Will create a thick privisioned image and resize
+                                            with an additional amount of space"/> GB
+        </td>
+    </tr>
+    </tbody>
+    <tbody id="addInstanceTbodyCloudInit" style="display: none">
+    <tr>
+        <td>
+            Cloud-Init Script
+        </td>
+        <td>
+            <select name="topoIconScriptSelect" id="topoIconScriptSelect">
+                <option value="0">Default cloud-init script</option>
+                <!-- not a better way to do this? -->
+                {% for s in script_list %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Cloud-Init Param
+        </td>
+        <td>
+            <input type="text" size="15" name="topoIconScriptParam" id="topoIconScriptParam" value="0"
+                   onblur="javascript: clean_string_no_special(this);"/>
+        </td>
+    </tr>
+    </tbody>
+    <tbody id="addInstanceTbodySecondaryDisk" style="display: none">
+    <tr>
+        <td title="Only useful for vmx > 14.2">
+            Secondary Disk
+        </td>
+        <td>
+            <select name="topoIconSecondaryDisk" id="topoIconSecondaryDisk">
+            </select>
+        </td>
+    </tr>
+    </tbody>
+    <tbody id="addInstanceTbodyVFPC" style="display: none">
+    <tr>
+        <td title="Only useful for vmx > 14.2">
+            Virtual PFE
+        </td>
+        <td>
+            <select name="topoIconImageVFPCSelect" id="topoIconImageVFPCSelect"
+                    onchange="javascript: setCompanionParams(this)">
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            vPFE vCPU
+        </td>
+        <td>
+            <select name="topoIconVFPCCpu" id="topoIconVFPCCpu">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            vPFE vRAM
+        </td>
+        <td>
+            <select name="topoIconVFPCRam" id="topoIconVFPCRam">
+                <option value="512">512</option>
+                <option value="768">768</option>
+                <option value="1024">1024</option>
+                <option value="2048">2048</option>
+                <option value="4096">4096</option>
+                <option value="6144">6144</option>
+                <option value="8192" selected>8192</option>
+                <option value="16384">16384</option>
+            </select> MB
+            <input type="hidden" id="topoIconVFPCJs" value=""/>
+            <input type="hidden" id="topoIconVFPCType" value=""/>
+        </td>
+    </tr>
+    </tbody>
+    <tbody>
+    <tr>
+        <td colspan="2">
+            <input type="hidden" name="topoIconType" id="topoIconType" value=""/>
+            <input type="hidden" name="topoIconImage" id="topoIconImage" value=""/>
+            <input type="button" onclick="javascript: addIconAndClose();" value="Add and Close"/>
+            &nbsp;
+            <input type="button" onclick="javascript: addIcon();" value="Add Another Instance"/>
+        </td>
+    </tr>
+    </tbody>
+</table>

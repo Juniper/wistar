@@ -20540,7 +20540,7 @@ draw2d.HeadlessCanvas = Class.extend(
  *      
  *      $(window).load(function () {
  *          
- *          var canvas = new draw2d.Canvas("gfx_holder");
+ *          var canvas = new draw2d.Canvas("draw2d_canvas");
  *      
  *          var figure1 = new draw2d.shape.basic.Oval();
  *          var figure2 = new draw2d.shape.basic.Rectangle();

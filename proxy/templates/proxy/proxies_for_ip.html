@@ -62,23 +62,35 @@
             Launch New Proxy
         </th>
     </tr>
-    <tr>
-        <td>Local Port:</td>
-        <td>
-            <input type="text" size="4" maxsize="5" onchange="javascript: validate_port(this)" id="proxyLocalPort"/>
-        </td>
-    </tr>
-    <tr>
-        <td>Remote Port:</td>
-        <td>
-            <input type="text" size="4" maxsize="5" onchange="javascript: validate_port(this)" id="proxyRemotePort"/>
-        </td>
-    </tr>
-    <tr>
-        <td colspan="2">
+    <!--<tr>-->
+        <!--<td>Local Port:</td>-->
+        <!--<td>-->
+            <!--<input type="text" size="4" maxsize="5" onchange="javascript: validate_port(this)" id="proxyLocalPort"/>-->
+        <!--</td>-->
+    <!--</tr>-->
+    <!--<tr>-->
+        <!--<td>Remote Port:</td>-->
+        <!--<td>-->
+            <!--<input type="text" size="4" maxsize="5" onchange="javascript: validate_port(this)" id="proxyRemotePort"/>-->
+        <!--</td>-->
+    <!--</tr>-->
+    <!--<tr>-->
+        <!--<td colspan="2">-->
             <input type="button" value="Create Proxy Process" onclick="javascript: launch_proxy()"
             title="Opens a port on the Wistar Server that proxies through to the management ip and desired port of the selected Instance"
-            >
+            <!--&gt;-->
+        <!--</td>-->
+    </tr>
+    <tr>
+        <td>
+            Proxy Port:
+            <input type="text" id="proxyLocalPort" style="width: 150px;" onchange="javascript: validate_port(this)">
+            on Wistar Server to Port:
+            <input type="text" id="proxyRemotePort" style="width: 150px;" onchange="javascript: validate_port(this)">
+            on {{ remote_ip }}
+            &nbsp;
+            <input type="button" value="Create Proxy Process" onclick="javascript: launch_proxy()"
+            title="Opens a port on the Wistar Server that proxies through to the management ip and desired port of the selected Instance">
         </td>
     </tr>
 </table>

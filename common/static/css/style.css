@@ -315,9 +315,11 @@ table tr td {
        border-bottom:1px solid #ddd;
        height: 34px;
 }
+/*
 table tr:nth-child(even) {
-       background: #f9f9f9;
+       background: #f2f3f4;
 }
+*/
 td.actions {
        text-align: center;
        white-space: nowrap;
@@ -459,7 +461,7 @@ input[type=text], textarea {
 	width:95%;
 	border: 0px solid #ddd;
 	border-bottom: 1px solid #ddd;
-	background: #f9f9f9;
+	background: #f2f3f4;
 }
 input[type=button],input[type=submit] {
 	font-size: 110%;

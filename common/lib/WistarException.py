@@ -17,6 +17,7 @@
 # limitations under the License.
 #
 
+
 class WistarException(Exception):
     """
         Simple exception to catch

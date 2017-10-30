@@ -1,0 +1,7 @@
+*pyc
+db.sqlite3
+.idea
+configuration-backup.py
+configuration-golden.py
+configuration*
+docs/_build

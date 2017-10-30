@@ -1,5 +1,8 @@
 <domain type='kvm'>
     <name>{{ device.name }}</name>
+    {% if device.domain_uuid != '' %}
+    <uuid>{{ device.domain_uuid }}</uuid>
+    {% endif %}
     <memory unit='MiB'>{{ device.ram }}</memory>
     <currentMemory unit='MiB'>{{ device.ram }}</currentMemory>
     <vcpu placement='static'>{{ device.cpu }}</vcpu>

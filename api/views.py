@@ -374,13 +374,11 @@ def delete_topology(request):
 
     topology_name = json_body[0]["name"]
 
-    should_reconfigure_dhcp = False
-
     try:
         # get the topology by name
         topology = Topology.objects.get(name=topology_name)
 
-    except ObjectDoesNotExist as odne:
+    except ObjectDoesNotExist:
         return apiUtils.return_json(False, "Topology is already deleted or does not exist")
 
     try:
@@ -416,14 +414,27 @@ def import_topology_json(request):
     json_string = request.body
 
     # fixme - add some basic check to ensure we have the proper format here
+
+    topology_json_string = wistarUtils.clone_topology(json_string)
+    if topology_json_string is None:
+        return apiUtils.return_json(False, "Topology Import Failed!")
+
     try:
-        topology_json_string = wistarUtils.clone_topology(json_string)
         topology_json = json.loads(topology_json_string)
+    except ValueError as ve:
+        logger.error('Could not parse topology json from Clone!')
+        return apiUtils.return_json(False, "Topology Import Failed!")
+
+    try:
         for json_object in topology_json:
             if json_object["type"] == "wistar.info":
                 name = json_object["name"]
                 description = json_object["description"]
                 break
+
+        if Topology.objects.filter(name=name).exists():
+            logger.info('Not importing existing topology with this name!')
+            return apiUtils.return_json(True, "Topology Exists with name: %s" % name)
 
         logger.debug("Creating new topology with name: %s" % name)
         t = Topology(name=name, description=description, json=topology_json_string)
@@ -467,39 +478,53 @@ def export_topology_json(request):
     json_string = request.body
     json_body = json.loads(json_string)
 
-    try:
-        if "name" in json_body[0]:
-            topology_name = json_body[0]["name"]
-            try:
-                # get the topology by name
-                topology = Topology.objects.get(name=topology_name)
-                json_data = json.loads(topology.json)
-                info_data = dict()
-                info_data["type"] = "wistar.info"
-                info_data["name"] = topology.name
-                info_data["description"] = topology.description
-                info_data["topology_id"] = topology.id
-                json_data.append(info_data)
-                return HttpResponse(json.dumps(json_data), content_type="application/json")
+    if "name" in json_body[0]:
+        topology_name = json_body[0]["name"]
+        try:
+            # get the topology by name
+            topology = Topology.objects.get(name=topology_name)
+            json_data = json.loads(topology.json)
+            info_data = dict()
+            info_data["type"] = "wistar.info"
+            info_data["name"] = topology.name
+            info_data["description"] = topology.description
+            info_data["topology_id"] = topology.id
+            json_data.append(info_data)
+            return HttpResponse(json.dumps(json_data), content_type="application/json")
 
-            except Topology.DoesNotExist:
-                return HttpResponse(status=500)
-
-    except Exception as e:
-        logger.error(e)
-        return HttpResponse(status=500)
+        except Topology.DoesNotExist:
+            logger.error('Topology with name: %s does not exist' % topology_name)
+            return HttpResponse(status=500)
+        except ValueError:
+            logger.error('Could not parse JSON object from saved topology!')
+            return HttpResponse(status=500)
 
 
 def start_topology(request):
     logger.debug("---- start_topology ---- ")
     json_string = request.body
-    json_body = json.loads(json_string)
+
+    try:
+        json_body = json.loads(json_string)
+    except ValueError:
+        return apiUtils(False, "Could not load json payload")
 
     try:
         if "name" in json_body[0]:
             topology_name = json_body[0]["name"]
+
+            # do we have a specified delay between starting domains?
+            if 'start_delay' in json_body[0]:
+                delay = int(json_body[0]['start_delay'])
+            else:
+                delay = 0.5
+
             # get the topology by name
-            topology = Topology.objects.get(name=topology_name)
+            try:
+                topology = Topology.objects.get(name=topology_name)
+            except ObjectDoesNotExist:
+                logger.error('Could not find topology with name: %s' % topology_name)
+                return apiUtils(False, "Could not find topology with name: %s" % topology_name)
 
             domain_list = libvirtUtils.get_domains_for_topology("t" + str(topology.id) + "_")
 
@@ -526,17 +551,15 @@ def start_topology(request):
                 logger.debug("starting network: %s" % network["name"])
                 libvirtUtils.start_network(network["name"])
 
-            time.sleep(.5)
+            time.sleep(delay)
             for domain in domain_list:
                 # no sleep time? Just go ahead and melt the disks!
-                time.sleep(.5)
-                logger.debug("starting domain: %s" % domain["uuid"])
-                libvirtUtils.start_domain(domain["uuid"])
+                if domain["state"] != 'running':
+                    logger.debug("starting domain: %s" % domain["uuid"])
+                    libvirtUtils.start_domain(domain["uuid"])
+                    time.sleep(delay)
 
             return apiUtils.return_json(True, 'Topology started!', topology_id=topology.id)
-
-    except Topology.DoesNotExist:
-            return apiUtils.return_json(False, 'Topology Does not Exist')
 
     except Exception as ex:
         logger.debug(str(ex))
@@ -544,6 +567,13 @@ def start_topology(request):
 
 
 def check_image_exists(request):
+    """
+    Checks if an image already exists in Wistar
+
+    :param request: JSON payload that contains a single object with the following properties: name
+    :return: a JSON object with at least the following properties: status (boolean), message, and other properties
+        may also return an HTTP Status of 500 in case of exceptions
+    """
     logger.debug("---- check_image_exists ----")
 
     json_string = request.body
@@ -574,15 +604,28 @@ def check_image_exists(request):
 
 
 def create_local_image(request):
+    """
+    Creates an image from a file on the local filesystem. You should upload the image to the server first, then call
+    this to register that image with Wistar!
+
+    :param request: JSON payload that contains a single object with the following properties:
+        name, description, image_type, and file_name
+    :return: a JSON object with at least the following properties: status (boolean), message, and other properties
+        may also return an HTTP Status of 500 in case of exceptions
+    """
     logger.debug("---- create_local_image ----")
     json_string = request.body
-    json_body = json.loads(json_string)
-    logger.debug(json_string)
+    try:
+        json_body = json.loads(json_string)
+    except ValueError as ve:
+        logger.error('Could not parse json payload!')
+        return apiUtils.return_json(False, "Could not parse json payload!")
+
     logger.debug(json_body)
     required_fields = set(['name', 'description', 'image_type', 'file_name'])
     if not required_fields.issubset(json_body[0]):
         logger.error("Invalid parameters in json body")
-        return HttpResponse(status=500)
+        return apiUtils.return_json(False, "Invalid parameters in json payload")
 
     file_name = json_body[0]["file_name"]
     name = json_body[0]["name"]
@@ -592,14 +635,21 @@ def create_local_image(request):
     file_path = configuration.user_images_dir + "/" + file_name
     try:
         image_id = imageUtils.create_local_image(name, description, file_path, image_type)
-        return apiUtils.return_json(True, "Image Created with id: %s" % image_id, image_id=image_id)
+        return apiUtils.return_json(True, "Image Exists with id: %s" % image_id, image_id=image_id)
 
     except Exception as e:
-        return HttpResponse(status=500)
+        logger.error(str(e))
+        return apiUtils.return_json(False, "Unknown exception in create_local_image")
         # return apiUtils.return_json(False, "Could not create local image!")
 
 
 def delete_image(request):
+    """
+    Deletes an image from Wistar
+
+    :param request: JSON payload that contains a single object with the following properties:  name
+    :return: a JSON object with at least the following properties: status (boolean) and message
+    """
     logger.debug("---- delete_image ----")
     json_string = request.body
     json_body = json.loads(json_string)

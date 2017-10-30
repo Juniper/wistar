@@ -64,6 +64,7 @@
       - python-markupsafe
       - python-setuptools
       - mtools
+      - dosfstools
 
   - name: Install Django
     pip:

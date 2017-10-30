@@ -1,4 +1,11 @@
 {% load staticfiles %}
+<script type="text/javascript">
+    {% if domain_list|length == 0 %}
+    is_deployed = false;
+    {% else %}
+    is_deployed = true;
+    {% endif %}
+</script>
 <table>
     <tr>
         <th colspan="3">KVM Deployment Status</th>

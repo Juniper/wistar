@@ -7,7 +7,7 @@
             Options
         </td>
         <td>
-		    <a href="#" onclick="javascript: redir('uploadToGlance/{{ image_id }}')">Upload Image to Glance</a>
+		    <a href="#" onclick="javascript: redir('/images/uploadToGlance/{{ image_id }}')">Upload Image to Glance</a>
 	    </td>
     </tr>
     {% else %}
@@ -17,7 +17,7 @@
         </td>
         <td>
           <a href="#"
-             onclick="javascript: redir('http://{{ openstack_host }}/horizon/admin/images/{{ glance_id }}/detail/')"
+             onclick="javascript: redir('http://{{ openstack_host }}/dashboard/admin/images/{{ glance_id }}/detail/')"
             title="{{ image }}">
               {{ glance_id }}
           </a>

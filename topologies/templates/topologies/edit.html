@@ -53,11 +53,24 @@
 <script type="text/javascript" src="{% static 'js/vm_types/wistarLegacy.js' %}"></script>
 
 <script type="text/javascript" src="{% static 'js/topologySelectionListener.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/topology_utils.js' %}"></script>
 
 <script type="text/javascript">
     var canvas;
     var lastX = 50;
-    var lastY = -50;
+    var lastY = 50;
+    var vmxCount = 1;
+    // keep track of how many icons we've added to the canvas
+    // perform simple wrapping if above 10
+    var iconWrapLimit = 5;
+    var iconCount = 0;
+    var iconOffset = 135;
+
+    var internalCloudCounter = 0;
+    var externalCloudCounter = 0;
+
+    var internalCloudInitialOffset = 0;
+    var externalCloudInitialOffset = 0;
 
     var wistarVmCount = 1;
 
@@ -73,6 +86,8 @@
     // what is our topology id anyway?
     var topology_id = '{{ topo.id }}';
 
+    // are we deployed somewhere yet?
+    var is_deployed = false;
 
     // keep track of how many icons we've added to the canvas
     // perform simple wrapping if above 10
@@ -105,6 +120,28 @@
         }
     }
 
+    function nextIp() {
+
+        for(i=ip_floor;i<255;i++) {
+            if ($.inArray(i, allocated_ips) < 0) {
+                ip_floor = i + 1;
+                return '{{ global_config.management_prefix }}' + i;
+            } else {
+                console.log(i + ' is taken');
+            }
+        }
+        alert("Out of usable IP addresses! You should probably delete some old topologies! \
+        Returning overlapping non reserved IP address");
+        for(i=dhcp_floor;i<255;i++) {
+            if ($.inArray(i, dhcp_reservations) < 0) {
+                dhcp_floor = i + 1;
+                return '{{ global_config.management_prefix }}' + i;
+            } else {
+                console.log(i + ' is currently reserved!');
+            }
+        }
+    }
+
     // loads initial topology from json stored in the 'json' div
     // also creates the instance array variable on page context
     function loadTopology() {
@@ -134,11 +171,23 @@
     // iterate instanceArray and grab the latest boot up state for each
     // this runs silently
     function updateAllBootState() {
+        if (! is_deployed) {
+            console.log('not checking undeployed topology');
+            return;
+        } else {
+            console.log('checking boot status');
+        }
         updateBootCounter++;
         console.log("updating boot up state for topology");
         for(v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
             var figure = canvas.getFigure(instance["id"]);
+            console.log(figure);
+            if (figure == null) {
+                console.log('removing non existent instance');
+                instanceArray.splice(v, 1);
+                continue;
+            }
             var ud = figure.getUserData()
             if ("parent" in ud) {
                 console.log("skipping check on child instance");
@@ -1712,8 +1761,40 @@
         sf.css("display", "none");
     }
 
+    function addInstanceForm() {
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        var url = '/topologies/addInstanceForm/';
+
+        var post = jQuery.get(url, function(response) {
+            var content = jQuery(response);
+            jQuery('#overlayPanel').empty().append(content);
+            showOverlay('#overlayPanel');
+        });
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
+    function resize_draw2d_canvas_view() {
+        var canvas_view = jQuery('#draw2d_canvas_view');
+        canvas_view.css('width', window.innerWidth - 450);
+        canvas_view.css('height', window.innerHeight - 176);
+    }
+
+    jQuery( window).resize(function() {
+        resize_draw2d_canvas_view();
+    });
+
     jQuery( window ).load(function() {
-        window.canvas = new draw2d.Canvas("gfx_holder", true);
+
+        resize_draw2d_canvas_view();
+
+        window.canvas = new draw2d.Canvas("draw2d_canvas", true);
         // set default connection router here
 
        var createConnection = function(v){
@@ -2397,7 +2478,7 @@
                     </tr>
                 </table>
             </div>
-            <div id="deploymentStatus"></div>
+            <div id="deploymentStatus" style="max-height: 455px; overflow-y: auto"></div>
             {% if topo_id != None %}
             <div id="automationTools">
                 <table>
@@ -2494,7 +2575,7 @@
                                         background-color: #fff;
                                         border-bottom: 1px solid #ddd;
                                         line-height: 34px;">
-
+                <input type="button" value="Add Instance" onclick="javascript: addInstanceForm()">
                 <input type="text" placeholder="New Note" id="newLabel"
                        onclick="javascript: this.value = ''" style="width: 200px">
 
@@ -2540,14 +2621,16 @@
                        title="make Topology Smaller" onclick="javascript: decreaseZoom()">
                 &nbsp;
             </div>
-            <div id="gfx_holder" style="background-image: url({% static 'images/grid_lite.png' %});
+            <div id="draw2d_canvas_view" style="width: 900px; height: 735px; overflow: scroll;">
+            <div id="draw2d_canvas" style="background-image: url({% static 'images/grid_lite.png' %});
                 background-repeat: repeat;
-                min-width:900px;
-                min-height:664px;
+                width:4000px;
+                height:4000px;
                 position:relative;
                 border-left: 1px solid #ddd;
                 border-right: 1px solid #ddd;
             ">
+            </div>
             </div>
             <div id="extendedToolsMenu" style="min-width: 900px;
                                         margin-right: 10px;

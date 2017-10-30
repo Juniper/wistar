@@ -28,8 +28,11 @@ from django.core.exceptions import ObjectDoesNotExist
 
 import libvirtUtils
 import osUtils
+import imageUtils
+import openstackUtils
 from images.models import Image
 from topologies.models import Topology
+from scripts.models import Script
 from wistar import configuration
 from wistar import settings
 
@@ -43,7 +46,7 @@ def generate_next_mac(topology_id):
     silly attempt to keep mac addresses unique
     use the topology id to generate 2 octets, and the number of
     macs used so far to generate the last one
-    :param topology_id: id of the topology we are building 
+    :param topology_id: id of the topology we are building
     :return: mostly unique mac address that should be safe to deploy
     """
     global mac_counter
@@ -59,7 +62,7 @@ def generate_next_mac(topology_id):
 def get_heat_json_from_topology_config(config):
     """
     Generates heat template from the topology configuration object
-    use load_config_from_topology_json to get the configuration from the Topology 
+    use load_config_from_topology_json to get the configuration from the Topology
     :param config: configuration dict from load_config_from_topology_json
     :return: json encoded heat template as String
     """
@@ -98,20 +101,35 @@ def get_heat_json_from_topology_config(config):
         template["resources"][network["name"]] = nr
         template["resources"][network["name"] + "_subnet"] = nrs
 
+    # cache the image_details here to avoid multiple REST calls for details about an image type
+    # as many topologies have lots of the same types of images around
+    image_details_dict = dict()
+
     for device in config["devices"]:
+
+        if device["imageId"] in image_details_dict:
+            image_details = image_details_dict[device["imageId"]]
+        else:
+            image_details = imageUtils.get_image_detail(device["imageId"])
+            image_details_dict[device["imageId"]] = image_details
+
+        image_name = image_details["name"]
+        if "disk" in image_details:
+            image_disk = image_details["disk"]
+        else:
+            image_disk = 20
+
         # determine openstack flavor here
         device_ram = int(device["ram"])
+        device_cpu = int(device["cpu"])
 
-        if device_ram >= 16384:
-            flavor = "m1.xlarge"
-        elif device_ram >= 8192:
-            flavor = "m1.large"
-        elif device_ram >= 4096:
-            flavor = "m1.medium"
-        elif device_ram >= 1024:
-            flavor = "m1.small"
-        else:
-            flavor = "m1.tiny"
+        flavor_detail = openstackUtils.get_minimum_flavor_for_specs(configuration.openstack_project,
+                                                                    device_cpu,
+                                                                    device_ram,
+                                                                    image_disk
+                                                                    )
+
+        flavor = flavor_detail["name"]
 
         dr = dict()
         dr["type"] = "OS::Nova::Server"
@@ -126,16 +144,47 @@ def get_heat_json_from_topology_config(config):
             index += 1
             dr["properties"]["networks"].append(port)
 
-        image = Image.objects.get(pk=device["imageId"])
-        image_name = image.name
         dr["properties"]["image"] = image_name
         dr["properties"]["name"] = device["name"]
 
         if device["configDriveSupport"]:
             dr["properties"]["config_drive"] = True
-            metadata = device["configDriveParams"]
-            metadata[0]["hostname"] = device["name"]
+            dr["properties"]["user_data_format"] = "RAW"
+            metadata = dict()
+            metadata["hostname"] = device["name"]
+            metadata["console"] = "vidconsole"
             dr["properties"]["metadata"] = metadata
+
+            # let's check all the configDriveParams and look for a junos config
+            # FIXME - this may need tweaked if we need to include config drive cloud-init support for other platforms
+            # right now we just need to ignore /boot/loader.conf
+            for cfp in device["configDriveParams"]:
+
+                if "destination" in cfp and cfp["destination"] == "/boot/loader.conf":
+                    template_name = cfp["template"]
+                    loader_string = osUtils.compile_config_drive_params_template(template_name,
+                                                                                 device["name"],
+                                                                                 device["label"],
+                                                                                 device["password"],
+                                                                                 device["ip"],
+                                                                                 device["managementInterface"])
+
+                    for l in loader_string:
+                        left, right = l.split('=')
+                        if left not in metadata:
+                            metadata[left] = right
+
+                if "destination" in cfp and cfp["destination"] == "/juniper.conf":
+                    template_name = cfp["template"]
+                    personality_string = osUtils.compile_config_drive_params_template(template_name,
+                                                                                      device["name"],
+                                                                                      device["label"],
+                                                                                      device["password"],
+                                                                                      device["ip"],
+                                                                                      device["managementInterface"])
+
+                    dr["properties"]["personality"] = dict()
+                    dr["properties"]["personality"] = {"/config/juniper.conf": personality_string}
 
         template["resources"][device["name"]] = dr
 
@@ -200,7 +249,7 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["imageId"] = user_data.get("image", "")
 
             try:
-                image = Image.objects.get(pk=device["imageId"])
+                Image.objects.get(pk=device["imageId"])
             except ObjectDoesNotExist:
                 raise Exception("Not all images are present!")
 
@@ -258,7 +307,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                 device["configScriptId"] = user_data.get("configScriptId", "")
                 device["configScriptParam"] = user_data.get("configScriptParam", "")
 
-            device["uuid"] = json_object["id"]
+            device["uuid"] = json_object.get('id', '')
             device["interfaces"] = []
 
             # determine next available VNC port that has not currently been assigned
@@ -509,13 +558,11 @@ def clone_topology(topology_json):
     """
     try:
         json_data = json.loads(topology_json)
+    except ValueError as ve:
+        logger.error('Could not parse topology JSON for clone!')
+        return None
 
-        wistar_vm_counter = 0
-
-        for json_object in json_data:
-            if "userData" in json_object and "wistarVm" in json_object["userData"]:
-                wistar_vm_counter += 1
-
+    try:
         all_used_ips = get_used_ips()
         floor_ip = 2
 
@@ -543,6 +590,13 @@ def clone_topology(topology_json):
                         image = image_list[0]
                         logger.debug("Updating image to corrected id of: %s " % str(image.id))
                         json_object["userData"]["image"] = image.id
+
+                # do not import configuration script information if the id does not exist here
+                # for non-local clone operations, this could pose a problem
+                if "configScriptId" in ud:
+                    if not Script.objects.filter(id=ud['configScriptId']).exists():
+                        logger.info('Could not find desired script during clone')
+                        json_object['userData']['configScriptId'] = 0
 
         return json.dumps(json_data)
 
@@ -710,7 +764,6 @@ def get_dhcp_reserved_ips():
     dhcp_leases = osUtils.get_dhcp_reservations()
     for lease in dhcp_leases:
         ip = str(lease["ip-address"])
-        logger.debug("adding active reservation %s" % ip)
         last_octet = ip.split('.')[-1]
         all_ips.append(int(last_octet))
 

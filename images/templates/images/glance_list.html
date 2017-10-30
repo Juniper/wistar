@@ -14,7 +14,7 @@
         {% for image in image_list %}
         <tr>
             <td>
-                <a href="javascript: window.open('http://{{ global_config.openstack_host }}/horizon/admin/images/{{ image.id }}/detail')">
+                <a href="javascript: window.open('http://{{ global_config.openstack_host }}/dashboard/admin/images/{{ image.id }}/detail')">
                     {{ image.name }}
                 </a>
             </td>
@@ -22,13 +22,14 @@
                 {{ image.description }}
             </td>
             <td>
-                <a href='importFromGlance/{{ image.id }}'>Import</a>
+                <a href='/images/importFromGlance/{{ image.id }}'>Import</a>
                 &nbsp;
             </td>
 
         </tr>
         {% endfor %}
     </table>
+    <br/>
     <p>Importing images from Glance will create a DB entry and allow you associate an image 'type' from the Edit
         screen
     </p>

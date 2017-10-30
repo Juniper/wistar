@@ -911,80 +911,86 @@ def inline_deploy_topology(config):
 
     for device in config["devices"]:
         try:
-            if not libvirtUtils.domain_exists(device["name"]):
-                logger.debug("Rendering deviceXml for: %s" % device["name"])
+            if libvirtUtils.domain_exists(device['name']):
+                device_domain = libvirtUtils.get_domain_by_name(device['name'])
+                device['domain_uuid'] = device_domain.UUIDString()
+            else:
+                device['domain_uuid'] = ''
 
-                configuration_file = device["configurationFile"]
-                logger.debug("using config file: " + configuration_file)
+            # if not libvirtUtils.domain_exists(device["name"]):
+            logger.debug("Rendering deviceXml for: %s" % device["name"])
 
-                logger.debug(device)
+            configuration_file = device["configurationFile"]
+            logger.debug("using config file: " + configuration_file)
 
-                image = Image.objects.get(pk=device["imageId"])
-                image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
-                instance_path = osUtils.get_instance_path_from_image(image_base_path, device["name"])
+            logger.debug(device)
 
-                secondary_disk = ""
-                tertiary_disk = ""
+            image = Image.objects.get(pk=device["imageId"])
+            image_base_path = settings.MEDIA_ROOT + "/" + image.filePath.url
+            instance_path = osUtils.get_instance_path_from_image(image_base_path, device["name"])
 
-                if not osUtils.check_path(instance_path):
-                    if device["resizeImage"] > 0:
-                        if not osUtils.create_thick_provision_instance(image_base_path,
-                                                                       device["name"],
-                                                                       device["resizeImage"]):
-                            raise Exception("Could not resize image instance for image: " + device["name"])
+            secondary_disk = ""
+            tertiary_disk = ""
 
-                    else:
-                        if not osUtils.create_thin_provision_instance(image_base_path, device["name"]):
-                            raise Exception("Could not create image instance for image: " + image_base_path)
+            if not osUtils.check_path(instance_path):
+                if device["resizeImage"] > 0:
+                    logger.debug('resizing image')
+                    if not osUtils.create_thick_provision_instance(image_base_path,
+                                                                   device["name"],
+                                                                   device["resizeImage"]):
+                        raise Exception("Could not resize image instance for image: " + device["name"])
 
-                if "type" in device["secondaryDiskParams"]:
-                    secondary_disk = wistarUtils.create_disk_instance(device, device["secondaryDiskParams"])
+                else:
+                    if not osUtils.create_thin_provision_instance(image_base_path, device["name"]):
+                        raise Exception("Could not create image instance for image: " + image_base_path)
 
-                if "type" in device["tertiaryDiskParams"]:
-                    tertiary_disk = wistarUtils.create_disk_instance(device, device["tertiaryDiskParams"])
+            if "type" in device["secondaryDiskParams"]:
+                secondary_disk = wistarUtils.create_disk_instance(device, device["secondaryDiskParams"])
 
-                cloud_init_path = ''
-                if device["cloudInitSupport"]:
-                    # grab the last interface
-                    management_interface = device["managementInterface"]
-                    # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
-                    management_ip = device["ip"] + "/24"
-                    # domain_name, host_name, mgmt_ip, mgmt_interface
-                    script_string = ""
-                    script_param = ""
-                    if device["configScriptId"] != 0:
-                        logger.debug("Passing script data!")
+            if "type" in device["tertiaryDiskParams"]:
+                tertiary_disk = wistarUtils.create_disk_instance(device, device["tertiaryDiskParams"])
+
+            cloud_init_path = ''
+            if device["cloudInitSupport"]:
+                # grab the last interface
+                management_interface = device["managementInterface"]
+                # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
+                management_ip = device["ip"] + "/24"
+                # domain_name, host_name, mgmt_ip, mgmt_interface
+                script_string = ""
+                script_param = ""
+
+                if device["configScriptId"] != 0:
+                    logger.debug("Passing script data!")
+                    try:
                         script = Script.objects.get(pk=int(device["configScriptId"]))
                         script_string = script.script
                         script_param = device["configScriptParam"]
                         logger.debug(script_string)
                         logger.debug(script_param)
+                    except ObjectDoesNotExist:
+                        logger.info('config script was specified but was not found!')
 
-                    logger.debug("Creating cloud init path for linux image")
-                    cloud_init_path = osUtils.create_cloud_init_img(device["name"], device["label"],
-                                                                    management_ip, management_interface,
-                                                                    device["password"], script_string, script_param)
+                logger.debug("Creating cloud init path for linux image")
+                cloud_init_path = osUtils.create_cloud_init_img(device["name"], device["label"],
+                                                                management_ip, management_interface,
+                                                                device["password"], script_string, script_param)
 
-                    logger.debug(cloud_init_path)
+                logger.debug(cloud_init_path)
 
-                device_xml = render_to_string(domain_xml_path + configuration_file,
-                                              {'device': device, 'instancePath': instance_path,
-                                               'vm_env': vm_env, 'cloud_init_path': cloud_init_path,
-                                               'secondary_disk_path': secondary_disk,
-                                               'tertiary_disk_path': tertiary_disk}
-                                              )
-                logger.debug(device_xml)
-                libvirtUtils.define_domain_from_xml(device_xml)
+            device_xml = render_to_string(domain_xml_path + configuration_file,
+                                          {'device': device, 'instancePath': instance_path,
+                                           'vm_env': vm_env, 'cloud_init_path': cloud_init_path,
+                                           'secondary_disk_path': secondary_disk,
+                                           'tertiary_disk_path': tertiary_disk}
+                                          )
+            logger.debug(device_xml)
+            libvirtUtils.define_domain_from_xml(device_xml)
 
-            if not osUtils.check_is_linux():
-                # perform some special hacks for vbox
-                management_interfaces = device["managementInterfaces"]
-                management_ip = str(management_interfaces[0]["ip"])
-                vboxUtils.preconfigure_vmx(device["name"], management_ip)
-
-            logger.debug("Reserving IP with dnsmasq")
-            management_mac = libvirtUtils.get_management_interface_mac_for_domain(device["name"])
-            libvirtUtils.reserve_management_ip_for_mac(management_mac, device["ip"])
+            if not libvirtUtils.domain_exists(device["name"]):
+                logger.debug("Reserving IP with dnsmasq")
+                management_mac = libvirtUtils.get_management_interface_mac_for_domain(device["name"])
+                libvirtUtils.reserve_management_ip_for_mac(management_mac, device["ip"])
 
         except Exception as ex:
             logger.debug("Raising exception")

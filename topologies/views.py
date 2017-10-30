@@ -34,6 +34,8 @@ from common.lib import junosUtils
 from common.lib import libvirtUtils
 from common.lib import osUtils
 from common.lib import wistarUtils
+from common.lib import openstackUtils
+
 from images.models import Image
 from scripts.models import Script
 from topologies.forms import ImportForm
@@ -267,6 +269,8 @@ def delete(request, topology_id):
     logger.debug('---- topology delete ----')
     topology_prefix = "t%s_" % topology_id
 
+    topology = get_object_or_404(Topology, pk=topology_id)
+
     if configuration.deployment_backend == "kvm":
 
         network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
@@ -287,10 +291,13 @@ def delete(request, topology_id):
                 if source_file is not None:
                     osUtils.remove_instance(source_file)
 
-        topology = get_object_or_404(Topology, pk=topology_id)
-
         osUtils.remove_instances_for_topology(topology_prefix)
         osUtils.remove_cloud_init_tmp_dirs(topology_prefix)
+
+    elif configuration.deployment_backend == "openstack":
+        stack_name = topology.name.replace(' ', '_')
+        if openstackUtils.connect_to_openstack():
+            logger.debug(openstackUtils.delete_stack(stack_name))
 
     topology.delete()
     messages.info(request, 'Topology %s deleted' % topology.name)
@@ -450,3 +457,33 @@ def export_as_heat_template(request, topology_id):
         logger.debug("Caught Exception in deploy heat")
         logger.error('exception: %s' % e)
         return render(request, 'error.html', {'error': str(e)})
+
+
+@csrf_exempt
+def add_instance_form(request):
+    logger.info('---------add_instance_form--------')
+
+    image_list = Image.objects.all().order_by('name')
+    script_list = Script.objects.all().order_by('name')
+    vm_types = configuration.vm_image_types
+    vm_types_string = json.dumps(vm_types)
+
+    image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
+
+    currently_allocated_ips = wistarUtils.get_used_ips()
+    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+
+    if configuration.deployment_backend == "openstack":
+        external_bridge = configuration.openstack_external_network
+    else:
+        external_bridge = configuration.kvm_external_bridge
+
+    context = {'image_list': image_list,
+               'script_list': script_list,
+               'vm_types': vm_types_string,
+               'image_list_json': image_list_json,
+               'external_bridge': external_bridge,
+               'allocated_ips': currently_allocated_ips,
+               'dhcp_reservations': dhcp_reservations,
+               }
+    return render(request, 'topologies/overlay/add_instance.html', context)
