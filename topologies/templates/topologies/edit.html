@@ -874,6 +874,35 @@
         saveConnectionData();
     }
 
+    function redeployTopology() {
+
+        alert('VMs must be restarted to reflect new topology configuration.');
+
+        exportJson();
+        var j = jQuery("#json").val();
+        var doc = jQuery(document.documentElement);
+        doc.css('cursor', 'progress');
+
+        var url = '/ajax/redeployTopology/';
+        var params = {
+            'topologyId' : '{{ topo.id }}',
+            'json' : j
+        };
+
+        var post = jQuery.post(url, params, function(response) {
+            var content = jQuery(response);
+            jQuery('#deploymentStatus').empty().append(content);
+        });
+
+        post.fail(function() {
+            alert('Could not perform request!');
+        });
+
+        post.always(function() {
+            doc.css('cursor', '');
+        });
+    }
+
     function deployTopology() {
         var doc = jQuery(document.documentElement);
         doc.css('cursor', 'progress');
@@ -1831,7 +1860,7 @@
             loadTopology();
             {% if topo.id != 0 %}
                 refreshDeploymentStatus( {{ topo.id }} );
-                updateAllBootState();
+                setTimeout(updateAllBootState, 1500);
                 // let's continue to check boot up state every 30 seconds
                 updateBootInterval = setInterval(updateAllBootState, 30000);
             {% endif %}
@@ -2641,7 +2670,7 @@
                                         border: 1px solid #ddd;
                                         line-height: 34px;">
                 <input type="button" value="Re-Deploy" title="Redeploy the Topology"
-                       onclick="javascript: deployTopology()">
+                       onclick="javascript: redeployTopology()">
                 &nbsp;
                 <input type="button" value="Toggle Boot Check" title="Toggle automated boot up status check"
                        onclick="javascript: toggleBootInterval()">

@@ -314,7 +314,7 @@ def create(request):
     logger.debug('---- topology create ----')
     url = '/topologies/'
     try:
-        if request.POST.has_key('id'):
+        if 'id' in request.POST:
             topo_id = request.POST['id']
             topo = get_object_or_404(Topology, pk=topo_id)
             topo.json = request.POST['json']

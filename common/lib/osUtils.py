@@ -568,6 +568,7 @@ def get_dhcp_reservations():
     {
         "ip-address": "192.168.122.171",
         "mac-address": "52:54:00:00:42:00",
+        "name": "vmx01"
     }
     """
     dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
@@ -579,115 +580,20 @@ def get_dhcp_reservations():
     entries = []
     with open(dhcp_hosts_file_path, 'r') as hosts_file:
         for entry in hosts_file:
-            (m, i) = entry.strip().split(',')
+            e = entry.strip().split(',')
+            m = e[0]
+            i = e[1]
+            if len(e) == 3:
+                n = e[2]
+            else:
+                n = ''
             entry_object = dict()
             entry_object["ip-address"] = i
             entry_object["mac-address"] = m
+            entry_object['name'] = n
             entries.append(entry_object)
 
     return entries
-
-
-def verify_dhcp_reservation(mac, ip):
-
-    dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
-
-    host_entries = get_dhcp_reservations()
-    for entry in host_entries:
-        (entry_mac, entry_ip) = entry.split(',')
-        if entry_ip == ip and entry_mac == mac:
-            logger.debug("management ip already reserved for this mac")
-            return True
-
-    with open(dhcp_hosts_file_path, 'a') as hosts_file:
-        hosts_file.write("%s,%s\n" % (mac, ip))
-
-    return True
-
-
-def reserve_management_ip_for_mac(mac, ip):
-    """
-    DEPRECATED - use libvirtUtils.reserve_management_ip_for_mac instead
-    Open the libvirt dnsmasq dhcp-hosts file and add an entry for the mac / ip combo if it's
-    not already there
-    :param mac: mac address of the management interface
-    :param ip: desired IP address - presumably this has already been vetted as not in use
-    :return: boolean true if the configuration has changed!
-    """
-    dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
-
-    if not os.path.exists(dhcp_hosts_file_path):
-        return False
-
-    with open(dhcp_hosts_file_path, 'r') as hosts_file:
-        for entry in hosts_file:
-            (entry_mac, entry_ip) = entry.split(',')
-            if entry_ip == ip and entry_mac == mac:
-                logger.debug("management ip already reserved for this mac")
-                return False
-            elif entry_ip == ip and entry_mac != mac:
-                logger.debug("management ip Already in Use!")
-                return False
-            elif entry_ip != ip and entry_mac == mac:
-                logger.debug("management interface mac is already configured!")
-                return False
-
-    with open(dhcp_hosts_file_path, 'a') as hosts_file:
-        hosts_file.write("%s,%s\n" % (mac, ip))
-
-    return True
-
-
-def release_management_ip_for_mac(mac):
-    """
-    DEPRECATED - use libvirtUtils.release_management_ip_for_mac instead
-    Open the libvirt dnsmasq dhcp-hosts file and remove an entry for the mac / ip combo if it's
-    not already there
-    :param mac: mac address of the management interface
-    :param ip: desired IP address - presumably this has already been vetted as not in use
-    :return: boolean
-    """
-    dhcp_hosts_file_path = "/var/lib/libvirt/dnsmasq/default.hostsfile"
-
-    if not os.path.exists(dhcp_hosts_file_path):
-        return False
-
-    # basic strategy is to pull all entries into an array unless the line matches our mac!
-    entries = []
-    found = False
-    with open(dhcp_hosts_file_path, 'r') as hosts_file:
-        for entry in hosts_file:
-            (m, i) = entry.strip().split(',')
-            if m == mac:
-                logger.debug("Removing management ip: %s reserved for mac: %s" % (i, m))
-                found = True
-                continue
-            else:
-                entries.append(entry.strip())
-
-    if found:
-        with open(dhcp_hosts_file_path, 'w') as hosts_file:
-            for entry in entries:
-                hosts_file.write("%s\n" % entry)
-
-        return True
-
-    return False
-
-
-def reload_dhcp_config():
-    """
-    sends a HUP to the dnsmasq process
-    :return: boolean
-    """
-    logger.debug("Sending HUP to dnsmsq processes")
-    cmd = 'ps -ef | grep dnsmasq | grep default.conf | awk \'{ print $2 }\' | xargs -n 1 kill -HUP'
-    logger.debug("Running cmd: " + cmd)
-    rt = os.system(cmd)
-    if rt == 0:
-        return True
-    else:
-        return False
 
 
 def check_port_in_use(port_number):

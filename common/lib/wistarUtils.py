@@ -26,13 +26,13 @@ import time
 
 from django.core.exceptions import ObjectDoesNotExist
 
-import libvirtUtils
-import osUtils
 import imageUtils
+import libvirtUtils
 import openstackUtils
+import osUtils
 from images.models import Image
-from topologies.models import Topology
 from scripts.models import Script
+from topologies.models import Topology
 from wistar import configuration
 from wistar import settings
 
@@ -40,8 +40,32 @@ logger = logging.getLogger(__name__)
 # keep track of how many mac's we've used
 mac_counter = 0
 
+# keep track of all macs that been used
+used_macs = dict()
+
 
 def generate_next_mac(topology_id):
+    """
+    keep track of all used macs and don't reuse them if possible
+    :param topology_id:
+    :return: unique mac
+    """
+    global used_macs
+    if topology_id not in used_macs:
+        used_macs[topology_id] = list()
+
+    macs_for_topology = used_macs[topology_id]
+    mac = _generate_mac(topology_id)
+
+    while mac in macs_for_topology:
+        logger.info('this mac %s has already been used!' % mac)
+        mac = _generate_mac(topology_id)
+
+    macs_for_topology.append(mac)
+    return mac
+
+
+def _generate_mac(topology_id):
     """
     silly attempt to keep mac addresses unique
     use the topology id to generate 2 octets, and the number of
@@ -209,6 +233,23 @@ def get_heat_json_from_topology_config(config):
     return json.dumps(template)
 
 
+def _get_management_macs_for_topology(topology_id):
+    """
+    returns a list of all macs used for management interfaces for a topology
+    :param topology_id: id of the topology
+    :return: list of macs
+    """
+    existing_macs = list()
+
+    domains = libvirtUtils.get_domains_for_topology(topology_id)
+    for d in domains:
+        m = libvirtUtils.get_management_interface_mac_for_domain(d['name'])
+        logger.debug('adding existing mac %s to existing_macs list' % m)
+        existing_macs.append(m)
+
+    return existing_macs
+
+
 def load_config_from_topology_json(topology_json, topology_id):
     """
     Generates dict containing a list of devices and networks from the topology JSON
@@ -222,6 +263,11 @@ def load_config_from_topology_json(topology_json, topology_id):
     logger.debug("loading json object from topology: %s" % topology_id)
     global mac_counter
     mac_counter = 0
+
+    # preload all the existing management mac addresses if any
+    global used_macs
+    used_macs[topology_id] = _get_management_macs_for_topology(topology_id)
+
     json_data = json.loads(topology_json)
 
     # configuration json will consist of a list of devices and networks
@@ -237,6 +283,13 @@ def load_config_from_topology_json(topology_json, topology_id):
 
     device_index = 0
     chassis_name_to_index = dict()
+
+    # has this topology already been deployed?
+    is_deployed = False
+    existing_macs = _get_management_macs_for_topology(topology_id)
+    if len(existing_macs) > 0:
+        # yep, already been deployed
+        is_deployed = True
 
     for json_object in json_data:
         if "userData" in json_object and "wistarVm" in json_object["userData"]:
@@ -349,7 +402,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                 chassis_id = device_index
                 chassis_name_to_index[chassis_name] = chassis_id
 
-            # set this property for use later, we'll loop again after we have configured all the conections
+            # set this property for use later, we'll loop again after we have configured all the connections
             # to create the management interface at the end (i.e. for Linux hosts)
             device["mgmtInterfaceIndex"] = user_data.get("mgmtInterfaceIndex", 0)
 
@@ -360,7 +413,12 @@ def load_config_from_topology_json(topology_json, topology_id):
                 # setup management interface
                 # management interface mi will always be connected to default management network (virbr0 on KVM)
                 mi = dict()
-                mi["mac"] = generate_next_mac(topology_id)
+
+                if is_deployed and libvirtUtils.domain_exists(device['name']):
+                    mi['mac'] = libvirtUtils.get_management_interface_mac_for_domain(device['name'])
+                else:
+                    mi['mac'] = generate_next_mac(topology_id)
+
                 mi["bridge"] = "virbr0"
                 mi["type"] = user_data.get("mgmtInterfaceType", "virtio")
 
@@ -534,7 +592,12 @@ def load_config_from_topology_json(topology_json, topology_id):
     for d in devices:
         if d["mgmtInterfaceIndex"] == -1:
             mi = dict()
-            mi["mac"] = generate_next_mac(topology_id)
+            # if this has already been deployed, let's preserve the existing mac address that has been assigned
+            if is_deployed and libvirtUtils.domain_exists(device['name']):
+                mi['mac'] = libvirtUtils.get_management_interface_mac_for_domain(device['name'])
+            else:
+                mi['mac'] = generate_next_mac(topology_id)
+
             mi["slot"] = "%#04x" % int(len(d["interfaces"]) + d["slot_offset"])
             mi["bridge"] = "virbr0"
             mi["type"] = user_data.get("mgmtInterfaceType", "")
@@ -734,9 +797,9 @@ def get_used_ips():
                     continue
 
                 last_octet = ip.split('.')[-1]
-                logger.debug(topology.id)
-                logger.info("'%s'" % ip)
-                logger.info(last_octet)
+                # logger.debug(topology.id)
+                # logger.info("'%s'" % ip)
+                # logger.info(last_octet)
                 all_ips.append(int(last_octet))
 
     dhcp_leases = get_dhcp_reserved_ips()

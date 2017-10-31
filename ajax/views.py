@@ -841,6 +841,59 @@ def multi_clone_topology(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
+def redeploy_topology(request):
+    required_fields = set(['json', 'topologyId'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "No Topology Id in request"})
+
+    topology_id = request.POST['topologyId']
+    j = request.POST['json']
+    try:
+        topo = Topology.objects.get(pk=topology_id)
+        topo.json = j
+        topo.save()
+    except ObjectDoesNotExist:
+        return render(request, 'ajax/ajaxError.html', {'error': "Topology doesn't exist"})
+
+    try:
+        domains = libvirtUtils.get_domains_for_topology(topology_id)
+        config = wistarUtils.load_config_from_topology_json(topo.json, topology_id)
+
+        logger.debug('checking for orphaned domains first')
+        # find domains we no longer need
+        for d in domains:
+            logger.debug('checking domain: %s' % d['name'])
+            found = False
+            for config_device in config["devices"]:
+                if config_device['name'] == d['name']:
+                    found = True
+                    continue
+
+            if not found:
+                logger.info("undefine domain: " + d["name"])
+                source_file = libvirtUtils.get_image_for_domain(d["uuid"])
+                if libvirtUtils.undefine_domain(d["uuid"]):
+                    if source_file is not None:
+                        osUtils.remove_instance(source_file)
+
+                    osUtils.remove_cloud_init_seed_dir_for_domain(d['name'])
+
+    except Exception as e:
+        logger.debug("Caught Exception in redeploy")
+        logger.debug(str(e))
+        return render(request, 'ajax/ajaxError.html', {'error': str(e)})
+
+    # forward onto deploy topo
+    try:
+        inline_deploy_topology(config)
+    except Exception as e:
+        logger.debug("Caught Exception in inline_deploy")
+        logger.debug(str(e))
+        return render(request, 'ajax/ajaxError.html', {'error': str(e)})
+
+    return refresh_deployment_status(request)
+
+
 def deploy_topology(request):
     if 'topologyId' not in request.POST:
         return render(request, 'ajax/ajaxError.html', {'error': "No Topology Id in request"})
@@ -848,8 +901,7 @@ def deploy_topology(request):
     topology_id = request.POST['topologyId']
     try:
         topo = Topology.objects.get(pk=topology_id)
-    except Exception as ex:
-        logger.debug(ex)
+    except ObjectDoesNotExist:
         return render(request, 'ajax/ajaxError.html', {'error': "Topology not found!"})
 
     try:
@@ -910,8 +962,10 @@ def inline_deploy_topology(config):
         domain_xml_path = "ajax/vbox/"
 
     for device in config["devices"]:
+        domain_exists = False
         try:
             if libvirtUtils.domain_exists(device['name']):
+                domain_exists = True
                 device_domain = libvirtUtils.get_domain_by_name(device['name'])
                 device['domain_uuid'] = device_domain.UUIDString()
             else:
@@ -987,10 +1041,10 @@ def inline_deploy_topology(config):
             logger.debug(device_xml)
             libvirtUtils.define_domain_from_xml(device_xml)
 
-            if not libvirtUtils.domain_exists(device["name"]):
+            if not domain_exists:
                 logger.debug("Reserving IP with dnsmasq")
                 management_mac = libvirtUtils.get_management_interface_mac_for_domain(device["name"])
-                libvirtUtils.reserve_management_ip_for_mac(management_mac, device["ip"])
+                libvirtUtils.reserve_management_ip_for_mac(management_mac, device["ip"], device["name"])
 
         except Exception as ex:
             logger.debug("Raising exception")

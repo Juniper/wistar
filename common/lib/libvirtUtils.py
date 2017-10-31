@@ -194,6 +194,10 @@ def get_domains_for_topology(topology_id):
     connect()
 
     domain_list = []
+
+    if not str(topology_id).startswith('t'):
+        topology_id = 't' + str(topology_id) + '_'
+
     try:
         domains = list_domains()
         for d in domains:
@@ -620,17 +624,19 @@ def get_management_interface_mac_for_domain(domain_name):
         return None
 
 
-def reserve_management_ip_for_mac(mac, ip):
+def reserve_management_ip_for_mac(mac, ip, device_name):
     """
     n.update(l.VIR_NETWORK_UPDATE_COMMAND_DELETE,  l.VIR_NETWORK_SECTION_IP_DHCP_HOST, -1,
-...  "<host mac='52:54:00:00:52:02' ip='192.168.122.87'/>", l.VIR_NETWORK_UPDATE_AFFECT_CONFIG | l.VIR_NETWORK_UPDATE_AFFECT_LIVE)
+    "<host mac='52:54:00:00:52:02' name='vmx01' ip='192.168.122.87'/>",
+    l.VIR_NETWORK_UPDATE_AFFECT_CONFIG | l.VIR_NETWORK_UPDATE_AFFECT_LIVE)
     :param mac: mac address to reserve
     :param ip: ip address to map to the mac address
+    :param device_name: name of the device
     :return: boolean on success / fail
     """
     try:
         management_network = get_network_by_name("default")
-        xml = "<host mac='{0}' ip='{1}'/>".format(mac, ip)
+        xml = "<host mac='{0}' ip='{1}' name='{2}'/>".format(mac, ip, device_name)
         management_network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
                                   libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
                                   -1,

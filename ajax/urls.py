@@ -41,6 +41,7 @@ urlpatterns = [
     url(r'^refreshHostLoad/$', views.refresh_host_load, name='refreshHostLoad'),
     url(r'^multiCloneTopology/$', views.multi_clone_topology, name='multiCloneTopology'),
     url(r'^deployTopology/$', views.deploy_topology, name='deployTopology'),
+    url(r'^redeployTopology/$', views.redeploy_topology, name='redeployTopology'),
     url(r'^deployStack/(?P<topology_id>[^/]+)$', views.deploy_stack, name='deployStack'),
     url(r'^deleteStack/(?P<topology_id>[^/]+)$', views.delete_stack, name='deleteStack'),
     url(r'^startTopology/$', views.start_topology, name='startTopology'),
