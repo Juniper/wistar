@@ -470,6 +470,17 @@
         return true;
     }
 
+    function resize_draw2d_canvas_view() {
+        var canvas_view = jQuery('#draw2d_canvas_view');
+        canvas_view.css('width', window.innerWidth - 20);
+        canvas_view.css('height', window.innerHeight - 200);
+    }
+
+    jQuery( window).resize(function() {
+        resize_draw2d_canvas_view();
+    });
+
+
     // loads initial topology from json stored in the 'json' div
     // also creates the instance array variable on page context
     function loadTopology() {
@@ -517,6 +528,9 @@
                 tsl.onSelectionChanged(event.figure);
             }
         });
+
+        resize_draw2d_canvas_view();
+
         loadTopology();
     });
     </script>
@@ -621,12 +635,13 @@
 
         <tr>
             <td style="vertical-align: top; padding-left: 2px; background-color: #fff;">
-                <div id="draw2d_canvas" style="background-image: url({% static 'images/grid_lite.png' %});
-                background-repeat: repeat;
-                width:1300px;
-                height:650px;
-                position:relative;
-                ">
+                <div id="draw2d_canvas_view" style="height: 900px; width: 1300px; overflow: scroll">
+                    <div id="draw2d_canvas" style="background-image: url({% static 'images/grid_lite.png' %});
+                    background-repeat: repeat;
+                    width:4000px;
+                    height:4000px;
+                    position:relative;
+                    "></div>
                 </div>
             </td>
         </tr>
