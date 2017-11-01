@@ -14,9 +14,9 @@ To get the most out of Wistar, here is a list of well tested and essential image
 
 vMX 15.1F6.9: Download can be found here: vmx_. Choose the vMX for x86 Package and upload the jinstall64-vmx image as 'vMX RE'.
 
-vQFX. Download the latest free trail vQFX from here: vQFX_
+vQFX. Download the latest free trail vQFX from here: vQFX_ The latest tested version is 15.1X53-D60
 
-vSRX 15.1. Any version of vSRX 15.1 has been known to work. Note, you need to ensure your kernel version matches the vSRX requirements. Latest tested version is vSRX 15.1_X49-D60.7.
+vSRX 15.1. vSRX 15.1_X49-D60.7 has been tested. Note, you need to ensure your kernel version matches the vSRX requirements.
 
 Ubuntu 16.04. Use the ubuntu 16.04 cloud-img for a linux instance that is fully configured via cloud-init on boot up. Choose the ubuntu16 image type when uploading to wistar.
 Download can be found here: ubuntu_.
