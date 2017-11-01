@@ -27,7 +27,7 @@ root@wistar-build:~# apt-get install python-pip python-dev build-essential qemu-
 
 Install Python packages-
 ```
-root@wistar-build:~# pip install pyvbox junos-eznc pyYAML Django==1.9.9 cryptography==1.2.1 websocket-client
+root@wistar-build:~# pip install pyvbox junos-eznc pyYAML Django==1.9.9 cryptography websocket-client
 ```
 
 
