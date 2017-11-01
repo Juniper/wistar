@@ -13,5 +13,4 @@ draw2d.shape.node.vpfe = draw2d.shape.node.wistarSetChild.extend({
     ICON_FILE: "/static/images/vmx.png",
     COMPANION_TYPE: "draw2d.shape.node.vre",
     COMPANION_INTERFACE_LIST: ["1"],
-
 });
