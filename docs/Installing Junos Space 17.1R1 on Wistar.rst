@@ -42,7 +42,7 @@ In this example, we'll build a topology with Junos Space as well as one vMX devi
 1. **Mouseover** *Topologies* => **Click** the *Create Topology* link.
 2. **Click** the *Add VM* link.
 3. Fill in all of the necessary fields in the form, be sure to select your Junos Space image in the *Base Image* dropdown menu.  
-   - *Thick Provision and resize with:* may be left at 0.
+- *Thick Provision and resize with:* may be left at 0.
 
 SCREENSHOT
 
