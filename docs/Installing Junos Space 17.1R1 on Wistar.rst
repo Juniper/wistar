@@ -41,8 +41,17 @@ In this example, we'll build a topology with Junos Space as well as one vMX devi
 
 1. **Mouseover** *Topologies* => **Click** the *Create Topology* link.
 2. **Click** the *Add VM* link.
-3. Fill in all of the necessary fields in the form, be sure to select your Junos Space image in the *Base Image* dropdown menu.  
-- *Thick Provision and resize with:* may be left at 0.
+3. Fill in all of the necessary fields in the form, be sure to select your Junos Space image in the *Base Image* dropdown menu. **NOTE:** *Thick Provision and resize with:* may be left at 0.
+4. **Click** *Add and Close* to finish, or *Add Another Instance* to add more images.
+
+Junos Space requires one external bridge and two internal bridges in order to fully operate with our topology.  Add them by clicking on the *Add Bridge* link for each required bridge.  Be sure that you drag the connections in the following order.
+
+5. Add the *eth0-external-br*.
+6. Add the *eth1-internal-br*.
+7. Add the *eth2-internal-br*.
+
+SCREENSHOT OF 
+
 
 SCREENSHOT
 
