@@ -46,9 +46,20 @@ In this example, we'll build a topology with Junos Space and discover a vMX and 
 
 Junos Space requires one external bridge and two internal bridges in order to fully operate with our topology.  Add them by clicking on the **Add Bridge** link for each required bridge.  **Be sure that you drag the connections in the following order, connections are enumerated as you drag them (eth0 first, eth1 second, etc.)**
 
-5. **External Bridge:** br0
-6. **Private Bridge 1:** Private 1
-7. **Private Bridge 2:** Private 2
+5. **External Bridge (eth0):** br0
+6. **Private Bridge 1 (eth1):** Private 1
+7. **Private Bridge 2 (eth2):** Private 2
+8. **eth3** will be created by automatically and attach to the **vibr0** management bridge in Wistar.
+
+Setting up Junos Space
+----------------------
+
+Next, we'll have to make some changes under the hood to get things working.
+
+1. Under the **KVM Deployment Status** table, click the icon that looks like a small computer monitor, this let's you access the out of band console for the Junos Space server.
+2. 
+
+
 
 SCREENSHOT OF TOPOLOGY
 
