@@ -37,7 +37,7 @@ SCREENSHOT
 Building a Topology with Junos Space
 ------------------------------------
 
-In this example, we'll build a topology with Junos Space and discover a vMX and a vQFX.
+In this example, we'll build a topology with Junos Space and discover 3 vMX devices.
 
 1. Mouseover **Topologies** and click the **Create Topology** link.
 2. Click the **Add VM** link.
