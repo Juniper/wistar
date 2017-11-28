@@ -88,7 +88,7 @@ The prompts to setup the Junos Space node will now appear.
 
   Choice [1-2,R]:
 
-5. Select **1** to configure IPv4 attributes.  When prompted to enter a new IPv4 address, ensure the address belongs to your external LAN that your laptop uses to connect to the Wistar server.  In this example the LAN I'm using is 10.1.0.0/24.
+5. Select **1** to configure IPv4 attributes.  When prompted to enter a new IPv4 address, ensure the address belongs to your external LAN that your laptop uses to connect to the Wistar server.  In this example the LAN I'm using is 10.1.0.0/24 and Google's public DNS for my nameserver.
 
 ::
 
@@ -102,6 +102,10 @@ The prompts to setup the Junos Space node will now appear.
 
   Please type the IPv4 nameserver address in dotted decimal notation:
   8.8.8.8
+
+6. When asked to configure a separate interface for device management, enter **y**, and select **1** to configure IPv4.  You will use the IP address, mask, and gateway that Wistar defined in the topology in the 192.168.122.0/24 space.
+
+::
 
   Configure a separate interface for device management? [y/N]
 
@@ -124,8 +128,15 @@ The prompts to setup the Junos Space node will now appear.
   Enter the default IPv4 gateway for this interface:
   192.168.122.1
 
+7. When prompted if Junos Space is going to be added to an existing cluster, enter **N**.
+
+::
+
   Will this Junos Space system be added to an existing cluster? [y/N] 
 
+8. You will then be prompted to configure the web GUI IP address, select **1** to configure IPv4 and use an address in your local LAN that is different from the previously configured management IP.
+
+::
 
   Configuring IP address for web GUI:
 
@@ -139,11 +150,16 @@ The prompts to setup the Junos Space node will now appear.
   Please enter IPv4 address for web GUI:
   10.1.0.210
 
+9. NTP and NAT configuration are optional and can be skipped by selecting **N**.
+
+::
+
   Do you want to enable NAT service? [y/N] 
 
-Configure an NTP server if you wish, I skip it because I don't have an issue with my lab being out of sync.
 
   Add NTP Server? [y/N] 
+
+10. Configure your display name for the system.
 
 ::
 
@@ -151,6 +167,10 @@ Configure an NTP server if you wish, I skip it because I don't have an issue wit
 
   Enter password for cluster maintenance mode:
   Re-enter password:
+
+11. You will now have the opportunity to verify your settings, once you are satisfied with them enter **A** to apply the settings.  Junos Space will then reboot.
+
+::
 
   Settings Summary:
 
@@ -171,9 +191,7 @@ Configure an NTP server if you wish, I skip it because I don't have an issue wit
 
   Choice [ACQR]: 
 
-Space will reboot.
-
-We can drop into the shell and make some changes to help improve performance.
+12. Once Junos Space comes back, we can make some performance enhancements by dropping into the root shell, this is accomplished by entering **7**
 
 :: 
 
@@ -191,6 +209,10 @@ We can drop into the shell and make some changes to help improve performance.
 
   Choice [1-7,AQR]:
 
+13. Disable the jmp-opennms service.
+
+::
+
   [sudo] password for admin:
   [root@space-525400000b1f ~]# service jmp-opennms stop
   Manually stop opennms...
@@ -205,24 +227,11 @@ We can drop into the shell and make some changes to help improve performance.
   Stopping OpenNMS...
   Stopping OpenNMS: [  OK  ]
 
-Another way to improve performance is to truncate some tables in mysql.
+14. Further enhancements can be made by truncating tables in MySQL.
 
 ::
 
   [root@space-525400000b1f ~]# mysql -pnetscreen -ujboss -Dbuild_db
-  Warning: Using a password on the command line interface can be insecure.
-  Reading table information for completion of table and cloumn names
-  You can turn off this feature to get a quicker startup with -A
-
-  Welcome to the MySQL monitor.  Commands end with ; or \g.
-  Your MySQL connection id is 140
-  Server version: 5.6.35-enterprise-commercial-advanced-log MySQL Enterprise Server - Advanced Edition (Commercial)
-
-  Copyright (C) 2000, 2016, Oracle and/or its affiliates.  All rights reserved.
-
-  Oracle is a registered trademark of Oracle Corporation and/or its affiliates.  Other names may be trademarks of their respective owners.
-
-  Type 'help;' or '\h' for help.  Type '\c' to clear the current input statement.
 
   mysql> truncate table SchemaEntity;
   Query OK, 0 rows affected (0.03 sec)
@@ -233,7 +242,7 @@ Another way to improve performance is to truncate some tables in mysql.
   mysql> truncate table DmiSchemaEntity;
   Query OK, 0 rows affected (0.03 sec)
 
-Now we need adjust Junos Space's built-in KVM hypervisor as it will conflict with our default network that Wistar is using (192.168.122.0/24), we accomplish this by editing the references to 192.168.122.0 in the /usr/share/libvirt/networking/default.xml file.  Use your favorite text editor to accomplish this, my example uses 192.168.126.0/24.
+15. Now we need adjust Junos Space's built-in KVM hypervisor as it will conflict with our default network that Wistar is using (192.168.122.0/24), we accomplish this by editing the references to 192.168.122.0/24 in the /usr/share/libvirt/networking/default.xml file.  Use your favorite text editor to accomplish this, my example uses 192.168.126.0/24.
 
 ::
 
