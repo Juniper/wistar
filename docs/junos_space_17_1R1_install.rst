@@ -14,7 +14,7 @@ Requirements
 The following are the hardware requirements for Junos Space in addition to that required by the Wistar installation.
 
 - **vCPU:** 4
-- **vRAM:** 16834
+- **vRAM:** 16834MB
 
 Uploading the Image
 -------------------
