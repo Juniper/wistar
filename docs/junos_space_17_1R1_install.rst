@@ -311,7 +311,7 @@ As a final test to ensure Junos Space is working correctly, let's discover our 3
 .. image:: screenshots/space/junos-space-configure-discovery-profile-3.png
 
 10. Skip the **Specify Device FingerPrint** section by clicking the **Next** button.
-11. Configure your discovery schedule, we'll use a generic example that will rediscovery devices daily.
+11. Configure your discovery schedule, we'll use a generic example that will rediscovery devices daily.  Click the **Next** button when this has been completed.
 
 .. image:: screenshots/space/junos-space-configure-discovery-profile-4.png
 
