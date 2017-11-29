@@ -11,7 +11,7 @@ This guide assumes you have a working Wistar installation.  If you have not inst
 Requirements
 ------------
 
-Junos Space minimum resource requirements:
+The following are the hardware requirements for Junos Space in addition to that required by the Wistar installation.
 
 - **vCPU:** 4
 - **vRAM:** 16834
