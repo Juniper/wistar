@@ -45,17 +45,18 @@ In this example, we'll build a topology with Junos Space and discover 3 vMX devi
 
 .. image:: screenshots/space/add_vm_details_junos_space.png
 
-Junos Space requires one external bridge and two internal bridges in order to fully operate with our topology.  Add them by clicking on the **Add Bridge** link for each required bridge.  **Be sure that you drag the connections in the following order, connections are enumerated as you drag them (eth0 first, eth1 second, etc.)**
+Junos Space requires one external bridge and two internal bridges in order to fully operate with our topology.  
 
-5. **External Bridge (eth0):** br0
-6. **Private Bridge 1 (eth1):** Private 1
-7. **Private Bridge 2 (eth2):** Private 2
-8. **eth3** will be created by automatically and attach to the **vibr0** management bridge in Wistar.
+5. Add them by clicking on the **Add Bridge** link for each required bridge.  **Be sure that you drag the connections in the following order, connections are enumerated as you drag them (eth0 first, eth1 second, etc.)**
+6. **External Bridge (eth0):** br0
+7. **Private Bridge 1 (eth1):** Private 1
+8. **Private Bridge 2 (eth2):** Private 2
+9. **eth3** will be created by automatically and attach to the **vibr0** management bridge in Wistar.
 
 .. image:: screenshots/space/topology_junos_space.png
 
-9. Once all of the desired instances, bridges, and connections are created, under the **KVM Deployment Status** table, click **Deploy To Hypervisor**.
-10. When the topology is deployed, click **Start Topology**.  A window will appear asking you to confirm, click **OK**.
+10. Once all of the desired instances, bridges, and connections are created, under the **KVM Deployment Status** table, click **Deploy To Hypervisor**.
+11. When the topology is deployed, click **Start Topology**.  A window will appear asking you to confirm, click **OK**.
 
 Setting up Junos Space
 ----------------------
