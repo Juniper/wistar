@@ -248,7 +248,7 @@ Next, we'll have to make some changes under the hood to get things working.
   mysql> truncate table DmiSchemaEntity;
   Query OK, 0 rows affected (0.03 sec)
 
-15. Now we need adjust Junos Space's built-in KVM hypervisor, as it will conflict with our default network that Wistar is using (192.168.122.0/24), we accomplish this by editing the references to 192.168.122.0/24 in the /usr/share/libvirt/networking/default.xml file.  Use your favorite text editor to accomplish this, my example uses 192.168.126.0/24.
+15. Now we need adjust Junos Space's built-in KVM hypervisor, as it will conflict with our default network that Wistar is using (192.168.122.0/24), we accomplish this by editing the references to 192.168.122.0/24 in the */usr/share/libvirt/networks/default.xml* file.  Use your favorite text editor to accomplish this, my example uses 192.168.126.0/24.
 
 ::
 
