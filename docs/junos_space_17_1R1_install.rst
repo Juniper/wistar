@@ -29,7 +29,7 @@ Uploading the Image
 5. Click the **Type:** dropdown and select **Junos Space**.
 6. Click the **Browse...** button next to **FilePath:** and select the downloaded .qcow2 image file location your local machine.
 7. In the **Description:** field, enter a description for the image.
-8. Click on the **Submit Query** button to upload.  Please note, there will not be a progress bar, so just be patient as the image is a large file.
+8. Click on the **Submit Query** button to upload.  Please note that there is not be a progress bar, so just be patient as the image is a large file and may take some time to upload.
 
 .. image:: screenshots/space/image_details_junos_space.png
 
@@ -53,6 +53,9 @@ Junos Space requires one external bridge and two internal bridges in order to fu
 8. **eth3** will be created by automatically and attach to the **vibr0** management bridge in Wistar.
 
 .. image:: screenshots/space/topology_junos_space.png
+
+9. Once all of the desired instances, bridges, and connections are created, under the **KVM Deployment Status** table, click **Deploy To Hypervisor**.
+10. When the topology is deployed, click **Start Topology**.  A window will appear asking you to confirm, click **OK**.
 
 Setting up Junos Space
 ----------------------
