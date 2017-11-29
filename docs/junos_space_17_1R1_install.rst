@@ -3,6 +3,8 @@ Installing Junos Space 17.1R1 on Wistar
 
 .. _instructions: https://github.com/Juniper/wistar/blob/master/README.md
 .. _website: https://www.juniper.net/support/downloads/?p=space#sw
+.. _KB26220: https://kb.juniper.net/InfoCenter/index?page=content&id=KB26220
+.. _`Junos Space 17.1 Documentation`: https://www.juniper.net/documentation/en_US/junos-space17.1/topics/task/configuration/junos-space-virtual-appliance-configuring.html
 
 This guide assumes you have a working Wistar installation.  If you have not installed Wistar yet, please see the installation instructions_ for both Ubuntu and VM based installs.
 
@@ -266,7 +268,10 @@ At this point we should be able to access Junos Space via the web browser by usi
 
 .. ::image screenshots/space/web_gui_login_junos_space.png
 
-REFERENCES
+References
+----------
 
+1. KB26220_ - *Overview of the Junos Space default user IDs and passwords AND changing the Admin password*
+2. `Junos Space 17.1 Documentation`_ - *Configuring a Junos Space Virtual Appliance as a Junos Space Node*
 
 
