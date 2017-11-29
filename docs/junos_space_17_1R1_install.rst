@@ -291,34 +291,34 @@ As a final test to ensure Junos Space is working correctly, let's discover our 3
 3. Expand the **Devices** section by clicking the **+**.
 4. Under **Devices**, expand the **Device Discovery** section by clicking the **+**, then click **Device Discovery Profiles**.
 
-SCREENSHOT
+.. image:: screenshots/space/junos-space-applications-pane-full.png
 
 5. In the main pane, click the green **+** to start the creation of a new discovery profile.
 
-SCREENSHOT
+.. image:: screenshots/space/junos-space-discovery-profile-add.png
 
 6. Name your profile, and designate the method of discovery.  In this example we are using the **Subnet** method since we know that our Wistar subnet (192.168.122.0/24) will make things easy.
 7. As you complete this section, click the **Next** button to continue.
 
-SCREENSHOT
+.. image:: screenshots/space/junos-space-configure-discovery-profile-1.png
 
 8. Configure the type(s) of discovery probes you wish to use, in our example we're setting up basic SNMPv1/v2 access.  Be sure to adjust your SNMP Community string to match your devices if required.  Click the **Next** button to continue.
 
-SCREENSHOT
+.. image:: screenshots/space/junos-space-configure-discovery-profile-2.png
 
 9. Setup your credential or key based authentication, in this example we're using credential based.  
 
-SCREENSHOT
+.. image:: screenshots/space/junos-space-configure-discovery-profile-3.png
 
 10. Skip the **Specify Device FingerPrint** section by clicking the **Next** button.
 11. Configure your discovery schedule, we'll use a generic example that will rediscovery devices daily.
 
-SCREENSHOT
+.. image:: screenshots/space/junos-space-configure-discovery-profile-4.png
 
 12. Now click the **Discover** button, Junos Space will begin discovery and show you progress as it moves through the discovery process.  
 13. When the job is complete, you can view your newly discovered devices in the **Devices** => **Device Management** tab.
 
-SCREENSHOT
+.. image:: screenshots/space/junos-space-managed-devices.png
 
 References
 ----------
