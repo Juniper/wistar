@@ -264,7 +264,8 @@ The prompts to setup the Junos Space node will now appear.
 
 At this point we should be able to access Junos Space via the web browser by using the IP address we set as the IPv4 web GUI address.  
 
-16. Log in using the default web credentials **super/juniper123**.  You will immediately be prompted to change the password, do so.17. You will need to log back in using the newly set password.
+16. Log in using the default web credentials **super/juniper123**.  You will immediately be prompted to change the password, do so.
+17. You will need to log back in using the newly set password.
 
 .. ::image screenshots/space/web_gui_login_junos_space.png
 
