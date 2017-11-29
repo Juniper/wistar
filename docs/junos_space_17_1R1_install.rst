@@ -18,13 +18,10 @@ Uploading the Image
 -------------------
 
 1. Download the 17.1R1 .qcow2 KVM Appliance Image from the Juniper Networks website_.  You will need a valid username and password to do so.
-
-SCREENSHOT
-
 2. Once the image is downloaded, navigate to your Wistar page to upload the image.
 3. Mouseover **Images** and click the **Upload Image** link.
 
-SCREENSHOT
+.. image:: screenshots/space/image_menu_generic.png
 
 4. In the **Name:** field, name the image.
 5. Click the **Type:** dropdown and select **Junos Space**.
@@ -32,7 +29,7 @@ SCREENSHOT
 7. In the **Description:** field, enter a description for the image.
 8. Click on the **Submit Query** button to upload.  Please note, there will not be a progress bar, so just be patient as the image is a large file.
 
-SCREENSHOT
+.. image:: screenshots/space/image_details_junos_space.png
 
 Building a Topology with Junos Space
 ------------------------------------
@@ -44,6 +41,8 @@ In this example, we'll build a topology with Junos Space and discover 3 vMX devi
 3. Fill in all of the necessary fields in the form, be sure to select your Junos Space image in the **Base Image** dropdown menu. *NOTE:* **Thick Provision and resize with:** may be left at 0.
 4. Click **Add and Close** to finish, or **Add Another Instance** to add more instances.
 
+.. image:: screenshots/space/add_vm_details_junos_space.png
+
 Junos Space requires one external bridge and two internal bridges in order to fully operate with our topology.  Add them by clicking on the **Add Bridge** link for each required bridge.  **Be sure that you drag the connections in the following order, connections are enumerated as you drag them (eth0 first, eth1 second, etc.)**
 
 5. **External Bridge (eth0):** br0
@@ -51,14 +50,20 @@ Junos Space requires one external bridge and two internal bridges in order to fu
 7. **Private Bridge 2 (eth2):** Private 2
 8. **eth3** will be created by automatically and attach to the **vibr0** management bridge in Wistar.
 
+.. image:: screenshots/space/topology_junos_space.png
+
 Setting up Junos Space
 ----------------------
 
 Next, we'll have to make some changes under the hood to get things working.
 
 1. Under the **KVM Deployment Status** table, click the icon that looks like a small computer monitor, this let's you access the out of band console for the Junos Space server.
+
+.. image:: screenshots/space/junos_space_console.png
+
 2. Log in with the default username/password - **admin/abc123**
 3. You will be prompted to change the **admin** password immediately, set it accordingly.
+4. Select **"S"**.
 
 The prompts to setup the Junos Space node will now appear.
 
@@ -75,7 +80,7 @@ The prompts to setup the Junos Space node will now appear.
 
   Choose the type of node to be installed [S/F] S
 
-4. Select **"S"** 
+5. Select **1** to configure IPv4 attributes.  When prompted to enter a new IPv4 address, ensure the address belongs to your external LAN that your laptop uses to connect to the Wistar server. 
 
 ::
 
@@ -88,12 +93,9 @@ The prompts to setup the Junos Space node will now appear.
 
   Choice [1-2,R]:
 
-5. Select **1** to configure IPv4 attributes.  When prompted to enter a new IPv4 address, ensure the address belongs to your external LAN that your laptop uses to connect to the Wistar server.  In this example the LAN I'm using is 10.1.0.0/24 and Google's public DNS for my nameserver.
-
-::
-
   Please enter new IPv4 address for interface eth0
   10.1.0.205
+  
   Please enter new IPv4 subnet mask for interface eth0
   255.255.255.0
 
@@ -134,7 +136,7 @@ The prompts to setup the Junos Space node will now appear.
 
   Will this Junos Space system be added to an existing cluster? [y/N] 
 
-8. You will then be prompted to configure the web GUI IP address, select **1** to configure IPv4 and use an address in your local LAN that is different from the previously configured management IP.
+8. You will then be prompted to configure the web GUI IP address, select **1** to configure IPv4 and use an address in your local LAN that is **different** from the previously configured management IP.
 
 ::
 
@@ -159,7 +161,7 @@ The prompts to setup the Junos Space node will now appear.
 
   Add NTP Server? [y/N] 
 
-10. Configure your display name for the system.
+10. Configure your display name for the system (this does not have to match your instance name in the topology).
 
 ::
 
@@ -191,7 +193,7 @@ The prompts to setup the Junos Space node will now appear.
 
   Choice [ACQR]: 
 
-12. Once Junos Space comes back, we can make some performance enhancements by dropping into the root shell, this is accomplished by entering **7**
+12. Once Junos Space comes back, we can make some performance enhancements by dropping into the root shell, this is accomplished by entering **7**.
 
 :: 
 
@@ -260,19 +262,9 @@ The prompts to setup the Junos Space node will now appear.
 
 At this point we should be able to access Junos Space via the web browser by using the IP address we set as the IPv4 web GUI address.  
 
-#. Log in using the default web credentials **super/juniper123**.  You will immediately be prompted to change the password, do so.
-#. You will need to log back in using the newly set password.
+16. Log in using the default web credentials **super/juniper123**.  You will immediately be prompted to change the password, do so.17. You will need to log back in using the newly set password.
 
-SCREENSHOT OF SPACE WELCOME PAGE
-
-
-
-
-SCREENSHOT OF TOPOLOGY
-
-
-
-SCREENSHOT
+.. ::image screenshots/space/web_gui_login_junos_space.png
 
 REFERENCES
 
