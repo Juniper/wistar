@@ -326,4 +326,4 @@ References
 1. KB26220_ - *Overview of the Junos Space default user IDs and passwords AND changing the Admin password*
 2. `Junos Space 17.1 Documentation`_ - *Configuring a Junos Space Virtual Appliance as a Junos Space Node*
 
-Special thanks to Nathan Embery and Tim Brown.
+Special thanks to Nathan Embery and Tim Brown!
