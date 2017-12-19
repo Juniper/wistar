@@ -455,6 +455,13 @@ def start_topology(request):
 
     topology_id = request.POST['topologyId']
 
+    delay_str = request.POST.get('delay', '180')
+
+    try:
+        delay = int(delay_str)
+    except ValueError:
+        delay = 180
+
     if topology_id == "":
         logger.debug("Found a blank topoId!")
         return render(request, 'ajax/ajaxError.html', {'error': "Blank Topology Id found"})
@@ -485,7 +492,7 @@ def start_topology(request):
         if libvirtUtils.start_domain(domain["uuid"]):
             # let's not sleep after the last domain has been started
             if iter_counter < num_domains:
-                time.sleep(180)
+                time.sleep(delay)
             iter_counter += 1
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not start domain: " + domain["name"]})

@@ -204,8 +204,13 @@
     // boot everything!
     function startTopology() {
 
-        var delay = instanceArray.length * 180 / 60;
-        var r = confirm("Are you sure you want to power on all Instances? This will take approximately " + delay + " minutes!");
+        var delay = prompt("Enter number of seconds between starting domains?", "180");
+        if (delay == null) {
+            return false;
+        }
+
+        var total_delay = instanceArray.length * delay / 60;
+        var r = confirm("Are you sure you want to power on all Instances? This will take approximately " + total_delay + " minutes!");
         if (r == false) {
             return r;
         }
@@ -215,7 +220,8 @@
 
         var url = "/ajax/startTopology/"
         var params = {
-            'topologyId' : "{{ topo.id }}"
+            'topologyId' : "{{ topo.id }}",
+            "delay": delay
         };
 
         var post = jQuery.post(url, params, function(response) {
@@ -416,7 +422,7 @@
 
     // simple validation
     function multiCloneTopology() {
-        var num_clones = prompt("How many copies would you like to create?");
+        var num_clones = prompt("How many copies would you like to create?", 1);
         if (num_clones == null) {
             // alert('very well');
             return false;
