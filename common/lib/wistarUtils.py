@@ -439,7 +439,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     dm = dict()
                     dm["mac"] = generate_next_mac(topology_id)
                     dm["bridge"] = "t%s_d" % str(topology_id)
-                    dm["type"] = user_data.get("mgmtInterfaceType", "")
+                    dm["type"] = user_data.get("mgmtInterfaceType", "virtio")
                     dm["bridge_preexists"] = False
                     device_interface_wiring[dummy] = dm
 

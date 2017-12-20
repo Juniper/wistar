@@ -5,7 +5,7 @@ draw2d.shape.node.vriot = draw2d.shape.node.wistarSetChild.extend({
     INTERFACE_PREFIX: "ge-0/0/",
     INTERFACE_TYPE: "virtio",
     MANAGEMENT_INTERFACE_PREFIX: "fxp",
-    MANAGEMENT_INTERFACE_TYPE: "e1000",
+    MANAGEMENT_INTERFACE_TYPE: "virtio",
     MANAGEMENT_INTERFACE_INDEX: 0,
     DOMAIN_CONFIGURATION_FILE: "junos_riot.xml",
     ICON_WIDTH: 50,

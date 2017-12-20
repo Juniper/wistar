@@ -1,10 +1,10 @@
 draw2d.shape.node.vqfxCosim = draw2d.shape.node.wistarSetChild.extend({
     NAME: "draw2d.shape.node.vqfxCosim",
     INTERFACE_PREFIX: "xe-0/0/",
-    INTERFACE_TYPE: "e1000",
+    INTERFACE_TYPE: "virtio",
     MANAGEMENT_INTERFACE_PREFIX: "em",
     MANAGEMENT_INTERFACE_INDEX: 0,
-    MANAGEMENT_INTERFACE_TYPE: "e1000",
+    MANAGEMENT_INTERFACE_TYPE: "virtio",
     DOMAIN_CONFIGURATION_FILE: "junos_vqfx.xml",
     ICON_WIDTH: 50,
     ICON_HEIGHT: 40,
