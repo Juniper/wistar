@@ -33,6 +33,7 @@ from ajax import views as av
 from common.lib import junosUtils
 from common.lib import libvirtUtils
 from common.lib import osUtils
+from common.lib import ovsUtils
 from common.lib import wistarUtils
 from common.lib import openstackUtils
 
@@ -273,10 +274,18 @@ def delete(request, topology_id):
 
     if configuration.deployment_backend == "kvm":
 
+        if hasattr(configuration, "use_openvswitch") and configuration.use_openvswitch:
+            use_ovs = True
+        else:
+            use_ovs = False
+
         network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
         for network in network_list:
             logger.debug("undefine network: " + network["name"])
             libvirtUtils.undefine_network(network["name"])
+
+            if use_ovs:
+                ovsUtils.delete_bridge(network["name"])
 
         domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
         for domain in domain_list:

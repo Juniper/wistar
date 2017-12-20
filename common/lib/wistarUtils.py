@@ -431,6 +431,7 @@ def load_config_from_topology_json(topology_json, topology_id):
 
                 mi["bridge"] = "virbr0"
                 mi["type"] = user_data.get("mgmtInterfaceType", "virtio")
+                mi["bridge_preexists"] = True
 
                 device_interface_wiring[device["mgmtInterfaceIndex"]] = mi
 
@@ -439,7 +440,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     dm["mac"] = generate_next_mac(topology_id)
                     dm["bridge"] = "t%s_d" % str(topology_id)
                     dm["type"] = user_data.get("mgmtInterfaceType", "")
-
+                    dm["bridge_preexists"] = False
                     device_interface_wiring[dummy] = dm
 
                 for companion in user_data.get("companionInterfaceList", []):
@@ -447,7 +448,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     cm["mac"] = generate_next_mac(topology_id)
                     cm["bridge"] = "t%s_%s_c" % (str(topology_id), chassis_id)
                     cm["type"] = user_data.get("interfaceType", "virtio")
-
+                    cm["bridge_preexists"] = False
                     device_interface_wiring[companion] = cm
 
                 # we do have management interfaces first, so let's go ahead and add them to the device
@@ -549,6 +550,7 @@ def load_config_from_topology_json(topology_json, topology_id):
                     slot = "%#04x" % int(len(d["interfaces"]) + device["slot_offset"])
                     interface = dict()
                     interface["mac"] = generate_next_mac(topology_id)
+                    interface["bridge_preexists"] = False
 
                     if source_uuid in internal_bridges:
                         bridge_name = "t" + str(topology_id) + "_p_br" + str(internal_bridges.index(source_uuid))
@@ -610,7 +612,8 @@ def load_config_from_topology_json(topology_json, topology_id):
 
             mi["slot"] = "%#04x" % int(len(d["interfaces"]) + d["slot_offset"])
             mi["bridge"] = "virbr0"
-            mi["type"] = user_data.get("mgmtInterfaceType", "")
+            mi["type"] = user_data.get("mgmtInterfaceType", "virtio")
+            mi["bridge_preexists"] = True
             d["interfaces"].append(mi)
 
     topology_config = dict()

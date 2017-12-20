@@ -35,7 +35,7 @@ from common.lib import libvirtUtils
 from common.lib import linuxUtils
 from common.lib import openstackUtils
 from common.lib import osUtils
-from common.lib import vboxUtils
+from common.lib import ovsUtils
 from common.lib import wistarUtils
 from common.lib.WistarException import WistarException
 from images.models import Image
@@ -412,22 +412,22 @@ def sync_link_data(request):
     try:
         if source_ip != "0.0.0.0":
             logger.debug("Configuring interfaces for " + str(source_ip))
-            if source_type == "linux":
-                source_results = linuxUtils.set_interface_ip_address(source_ip, "root", source_pw, source_interface,
+            if "junos" in source_type:
+                source_results = junosUtils.set_interface_ip_address(source_ip, source_pw, source_interface,
                                                                      source_port_ip)
             else:
-                source_results = junosUtils.set_interface_ip_address(source_ip, source_pw, source_interface,
+                source_results = linuxUtils.set_interface_ip_address(source_ip, "root", source_pw, source_interface,
                                                                      source_port_ip)
 
             if source_results is False:
                 raise WistarException("Couldn't set ip address on source VM")
 
         if target_ip != "0.0.0.0":
-            if target_type == "linux":
-                target_results = linuxUtils.set_interface_ip_address(target_ip, "root", target_pw, target_interface,
+            if "junos" in target_type:
+                target_results = junosUtils.set_interface_ip_address(target_ip, target_pw, target_interface,
                                                                      target_port_ip)
             else:
-                target_results = junosUtils.set_interface_ip_address(target_ip, target_pw, target_interface,
+                target_results = linuxUtils.set_interface_ip_address(target_ip, "root", target_pw, target_interface,
                                                                      target_port_ip)
 
             if target_results is False:
@@ -718,7 +718,16 @@ def manage_network(request):
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop network!"})
 
     elif action == "undefine":
+        # clean up ovs bridges if needed
+        if hasattr(configuration, "use_openvswitch") and configuration.use_openvswitch:
+            use_ovs = True
+        else:
+            use_ovs = False
+
         if libvirtUtils.undefine_network(network_name):
+            if use_ovs:
+                ovsUtils.delete_bridge(network_name)
+
             return refresh_deployment_status(request)
         else:
             return render(request, 'ajax/ajaxError.html', {'error': "Could not stop domain!"})
@@ -931,14 +940,38 @@ def deploy_topology(request):
 
 
 def inline_deploy_topology(config):
+    """
+    takes the topology configuration object and deploys to the appropriate hypervisor
+    :param config: output of the wistarUtils.
+    :return:
+    """
+    is_ovs = False
+    is_linux = osUtils.check_is_linux()
+    is_ubuntu = osUtils.check_is_ubuntu()
+
+    if hasattr(configuration, "use_openvswitch") and configuration.use_openvswitch:
+        is_ovs = True
+
     # only create networks on Linux/KVM
     logger.debug("Checking if we should create networks first!")
-    if osUtils.check_is_linux():
+    if is_linux:
         for network in config["networks"]:
+
+            network_xml_path = "ajax/kvm/network.xml"
+
+            # Do we need openvswitch here?
+            if is_ovs:
+                # set the network_xml_path to point to a network configuration that defines the ovs type here
+                network_xml_path = "ajax/kvm/network_ovs.xml"
+                if not ovsUtils.create_bridge(network["name"]):
+                    err = "Could not create ovs bridge"
+                    logger.error(err)
+                    raise Exception(err)
+
             try:
                 if not libvirtUtils.network_exists(network["name"]):
                     logger.debug("Rendering networkXml for: %s" % network["name"])
-                    network_xml = render_to_string("ajax/kvm/network.xml", {'network': network})
+                    network_xml = render_to_string(network_xml_path, {'network': network})
                     logger.debug(network_xml)
                     libvirtUtils.define_network_from_xml(network_xml)
                     time.sleep(.5)
@@ -958,13 +991,13 @@ def inline_deploy_topology(config):
     vm_env["cache"] = configuration.filesystem_cache_mode
     vm_env["io"] = configuration.filesystem_io_mode
 
-    if osUtils.check_is_linux() and osUtils.check_is_ubuntu():
+    if is_linux and is_ubuntu:
         vm_env["emulator"] = "/usr/bin/kvm-spice"
         vm_env["pcType"] = "pc"
 
     # by default, we use kvm as the hypervisor
     domain_xml_path = "ajax/kvm/"
-    if not osUtils.check_is_linux():
+    if not is_linux:
         # if we're not on Linux, then let's try to use vbox instead
         domain_xml_path = "ajax/vbox/"
 
@@ -1043,7 +1076,8 @@ def inline_deploy_topology(config):
                                           {'device': device, 'instancePath': instance_path,
                                            'vm_env': vm_env, 'cloud_init_path': cloud_init_path,
                                            'secondary_disk_path': secondary_disk,
-                                           'tertiary_disk_path': tertiary_disk}
+                                           'tertiary_disk_path': tertiary_disk,
+                                           'use_ovs': is_ovs}
                                           )
             logger.debug(device_xml)
             libvirtUtils.define_domain_from_xml(device_xml)
@@ -1054,7 +1088,8 @@ def inline_deploy_topology(config):
                 libvirtUtils.reserve_management_ip_for_mac(management_mac, device["ip"], device["name"])
 
         except Exception as ex:
-            logger.debug("Raising exception")
+            logger.warn("Raising exception")
+            logger.error(ex)
             raise Exception(str(ex))
 
 
