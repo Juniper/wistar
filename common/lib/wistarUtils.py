@@ -312,7 +312,13 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["cpu"] = user_data.get("cpu", 1)
             device["interfacePrefix"] = user_data.get("interfacePrefix", "")
             device["configurationFile"] = user_data.get("configurationFile", "")
-            device["slot_offset"] = int(user_data.get("pciSlotOffset", 3))
+
+            try:
+                device["slot_offset"] = int(user_data.get("pciSlotOffset", 3))
+            except ValueError:
+                logger.warn("Could not parse int from pciSlotOffset")
+                device["slot_offset"] = 3
+
             device["interfaceType"] = user_data.get("interfaceType", "")
 
             device["smbiosProduct"] = user_data.get("smbiosProductString", "")
@@ -324,7 +330,11 @@ def load_config_from_topology_json(topology_json, topology_id):
 
             device["managementInterface"] = user_data.get("mgmtInterface", "")
 
-            device["resizeImage"] = user_data.get("resize", 0);
+            try:
+                device["resizeImage"] = int(user_data.get("resize", 0))
+            except ValueError:
+                logger.warn("couldn't parse int from resizeImage value!")
+                device["resizeImage"] = 0
 
             device["ip"] = user_data.get("ip", "")
             device["type"] = user_data.get("type", "")
