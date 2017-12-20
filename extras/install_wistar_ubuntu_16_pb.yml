@@ -65,6 +65,7 @@
       - python-setuptools
       - mtools
       - dosfstools
+      - openvswitch-switch
 
   - name: Install Django
     pip:
