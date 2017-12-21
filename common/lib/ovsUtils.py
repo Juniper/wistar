@@ -26,7 +26,7 @@ def ovs_bridge_exists(bridge_name):
     :param bridge_name: name of the bridge to check
     :return: boolean
     """
-    rv = os.system("ovs-vsctl br-exists %s" % bridge_name)
+    rv = os.system("sudo ovs-vsctl br-exists %s" % bridge_name)
     if rv == 0:
         return True
     else:
@@ -40,7 +40,7 @@ def create_bridge(bridge_name):
     :return: boolean
     """
     if not ovs_bridge_exists(bridge_name):
-        rv = os.system("ovs-vsctl add-br %s" % bridge_name)
+        rv = os.system("sudo ovs-vsctl add-br %s" % bridge_name)
         if rv == 0:
             # let's configure this bridge as well
             allow_bpdu(bridge_name)
@@ -58,7 +58,7 @@ def allow_bpdu(bridge_name):
     :param bridge_name: name of the bridge to configure
     :return: boolean
     """
-    rv = os.system("ovs-vsctl set bridge %s other-config:forward-bpdu=true" % bridge_name)
+    rv = os.system("sudo ovs-vsctl set bridge %s other-config:forward-bpdu=true" % bridge_name)
     if rv == 0:
         return True
     else:
@@ -71,7 +71,7 @@ def delete_bridge(bridge_name):
      :param bridge_name: name of the bridge to create
      :return: boolean
      """
-    rv = os.system("ovs-vsctl del-br %s" % bridge_name)
+    rv = os.system("sudo ovs-vsctl del-br %s" % bridge_name)
     if rv == 0:
         return True
     else:
