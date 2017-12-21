@@ -172,6 +172,12 @@
       groups: libvirtd
       append: yes
 
+  - name: Allow libvirtd group to modify ovs-vsctl
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      line: '%libvirtd ALL=NOPASSWD: /usr/bin/ovs-vsctl'
+
   handlers:
     - name: restart apache
       service: name=apache2 state=restarted
