@@ -106,7 +106,6 @@
   - name: Pull latest Wistar from Git
     git:
       repo: https://github.com/Juniper/wistar.git
-      depth: 1
       dest: /opt/wistar/wistar-master/
  
   - name: Create Wistar tables
