@@ -22,6 +22,7 @@ import logging
 import os
 import random
 import time
+import traceback
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -1090,6 +1091,7 @@ def inline_deploy_topology(config):
         except Exception as ex:
             logger.warn("Raising exception")
             logger.error(ex)
+            logger.error(traceback.format_exc())
             raise Exception(str(ex))
 
 

@@ -134,8 +134,14 @@ def create_thick_provision_instance(image, instance, resize):
     logger.debug(resize)
 
     shutil.copy(image, instance_file)
-    logger.debug("copied and ready to go")
-    rv = os.system("qemu-img resize '" + instance_file + "' +" + resize + "G")
+    logger.debug("copied image to thick provisioned image and ready to go")
+    try:
+        resize_str = str(resize)
+    except ValueError:
+        logger.error('Could not create a string value from resize! Using default value of 20')
+        resize_str = 20
+
+    rv = os.system("qemu-img resize '" + instance_file + "' +" + resize_str + "G")
     if rv == 0:
         return True
     else:
