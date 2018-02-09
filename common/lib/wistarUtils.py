@@ -831,7 +831,7 @@ def get_used_ips():
                 # logger.info(last_octet)
                 all_ips.append(int(last_octet))
 
-    dhcp_leases = get_dhcp_reserved_ips()
+    dhcp_leases = get_consumed_management_ips()
     all_ips.extend(dhcp_leases)
 
     logger.debug("sorting and returning all_ips")
@@ -839,23 +839,32 @@ def get_used_ips():
     return all_ips
 
 
-def get_dhcp_reserved_ips():
-    # pull current ips out of dhcp reservations and leases files
-    # return as a single list
+def get_consumed_management_ips():
+    """
+    Return a list of all ip addresses that are currently consumed on the wistar management network
+    THIS ASSUMES A /24 for THE MANAGEMENT NETWORK!
+    :return: a list of ints representing the last octet of the /24 management network
+    """
     all_ips = list()
 
-    # let's also grab current dhcp leases as well
-    dhcp_leases = osUtils.get_dhcp_leases()
+    # let's also grab consumed management ips as well
+    if configuration.deployment_backend == "openstack":
+        if openstackUtils.connect_to_openstack():
+            dhcp_leases = openstackUtils.get_consumed_management_ips()
+        else:
+            return all_ips
+    else:
+        dhcp_leases = osUtils.get_dhcp_leases()
+        # let's also grab current dhcp reservations
+        dhcp_reservations = osUtils.get_dhcp_reservations()
+        for dr in dhcp_reservations:
+            ip = str(dr["ip-address"])
+            last_octet = ip.split('.')[-1]
+            all_ips.append(int(last_octet))
+
     for lease in dhcp_leases:
         ip = str(lease["ip-address"])
         logger.debug("adding active lease %s" % ip)
-        last_octet = ip.split('.')[-1]
-        all_ips.append(int(last_octet))
-
-    # let's also grab current dhcp reservations
-    dhcp_leases = osUtils.get_dhcp_reservations()
-    for lease in dhcp_leases:
-        ip = str(lease["ip-address"])
         last_octet = ip.split('.')[-1]
         all_ips.append(int(last_octet))
 

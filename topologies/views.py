@@ -74,7 +74,7 @@ def new(request):
     image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
 
     currently_allocated_ips = wistarUtils.get_used_ips()
-    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+    dhcp_reservations = wistarUtils.get_consumed_management_ips()
 
     if configuration.deployment_backend == "openstack":
         external_bridge = configuration.openstack_external_network
@@ -195,7 +195,7 @@ def clone(request, topo_id):
     currently_allocated_ips = wistarUtils.get_used_ips()
     cloned_ips = wistarUtils.get_used_ips_from_topology_json(topology.json)
 
-    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+    dhcp_reservations = wistarUtils.get_consumed_management_ips()
 
     currently_allocated_ips += cloned_ips
 
@@ -471,7 +471,7 @@ def add_instance_form(request):
     image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
 
     currently_allocated_ips = wistarUtils.get_used_ips()
-    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+    dhcp_reservations = wistarUtils.get_consumed_management_ips()
 
     if configuration.deployment_backend == "openstack":
         external_bridge = configuration.openstack_external_network

@@ -634,7 +634,7 @@ def get_available_ip(request):
     # IP addresses. This makes the attempt to use 'old' ips that
     # are at least not still in use.
     logger.info("getting ips that are currently reserved via DHCP")
-    all_used_ips = wistarUtils.get_dhcp_reserved_ips()
+    all_used_ips = wistarUtils.get_consumed_management_ips()
     logger.debug(all_used_ips)
     next_ip = wistarUtils.get_next_ip(all_used_ips, 2)
     logger.debug(next_ip)
