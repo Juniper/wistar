@@ -27,7 +27,7 @@ from urllib2 import URLError
 from wistar import configuration
 
 # OpenStack component URLs
-_glance_url = ':9292/v1'
+# _glance_url = ':9292/v1'
 _analytics_url = ':8081'
 _api_url = ':8082'
 _os_url = ':5000/v3'
@@ -62,6 +62,21 @@ def connect_to_openstack():
     """
 
     logger.debug("--- connect_to_openstack ---")
+
+    logger.debug('verify configuration')
+
+    if not hasattr(configuration, 'openstack_host'):
+        logger.error('Openstack Host is not configured')
+        return False
+
+    if not hasattr(configuration, 'openstack_user'):
+        logger.error('Openstack User is not configured')
+        return False
+
+    if not hasattr(configuration, 'openstack_password'):
+        logger.error('Openstack Password is not configured')
+        return False
+
     global _auth_token
     global _tenant_id
     global _token_cache_time

@@ -580,8 +580,14 @@ def refresh_openstack_deployment_status(request, topology_id):
     if stack_details is not None and stack_details["stack_status"] == "CREATE_COMPLETE":
         stack_resources = openstackUtils.get_stack_resources(stack_name, stack_details["id"])
 
+    if hasattr(configuration, 'openstack_horizon_url'):
+        horizon_url = configuration.openstack_horizon_url
+    else:
+        horizon_url = 'http://' + configuration.openstack_host + '/dashboard'
+
     context = {"stack": stack_details, "topology_id": topology.id,
                "openstack_host": configuration.openstack_host,
+               "openstack_horizon_url": horizon_url,
                "stack_resources": stack_resources
                }
     return render(request, 'ajax/openstackDeploymentStatus.html', context)
@@ -1419,11 +1425,15 @@ def deploy_stack(request, topology_id):
         return render(request, 'error.html', {'error': "Topology not found!"})
 
     try:
+        # generate a stack name
+        # FIXME should add a check to verify this is a unique name
+        stack_name = topology.name.replace(' ', '_')
+
         # let's parse the json and convert to simple lists and dicts
         logger.debug("loading config")
         config = wistarUtils.load_config_from_topology_json(topology.json, topology_id)
         logger.debug("Config is loaded")
-        heat_template = wistarUtils.get_heat_json_from_topology_config(config)
+        heat_template = wistarUtils.get_heat_json_from_topology_config(config, stack_name)
         logger.debug("heat template created")
         if not openstackUtils.connect_to_openstack():
             return render(request, 'error.html', {'error': "Could not connect to Openstack"})
@@ -1435,7 +1445,7 @@ def deploy_stack(request, topology_id):
             raise Exception("No project found for %s" % configuration.openstack_project)
 
         # FIXME - verify all images are in glance before jumping off here!
-        stack_name = topology.name.replace(' ', '_')
+
         logger.debug(openstackUtils.create_stack(stack_name, heat_template))
 
         return HttpResponseRedirect('/topologies/' + topology_id + '/')

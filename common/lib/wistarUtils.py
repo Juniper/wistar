@@ -83,7 +83,7 @@ def _generate_mac(topology_id):
     return mac
 
 
-def get_heat_json_from_topology_config(config):
+def get_heat_json_from_topology_config(config, project_name='admin'):
     """
     Generates heat template from the topology configuration object
     use load_config_from_topology_json to get the configuration from the Topology
@@ -108,7 +108,7 @@ def get_heat_json_from_topology_config(config):
 
         nrs = dict()
         nrs["type"] = "OS::Neutron::Subnet"
-
+        #
         p = dict()
         p["cidr"] = "1.1.1.0/24"
         p["enable_dhcp"] = False
@@ -221,10 +221,19 @@ def get_heat_json_from_topology_config(config):
 
             if port["bridge"] == "virbr0":
                 p["network_id"] = configuration.openstack_mgmt_network
+
+                # specify our desired IP address on the management interface
+                p['fixed_ips'] = list()
+                fip = dict()
+                fip['ip_address'] = device['ip']
+                p['fixed_ips'].append(fip)
+
             elif port["bridge"] == configuration.openstack_external_network:
                 p["network_id"] = configuration.openstack_external_network
             else:
                 p["network_id"] = {"get_resource": port["bridge"]}
+                # disable port security on all other ports (in case this isn't set globally)
+                p['port_security_enabled'] = False
 
             pr["properties"] = p
             template["resources"][device["name"] + "_port" + str(index)] = pr
@@ -266,7 +275,10 @@ def load_config_from_topology_json(topology_json, topology_id):
 
     # preload all the existing management mac addresses if any
     global used_macs
-    used_macs[topology_id] = _get_management_macs_for_topology(topology_id)
+    if configuration.deployment_backend == "kvm":
+        used_macs[topology_id] = _get_management_macs_for_topology(topology_id)
+    else:
+        used_macs[topology_id] = list()
 
     json_data = json.loads(topology_json)
 
@@ -286,8 +298,7 @@ def load_config_from_topology_json(topology_json, topology_id):
 
     # has this topology already been deployed?
     is_deployed = False
-    existing_macs = _get_management_macs_for_topology(topology_id)
-    if len(existing_macs) > 0:
+    if len(used_macs[topology_id]) > 0:
         # yep, already been deployed
         is_deployed = True
 
