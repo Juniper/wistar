@@ -384,15 +384,18 @@ def load_config_from_topology_json(topology_json, topology_id):
             device["uuid"] = json_object.get('id', '')
             device["interfaces"] = []
 
-            # determine next available VNC port that has not currently been assigned
-            next_vnc_port = libvirtUtils.get_next_domain_vnc_port(device_index)
-
-            # verify that this port is not actually in use by another process
-            while osUtils.check_port_in_use(next_vnc_port):
-                device_index += 1
+            device['vncPort'] = 0
+            if configuration.deployment_backend == "kvm":
+                # determine next available VNC port that has not currently been assigned
                 next_vnc_port = libvirtUtils.get_next_domain_vnc_port(device_index)
 
-            device["vncPort"] = next_vnc_port
+                # verify that this port is not actually in use by another process
+                while osUtils.check_port_in_use(next_vnc_port):
+                    device_index += 1
+                    next_vnc_port = libvirtUtils.get_next_domain_vnc_port(device_index)
+
+                device["vncPort"] = next_vnc_port
+
             # is this a child VM?
             # children will *always* have a parent attribute set in their userdata
             parent_id = user_data.get("parent", "")
@@ -435,7 +438,10 @@ def load_config_from_topology_json(topology_json, topology_id):
                 # management interface mi will always be connected to default management network (virbr0 on KVM)
                 mi = dict()
 
-                if is_deployed and libvirtUtils.domain_exists(device['name']):
+                # slight optimization for kvm backend, dont generate new mac
+                if configuration.deployment_backend == "kvm" and \
+                        is_deployed and \
+                        libvirtUtils.domain_exists(device['name']):
                     mi['mac'] = libvirtUtils.get_management_interface_mac_for_domain(device['name'])
                 else:
                     mi['mac'] = generate_next_mac(topology_id)
@@ -614,7 +620,9 @@ def load_config_from_topology_json(topology_json, topology_id):
         if d["mgmtInterfaceIndex"] == -1:
             mi = dict()
             # if this has already been deployed, let's preserve the existing mac address that has been assigned
-            if is_deployed and libvirtUtils.domain_exists(device['name']):
+            if configuration.deployment_backend == "kvm" and \
+                    is_deployed and \
+                    libvirtUtils.domain_exists(device['name']):
                 mi['mac'] = libvirtUtils.get_management_interface_mac_for_domain(device['name'])
             else:
                 mi['mac'] = generate_next_mac(topology_id)
