@@ -249,7 +249,7 @@ def get_network_id(network_name):
     return None
 
 
-def upload_image_to_glance(name, image_file_path):
+def upload_image_to_glance_old(name, image_file_path):
     """
 
     :param name: name of the image to be uploaded
@@ -282,6 +282,56 @@ def upload_image_to_glance(name, image_file_path):
     finally:
         fio.close()
         f.close()
+        return None
+
+
+def upload_image_to_glance(name, image_file_path):
+    """
+
+    :param name: name of the image to be created
+    :param image_file_path: path of the file to upload
+    :return: json encoded results string from glance REST api
+    """
+    logger.debug("--- create_image_in_glance ---")
+
+    url = create_glance_url('/images')
+
+    try:
+
+        d = dict()
+        d['disk_format'] = 'qcow2'
+        d['container_format'] = 'bare'
+        d['name'] = name
+
+        r_data = do_post(url, json.dumps(d))
+
+    except Exception as e:
+        logger.error("Could not upload image to glance")
+        logger.error("error was %s" % str(e))
+        return None
+
+    try:
+        r_json = json.loads(r_data)
+        if 'id' in r_json:
+            image_id = r_json['id']
+
+            logger.info('Preparing to push image data to glance!')
+            f = open(image_file_path, 'rb')
+            fio = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+            upload_url = create_glance_url('/images/%s/file' % image_id)
+            request = urllib2.Request(upload_url, fio)
+            request.add_header("Content-Type", "application/octet-stream")
+            request.add_header("X-Auth-Token", _auth_token)
+            request.get_method = lambda: 'PUT'
+            return urllib2.urlopen(request)
+        else:
+            logger.error('Could not find an ID key in returned json from glance image create')
+            logger.error(r_data)
+            logger.error('returning None')
+            return None
+
+    except ValueError:
+        logger.error('Could not parse JSON return data from glance image create')
         return None
 
 

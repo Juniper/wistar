@@ -185,6 +185,7 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
             for cfp in device["configDriveParams"]:
 
                 if "destination" in cfp and cfp["destination"] == "/boot/loader.conf":
+                    logger.debug("Creating loader.conf config-drive entry")
                     template_name = cfp["template"]
                     loader_string = osUtils.compile_config_drive_params_template(template_name,
                                                                                  device["name"],
@@ -193,12 +194,17 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
                                                                                  device["ip"],
                                                                                  device["managementInterface"])
 
-                    for l in loader_string:
-                        left, right = l.split('=')
-                        if left not in metadata:
-                            metadata[left] = right
+                    logger.debug('----------')
+                    logger.debug(loader_string)
+                    logger.debug('----------')
+                    for l in loader_string.split('\n'):
+                        if '=' in l:
+                            left, right = l.split('=')
+                            if left not in metadata and left != '':
+                                metadata[left] = right.replace('"', '')
 
                 if "destination" in cfp and cfp["destination"] == "/juniper.conf":
+                    logger.debug("Creating juniper.conf config-drive entry")
                     template_name = cfp["template"]
                     personality_string = osUtils.compile_config_drive_params_template(template_name,
                                                                                       device["name"],
@@ -209,6 +215,8 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
 
                     dr["properties"]["personality"] = dict()
                     dr["properties"]["personality"] = {"/config/juniper.conf": personality_string}
+                else:
+                    logger.debug('No juniper.conf found here ')
 
         template["resources"][device["name"]] = dr
 
