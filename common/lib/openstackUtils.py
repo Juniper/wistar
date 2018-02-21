@@ -391,14 +391,14 @@ def get_consumed_management_ips():
 
 def get_glance_image_list():
     """
-    :return: json response from glance /images/ URL
+    :return: json response from glance /images URL filtered with only shared images
     """
     logger.debug("--- get_glance_image_list ---")
 
-    url = create_glance_url("/images")
+    url = create_glance_url("/images?visibility=shared")
     image_list_string = do_get(url)
     if image_list_string is None:
-        return None
+        return list()
 
     image_list = json.loads(image_list_string)
     return image_list
@@ -428,7 +428,7 @@ def get_image_id_for_name(image_name):
     logger.debug("--- get_image_id_for_name ---")
 
     image_list = get_glance_image_list()
-    if image_list is None:
+    if image_list is None or len(image_list) == 0:
         return None
 
     for image in image_list["images"]:
