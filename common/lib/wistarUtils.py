@@ -47,9 +47,15 @@ used_macs = dict()
 def generate_next_mac(topology_id):
     """
     keep track of all used macs and don't reuse them if possible
-    :param topology_id:
+    :param topology_id: id of the topology in question
     :return: unique mac
     """
+
+    if configuration.deployment_backend == 'openstack':
+        # we just don't need this for openstack at all, just return a string that will
+        # never get used
+        return '52:54:11:22:33:44'
+
     global used_macs
     if topology_id not in used_macs:
         used_macs[topology_id] = list()
@@ -74,12 +80,17 @@ def _generate_mac(topology_id):
     :return: mostly unique mac address that should be safe to deploy
     """
     global mac_counter
-    base = "52:54:00:"
+    global used_macs
+    b1 = "52:54:"
+    b2 = '%02x' % int(len(used_macs[topology_id]) / 256)
+    base = b1 + str(b2) + ":"
     tid = "%04x" % int(topology_id)
     mac_base = base + str(tid[:2]) + ":" + str(tid[2:4]) + ":"
     mac = mac_base + (str("%02x" % mac_counter)[:2])
 
     mac_counter += 1
+
+    mac_counter = mac_counter % 256
     return mac
 
 
