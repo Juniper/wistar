@@ -58,6 +58,11 @@ filesystem_io_mode = 'threads'
 # show openstack options even if not the primary deployment option
 # i.e. upload to glance is available but still deploy locally to kvm
 use_openstack = False
+
+# openstack horizon url is used to create Horizon URLs
+# some version of openstack use '/dashboard', '/horizon', or '/'
+openstack_horizon_url = "http://10.10.10.10"
+
 # authentication parameters
 openstack_host = '10.10.10.10'
 openstack_user = 'admin'

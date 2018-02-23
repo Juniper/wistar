@@ -323,9 +323,19 @@ def compile_config_drive_params_template(template_name, domain_name, host_name, 
         # read template
         this_path = os.path.abspath(os.path.dirname(__file__))
         template_path = os.path.abspath(os.path.join(this_path, "../templates/%s" % template_name))
-
+        logger.debug(template_path)
         template = open(template_path)
+
+    except OSError as oe:
+        logger.error("Could not open template file with name: %s" % template_name)
+        logger.info(str(oe))
+        return None
+    try:
+
         template_string = template.read()
+
+        logger.debug(template_string)
+
         template.close()
 
         env = Environment()
@@ -353,8 +363,10 @@ def compile_config_drive_params_template(template_name, domain_name, host_name, 
 
         seed_dir = configuration.seeds_dir + domain_name
 
-        if not check_path(seed_dir):
-            os.mkdir(seed_dir)
+        if configuration.deployment_backend == "kvm":
+            # ensure this exists for KVM backend before continueing, ignore otherwise
+            if not check_path(seed_dir):
+                os.mkdir(seed_dir)
 
         return template_data_string
 

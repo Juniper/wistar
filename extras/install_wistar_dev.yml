@@ -1,6 +1,8 @@
 ---
 #
-# Provisions all the required dependencies for Wistar on the local host
+# Provisions all the required dependencies for Wistar on the local host and nothing else
+# primarily useful for development work as you need to run the process manually
+# run with python ./manage.py runserver 0.0.0.0:8080
 #
 
 - name: Provision Wistar
@@ -9,11 +11,6 @@
   become: true
 
   tasks:
-  - name: Update all packages to the latest version
-    apt:
-      upgrade: dist
-      update_cache: yes
-
   - name: Install Junos-eznc dependancies
     apt:
       name: "{{ item }}"
@@ -102,75 +99,6 @@
       path: /opt/wistar/user_images/instances
       state: directory
 
-  - name: Pull latest Wistar from Git
-    git:
-      repo: https://github.com/Juniper/wistar.git
-      dest: /opt/wistar/wistar-master/
- 
   - name: Create Wistar tables
-    command: /opt/wistar/wistar-master/manage.py migrate
+    command: /opt/wistar/wistar/manage.py migrate
 
-  - name: install apache2
-    apt:
-      name: "{{ item }}"
-      state: present
-    with_items:
-      - apache2
-      - libapache2-mod-wsgi
-
-  - name: enable the Apache2 module "wsgi"
-    apache2_module:
-      state: present
-      name: wsgi
-    notify: restart apache
-
-  - name: set permissions on wistar dir
-    file:
-      path: /opt/wistar
-      owner: www-data
-      group: www-data
-      state: directory
-      recurse: yes
-
-  - name: set permissions on wistar log
-    file:
-      path: /var/log/wistar.log
-      owner: www-data
-      group: www-data
-      state: touch
-
-  - name: set permissions on wistar errorlog
-    file:
-      path: /var/log/apache2/wistar.log
-      owner: www-data
-      group: www-data
-      state: touch
-
-  - name: set permissions on wistar accesslog
-    file:
-      path: /var/log/apache2/wistar_access.log
-      owner: www-data
-      group: www-data
-      state: touch
-
-  - name: copy wistar config file to apache
-    copy:
-      src: 999-wistar.conf
-      dest: /etc/apache2/sites-available/999-wistar.conf
-
-  - name: enable wistar site in apache
-    file:
-      src: /etc/apache2/sites-available/999-wistar.conf
-      dest: /etc/apache2/sites-enabled/999-wistar.conf
-      state: link
-    notify: restart apache
-
-  - name: add www-data to libvirt users
-    user:
-      name: www-data
-      groups: libvirtd
-      append: yes
-
-  handlers:
-    - name: restart apache
-      service: name=apache2 state=restarted

@@ -45,7 +45,7 @@
                 <td>
                      <a title="View in Horizon"
                         href="#"
-                        onclick="javascript: window.open('http://{{ openstack_host }}/dashboard/project/instances/{{ resource.physical_resource_id }}')">
+                        onclick="javascript: window.open('{{ openstack_horizon_url }}/project/instances/{{ resource.physical_resource_id }}')">
                         {{ resource.resource_name }}
                      </a>
                 </td>
@@ -54,15 +54,15 @@
                 </td>
                 <td style="white-space: nowrap;">
                         {% if resource.resource_status == "CREATE_COMPLETE" %}
-                        <img src="{% static 'images/running.png' %}" width="20px" height="20px"/>&nbsp;
+                        <div class="status_green">&#10003;</div>
                         <a href="#"
-                            onclick="javascript: window.open('http://{{ openstack_host }}/dashboard/project/instances/{{ resource.physical_resource_id }}/?tab=instance_details__console');"
+                            onclick="javascript: window.open('{{ openstack_horizon_url }}/project/instances/{{ resource.physical_resource_id }}/?tab=instance_details__console');"
                             title="Launch Console"
                             >
                             <img src="{% static 'images/console.png' %}" width="20px" height="20px"/>
                         </a>
                         {% else %}
-                        <img src="{% static 'images/stopped.png' %}" width="20px" height="20px"/>
+                        <div class="status_red">&#9661;</div>
                         {% endif %}
                 </td>
             </tr>
@@ -83,23 +83,24 @@
             <td>
                 Options
             </td>
-            <td>
-                <a href="#"
-                   onclick="javascript: window.open('http://{{ openstack_host }}/dashboard/project/stacks/stack/{{ stack.id }}/')">
-                    View in Horizon
-                </a>
-                &nbsp;
-                <a href="#" onclick="javascript: redir('/ajax/deleteStack/{{ topology_id }}')">
-                    Delete Stack
-                </a>
-                 &nbsp;
-                <a href="#" onclick="javascript: redir('/topologies/exportHeat/{{ topology_id }}')">
-                    Debug HEAT
-                </a>
+            <td colspan="2">
+                <div class="status_grey">
+                    <a href="#"
+                        onclick="javascript: window.open('{{ openstack_horizon_url }}/project/stacks/stack/{{ stack.id }}/')"
+                        title="View in Horizon">&#128269;</a>
+                </div>
+                <div class="status_red">
+                    <a href="#" onclick="javascript: redir('/ajax/deleteStack/{{ topology_id }}')"
+                       title="Delete Stack">&#10005;</a>
+                </div>
+                <div class="status_grey">
+                    <a href="#" onclick="javascript: redir('/topologies/exportHeat/{{ topology_id }}')"
+                        title="Show HEAT">&#9881;</a>
+                </div>
             </td>
         </tr>
         <tr>
-            <td colspan="4">
+            <td colspan="3">
                 <input type="button" name="refreshDSButton" id="refreshDSButton"
                        value="Refresh OpenStack Status"
                        onclick="javascript: refreshDeploymentStatus('{{ topology_id }}');"/>

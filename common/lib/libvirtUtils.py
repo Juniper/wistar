@@ -480,6 +480,15 @@ def get_domain_vnc_port(domain):
 
 # simple func to ensure we always use a valid vnc_port
 def get_next_domain_vnc_port(offset=0):
+    """
+    Returns an port that can be used for VNC console access
+    Ensures the port is not currently take by another configured / deployed VM
+    or another process on the host machine
+    Will begin iterating UP from configured 'vnc_start_port' and return first (or first + offset) port that is
+    available
+    :param offset: Offset indicates the number of previously found ports that should be considered to be taken
+    :return: int
+    """
     logger.debug("Getting next vnc port with offset: " + str(offset))
     current_iteration = 0
     connect()
