@@ -231,6 +231,30 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
                 else:
                     logger.debug('No juniper.conf found here ')
 
+        if device['cloudInitSupport']:
+            logger.debug('creating cloud-init script')
+            dr["properties"]["config_drive"] = True
+            dr["properties"]["user_data_format"] = "RAW"
+            metadata = dict()
+            metadata["hostname"] = device["name"]
+            dr["properties"]["metadata"] = metadata
+            # grab the prefix len from the management subnet which is in the form 192.168.122.0/24
+            if '/' in configuration.management_subnet:
+                management_prefix_len = configuration.management_subnet.split('/')[1]
+            else:
+                management_prefix_len = '24'
+
+            management_ip = device['ip'] + '/' + management_prefix_len
+
+            device_config = osUtils.get_cloud_init_config(device['name'],
+                                                          device['label'],
+                                                          management_ip,
+                                                          device['managementInterface'],
+                                                          device['password'])
+
+            user_data_string = osUtils.render_cloud_init_user_data(device_config)
+            dr["properties"]["user_data"] = user_data_string
+
         template["resources"][device["name"]] = dr
 
     for device in config["devices"]:

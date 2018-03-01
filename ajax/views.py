@@ -1021,8 +1021,15 @@ def inline_deploy_topology(config):
             if device["cloudInitSupport"]:
                 # grab the last interface
                 management_interface = device["managementInterface"]
-                # this will come back to haunt me one day. Assume /24 for mgmt network is sprinkled everywhere!
-                management_ip = device["ip"] + "/24"
+
+                # grab the prefix len from the management subnet which is in the form 192.168.122.0/24
+                if '/' in configuration.management_subnet:
+                    management_prefix_len = configuration.management_subnet.split('/')[1]
+                else:
+                    management_prefix_len = '24'
+
+                management_ip = device['ip'] + '/' + management_prefix_len
+
                 # domain_name, host_name, mgmt_ip, mgmt_interface
                 script_string = ""
                 script_param = ""
