@@ -75,23 +75,25 @@ def _generate_mac(topology_id):
     """
     silly attempt to keep mac addresses unique
     use the topology id to generate 2 octets, and the number of
-    macs used so far to generate the last one
-    :param topology_id: id of the topology we are building
+    macs used so far to generate the last two octets.
+    Uses the locally administered address ranges 52:54:00 through 52:54:FF
+    :param topology_id: string id of the topology we are building
     :return: mostly unique mac address that should be safe to deploy
     """
+    tid = int(topology_id)
     global mac_counter
     global used_macs
-    b1 = "52:54:"
-    b2 = '%02x' % int(len(used_macs[topology_id]) / 256)
-    base = b1 + str(b2) + ":"
-    tid = "%04x" % int(topology_id)
-    mac_base = base + str(tid[:2]) + ":" + str(tid[2:4]) + ":"
-    mac = mac_base + (str("%02x" % mac_counter)[:2])
+    base = '52:54:00:00:00:00'
+    ba = base.split(':')
+    ba[2] = '%02x' % int(tid / 256)
+    ba[3] = '%02x' % int(tid % 256)
+    ba[4] = '%02x' % int(len(used_macs[topology_id]) / 256)
+    ba[5] = '%02x' % int(mac_counter)
 
     mac_counter += 1
 
     mac_counter = mac_counter % 256
-    return mac
+    return ':'.join(ba)
 
 
 def get_heat_json_from_topology_config(config, project_name='admin'):
