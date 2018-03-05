@@ -125,6 +125,7 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
         p = dict()
         p["cidr"] = "1.1.1.0/24"
         p["enable_dhcp"] = False
+        p["gateway_ip"] = ""
         p["name"] = network["name"] + "_subnet"
         if network["name"] == "virbr0":
             p["network_id"] = configuration.openstack_mgmt_network
