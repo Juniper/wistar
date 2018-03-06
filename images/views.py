@@ -335,14 +335,14 @@ def glance_detail(request):
 
     if openstackUtils.connect_to_openstack():
         glance_id = openstackUtils.get_image_id_for_name(image.name)
-        if glance_id is None:
-            messages.info(request, "Glance image not found!")
-            return HttpResponseRedirect('/images/')
 
-        glance_json = openstackUtils.get_glance_image_detail(glance_id)
-        logger.debug("glance json of %s is" % glance_id)
-        logger.debug(glance_json)
-        logger.debug("---")
+        glance_json = dict()
+        if glance_id is not None:
+            glance_json = openstackUtils.get_glance_image_detail(glance_id)
+            logger.debug("glance json of %s is" % glance_id)
+            logger.debug(glance_json)
+            logger.debug("---")
+
         return render(request, 'images/glance_detail.html', {'image': glance_json,
                                                              "image_id": image_id,
                                                              "glance_id": glance_id,
