@@ -253,7 +253,18 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
                                                           device['managementInterface'],
                                                           device['password'])
 
-            user_data_string = osUtils.render_cloud_init_user_data(device_config)
+            script_string = ""
+            if "configScriptId" in device and device["configScriptId"] != 0:
+                logger.debug("Passing script data!")
+                try:
+                    script = Script.objects.get(pk=int(device["configScriptId"]))
+                    script_string = script.script
+                    device_config["script_param"] = device.get("configScriptParam", '')
+                    logger.debug(script_string)
+                except ObjectDoesNotExist:
+                    logger.info('config script was specified but was not found!')
+
+            user_data_string = osUtils.render_cloud_init_user_data(device_config, script_string)
             dr["properties"]["user_data"] = user_data_string
 
         template["resources"][device["name"]] = dr
