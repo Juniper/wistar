@@ -577,7 +577,7 @@ def refresh_openstack_deployment_status(request, topology_id):
     stack_details = openstackUtils.get_stack_details(stack_name)
     stack_resources = dict()
     logger.debug(stack_details)
-    if stack_details is not None and stack_details["stack_status"] == "CREATE_COMPLETE":
+    if stack_details is not None and 'stack_status' in stack_details and 'COMPLETE' in stack_details["stack_status"]:
         stack_resources = openstackUtils.get_stack_resources(stack_name, stack_details["id"])
 
     if hasattr(configuration, 'openstack_horizon_url'):

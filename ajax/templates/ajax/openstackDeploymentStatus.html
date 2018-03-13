@@ -20,7 +20,7 @@
         </td>
     </tr>
     {% else %}
-        {% if stack.stack_status != "CREATE_COMPLETE" %}
+        {% if 'COMPLETE' not in stack.stack_status %}
         <tr>
             <td>
                 Status
@@ -41,7 +41,6 @@
             {% for resource in stack_resources.resources %}
             {% if resource.resource_type == "OS::Nova::Server" %}
             <tr>
-
                 <td>
                      <a title="View in Horizon"
                         href="#"
@@ -49,12 +48,10 @@
                         {{ resource.resource_name }}
                      </a>
                 </td>
-                <td>
-                    Status
-                </td>
-                <td style="white-space: nowrap;">
-                        {% if resource.resource_status == "CREATE_COMPLETE" %}
+                <td colspan="2" style="white-space: nowrap;">
+                        {% if 'COMPLETE' in resource.resource_status %}
                         <div class="status_green">&#10003;</div>
+                        &nbsp;
                         <a href="#"
                             onclick="javascript: window.open('{{ openstack_horizon_url }}/project/instances/{{ resource.physical_resource_id }}/?tab=instance_details__console');"
                             title="Launch Console"
@@ -63,22 +60,13 @@
                         </a>
                         {% else %}
                         <div class="status_red">&#9661;</div>
+                        &nbsp;
                         {% endif %}
                 </td>
             </tr>
             {% endif %}
             {% endfor %}
         {% endif %}
-    <!--
-        <tr>
-            <td>
-                Resources
-            </td>
-            <td>
-                {{ stack_resources }}
-            </td>
-        </tr>
-    -->
         <tr>
             <td>
                 Options
@@ -89,14 +77,17 @@
                         onclick="javascript: window.open('{{ openstack_horizon_url }}/project/stacks/stack/{{ stack.id }}/')"
                         title="View in Horizon">&#128269;</a>
                 </div>
+                &nbsp;
                 <div class="status_red">
                     <a href="#" onclick="javascript: redir('/ajax/deleteStack/{{ topology_id }}')"
                        title="Delete Stack">&#10005;</a>
                 </div>
+                &nbsp;
                 <div class="status_grey">
                     <a href="#" onclick="javascript: redir('/topologies/exportHeat/{{ topology_id }}')"
                         title="Show HEAT">&#9881;</a>
                 </div>
+                &nbsp;
             </td>
         </tr>
         <tr>
@@ -108,4 +99,3 @@
         </tr>
     {% endif %}
 </table>
-
