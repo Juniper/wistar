@@ -35,7 +35,6 @@ from common.lib import libvirtUtils
 from common.lib import linuxUtils
 from common.lib import openstackUtils
 from common.lib import osUtils
-from common.lib import vboxUtils
 from common.lib import wistarUtils
 from common.lib.WistarException import WistarException
 from images.models import Image
@@ -261,23 +260,26 @@ def get_junos_startup_state(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
+
+    # always check network if possible regardless of deployment_backend
+    if "ip" in request.POST:
+        # this instance is auto-configured, so we can just check for IP here
+        response_data["network"] = osUtils.check_ip(request.POST["ip"])
+
     if configuration.deployment_backend == "kvm" and libvirtUtils.is_domain_running(name):
         # topologies/edit will fire multiple calls at once
         # let's just put a bit of a breather between each one
         response_data["power"] = True
-        if "ip" in request.POST:
-            # this instance is auto-configured, so we can just check for IP here
-            response_data["network"] = osUtils.check_ip(request.POST["ip"])
-        else:
+        if "ip" not in request.POST:
             time.sleep(random.randint(0, 10) * .10)
-
             response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
 
     elif configuration.deployment_backend == "openstack":
 
         time.sleep(random.randint(0, 20) * .10)
         response_data["power"] = True
-        response_data["console"] = consoleUtils.is_junos_device_at_prompt(name)
+        # console no longer supported in openstack deployments
+        response_data["console"] = False
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
@@ -293,20 +295,24 @@ def get_linux_startup_state(request):
         return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
 
     name = request.POST['name']
+    # always check network if possible regardless of deployment_backend
+    if "ip" in request.POST:
+        # this instance is auto-configured, so we can just check for IP here
+        response_data["network"] = osUtils.check_ip(request.POST["ip"])
 
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
             time.sleep(random.randint(0, 10) * .10)
             response_data["power"] = True
-            response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
+            # as of 2018-01-01 we no longer support openstack console, this is dead code
+            # response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
+            response_data['console'] = False
     else:
         if libvirtUtils.is_domain_running(name):
             time.sleep(random.randint(0, 10) * .10)
             response_data["power"] = True
-            if "ip" in request.POST:
-                # this instance is auto-configured, so we can just check for IP here
-                response_data["network"] = osUtils.check_ip(request.POST["ip"])
-            else:
+            # let's check the console only if we do not have network available to check
+            if "ip" not in request.POST:
                 response_data["console"] = consoleUtils.is_linux_device_at_prompt(name)
 
     return HttpResponse(json.dumps(response_data), content_type="application/json")

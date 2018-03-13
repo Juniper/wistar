@@ -1,4 +1,11 @@
 {% load staticfiles %}
+<script type="text/javascript">
+{% if stack == None %}
+is_deployed = false;
+{% else %}
+is_deployed = true;
+{% endif %}
+</script>
 <table>
     <tr>
         <th colspan="3"> Stack Status</th>
