@@ -181,7 +181,7 @@
         }
         updateBootCounter++;
         console.log("updating boot up state for topology");
-        for(v=0;v<instanceArray.length;v++) {
+        for(var v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
             var figure = canvas.getFigure(instance["id"]);
             console.log(figure);
@@ -326,7 +326,7 @@
                 }
             }
             console.log("setting state to: " + state);
-            topo_object = canvas.getFigure(id);
+            var topo_object = canvas.getFigure(id);
             topo_object.setBootState(state);
         };
 
