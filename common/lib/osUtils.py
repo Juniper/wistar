@@ -129,17 +129,13 @@ def create_thin_provision_instance(image, instance):
 def create_thick_provision_instance(image, instance, resize):
     instance_file = get_instance_path_from_image(image, instance)
 
-    logger.debug(image)
-    logger.debug(instance_file)
-    logger.debug(resize)
-
     shutil.copy(image, instance_file)
     logger.debug("copied image to thick provisioned image and ready to go")
     try:
         resize_str = str(resize)
     except ValueError:
         logger.error('Could not create a string value from resize! Using default value of 20')
-        resize_str = 20
+        resize_str = "20"
 
     rv = os.system("qemu-img resize '" + instance_file + "' +" + resize_str + "G")
     if rv == 0:
@@ -327,9 +323,19 @@ def compile_config_drive_params_template(template_name, domain_name, host_name, 
         # read template
         this_path = os.path.abspath(os.path.dirname(__file__))
         template_path = os.path.abspath(os.path.join(this_path, "../templates/%s" % template_name))
-
+        logger.debug(template_path)
         template = open(template_path)
+
+    except OSError as oe:
+        logger.error("Could not open template file with name: %s" % template_name)
+        logger.info(str(oe))
+        return None
+    try:
+
         template_string = template.read()
+
+        logger.debug(template_string)
+
         template.close()
 
         env = Environment()
@@ -357,8 +363,10 @@ def compile_config_drive_params_template(template_name, domain_name, host_name, 
 
         seed_dir = configuration.seeds_dir + domain_name
 
-        if not check_path(seed_dir):
-            os.mkdir(seed_dir)
+        if configuration.deployment_backend == "kvm":
+            # ensure this exists for KVM backend before continueing, ignore otherwise
+            if not check_path(seed_dir):
+                os.mkdir(seed_dir)
 
         return template_data_string
 
@@ -416,6 +424,80 @@ def get_junos_default_config_template(domain_name, host_name, password, ip, mana
         return None
 
 
+def get_cloud_init_config(domain_name, host_name, mgmt_ip, mgmt_interface, password, script_param=""):
+    logger.debug('getting cloud-init-config')
+    logger.debug(mgmt_ip)
+    ip_network = IPNetwork(mgmt_ip)
+    logger.debug('got ip_network')
+    logger.debug(ip_network)
+    config = dict()
+    config["domain_name"] = domain_name
+    config["hostname"] = host_name
+    config["ip_address"] = ip_network.ip.format()
+    config["broadcast_address"] = ip_network.broadcast.format()
+    config["network_address"] = ip_network.network.format()
+    config["netmask"] = ip_network.netmask.format()
+    config["mgmt_interface"] = mgmt_interface
+    config["default_gateway"] = configuration.management_gateway
+    config["ssh_key"] = configuration.ssh_key
+
+    # do not allow 'root' user as the default ssh_user as this causes Junos configuration errors
+    if configuration.ssh_user == 'root':
+        ssh_user = 'wistar'
+    else:
+        ssh_user = configuration.ssh_user
+
+    config["ssh_user"] = ssh_user
+    config["password"] = password
+
+    logger.debug('checking script_param')
+    if script_param is not None and script_param != "":
+        config["param"] = script_param
+
+    return config
+
+
+def render_cloud_init_user_data(config, script=""):
+    # read template
+    this_path = os.path.abspath(os.path.dirname(__file__))
+    user_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_user_data"))
+
+    logger.debug(user_data_template_path)
+
+    if script == "" and script is not None:
+        user_data_template = open(user_data_template_path)
+        user_data_template_string = user_data_template.read()
+        user_data_template.close()
+    else:
+        user_data_template_string = script
+
+    env = Environment()
+    user_data = env.from_string(user_data_template_string)
+
+    user_data_string = user_data.render(config=config)
+
+    return user_data_string
+
+
+def render_cloud_init_meta_data(config):
+    # read template
+    this_path = os.path.abspath(os.path.dirname(__file__))
+    meta_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_meta_data"))
+
+    logger.debug(meta_data_template_path)
+
+    meta_data_template = open(meta_data_template_path)
+    meta_data_template_string = meta_data_template.read()
+    meta_data_template.close()
+
+    env = Environment()
+    meta_data = env.from_string(meta_data_template_string)
+
+    meta_data_string = meta_data.render(config=config)
+
+    return meta_data_string
+
+
 def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, password, script="", script_param=""):
     try:
         seed_dir = configuration.seeds_dir + domain_name
@@ -428,50 +510,10 @@ def create_cloud_init_img(domain_name, host_name, mgmt_ip, mgmt_interface, passw
             logger.debug("seed.img already created!")
             return seed_img_name
 
-        # read template
-        this_path = os.path.abspath(os.path.dirname(__file__))
-        meta_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_meta_data"))
-        user_data_template_path = os.path.abspath(os.path.join(this_path, "../templates/cloud_init_user_data"))
+        config = get_cloud_init_config(domain_name, host_name, mgmt_ip, mgmt_interface, password, script_param)
 
-        logger.debug(meta_data_template_path)
-
-        logger.debug(user_data_template_path)
-
-        meta_data_template = open(meta_data_template_path)
-        meta_data_template_string = meta_data_template.read()
-        meta_data_template.close()
-
-        if script == "":
-            user_data_template = open(user_data_template_path)
-            user_data_template_string = user_data_template.read()
-            user_data_template.close()
-        else:
-            user_data_template_string = script
-
-        env = Environment()
-        meta_data = env.from_string(meta_data_template_string)
-        user_data = env.from_string(user_data_template_string)
-
-        ip_network = IPNetwork(mgmt_ip)
-
-        config = dict()
-        config["domain_name"] = domain_name
-        config["hostname"] = host_name
-        config["ip_address"] = ip_network.ip.format()
-        config["broadcast_address"] = ip_network.broadcast.format()
-        config["network_address"] = ip_network.network.format()
-        config["netmask"] = ip_network.netmask.format()
-        config["mgmt_interface"] = mgmt_interface
-        config["default_gateway"] = configuration.management_gateway
-        config["ssh_key"] = configuration.ssh_key
-        config["ssh_user"] = configuration.ssh_user
-        config["password"] = password
-
-        if script_param != "":
-            config["param"] = script_param
-
-        meta_data_string = meta_data.render(config=config)
-        user_data_string = user_data.render(config=config)
+        user_data_string = render_cloud_init_user_data(config, script)
+        meta_data_string = render_cloud_init_meta_data(config)
 
         logger.debug("writing meta-data file")
         mdf = open(seed_dir + "/meta-data", "w")

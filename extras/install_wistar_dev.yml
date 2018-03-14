@@ -1,0 +1,104 @@
+---
+#
+# Provisions all the required dependencies for Wistar on the local host and nothing else
+# primarily useful for development work as you need to run the process manually
+# run with python ./manage.py runserver 0.0.0.0:8080
+#
+
+- name: Provision Wistar
+  hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+  - name: Install Junos-eznc dependancies
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - build-essential
+      - libxml2-dev
+      - libxslt1-dev
+      - libz-dev
+      - libffi-dev
+      - libssl-dev
+      - python-dev
+      - git
+      - python-pip
+
+  - name: Install python-cryptography
+    pip:
+      name: cryptography
+      editable: false
+
+  - name: Install junos-eznc
+    pip:
+      name: junos-eznc
+      editable: false
+
+  - name: Install jxmlease
+    pip:
+      name: jxmlease
+      editable: false
+
+  - name: Install Wistar dependancies
+    apt:
+      name: "{{ item }}"
+      state: present
+      update_cache: true
+    with_items:
+      - qemu-kvm
+      - libvirt-bin
+      - socat
+      - python-pexpect
+      - python-libvirt
+      - python-yaml
+      - unzip
+      - bridge-utils
+      - python-numpy
+      - genisoimage
+      - python-netaddr
+      - python-markupsafe
+      - python-setuptools
+      - mtools
+      - dosfstools
+
+  - name: Install Django
+    pip:
+      name: django
+      version: 1.9.9
+      editable: false
+
+  - name: Install Python virtualBox
+    pip:
+      name: pyvbox
+      editable: false
+
+  - name: Create Wistar directory structure 1
+    file:
+      path: /opt/wistar
+      state: directory
+  - name: Create Wistar directory structure 2
+    file:
+      path: /opt/wistar/user_images
+      state: directory
+  - name: Create Wistar directory structure 3
+    file:
+      path: /opt/wistar/wistar-master
+      state: directory
+  - name: Create Wistar directory structure 4
+    file:
+      path: /opt/wistar/media
+      state: directory
+  - name: Create Wistar directory structure 5
+    file:
+      path: /opt/wistar/seeds
+      state: directory
+  - name: Create Wistar directory structure 6
+    file:
+      path: /opt/wistar/user_images/instances
+      state: directory
+
+  - name: Create Wistar tables
+    command: /opt/wistar/wistar/manage.py migrate
+

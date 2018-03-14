@@ -68,19 +68,22 @@ def edit(request):
 
 def new(request):
     logger.debug('---- topology new ----')
-    image_list = Image.objects.all().order_by('name')
+
     script_list = Script.objects.all().order_by('name')
     vm_types = configuration.vm_image_types
     vm_types_string = json.dumps(vm_types)
-    image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
 
     currently_allocated_ips = wistarUtils.get_used_ips()
-    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+    dhcp_reservations = wistarUtils.get_consumed_management_ips()
 
     if configuration.deployment_backend == "openstack":
         external_bridge = configuration.openstack_external_network
+        image_list = Image.objects.filter(filePath='').order_by('name')
     else:
         external_bridge = configuration.kvm_external_bridge
+        image_list = Image.objects.exclude(filePath='').order_by('name')
+
+    image_list_json = serializers.serialize('json', image_list, fields=('name', 'type'))
 
     context = {'image_list': image_list, 'script_list': script_list, 'vm_types': vm_types_string,
                'image_list_json': image_list_json,
@@ -196,7 +199,7 @@ def clone(request, topo_id):
     currently_allocated_ips = wistarUtils.get_used_ips()
     cloned_ips = wistarUtils.get_used_ips_from_topology_json(topology.json)
 
-    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+    dhcp_reservations = wistarUtils.get_consumed_management_ips()
 
     currently_allocated_ips += cloned_ips
 
@@ -480,7 +483,7 @@ def add_instance_form(request):
     image_list_json = serializers.serialize('json', Image.objects.all(), fields=('name', 'type'))
 
     currently_allocated_ips = wistarUtils.get_used_ips()
-    dhcp_reservations = wistarUtils.get_dhcp_reserved_ips()
+    dhcp_reservations = wistarUtils.get_consumed_management_ips()
 
     if configuration.deployment_backend == "openstack":
         external_bridge = configuration.openstack_external_network

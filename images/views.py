@@ -122,7 +122,7 @@ def create(request):
             else:
                 logger.error("Could not convert vmdk!")
 
-        if image_type == "junos_vre" and "jinstall64-vmx-15.1" in full_path:
+        if image_type == "junos_vre_15" and "jinstall64-vmx-15.1" in full_path:
             logger.debug("Creating RIOT image for Junos vMX 15.1")
             # lets replace the last "." with "_riot."
             if '.' in full_path:
@@ -335,10 +335,14 @@ def glance_detail(request):
 
     if openstackUtils.connect_to_openstack():
         glance_id = openstackUtils.get_image_id_for_name(image.name)
-        glance_json = openstackUtils.get_glance_image_detail(glance_id)
-        logger.debug("glance json of %s is" % glance_id)
-        logger.debug(glance_json)
-        logger.debug("---")
+
+        glance_json = dict()
+        if glance_id is not None:
+            glance_json = openstackUtils.get_glance_image_detail(glance_id)
+            logger.debug("glance json of %s is" % glance_id)
+            logger.debug(glance_json)
+            logger.debug("---")
+
         return render(request, 'images/glance_detail.html', {'image': glance_json,
                                                              "image_id": image_id,
                                                              "glance_id": glance_id,

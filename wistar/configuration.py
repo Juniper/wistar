@@ -19,6 +19,8 @@
 
 # some basic configuration parameters for wistar
 
+import vm_definitions
+
 # shortcut to fill in default instance password in 'New VM' screen
 # Make sure this meets the complexity requirements for your VMs!
 # i.e. for junos you need 3 of these 4: upper / lower / special / number
@@ -56,6 +58,11 @@ filesystem_io_mode = 'threads'
 # show openstack options even if not the primary deployment option
 # i.e. upload to glance is available but still deploy locally to kvm
 use_openstack = False
+
+# openstack horizon url is used to create Horizon URLs
+# some version of openstack use '/dashboard', '/horizon', or '/'
+openstack_horizon_url = "http://10.10.10.10"
+
 # authentication parameters
 openstack_host = '10.10.10.10'
 openstack_user = 'admin'
@@ -91,81 +98,5 @@ management_gateway = '192.168.122.1'
 # wistar cloud init seeds director / temp directory
 seeds_dir = "/opt/wistar/seeds/"
 
-
-vm_image_types = [
-    {
-        "name": "blank",
-        "description": "Blank",
-        "js": "draw2d.shape.node.generic",
-    },
-    {
-        "name": "linux",
-        "description": "Linux",
-        "js": "draw2d.shape.node.linux",
-    },
-    {
-        "name": "ubuntu16",
-        "description": "Ubuntu 16",
-        "js": "draw2d.shape.node.ubuntu16",
-    },
-    {
-        "name": "junos_vmx",
-        "description": "Junos vMX Phase 1",
-        "js": "draw2d.shape.node.vmx",
-    },
-    {
-        "name": "junos_vre",
-        "description": "Junos vMX RE",
-        "js": "draw2d.shape.node.vre",
-    },
-    {
-        "name": "junos_vpfe",
-        "description": "Junos vMX vFPC",
-        "js": "draw2d.shape.node.vpfe",
-    },
-    {
-        "name": "junos_vpfe_haswell",
-        "description": "Junos vMX vFPC (Haswell)",
-        "js": "draw2d.shape.node.vpfe_haswell",
-    },
-    {
-        "name": "junos_vqfx_re",
-        "description": "Junos vQFX RE",
-        "js": "draw2d.shape.node.vqfxRe",
-    },
-    {
-        "name": "junos_riot",
-        "description": "Junos vMX RIOT",
-        "js": "draw2d.shape.node.vriot",
-    },
-    {
-        "name": "junos_vrr",
-        "description": "Junos Virtual Route Reflector",
-        "js": "draw2d.shape.node.vrr",
-    },
-    {
-        "name": "junos_vqfx_cosim",
-        "description": "Junos vQFX PFE",
-        "js": "draw2d.shape.node.vqfxCosim",
-    },
-    {
-        "name": "generic",
-        "description": "Other",
-        "js": "draw2d.shape.node.generic",
-    },
-    {
-        "name": "junos_vsrx",
-        "description": "Junos vSRX",
-        "js": "draw2d.shape.node.vsrx",
-    },
-    {
-        "name": "junos_vmx_hdd",
-        "description": "Junos vMX HDD",
-        "js": "draw2d.shape.node.generic",
-    },
-        {
-        "name": "space",
-        "description": "Junos Space",
-        "js": "draw2d.shape.node.space",
-    }
-]
+# keep vm_image_types in a separate file and just include them here
+vm_image_types = vm_definitions.vm_image_types

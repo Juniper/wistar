@@ -53,7 +53,10 @@
             </li>
             {% elif global_config.deployment_backend == "openstack" %}
             <li>
-                <a href="javascript: window.open('http://{{ global_config.openstack_host }}/dashboard/project/stacks')">Manage Openstack</a>
+                <a href="#"
+                   onclick="javascript: window.open('{{ global_config.openstack_horizon_url }}/project/stacks')">
+                    Manage Openstack
+                </a>
             </li>
             {% endif %}
             <li id="menu_images">

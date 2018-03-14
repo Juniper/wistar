@@ -39,6 +39,8 @@
 <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vm_types/vre_15.js' %}"></script>
+
 <script type="text/javascript" src="{% static 'js/vm_types/vrr.js' %}"></script>
 
 <script type="text/javascript" src="{% static 'js/vm_types/vriot.js' %}"></script>
@@ -179,7 +181,7 @@
         }
         updateBootCounter++;
         console.log("updating boot up state for topology");
-        for(v=0;v<instanceArray.length;v++) {
+        for(var v=0;v<instanceArray.length;v++) {
             var instance = instanceArray[v];
             var figure = canvas.getFigure(instance["id"]);
             console.log(figure);
@@ -324,7 +326,7 @@
                 }
             }
             console.log("setting state to: " + state);
-            topo_object = canvas.getFigure(id);
+            var topo_object = canvas.getFigure(id);
             topo_object.setBootState(state);
         };
 
@@ -1376,6 +1378,12 @@
     }
 
     function manageIso(action, domainName, path) {
+
+        if (! is_deployed) {
+          alert('Can not manage iso until domain is deployed!');
+          return;
+        }
+
         var url = "/ajax/manageIso/"
         var params = {
             'domainName' : domainName,
@@ -1399,6 +1407,12 @@
     }
 
     function loadIsoManager() {
+
+        if (! is_deployed) {
+            alert('Can not manage iso until domain is deployed!');
+            return;
+        }
+
         var doc = jQuery(document);
         doc.css('cursor' , 'progress' );
 
