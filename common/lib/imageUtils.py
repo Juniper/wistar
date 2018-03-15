@@ -41,9 +41,13 @@ def get_image_detail(image_id):
     file - file path or file URL
     local - boolean if stored locally
     """
+
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
-            if len(image_id) < 5:
+            if type(image_id) is str and len(image_id) > 5:
+                glance_detail = openstackUtils.get_glance_image_detail(image_id)
+                return get_image_detail_from_glance_image(glance_detail)
+            else:
                 # this is not a glance image Id!
                 local_detail = Image.objects.get(pk=image_id)
                 image_detail = get_image_detail_from_local_image(local_detail)
@@ -52,9 +56,6 @@ def get_image_detail(image_id):
                 for i in glance_image_list:
                     if i["name"] == image_name:
                         return i
-            else:
-                glance_detail = openstackUtils.get_glance_image_detail(image_id)
-                return get_image_detail_from_glance_image(glance_detail)
         else:
             raise Exception('Could not authenticate to Openstack')
 
