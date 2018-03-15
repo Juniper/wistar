@@ -33,6 +33,7 @@ from ajax import views as av
 from common.lib import junosUtils
 from common.lib import libvirtUtils
 from common.lib import osUtils
+from common.lib import ovsUtils
 from common.lib import wistarUtils
 from common.lib import openstackUtils
 
@@ -129,7 +130,7 @@ def import_topology(request):
             logger.debug("Iterating json objects in imported data")
             for json_object in json_data:
                 if "userData" in json_object and "wistarVm" in json_object["userData"]:
-                    logger.debug("Found one")
+                    # logger.debug("Found one")
                     ud = json_object["userData"]
                     # check if we have this type of image
                     image_list = Image.objects.filter(type=ud["type"])
@@ -140,7 +141,7 @@ def import_topology(request):
                                      '! Please upload an image of this type and try again')
 
                     image = image_list[0]
-                    logger.debug(str(image.id))
+                    # logger.debug(str(image.id))
                     json_object["userData"]["image"] = image.id
 
                     valid_ip = wistarUtils.get_next_ip(currently_allocated_ips, next_ip_floor)
@@ -160,11 +161,14 @@ def import_topology(request):
             vm_types = configuration.vm_image_types
             vm_types_string = json.dumps(vm_types)
 
+            dhcp_reservations = wistarUtils.get_consumed_management_ips()
+
             context = {'image_list': image_list,
                        'image_list_json': image_list_json,
                        'allocated_ips': currently_allocated_ips,
                        'script_list': script_list,
                        'vm_types': vm_types_string,
+                       'dhcp_reservations': dhcp_reservations,
                        'topo': topology
                        }
 
@@ -276,10 +280,18 @@ def delete(request, topology_id):
 
     if configuration.deployment_backend == "kvm":
 
+        if hasattr(configuration, "use_openvswitch") and configuration.use_openvswitch:
+            use_ovs = True
+        else:
+            use_ovs = False
+
         network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
         for network in network_list:
             logger.debug("undefine network: " + network["name"])
             libvirtUtils.undefine_network(network["name"])
+
+            if use_ovs:
+                ovsUtils.delete_bridge(network["name"])
 
         domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
         for domain in domain_list:
