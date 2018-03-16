@@ -106,7 +106,13 @@ def get_image_detail_from_glance_image(glance_image):
     image_detail["name"] = glance_image["name"]
     image_detail["id"] = glance_image["id"]
     image_detail["format"] = glance_image["disk_format"]
-    image_detail["size"] = glance_image["size"]
+
+    try:
+        image_detail["size"] = int(glance_image["size"])
+    except ValueError:
+        logger.warn('Could not parse int value from glance image size')
+        image_detail["size"] = 20
+
     image_detail["file"] = glance_image["file"]
     image_detail["description"] = glance_image["size"]
     image_detail["local"] = False

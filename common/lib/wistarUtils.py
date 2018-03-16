@@ -153,9 +153,13 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
 
         image_name = image_details["name"]
         if "disk" in image_details:
-            image_disk = image_details["disk"]
+            image_disk_size = image_details["disk"]
         else:
-            image_disk = 20
+            image_disk_size = 20
+
+        # if the user has specified a desired disk size, grab it here so we get the correct flavor
+        if type(image_disk_size) is int and device["resizeImage"] > image_disk_size:
+            image_disk_size = device["resizeImage"]
 
         # determine openstack flavor here
         device_ram = int(device["ram"])
@@ -164,7 +168,7 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
         flavor_detail = openstackUtils.get_minimum_flavor_for_specs(configuration.openstack_project,
                                                                     device_cpu,
                                                                     device_ram,
-                                                                    image_disk
+                                                                    image_disk_size
                                                                     )
 
         flavor = flavor_detail["name"]

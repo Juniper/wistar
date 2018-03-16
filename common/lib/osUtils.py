@@ -581,8 +581,15 @@ def get_image_size(image_path):
     cmd = "du -b %s | awk '{ print $1 }'" % image_path
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     p.wait()
-    (o, e) = p.communicate()
-    return o
+    (size_str, e) = p.communicate()
+
+    try:
+        size = int(size_str)
+    except ValueError:
+        logger.warn('Could not parse int value from get_image_size')
+        size = 20
+
+    return size
 
 
 def get_dhcp_leases():
