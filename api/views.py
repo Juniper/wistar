@@ -32,6 +32,8 @@ from common.lib import linuxUtils
 from common.lib import osUtils
 from common.lib import wistarUtils
 from common.lib import imageUtils
+from common.lib import openstackUtils
+from images.models import Image
 from scripts.models import Script
 from topologies.models import Topology
 from wistar import configuration
@@ -663,3 +665,48 @@ def delete_image(request):
 
     imageUtils.delete_image_by_name(name)
     return apiUtils.return_json(True, "Image deleted")
+
+
+def import_glance_image(request):
+    """
+        Imports Openstack Glance image into Wistar.
+
+        :param request: JSON payload that contains a single object with the following properties:  image_name, image_type, image_descr
+        :return: a JSON object with at least the following properties: status (boolean) and message
+        """
+
+    logger.debug("<---- API call import_glance_images ---->")
+
+    if openstackUtils.connect_to_openstack():
+
+        json_string = request.body
+
+        try:
+            json_body = json.loads(json_string)
+        except ValueError as ve:
+            logger.error('Could not parse json payload with error <{0}>'.format(ve.message))
+            return apiUtils.return_json(False, "Could not parse json payload!")
+
+        logger.debug(json_body)
+        required_fields = {'image_name', 'image_type', 'image_descr'}
+
+        if not required_fields.issubset(json_body):
+            logger.error("Invalid parameters in json body")
+            return apiUtils.return_json(False, "Invalid parameters in json payload")
+
+        image_name = json_body["image_name"]
+        image_type = json_body["image_type"]
+        image_decr = json_body["image_descr"]
+
+        logger.debug("<---- API call import_glance_image: <{0}> START ---->".format(image_name))
+        image = Image()
+        image.description = image_decr + ' image imported from Glance'
+        image.name = image_name
+        image.type = image_type
+        image.save()
+        logger.debug("<---- API call import_glance_image: <{0}> DONE ---->".format(image_name))
+
+        return apiUtils.return_json(True, "Glance images successfully imported")
+
+    else:
+        return apiUtils.return_json(False, "Failed to authenticate")
