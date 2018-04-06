@@ -118,7 +118,7 @@ def get_image_detail_from_glance_image(glance_image):
 
     except ValueError:
         logger.warn('Could not parse int value from glance image size / min_disk')
-        image_detail["size"] = 20
+        image_detail["size"] = 20000000000
 
     image_detail["file"] = glance_image["file"]
     image_detail["description"] = glance_image["size"]

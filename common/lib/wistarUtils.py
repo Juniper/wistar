@@ -19,6 +19,7 @@
 
 import json
 import logging
+import math
 import os
 import re
 import subprocess
@@ -152,10 +153,17 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
             image_details_dict[device["imageId"]] = image_details
 
         image_name = image_details["name"]
-        if "disk" in image_details:
-            image_disk_size = image_details["disk"]
-        else:
-            image_disk_size = 20
+
+        image_disk_size = 20
+
+        # set the size in GB, rounding up to the nearest int
+        if 'size' in image_details:
+            current_size = int(image_details['size'])
+            image_disk_size = int(math.ceil(current_size / 1000000000))
+
+        # if the flavor asks for a minimum disk size, let's see if it's larger that what we have
+        if "min_disk" in image_details and image_details['min_disk'] > image_disk_size:
+            image_disk_size = image_details["min_disk"]
 
         # if the user has specified a desired disk size, grab it here so we get the correct flavor
         if type(image_disk_size) is int and device["resizeImage"] > image_disk_size:
