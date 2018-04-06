@@ -391,16 +391,34 @@ def get_consumed_management_ips():
 
 def get_glance_image_list():
     """
-    :return: json response from glance /images URL filtered with only shared images
+    :return: list of json objects from glance /images URL filtered with only shared or public images
     """
     logger.debug("--- get_glance_image_list ---")
 
-    url = create_glance_url("/images?visibility=shared")
+    url = create_glance_url("/images")
     image_list_string = do_get(url)
-    if image_list_string is None:
-        return list()
 
-    image_list = json.loads(image_list_string)
+    image_list = list()
+
+    if image_list_string is None:
+        return image_list
+
+    try:
+        glance_return = json.loads(image_list_string)
+    except ValueError:
+        logger.warn('Could not parse json response from glance /images')
+        return image_list
+
+    if 'images' not in glance_return:
+        logger.warn('did not find images key in glance return data')
+        logger.debug(glance_return)
+        return image_list
+
+    for im in glance_return['images']:
+
+        if 'visibility' in im and im['visibility'] in ['shared', 'public']:
+            image_list.append(im)
+
     return image_list
 
 
@@ -431,7 +449,7 @@ def get_image_id_for_name(image_name):
     if image_list is None or len(image_list) == 0:
         return None
 
-    for image in image_list["images"]:
+    for image in image_list:
         if image["name"] == image_name:
             return image["id"]
 
@@ -575,7 +593,7 @@ def get_minimum_flavor_for_specs(project_name, cpu, ram, disk):
             # let's find the smallest flavor left!
             cpu_low = 99
             disk_low = 999
-            ram_low = 9999
+            ram_low = 99999
             for f in disk_candidates:
                 if f["vcpus"] < cpu_low:
                     cpu_low = f["vcpus"]

@@ -163,7 +163,7 @@ def get_image_list():
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
             images = openstackUtils.get_glance_image_list()
-            for glance_detail in images["images"]:
+            for glance_detail in images:
                 image_detail = get_image_detail_from_glance_image(glance_detail)
                 image_list.append(image_detail)
 
@@ -202,7 +202,7 @@ def get_glance_image_list():
     if configuration.deployment_backend == "openstack":
         if openstackUtils.connect_to_openstack():
             images = openstackUtils.get_glance_image_list()
-            for glance_detail in images["images"]:
+            for glance_detail in images:
                 image_detail = get_image_detail_from_glance_image(glance_detail)
                 image_list.append(image_detail)
 
