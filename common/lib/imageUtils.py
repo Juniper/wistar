@@ -106,22 +106,41 @@ def get_image_detail_from_glance_image(glance_image):
     image_detail["name"] = glance_image["name"]
     image_detail["id"] = glance_image["id"]
     image_detail["format"] = glance_image["disk_format"]
+    image_detail['status'] = glance_image["status"]
+
+    default_size = 20000000000
 
     try:
-        size = int(glance_image["size"])
-        min_disk = int(glance_image["min_disk"])
-
-        if min_disk > size:
-            image_detail['size'] = min_disk
+        if 'size' not in glance_image:
+            size = default_size
+        elif glance_image["size"] is None:
+            size = default_size
         else:
-            image_detail['size'] = size
+            size = int(glance_image["size"])
 
-    except ValueError:
-        logger.warn('Could not parse int value from glance image size / min_disk')
-        image_detail["size"] = 20000000000
+    except (TypeError, ValueError):
+            logger.warn('Could not parse int value from glance image size')
+            size = default_size
+
+    try:
+        if 'min_disk' not in glance_image:
+            min_disk = 0
+        elif glance_image['min_disk'] is None:
+            min_disk = 0
+        else:
+            min_disk = int(glance_image['min_disk'])
+
+    except (TypeError, ValueError):
+        logger.warn('Could not parse int value from glance image min_disk')
+        min_disk = 0
+
+    if min_disk > size:
+        image_detail['size'] = min_disk
+    else:
+        image_detail['size'] = size
 
     image_detail["file"] = glance_image["file"]
-    image_detail["description"] = glance_image["size"]
+    image_detail["description"] = image_detail["size"]
     image_detail["local"] = False
 
     return image_detail

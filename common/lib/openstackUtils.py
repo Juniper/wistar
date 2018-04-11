@@ -416,6 +416,10 @@ def get_glance_image_list():
 
     for im in glance_return['images']:
 
+        if 'status' in im and im['status'] != 'active':
+            logger.debug('Skipping non-active image %s' % im['name'])
+            continue
+
         if 'visibility' in im and im['visibility'] in ['shared', 'public']:
             image_list.append(im)
 
