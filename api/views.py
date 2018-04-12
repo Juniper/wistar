@@ -671,7 +671,8 @@ def import_glance_image(request):
     """
         Imports Openstack Glance image into Wistar.
 
-        :param request: JSON payload that contains a single object with the following properties:  image_name, image_type, image_descr
+        :param request: JSON payload that contains a single object with the following properties:
+            image_name, image_type, image_descr
         :return: a JSON object with at least the following properties: status (boolean) and message
         """
 
@@ -699,6 +700,11 @@ def import_glance_image(request):
         image_decr = json_body["image_descr"]
 
         logger.debug("<---- API call import_glance_image: <{0}> START ---->".format(image_name))
+
+        if Image.objects.filter(name=image_name).exists():
+            logger.info('image with name %s already exists' % image_name)
+            return apiUtils.return_json(True, "Glance images already imported")
+
         image = Image()
         image.description = image_decr + ' image imported from Glance'
         image.name = image_name
