@@ -134,10 +134,8 @@ def get_image_detail_from_glance_image(glance_image):
         logger.warn('Could not parse int value from glance image min_disk')
         min_disk = 0
 
-    if min_disk > size:
-        image_detail['size'] = min_disk
-    else:
-        image_detail['size'] = size
+    image_detail['size'] = size
+    image_detail['min_disk'] = min_disk
 
     image_detail["file"] = glance_image["file"]
     image_detail["description"] = image_detail["size"]
