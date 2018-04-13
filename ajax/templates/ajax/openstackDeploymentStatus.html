@@ -23,6 +23,8 @@ is_deployed = true;
             <input type="button" name="refreshDSButton"
                    value="Refresh OpenStack Status"
                    onclick="javascript: refreshDeploymentStatus('{{ topology_id }}');"/>
+            <input type="button" value="Show HEAT"
+                    onclick="javascript: window.open('/topologies/exportHeat/{{ topology_id }}')"/>
             <input type="hidden" id="deployed" value="1"/>
         </td>
     </tr>
