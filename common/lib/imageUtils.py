@@ -51,11 +51,13 @@ def get_image_detail(image_id):
                 # this is not a glance image Id!
                 local_detail = Image.objects.get(pk=image_id)
                 image_detail = get_image_detail_from_local_image(local_detail)
-                image_name = image_detail["name"]
-                glance_image_list = get_glance_image_list()
-                for i in glance_image_list:
-                    if i["name"] == image_name:
-                        return i
+
+                if 'name' not in image_detail:
+                    logger.error('Could not get a name from the local image!')
+                    return None
+
+                return openstackUtils.get_glance_image_detail_by_name(image_detail['name'])
+
         else:
             raise Exception('Could not authenticate to Openstack')
 

@@ -441,6 +441,36 @@ def get_glance_image_detail(glance_id):
     return json.loads(image_string)
 
 
+def get_glance_image_detail_by_name(image_name):
+    """
+    :param image_name: name of the glance image to retrieve
+    :return: json response from glance /images?name=image_name URL or None
+    """
+    logger.debug("--- get_glance_image_detail ---")
+
+    url = create_glance_url("/images?name=%s" % image_name)
+    image_string = do_get(url)
+    if image_string is None:
+        logger.error('Error calling glance api, no data')
+        return None
+
+    try:
+        images_dict = json.loads(image_string)
+
+        if 'images' not in images_dict:
+            logger.error('Unexpected output from glance api')
+            return None
+
+        for image in images_dict['images']:
+            if 'name' in image and image['name'] == image_name:
+                logger.debug('returning image with id: %s' % image.get('id', '0'))
+                return image
+
+    except ValueError:
+        logger.error('Could not parse json return from glance api')
+        return None
+
+
 def get_image_id_for_name(image_name):
     """
     Returns the glance Id for the given image_name
@@ -449,13 +479,10 @@ def get_image_id_for_name(image_name):
     """
     logger.debug("--- get_image_id_for_name ---")
 
-    image_list = get_glance_image_list()
-    if image_list is None or len(image_list) == 0:
-        return None
-
-    for image in image_list:
-        if image["name"] == image_name:
-            return image["id"]
+    image_detail = get_glance_image_detail_by_name(image_name)
+    if 'name' in image_detail and image_detail['name'] == image_name:
+        # all is well, return the id from here
+        return image_detail.get('id', None)
 
     return None
 
@@ -561,7 +588,6 @@ def get_minimum_flavor_for_specs(project_name, cpu, ram, disk):
 
         # first, let's see if we have an exact match!
         for f in flavors_object["flavors"]:
-            logger.debug("check flavors")
             logger.debug("checking flavor: " + f["name"])
             if f["vcpus"] == cpu and f["ram"] == ram and f["disk"] == disk:
                 return f
