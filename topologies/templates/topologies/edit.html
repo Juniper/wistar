@@ -1640,21 +1640,19 @@
     }
 
     function addExternalCloud() {
-        if (externalCloudAdded == false) {
-            var c = new draw2d.shape.node.externalCloud();
-            c.width = 100;
-            c.height = 100;
-            canvas.add(c, 385, 15);
-            externalCloudAdded = true;
-        } else {
-            alert("You may only add one external connection!");
-            return false;
-        }
+        var label = prompt('Enter name of the External Bridge to add:', 'br' + externalCloudCounter);
+        externalCloudCounter = externalCloudCounter + 1;
+        var c = new draw2d.shape.node.externalCloud(label);
+        c.width = 100;
+        c.height = 100;
+        canvas.add(c, 385 + (externalCloudCounter * 60), 15 + (externalCloudCounter * 50));
+
+        hideOverlay('#add_bridge_form');
     }
 
     function addInternalCloud() {
         internalCloudCounter = internalCloudCounter + 1;
-        var label = jQuery('#internalCloudName').val();
+        var label = prompt('Enter name of the Private Bridge to add:', 'underlay_' + internalCloudCounter);
         var c = new draw2d.shape.node.internalCloud(label);
         c.width = 100;
         c.height = 100;
@@ -2625,6 +2623,8 @@
                                         border-bottom: 1px solid #ddd;
                                         line-height: 34px;">
                 <input type="button" value="Add Instance" onclick="javascript: addInstanceForm()">
+                <input type="button" value="Add Bridge" onclick="javascript: addInternalCloud()">
+                <input type="button" value="Add External Bridge" onclick="javascript: addExternalCloud()">
                 <input type="text" placeholder="New Note" id="newLabel"
                        onclick="javascript: this.value = ''" style="width: 200px">
 
