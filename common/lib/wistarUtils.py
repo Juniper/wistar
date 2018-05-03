@@ -161,7 +161,7 @@ def get_heat_json_from_topology_config(config, project_name='admin'):
             current_size = float(image_details['size'])
             image_disk_size = int(math.ceil(current_size / 1000000000))
 
-        # if the flavor asks for a minimum disk size, let's see if it's larger that what we have
+        # if the glance image asks for a minimum disk size, let's see if it's larger that what we have
         if "min_disk" in image_details and image_details['min_disk'] > image_disk_size:
             image_disk_size = image_details["min_disk"]
 
