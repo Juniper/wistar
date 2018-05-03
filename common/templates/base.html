@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
-    <title>{% block title %}Wistar - vLab{% endblock %}</title>
+    <title>{% block title %}{{ global_config.wistar_title }}{% endblock %}</title>
     <link href="{% static 'images/wistar.png' %}" rel="shortcut icon">
     <script type="text/javascript" src="{% static 'js/jquery-1.12.4.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
@@ -13,7 +13,7 @@
 </head>
 <body>
 <div id="header">
-    <h3>Wistar - Virtual Lab Environment</h3>
+    <h3>{{ global_config.wistar_title }}</h3>
     <div id="hostLoad">
         <a href="javascript: refreshHostLoad()">
             Host Load: {{ load.one }} - {{ load.five }} - {{ load.ten }}

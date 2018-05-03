@@ -20,6 +20,9 @@
 # some basic configuration parameters for wistar
 
 import vm_definitions
+# What should we show as the title across all pages?
+# Useful to customize this if you have multiple wistar instances on different servers / clusters
+wistar_title = 'Wistar - Virtual Lab Environment'
 
 # shortcut to fill in default instance password in 'New VM' screen
 # Make sure this meets the complexity requirements for your VMs!
