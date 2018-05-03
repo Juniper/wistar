@@ -48,13 +48,22 @@
         <controller type='usb' index='0'>
             <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
         </controller>
-        {% for interface in device.interfaces %}
-        <interface type='bridge'>
-            <mac address='{{ interface.mac }}'/>
-            <source bridge='{{ interface.bridge }}'/>
-            <model type='{{ interface.type }}'/>
-            <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
-        </interface>
+    {% for interface in device.interfaces %}
+      {% if use_ovs and not interface.bridge_preexists %}
+      <interface type='bridge'>
+          <source bridge='{{ interface.bridge }}'/>
+          <virtualport type='openvswitch'/>
+          <model type='{{ interface.type }}'/>
+          <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
+      </interface>
+      {% else %}
+      <interface type='bridge'>
+          <mac address='{{ interface.mac }}'/>
+          <source bridge='{{ interface.bridge }}'/>
+          <model type='{{ interface.type }}'/>
+          <address type='pci' domain='0x0000' bus='0x00' slot='{{ interface.slot }}' function='0x0'/>
+      </interface>
+      {% endif %}
         {% endfor %}
         <serial type='pty'>
             <target port='0'/>

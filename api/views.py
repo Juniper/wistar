@@ -30,6 +30,7 @@ from common.lib import consoleUtils
 from common.lib import libvirtUtils
 from common.lib import linuxUtils
 from common.lib import osUtils
+from common.lib import ovsUtils
 from common.lib import wistarUtils
 from common.lib import imageUtils
 from common.lib import openstackUtils
@@ -385,10 +386,18 @@ def delete_topology(request):
 
     try:
         topology_prefix = "t%s_" % topology.id
+
+        if hasattr(configuration, "use_openvswitch") and configuration.use_openvswitch:
+            use_ovs = True
+        else:
+            use_ovs = False
+
         network_list = libvirtUtils.get_networks_for_topology(topology_prefix)
         for network in network_list:
             logger.debug("undefining network: " + network["name"])
             libvirtUtils.undefine_network(network["name"])
+            if use_ovs:
+                ovsUtils.delete_bridge(network["name"])
 
         domain_list = libvirtUtils.get_domains_for_topology(topology_prefix)
         for domain in domain_list:

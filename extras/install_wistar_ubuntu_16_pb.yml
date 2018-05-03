@@ -1,12 +1,16 @@
 ---
 #
 # Provisions all the required dependencies for Wistar on the local host
+# wistar_branch refers to the branch from git that you want to clone
+# this is useful if you'd like to follow the develop branch for example
 #
 
 - name: Provision Wistar
   hosts: localhost
   connection: local
   become: true
+  vars:
+    wistar_branch: master
 
   tasks:
   - name: Update all packages to the latest version
@@ -65,6 +69,7 @@
       - python-setuptools
       - mtools
       - dosfstools
+      - openvswitch-switch
 
   - name: Install Django
     pip:
@@ -106,6 +111,7 @@
     git:
       repo: https://github.com/Juniper/wistar.git
       dest: /opt/wistar/wistar-master/
+      version: "{{ wistar_branch }}"
  
   - name: Create Wistar tables
     command: /opt/wistar/wistar-master/manage.py migrate
@@ -170,6 +176,12 @@
       name: www-data
       groups: libvirtd
       append: yes
+
+  - name: Allow libvirtd group to modify ovs-vsctl
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      line: '%libvirtd ALL=NOPASSWD: /usr/bin/ovs-vsctl'
 
   handlers:
     - name: restart apache
