@@ -84,8 +84,9 @@ virtual_box_host_only_net_name = 'vboxnet0'
 # default external bridge name
 kvm_external_bridge = "br0"
 
-# Use OVS bridges
-use_openvswitch = True
+# Use OVS bridges - THIS IS EXPERIMENTAL AND WILL ALMOST CERTAINLY NOT WORK IN MOST CASES
+# Best to keep this as false for now until ovs libvirt support has matured a bit
+use_openvswitch = False
 
 # Define the starting port number for VM's VNC
 # This is needed if the system is using port 5900 or subsequent ports
