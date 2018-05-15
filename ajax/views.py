@@ -58,6 +58,19 @@ def manage_hypervisor(request):
     return render(request, 'ajax/manageHypervisor.html')
 
 
+def instance_details(request):
+    required_fields = set(['domainName'])
+    if not required_fields.issubset(request.POST):
+        return render(request, 'ajax/ajaxError.html', {'error': "Invalid Parameters in POST"})
+
+    try:
+        domain_name = request.POST['domainName']
+        domain = libvirtUtils.get_domain_dict(domain_name)
+        return render(request, 'ajax/instanceDetails.html', {'d': domain})
+    except Exception as e:
+        return render(request, 'ajax/ajaxError.html', {'error': e})
+
+
 def view_domain(request, domain_id):
     try:
         domain = libvirtUtils.get_domain_by_uuid(domain_id)
@@ -1106,7 +1119,10 @@ def inline_deploy_topology(config):
             if not domain_exists:
                 logger.debug("Reserving IP with dnsmasq")
                 management_mac = libvirtUtils.get_management_interface_mac_for_domain(device["name"])
+                logger.debug('got management mac')
+                logger.debug(management_mac)
                 libvirtUtils.reserve_management_ip_for_mac(management_mac, device["ip"], device["name"])
+                logger.debug('management ip is reserved for mac')
 
         except Exception as ex:
             logger.warn("Raising exception")

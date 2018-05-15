@@ -149,6 +149,27 @@ def get_domain_by_name(domain_name):
     raise Exception("Could not get domain by name")
 
 
+def get_domain_dict(domain_name):
+    """
+    Get a dict containing domain details with the following keys: 'name', 'id', 'uuid', 'state'
+    'State' can be 'running' or 'shut off'
+    :param domain_name: name of the domain something like 't01_vmx01'
+    :return: domain dict
+    """
+    d = get_domain_by_name(domain_name)
+    domain = dict()
+    domain["name"] = d.name()
+    domain["id"] = d.ID()
+    domain["uuid"] = d.UUIDString()
+    domain['xml'] = d.XMLDesc(0)
+    if d.info()[0] == 1:
+        domain["state"] = "running"
+    else:
+        domain["state"] = "shut off"
+
+    return domain
+
+
 # convenience function to check if a domain is currently started
 def is_domain_running(domain_name):
     try:

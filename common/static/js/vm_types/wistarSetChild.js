@@ -57,7 +57,7 @@ draw2d.shape.node.wistarSetChild = draw2d.shape.node.wistarStandalone.extend({
             label = this.getParentName();
         }
         if (this.label == undefined) {
-    	    this.label = new draw2d.shape.basic.Label({text: label });
+    	    this.label = new wistarLabel({text: label });
             this.label.setColor("#0d0d0d");
             this.label.setFontColor("#0d0d0d");
             this.label.setStroke(0);
@@ -78,8 +78,6 @@ draw2d.shape.node.wistarSetChild = draw2d.shape.node.wistarStandalone.extend({
     },
     // override default dc handler
 	onDoubleClick: function() {
-	    if (typeof topology_id != 'undefined') {
-		    launchWebConsole(generateDomainNameFromLabel(this.getParentName()));
-		}
+	   loadInstanceDetails();
 	}
 });

@@ -2,22 +2,22 @@
 {% load staticfiles %}
 {% block scripts %}
 
-    <script type="text/javascript">
-    jQuery( window ).load( function() {
+<script type="text/javascript">
+    jQuery(window).load(function () {
         refreshDeploymentStatus('');
     });
-    </script>
+</script>
 
 {% endblock %}
 {% block content %}
 <div class="centered_box_75">
 
-<h2>Hypervisor Status</h2>
-<ul class="messages">
-    {% for message in messages %}
-    <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-</ul>
-<div id="deploymentStatus"></div>
-    </div>
+    <h2>Hypervisor Status</h2>
+    <ul class="messages">
+        {% for message in messages %}
+        <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    <div id="deploymentStatus"></div>
+</div>
 {% endblock %}

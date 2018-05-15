@@ -1,0 +1,166 @@
+{% load staticfiles %}
+
+<script type="text/javascript">
+
+    $(document).keyup(function(e){
+        if(e.keyCode === 27)
+            closeOverlay();
+    });
+
+    function addInstanceRole() {
+        var r = $('#instanceNewRole').val();
+        if (r == '') {
+            console.log('no role to set');
+            return;
+        }
+        var roles = s.getUserDataKey('roles');
+
+        if (! $.isArray(roles)) {
+            roles = [];
+        }
+        roles.push(r);
+
+        s.setUserDataKey('roles', roles);
+
+        $('#instanceRoles').append("<li>" + r + "</li>");
+        $('#instanceNewRole').val('');
+    }
+
+    function clearInstanceRoles() {
+        s.setUserDataKey('roles', []);
+        $('#instanceRoles').empty();
+    }
+
+    function updateInstance() {
+        s.setUser($('#instanceUser').val());
+        s.setPassword($('#instancePass').val());
+        s.setCpu($('#instanceCpu').val());
+        s.setRam($('#instanceRam').val());
+        closeOverlay();
+    }
+
+    $(function() {
+        console.log('loading instance details for ' + s.getName());
+        $('#instanceName').val(s.getName());
+        $('#instanceIp').val(s.getIp());
+        $('#instanceIp').val(s.getIp());
+        $('#instanceUser').val(s.getUser());
+        $('#instancePass').val(s.getPassword());
+        $('#instanceCpu').val(s.getCpu());
+        $('#instanceRam').val(s.getRam());
+
+        var roles = s.getUserDataKey('roles');
+        if ($.isArray(roles)) {
+            $.each(roles, function(i, r)
+            {
+                $('#instanceRoles').append("<li>" + r + "</li>");
+            });
+        }
+
+    });
+</script>
+
+<table class="centered_box">
+    <tr>
+        <td colspan="4" style="text-align: right"><a href="#" onclick="javascript: closeOverlay()">X</a></td>
+    </tr>
+    <tr>
+        <th colspan="4">Instance Details</th>
+    </tr>
+    <tr>
+        <td>
+            Name
+        </td>
+        <td>
+            <input type="text" disabled="true" name="instanceName" id="instanceName" value=""/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            IP Address
+        </td>
+        <td>
+            <input type="text" disabled="true" title="management address" name="instanceIp"
+                   id="instanceIp" value=""/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Status
+        </td>
+        <td>
+            {% if d.state != "running" %}
+            <div class="status_red" title="Power on instance in Hypervisor">
+            <a href="#" onclick="javascript: manageDomain('start', '{{ d.uuid }}', '{{ topologyId }}');">
+                &#9661;</a>
+            </div>
+            &nbsp;
+            {% else %}
+            <div class="status_green">
+            <a href="#" onclick="javascript: manageDomain('stop', '{{ d.uuid }}', '{{ topologyId }}');"
+               title="Power off instance in Hypervisor">
+                &#10003;</a>
+            </div>
+            &nbsp;
+            <div class="status_grey">
+            <a href="#" onclick="javascript: manageDomain('suspend', '{{ d.uuid }}', '{{ topologyId }}');"
+               title="Suspend instance in Hypervisor">
+                S</a>
+            </div>
+            &nbsp;
+            <a href="#" onclick="javascript: launchWebConsole('{{ d.name }}');"
+               title="Launch Console">
+                <img src="{% static 'images/console.png' %}" width="20px" height="20px"/></a>
+            &nbsp;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Authentication
+        </td>
+        <td>
+            <input type="text" style="width: 75px;"
+                   name="instanceUser" id="instanceUser" value=""/>
+            &nbsp;
+            <input type="text" style="width: 75px;"
+                   name="instancePass" id="instancePass" value=""/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            VM Params
+        </td>
+        <td>
+            vCPU:
+            <input type="text" style="width: 75px;"
+                   id="instanceCpu"/>
+            &nbsp;
+            vRAM:
+            <input type="text" style="width: 75px;"
+                   id="instanceRam" value=""/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Roles
+        </td>
+        <td>
+            <div style="line-height: 1.5;">
+                <ul style="list-style-type: square; margin-bottom: 10px;" id="instanceRoles"></ul>
+            </div>
+            Add Role:
+            <input type="text" style="width: 75px;"
+                   id="instanceNewRole"/>
+            <input type="button" onclick="javascript: addInstanceRole()" value="Add"/>
+            &nbsp;
+            <input type="button" onclick="javascript: clearInstanceRoles()" value="Clear"/>&nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <input type="button" onclick="javascript: updateInstance()" value="Update"/>
+        </td>
+    </tr>
+
+</table>

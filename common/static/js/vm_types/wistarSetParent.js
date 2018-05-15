@@ -9,7 +9,7 @@ wistarSetParentIPLocator = draw2d.layout.locator.Locator.extend({
         var parent = target.getParent();
         var boundingBox = parent.getBoundingBox();
         var targetBoundingBox = target.getBoundingBox();
-        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 50);
+        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 60);
     }
 });
 
@@ -70,7 +70,7 @@ draw2d.shape.node.wistarSetParent = draw2d.shape.node.wistarVm.extend({
 	    var ud = this.getUserData();
 	    ud["ip"] = ip;
 	    if (this.ipLabel == undefined) {
-		    this.ipLabel = new draw2d.shape.basic.Label({text: "\n" + ip });
+		    this.ipLabel = new wistarLabel({text: ip });
 	        this.ipLabel.setColor("#000");
         	this.ipLabel.setFontColor("#000");
         	this.ipLabel.setStroke(0);

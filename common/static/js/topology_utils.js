@@ -1,5 +1,3 @@
-
-
 function setImageType() {
     id = jQuery('#topoIconImageSelect').val().split(':')[0]
     type = jQuery('#topoIconImageSelect').val().split(':')[1]
@@ -18,11 +16,11 @@ function setImageType() {
     jQuery('#topoIconScriptParam').val(0);
     jQuery('#topoIconResize').val(0);
 
-    for (v=0;v<vm_types.length;v++) {
+    for (v = 0; v < vm_types.length; v++) {
         vm_type = vm_types[v];
         if (vm_type.name == type) {
 
-            var icon = eval("new " + vm_type.js + "()" );
+            var icon = eval("new " + vm_type.js + "()");
 
             console.log(icon);
 
@@ -127,7 +125,7 @@ function addIcon() {
     var icon;
 
     vm_type_data = {};
-    for (v=0;v<vm_types.length;v++) {
+    for (v = 0; v < vm_types.length; v++) {
         vm_type = vm_types[v];
         if (vm_type.name == type) {
             vm_type_data = vm_type;
@@ -136,7 +134,7 @@ function addIcon() {
     }
     console.log(vm_type_data);
 
-    icon = eval("new " + vm_type_data.js + "()" );
+    icon = eval("new " + vm_type_data.js + "()");
 
     // Should the user have selected a companion image?
     if (icon.getCompanionType() != "") {
@@ -197,7 +195,7 @@ function addIcon() {
             vpfe_js = icon.COMPANION_TYPE;
         }
 
-        var vpfe = eval("new " + vpfe_js + "()" );
+        var vpfe = eval("new " + vpfe_js + "()");
 
         vpfe_ip = nextIp();
 
@@ -250,19 +248,19 @@ function incrementIconName(name) {
     if (last == "9") {
         var lastTwo = name.substr(-2);
         var lastTwoInt = parseInt(lastTwo);
-        if (! isNaN(lastTwoInt)) {
-            return name.substring(0, name.length -2) + (lastTwoInt + 1);
+        if (!isNaN(lastTwoInt)) {
+            return name.substring(0, name.length - 2) + (lastTwoInt + 1);
         } else {
             // last two are not an int, check for single digit suffix
-            if (! isNaN(lastInt)) {
-                return name.substring(0, name.length -1) + (lastInt + 1);
+            if (!isNaN(lastInt)) {
+                return name.substring(0, name.length - 1) + (lastInt + 1);
             } else {
                 return name + "2";
             }
         }
     } else {
-        if (! isNaN(lastInt)) {
-            return name.substring(0, name.length -1) + (lastInt + 1);
+        if (!isNaN(lastInt)) {
+            return name.substring(0, name.length - 1) + (lastInt + 1);
         } else {
             return name + "2";
         }
@@ -273,7 +271,7 @@ function addLabel() {
 
     var label = jQuery('#newLabel').val();
     var labelSize = jQuery('#newLabelFontSize').val();
-    var l = new draw2d.shape.basic.Label({ text: label });
+    var l = new draw2d.shape.basic.Label({text: label});
     // l.setBackgroundColor();
     l.setFontColor("#000000");
     l.setFontSize(labelSize);
@@ -312,9 +310,9 @@ function setCompanionParams(o) {
     var companion_image = jQuery('#topoIconImageVFPCSelect').val();
     console.log(companion_image);
     var companion_type = "blank";
-    for(i=0;i<images.length;i++) {
+    for (i = 0; i < images.length; i++) {
 
-        if(images[i]["pk"] == companion_image) {
+        if (images[i]["pk"] == companion_image) {
             companion_type = images[i]["fields"]["type"];
             console.log(companion_type);
             break;
@@ -323,7 +321,7 @@ function setCompanionParams(o) {
     // set the companion type here to be used later
     jQuery('#topoIconVFPCType').val(companion_type);
 
-    for (v=0;v<vm_types.length;v++) {
+    for (v = 0; v < vm_types.length; v++) {
         vm_type = vm_types[v];
         console.log(vm_type.name);
         if (vm_type.name == companion_type) {
@@ -337,4 +335,34 @@ function setCompanionParams(o) {
             break;
         }
     }
+}
+
+function loadInstanceDetails() {
+
+    var doc = jQuery(document);
+    doc.css('cursor', 'progress');
+
+    var figureId = jQuery('#selectedObject').val();
+    var figure = canvas.getFigure(figureId);
+
+    var domainName = generateDomainNameFromLabel(figure.getLabel());
+
+    var cso = jQuery('<div/>').attr("id", "overlay").addClass("screen-overlay");
+
+    jQuery('#content').append(cso);
+
+    var url = '/ajax/instanceDetails/';
+    var params = {
+        'domainName': domainName
+    };
+    var post = jQuery.post(url, params, function (response) {
+        var content = jQuery(response);
+        cso.append(content);
+    });
+    post.fail(function () {
+        alert('Could not perform request!');
+    });
+    post.always(function () {
+        doc.css('cursor', '');
+    });
 }

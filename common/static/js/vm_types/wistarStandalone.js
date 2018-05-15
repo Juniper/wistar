@@ -35,7 +35,7 @@ IpLabelLocator = draw2d.layout.locator.Locator.extend({
         var parent = target.getParent();
         var boundingBox = parent.getBoundingBox();
         var targetBoundingBox = target.getBoundingBox();
-        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 4);
+        target.setPosition(boundingBox.w / 2 - targetBoundingBox.w / 2, parent.getHeight() + 15);
     }
 });
 BootStateLocator = draw2d.layout.locator.Locator.extend({
@@ -50,6 +50,19 @@ BootStateLocator = draw2d.layout.locator.Locator.extend({
         target.setPosition(x, y);
     }
 });
+
+wistarLabel = draw2d.shape.basic.Label.extend({
+    NAME: "wistarLabel",
+    init: function(text) {
+        console.log('inity');
+        this._super(text);
+    },
+    onDoubleClick: function() {
+        console.log('CLICKY');
+        this.getParent().onDoubleClick();
+    }
+});
+
 // provides a base class for all topology icons that will be 'standalone' ie not
 // in a pair like vre / vpfe
 // should not be instantiated directly, but rely on child classes
@@ -88,7 +101,7 @@ draw2d.shape.node.wistarStandalone = draw2d.shape.node.wistarVm.extend({
 	    var ud = this.getUserData();
 	    ud["ip"] = ip;
 	    if (this.ipLabel == undefined) {
-		    this.ipLabel = new draw2d.shape.basic.Label({ text: "\n" + ip });
+		    this.ipLabel = new wistarLabel({ text: ip });
 	        this.ipLabel.setColor("#000");
         	this.ipLabel.setFontColor("#000");
         	this.ipLabel.setStroke(0);
@@ -100,7 +113,7 @@ draw2d.shape.node.wistarStandalone = draw2d.shape.node.wistarVm.extend({
     setLabel: function(label) {
         this.setName(label);
         if (this.label == undefined) {
-    	    this.label = new draw2d.shape.basic.Label({ text: label });
+    	    this.label = new wistarLabel({ text: label });
             this.label.setColor("#0d0d0d");
             this.label.setFontColor("#0d0d0d");
             this.label.setStroke(0);

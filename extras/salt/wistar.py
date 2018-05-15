@@ -58,6 +58,8 @@ def targets(tgt, tgt_type='glob', **kwargs):
             all_hosts = __get_inv(tj)
             if tgt_type == 'glob':
                 return ret_glob_minions(all_hosts, tgt)
+            elif tgt_type == 'grain':
+                return ret_grain_minions(all_hosts, tgt)
             else:
                 return dict()
         else:
@@ -85,6 +87,8 @@ def __get_inv(topology_json):
                 hosts[name]['host'] = ip
                 hosts[name]['user'] = username
                 hosts[name]['passwd'] = password
+                if 'roles' in ud:
+                    hosts[name]['grains']['roles'] = ud.get('roles', [])
 
     return hosts
 
@@ -97,3 +101,13 @@ def ret_glob_minions(hosts, tgt):
 
     return matched_minions
 
+
+def ret_grain_minions(hosts, tgt):
+    matched_minions = dict()
+    for minion in hosts:
+        if 'grains' in hosts[minion] and 'roles' in hosts[minion]['grains']:
+            minion_roles = hosts[minion]['grains']['roles']
+            if tgt in minion_roles:
+                matched_minions[minion] = hosts[minion]
+
+    return matched_minions
