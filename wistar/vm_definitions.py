@@ -35,6 +35,11 @@ vm_image_types = [
         "js": "draw2d.shape.node.vre_15",
     },
     {
+        "name": "junos_vmx_vcp_virtio",
+        "description": "Junos vMX RE (virtio)",
+        "js": "draw2d.shape.node.vmx_virtio",
+    },
+    {
         "name": "junos_vpfe",
         "description": "Junos vMX vFPC",
         "js": "draw2d.shape.node.vpfe",
@@ -53,6 +58,11 @@ vm_image_types = [
         "name": "junos_riot",
         "description": "Junos vMX RIOT",
         "js": "draw2d.shape.node.vriot",
+    },
+    {
+        "name": "junos_riot_virtio",
+        "description": "Junos vMX VFP (virtio)",
+        "js": "draw2d.shape.node.vriot_virtio",
     },
     {
         "name": "junos_vrr",
