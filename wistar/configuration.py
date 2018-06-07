@@ -20,9 +20,12 @@
 # some basic configuration parameters for wistar
 
 import vm_definitions
+import socket
+
 # What should we show as the title across all pages?
 # Useful to customize this if you have multiple wistar instances on different servers / clusters
-wistar_title = 'Wistar - Virtual Lab Environment'
+wistar_hostname = socket.gethostname()
+wistar_title = 'Wistar - Virtual Lab Environment - Host: ' + wistar_hostname
 
 # shortcut to fill in default instance password in 'New VM' screen
 # Make sure this meets the complexity requirements for your VMs!
