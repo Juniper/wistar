@@ -34,12 +34,14 @@
     <script type="text/javascript" src="{% static 'js/vm_types/vmx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vsrx.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vre.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vmx_virtio.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vre_15.js' %}"></script>
 
     <script type="text/javascript" src="{% static 'js/vm_types/vrr.js' %}"></script>
 
     <script type="text/javascript" src="{% static 'js/vm_types/vpfe.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vriot.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/vm_types/vriot_virtio.js' %}"></script>
 
     <script type="text/javascript" src="{% static 'js/vm_types/vqfxRe.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/vm_types/vqfxCosim.js' %}"></script>
@@ -755,6 +757,9 @@
                             <option value="6">6</option>
                             <option value="8">8</option>
                             <option value="10">10</option>
+                            <option value="12">12</option>
+                            <option value="14">14</option>
+                            <option value="16">16</option>
                         </select>
                         vRAM:
                         <select name="topoIconRam" id="topoIconRam">
@@ -764,9 +769,12 @@
                             <option value="2048" selected>2048</option>
                             <option value="4096">4096</option>
                             <option value="8192">8192</option>
+                            <option value="12288">12288</option>
                             <option value="16384">16384</option>
                             <option value="24576">24576</option>
                             <option value="32768">32768</option>
+                            <option value="49152">49152</option>
+                            <option value="65536">65536</option>
                         </select> MB
                     </td>
                 </tr>
